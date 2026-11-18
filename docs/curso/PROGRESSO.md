@@ -27,6 +27,7 @@ Cada disciplina tem PDFs na plataforma (indicação de leitura, material autoral
 - Módulo 01 · Introdução: ✅ introdução ao curso · ✅ o que você verá, como praticar e comunidade
 - Módulo 02 · ML, DL e IA: ✅ ML, DL e IA · ✅ Teachable Machine · ✅ redes neurais e como aprendem · ✅ primeira rede neural para categorizar alunos (pt 1 e 2)
 - Módulo 03 · Sistemas de recomendação: ✅ como funcionam sistemas de recomendação (pt 1 a 7)
+  - Projeto: plataforma híbrida de recomendação na AWS, em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`. Código e testes de aplicação prontos (21 testes Vitest e 14 Python passando); falta endurecer a infra (state remoto, saída de rede do ECS, TLS no MemoryDB, IAM, workflows), adicionar `terraform test`, o componente com Claude (explicação via Bedrock com saída estruturada), teste no Floci e os posts.
 - **Módulo 04 · Como vencer qualquer jogo** (projeto escolhido): ✅ pt 1 · ⬜ pt 2 a 5
 - Módulo 05 · Web AI e LLMs: ⬜ algoritmos genéticos · ⬜ transformers, embeddings e attention · ✅ IA na web com Web AI · ⬜ demo Web AI multimodal
 - Módulo 06 · Prompts: ⬜ prompts que geram boas respostas · ⬜ padrão TOON e JSON para prompts
