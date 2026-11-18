@@ -12,6 +12,7 @@ import { mergeCandidates } from './candidate-merger';
 import { SageMakerReranker } from './reranker';
 import { HeuristicReranker } from './heuristic-reranker';
 import { baseLogger, StageTimer } from '../infrastructure/logging/logger';
+import { IRecommendationExplainer, ExplanationOutcome } from './recommendation-explainer';
 
 export interface RecommendationRequestParams {
   userId: string;
@@ -20,7 +21,14 @@ export interface RecommendationRequestParams {
   sessionItemIds?: string[];
   userCountry?: string;
   requestId?: string;
+  /** Pede a explicação com Claude. Fora do SLO de 60 ms (ADR-0004). */
+  explain?: boolean;
 }
+
+export type ExplanationSummary =
+  | { status: 'not_requested' }
+  | { status: 'ok'; modelId: string; attempts: number }
+  | { status: 'unavailable'; reason: string; attempts: number };
 
 export interface RecommendationResponse {
   requestId: string;
@@ -29,6 +37,7 @@ export interface RecommendationResponse {
   degradedMode: boolean;
   executionDurationMs: number;
   recommendations: RecommendedItem[];
+  explanation: ExplanationSummary;
 }
 
 export interface IGetRecommendationsUseCase {
@@ -43,6 +52,7 @@ export interface UseCaseDependencies {
   metricsPublisher?: ICloudWatchMetricsPublisher;
   filterEngine?: BusinessFilterEngine;
   inventoryRepo?: IInventoryEligibilityRepository;
+  explainer?: IRecommendationExplainer;
 }
 
 export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
@@ -53,6 +63,7 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
   private metricsPublisher?: ICloudWatchMetricsPublisher;
   private filterEngine: BusinessFilterEngine;
   private inventoryRepo?: IInventoryEligibilityRepository;
+  private explainer?: IRecommendationExplainer;
 
   constructor(deps: UseCaseDependencies) {
     this.batchRepo = deps.batchRepo;
@@ -67,6 +78,7 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
         new RecentPurchaseSuppressionRule(),
       ]);
     this.inventoryRepo = deps.inventoryRepo;
+    this.explainer = deps.explainer;
   }
 
   public async execute(params: RecommendationRequestParams): Promise<RecommendationResponse> {
@@ -186,6 +198,51 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
       void this.metricsPublisher?.publishDegradedMode();
     }
 
+    // 6. Explicação com Claude (opcional). Falha aqui nunca derruba a recomendação.
+    let explanation: ExplanationSummary = { status: 'not_requested' };
+    if (params.explain) {
+      const explainTimer = new StageTimer(logger, 'claude-explanation');
+      const evidence = new Map(filteredCandidates.map((c) => [c.itemId, c]));
+      let outcome: ExplanationOutcome;
+      if (!this.explainer) {
+        outcome = { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: 'explicações desligadas' };
+      } else {
+        try {
+          outcome = await this.explainer.explain({
+            userId: params.userId,
+            sessionItemIds: params.sessionItemIds,
+            items: recommendations.map((r) => {
+              const c = evidence.get(r.itemId);
+              return {
+                itemId: r.itemId,
+                title: r.title,
+                category: r.category,
+                provenance: r.provenance,
+                batchScore: c?.batchScore,
+                vectorScore: c?.vectorScore,
+              };
+            }),
+          });
+        } catch (err) {
+          logger.error({ err }, 'Explainer lançou exceção; respondendo sem explicação');
+          outcome = { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: String(err) };
+        }
+      }
+
+      if (outcome.status === 'ok') {
+        const byId = new Map(outcome.explanations.map((e) => [e.itemId, e]));
+        recommendations = recommendations.map((r) => {
+          const e = byId.get(r.itemId);
+          return e ? { ...r, explanation: { reason: e.reason, signals: e.signals, source: e.source } } : r;
+        });
+        explanation = { status: 'ok', modelId: outcome.modelId, attempts: outcome.attempts };
+      } else {
+        logger.warn({ category: outcome.errorCategory, detail: outcome.detail }, 'Explicação indisponível; resposta segue sem explicação');
+        explanation = { status: 'unavailable', reason: outcome.errorCategory, attempts: outcome.attempts };
+      }
+      explainTimer.end({ status: explanation.status });
+    }
+
     const endTime = process.hrtime.bigint();
     const executionDurationMs = Math.round(Number(endTime - startTime) / 1_000_000);
 
@@ -196,6 +253,7 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
       degradedMode,
       executionDurationMs,
       recommendations,
+      explanation,
     };
   }
 }

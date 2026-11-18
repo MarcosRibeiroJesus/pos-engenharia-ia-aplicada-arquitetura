@@ -12,6 +12,18 @@ const envSchema = z.object({
   MEMORYDB_CLUSTER_ENDPOINT: z.string().default('localhost:6379'),
   SAGEMAKER_ENDPOINT_NAME: z.string().default('recommendation-serverless-endpoint'),
   SAGEMAKER_ENDPOINT_URL: z.string().optional(),
+  MEMORYDB_TLS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  BEDROCK_MODEL_ID: z.string().default('anthropic.claude-haiku-5-5'),
+  BEDROCK_ENDPOINT_URL: z.string().optional(),
+  EXPLANATIONS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  EXPLANATION_TIMEOUT_MS: z.coerce.number().int().positive().default(2500),
+  METRICS_NAMESPACE: z.string().default('Ecommerce/Recommendations'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 

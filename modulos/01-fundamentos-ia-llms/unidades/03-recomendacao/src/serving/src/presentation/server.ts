@@ -8,6 +8,9 @@ import { IGetRecommendationsUseCase, GetRecommendationsUseCase } from '../applic
 import { DynamoDbBatchCandidateRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
 import { MemoryDbVectorCandidateRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
 import { SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
+import { CloudWatchMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { BedrockClaudeClient } from '../infrastructure/bedrock/bedrock-claude.client';
+import { RecommendationExplainer } from '../application/recommendation-explainer';
 
 export interface ServerOptions extends FastifyServerOptions {
   healthCheckers?: DownstreamHealthCheckers;
@@ -87,15 +90,33 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   app.get('/health', (req, reply) => healthController.getHealth(req, reply));
 
   // Register Recommendations Route
-  const useCase = recommendationUseCase || new GetRecommendationsUseCase({
-    batchRepo: new DynamoDbBatchCandidateRepository(),
-    vectorRepo: new MemoryDbVectorCandidateRepository(),
-    scoringClient: new SageMakerScoringClient(),
-  });
+  const useCase = recommendationUseCase || buildDefaultUseCase();
   const recommendationController = new RecommendationController(useCase);
   app.get('/v1/recommendations', (req, reply) => recommendationController.getRecommendations(req, reply));
 
   return app;
+}
+
+function buildDefaultUseCase(): IGetRecommendationsUseCase {
+  const metricsPublisher = new CloudWatchMetricsPublisher();
+  const explainer = env.EXPLANATIONS_ENABLED
+    ? new RecommendationExplainer(new BedrockClaudeClient(), {
+        modelId: env.BEDROCK_MODEL_ID,
+        timeoutMs: env.EXPLANATION_TIMEOUT_MS,
+        metrics: {
+          publishExplanationRetry: () => metricsPublisher.publishExplanationRetry(),
+          publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback(c),
+        },
+      })
+    : undefined;
+
+  return new GetRecommendationsUseCase({
+    batchRepo: new DynamoDbBatchCandidateRepository(),
+    vectorRepo: new MemoryDbVectorCandidateRepository(),
+    scoringClient: new SageMakerScoringClient(),
+    metricsPublisher,
+    explainer,
+  });
 }
 
 export async function startServer(): Promise<FastifyInstance> {

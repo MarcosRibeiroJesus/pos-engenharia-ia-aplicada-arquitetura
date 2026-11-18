@@ -47,6 +47,16 @@ paths:
           schema:
             type: string
             example: "SKU-1001,SKU-1002"
+        - name: explain
+          in: query
+          required: false
+          description: >
+            Pede uma explicação curta por item, gerada com Claude no Amazon Bedrock (ADR-0004).
+            Fora do SLO de 60 ms. Se a explicação falhar, a resposta é a mesma, sem o campo explanation nos itens.
+          schema:
+            type: string
+            enum: ["true", "false"]
+            default: "false"
       responses:
         '200':
           description: Successfully retrieved personalized recommendations.
@@ -97,6 +107,7 @@ components:
         - recommendations
         - degradedMode
         - executionDurationMs
+        - explanation
       properties:
         requestId:
           type: string
@@ -120,6 +131,46 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RecommendedItem'
+        explanation:
+          $ref: '#/components/schemas/ExplanationSummary'
+
+    ExplanationSummary:
+      type: object
+      required: [status]
+      description: Estado da explicação com Claude para esta resposta.
+      properties:
+        status:
+          type: string
+          enum: [not_requested, ok, unavailable]
+        modelId:
+          type: string
+          example: "anthropic.claude-haiku-5-5"
+        attempts:
+          type: integer
+          description: Chamadas ao modelo, contando a retentativa após erro de validação.
+        reason:
+          type: string
+          enum: [validation, timeout, throttled, model_error, refusal, circuit_open, internal_error]
+          description: Categoria da falha quando status = unavailable.
+
+    ItemExplanation:
+      type: object
+      required: [reason, signals, source]
+      properties:
+        reason:
+          type: string
+          maxLength: 160
+          example: "Combina com as suas compras anteriores e com itens parecidos de que você gostou."
+        signals:
+          type: array
+          description: Sinais citados; cada um tem lastro nos dados do item.
+          items:
+            type: string
+            enum: [purchase_history, similar_items, session_context, category_affinity, popular]
+        source:
+          type: string
+          enum: [claude]
+          description: Proveniência do texto (gerado por modelo).
 
     RecommendedItem:
       type: object
@@ -158,6 +209,8 @@ components:
         category:
           type: string
           example: "Electronics > Audio > Headphones"
+        explanation:
+          $ref: '#/components/schemas/ItemExplanation'
 
     HealthResponse:
       type: object

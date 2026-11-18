@@ -33,6 +33,13 @@ export const RecommendedItemSchema = z.object({
   title: z.string(),
   priceCents: z.number().int().nonnegative(),
   category: z.string().optional(),
+  explanation: z
+    .object({
+      reason: z.string(),
+      signals: z.array(z.string()),
+      source: z.literal('claude'),
+    })
+    .optional(),
 });
 
 export type RecommendedItem = z.infer<typeof RecommendedItemSchema>;

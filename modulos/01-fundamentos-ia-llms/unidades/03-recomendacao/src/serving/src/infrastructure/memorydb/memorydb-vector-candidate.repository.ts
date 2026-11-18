@@ -24,6 +24,8 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
         connectTimeout: 1000,
         maxRetriesPerRequest: 1,
         lazyConnect: true,
+        // MemoryDB com tls_enabled exige TLS no cliente (ADR-0003).
+        tls: env.MEMORYDB_TLS ? {} : undefined,
       });
     }
 

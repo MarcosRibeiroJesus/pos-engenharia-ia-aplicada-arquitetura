@@ -7,11 +7,13 @@ export interface ICloudWatchMetricsPublisher {
   publishSageMakerFallback(): Promise<void>;
   publishMemoryDbFallback(): Promise<void>;
   publishDynamoDbFallback(): Promise<void>;
+  publishExplanationRetry?(): Promise<void>;
+  publishExplanationFallback?(category: string): Promise<void>;
 }
 
 export class CloudWatchMetricsPublisher implements ICloudWatchMetricsPublisher {
   private client: CloudWatchClient;
-  private namespace = 'Ecommerce/Recommendations';
+  private namespace = env.METRICS_NAMESPACE;
 
   constructor(customClient?: CloudWatchClient) {
     this.client = customClient || new CloudWatchClient({ region: env.AWS_REGION });
@@ -52,5 +54,14 @@ export class CloudWatchMetricsPublisher implements ICloudWatchMetricsPublisher {
 
   public async publishDynamoDbFallback(): Promise<void> {
     await this.putMetric('DynamoDbFallbackCount');
+  }
+
+  public async publishExplanationRetry(): Promise<void> {
+    await this.putMetric('ExplanationRetryCount');
+  }
+
+  public async publishExplanationFallback(category: string): Promise<void> {
+    await this.putMetric('ExplanationFallbackCount');
+    await this.putMetric(`ExplanationFallback_${category}`);
   }
 }

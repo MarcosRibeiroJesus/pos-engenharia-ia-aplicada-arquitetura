@@ -16,6 +16,10 @@ const QuerySchema = z.object({
     }),
   category: z.string().optional(),
   sessionItemIds: z.string().optional(),
+  explain: z
+    .enum(['true', 'false'], { errorMap: () => ({ message: "Parameter 'explain' must be 'true' or 'false'" }) })
+    .optional()
+    .transform((v) => v === 'true'),
 });
 
 export class RecommendationController {
@@ -38,7 +42,7 @@ export class RecommendationController {
       return;
     }
 
-    const { userId, limit, category, sessionItemIds } = parseResult.data;
+    const { userId, limit, category, sessionItemIds, explain } = parseResult.data;
 
     const parsedSessionItems = sessionItemIds
       ? sessionItemIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
@@ -51,6 +55,7 @@ export class RecommendationController {
         category,
         sessionItemIds: parsedSessionItems,
         requestId: req.id,
+        explain,
       });
 
       reply.status(200).send(response);
