@@ -10,23 +10,34 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
-- `modulos/NN-slug/`: `notas/`, `infra/` (Terraform), `tests/`, `adr/`, `docs/` (design doc da arquitetura comparativa e diagramas), `post.md`.
+- `modulos/NN-slug/`: uma disciplina. Dentro, `unidades/UU-slug/` para cada unidade (os "Módulo 0X" dentro da disciplina na plataforma), com `notas/`, `infra/` (Terraform), `src/`, `tests/`, `adr/`, `docs/` e `posts/`. Na raiz da disciplina, `linkedin.md` com o post de divulgação.
 - `site/`: site do GitHub Pages. `testing/`: harness de teste local e relatórios. `scripts/setup-ambiente.sh`: setup do ambiente de nuvem.
 
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
-- Uma sessão por módulo, no branch `modulo/NN-slug`, com PR para `main`. O merge depende da minha aprovação.
+- Uma sessão por unidade (ou por disciplina, nas pequenas), no branch `modulo/NN-slug/UU-slug`, com PR para `main`. O merge depende da minha aprovação.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
-## Fluxo por módulo
+## Entregáveis
+- **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam):
+  1. Projeto Terraform na AWS, com uma arquitetura enterprise que abstrai o que a unidade ensina.
+  2. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
+  3. Post da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
+- **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
+
+## Legendas das aulas
+- Cada videoaula tem legenda em português (VTT) na Mediastream. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado: o JSON de `listCategories` da Platos traz o id de embed de cada aula, e `mdstrm.com/video/<id>.json` traz a URL do VTT.
+- Use as legendas para deixar a solução fiel ao que foi ensinado. Elas ficam fora do repositório; nas `notas/` entram só resumos com palavras próprias.
+
+## Fluxo por unidade
 1. Mapear as aulas na Platos e registrar no PROGRESSO.md.
 2. Extrair de 1 a 3 temas de maior valor para engenheiros seniores que querem dominar arquitetura e design de produto.
 3. Pesquisar arquiteturas: priorize a AWS (Architecture Center, blogs oficiais) e casos públicos de FAANG e grandes bancos.
 4. Propor de 2 a 3 opções de projeto em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
 5. Implementar com TDD (abaixo).
 6. Testar no Floci só com o projeto 100% concluído e gerar o relatório.
-7. Escrever o post e publicar o módulo no site.
+7. Escrever os dois posts e publicar a unidade no site. Ao concluir as unidades da disciplina, escrever o post de LinkedIn.
 
 ## Duas arquiteturas por módulo
 - Principal, na AWS: Terraform implementado, testado e com deploy possível.
