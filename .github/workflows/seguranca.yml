@@ -70,13 +70,13 @@ jobs:
             --config p/dockerfile --sarif --output semgrep.sarif --metrics off || true
       - name: zizmor (segurança dos workflows)
         run: zizmor --config .github/zizmor.yml --format sarif .github/workflows > zizmor.sarif || true
-      - uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
           category: semgrep
-      - uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        if: always() && hashFiles('zizmor.sarif') != ''
         with:
           sarif_file: zizmor.sarif
           category: zizmor
@@ -102,12 +102,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           languages: ${{ matrix.linguagem }}
           build-mode: none
           queries: security-extended
-      - uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           category: codeql-${{ matrix.linguagem }}
 
@@ -128,6 +128,7 @@ jobs:
           fail-on-severity: high
           deny-licenses: AGPL-3.0-only, AGPL-3.0-or-later, GPL-3.0-only, GPL-3.0-or-later
       - name: Trivy (vulnerabilidades, licenças e segredos no repositório)
+        if: always()
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: fs
@@ -137,12 +138,13 @@ jobs:
           output: trivy-fs.sarif
           severity: HIGH,CRITICAL
           exit-code: "0"
-      - uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        if: always() && hashFiles('trivy-fs.sarif') != ''
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-fs
       - name: SBOM (SPDX)
+        if: always()
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           path: .
@@ -154,6 +156,7 @@ jobs:
           name: sarif-sca
           path: "*.sarif"
       - name: Bloquear em severidade alta
+        if: always()
         run: python3 .github/ia/gate_sarif.py trivy-fs.sarif
 
   iac:
@@ -193,8 +196,8 @@ jobs:
           output_file_path: console,checkov.sarif
           soft_fail: false
           download_external_modules: false
-      - uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        if: always() && hashFiles('checkov.sarif') != ''
         with:
           sarif_file: checkov.sarif
           category: checkov
@@ -234,8 +237,8 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "0"
-      - uses: github/codeql-action/upload-sarif@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
-        if: always()
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        if: always() && hashFiles('trivy-imagem.sarif') != ''
         with:
           sarif_file: trivy-imagem.sarif
           category: trivy-imagem-${{ strategy.job-index }}
