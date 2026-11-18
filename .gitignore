@@ -1,0 +1,30 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+.terraform.lock.hcl.bak
+
+# Segredos
+.env
+.env.*
+*.pem
+*.key
+credentials*
+
+# Relatórios por execução (o latest.html é versionado)
+testing/reports/*/
+testing/reports/*.log
+
+# Python / Node
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# SO e editores
+.DS_Store
+.idea/
+.vscode/

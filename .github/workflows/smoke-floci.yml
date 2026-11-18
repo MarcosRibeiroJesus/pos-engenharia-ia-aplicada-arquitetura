@@ -1,0 +1,39 @@
+name: Smoke test no Floci
+
+on:
+  pull_request:
+    paths: ["testing/**", ".github/workflows/smoke-floci.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      floci:
+        image: floci/floci:latest
+        ports: ["4566:4566"]
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      EMULATOR_NAME: Floci (GitHub Actions)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install cfn-lint awscli
+      - name: Aguardar o Floci
+        run: |
+          for _ in $(seq 1 30); do
+            curl -s -o /dev/null http://localhost:4566 && exit 0
+            sleep 2
+          done
+          echo "Floci não respondeu" && exit 1
+      - run: python3 testing/scripts/run_tests.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-smoke
+          path: testing/reports/
