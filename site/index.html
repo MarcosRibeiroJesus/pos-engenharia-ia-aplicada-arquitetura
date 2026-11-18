@@ -10,7 +10,7 @@
 <body>
 <header class="topbar"><div class="in">
   <a class="brand" href="./">Arquitetura na Prática</a>
-  <nav><a href="#posts">Posts</a><a href="#projetos">Projetos</a><a href="#modulos">Módulos</a></nav>
+  <nav><a href="#" data-go="ia-aplicada">IA Aplicada</a><a href="#" data-go="arquitetura">Arquiteturas AWS</a><a href="#" data-go="post">Posts</a><a href="#modulos">Módulos</a></nav>
   <a class="btn ghost" href="https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura" rel="noopener">GitHub</a>
 </div></header>
 
@@ -18,7 +18,7 @@
   <div class="logo">AP</div>
   <h1>Arquitetura na Prática</h1>
   <p>Arquiteturas de nível enterprise, com Terraform, CI/CD, segurança, observabilidade e FinOps, construídas a partir dos módulos da minha pós-graduação.</p>
-  <a class="btn" href="#posts">Ler os posts</a>
+  <a class="btn" href="#" data-go="arquitetura">Ver as arquiteturas</a>
   <div class="byline">por Marcos Ribeiro de Jesus · Engenharia de Software · AWS e multi-cloud</div>
 </section>
 
@@ -26,11 +26,12 @@
   <div>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="all">Tudo</button>
+      <button role="tab" aria-selected="false" data-tab="ia-aplicada">IA Aplicada</button>
+      <button role="tab" aria-selected="false" data-tab="arquitetura">Arquiteturas AWS</button>
       <button role="tab" aria-selected="false" data-tab="post">Posts</button>
-      <button role="tab" aria-selected="false" data-tab="projeto">Projetos</button>
     </div>
     <div id="feed"></div>
-    <span id="posts"></span><span id="projetos"></span>
+    
   </div>
 
   <aside>
@@ -40,7 +41,9 @@
       <p class="note">As disciplinas seguintes entram aqui quando forem liberadas na plataforma.</p>
     </div>
     <div class="side-block">
-      <h3>Padrão de cada projeto</h3>
+      <h3>Dois projetos por unidade</h3>
+      <p class="note"><b>IA Aplicada</b>: o projeto da aula levado a sério, como o agente que vence Doom. <b>Arquitetura AWS</b>: a versão enterprise do tema, escolhida entre referências oficiais da AWS, com Terraform e um componente com Claude.</p>
+      <h3 style="margin-top:22px">Padrão de cada projeto</h3>
       <div class="stack">
         <span class="chip">Terraform</span><span class="chip">GitHub Actions</span><span class="chip">OIDC</span>
         <span class="chip">Teste local em emulador</span><span class="chip">Observabilidade</span>
@@ -70,20 +73,28 @@ const MODULES = [
 
 const ITEMS = [
   {
-    type: "post", module: "01", status: "draft", statusLabel: "Rascunho",
+    type: "ia-aplicada", module: "01", unit: "04", status: "choose", statusLabel: "Em escolha",
+    title: "Uma IA que aprende a vencer Doom",
+    dek: "Projeto de IA aplicada da unidade 04 (Como vencer qualquer jogo): agente treinado com reforço, avaliação automática e demonstração no navegador.",
+    href: "https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/pull/8", minutes: null, tags: ["Reinforcement Learning", "Web ML", "ViZDoom"],
+    diagram: ["ViZDoom", "Treino Spot", "Avaliação", "Navegador"],
+  },
+  {
+    type: "arquitetura", module: "01", unit: "03", status: "draft", statusLabel: "Em construção",
+    title: "Plataforma híbrida de recomendação na AWS",
+    dek: "Arquitetura AWS da unidade 03: batch com Glue, SageMaker e DynamoDB, tempo real com busca vetorial, serving resiliente em ECS e explicação das recomendações com Claude.",
+    href: "https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/pull/1", minutes: null, tags: ["AWS", "Terraform", "Claude"],
+    diagram: ["S3/Glue", "SageMaker", "MemoryDB", "ECS"],
+  },
+  {
+    type: "post", module: "01", unit: "03", status: "draft", statusLabel: "Rascunho",
     title: "Recomendação em escala: do batch ao LLM",
     dek: "Como grandes empresas estruturam recomendação, da referência batch-first da AWS aos modelos fundacionais usados pelo YouTube.",
     href: "posts/modulo-01-recomendacao.html", minutes: 8, tags: ["Recomendação", "AWS", "LLM"],
     diagram: ["Eventos", "Lote", "Ranking", "Serving"],
   },
-  {
-    type: "projeto", module: "01", status: "choose", statusLabel: "Em escolha",
-    title: "Projeto do módulo 1: uma IA que aprende a vencer Doom",
-    dek: "Treino com reforço em escala na nuvem, pipeline de avaliação e promoção de modelos, e demonstração no navegador. Variante final em escolha.",
-    href: "posts/modulo-01-recomendacao.html#projeto", minutes: null, tags: ["Reinforcement Learning", "Web ML", "Terraform"],
-    diagram: ["ViZDoom", "Treino Spot", "Avaliação", "Navegador"],
-  },
 ];
+const TYPE_LABEL = { "ia-aplicada": "IA Aplicada", "arquitetura": "Arquitetura AWS", "post": "Post" };
 
 function thumb(labels) {
   const w = 150, h = 112, bw = 56, bh = 22;
@@ -105,8 +116,8 @@ function render(filter) {
     <article class="post">
       <div>
         <div class="meta">
-          <span class="chip">Módulo ${i.module}</span>
-          <span>${i.type === "post" ? "Post" : "Projeto"}</span>
+          <span class="chip">Módulo ${i.module}${i.unit ? " · Unidade " + i.unit : ""}</span>
+          <span>${TYPE_LABEL[i.type]}</span>
           <span class="status ${i.status}">${i.statusLabel}</span>
           ${i.minutes ? `<span>· ${i.minutes} min de leitura</span>` : ""}
         </div>
@@ -121,9 +132,14 @@ function render(filter) {
 document.getElementById("modules").innerHTML = MODULES.map(m => `
   <div class="module"><span class="n">${m.n}</span><span class="t">${m.title}<div class="s">${m.status}</div></span></div>`).join("");
 
-document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
-  render(b.dataset.tab);
+function selectTab(tab) {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x.dataset.tab === tab));
+  render(tab);
+}
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => selectTab(b.dataset.tab)));
+document.querySelectorAll("[data-go]").forEach(a => a.addEventListener("click", ev => {
+  ev.preventDefault(); selectTab(a.dataset.go);
+  document.querySelector(".tabs").scrollIntoView({ behavior: "smooth" });
 }));
 render("all");
 </script>

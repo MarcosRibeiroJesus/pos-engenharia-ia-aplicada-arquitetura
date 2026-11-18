@@ -20,10 +20,12 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
-- **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam):
-  1. Projeto Terraform na AWS, escolhido por mim entre opções pesquisadas nas fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua sobre o tema. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo).
-  2. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
-  3. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
+- **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam), sempre os dois projetos abaixo:
+  1. **Projeto de IA aplicada**: o exemplo da aula levado a sério e fiel ao que foi ensinado (como o agente que vence Doom na unidade 01.04), em `unidades/UU-slug/ia-aplicada/`.
+  2. **Arquitetura AWS completa**: a versão enterprise do tema da unidade, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica em `unidades/UU-slug/infra/` e `src/`.
+  3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
+  4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
+- As opções de cada unidade ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
 - **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
@@ -63,7 +65,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Módulos.
+- O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
 
 ## Posts
