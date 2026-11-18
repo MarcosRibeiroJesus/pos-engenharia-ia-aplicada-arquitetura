@@ -72,13 +72,18 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Resuma com palavras próprias; no máximo uma citação curta por fonte.
 
 ## Lente de certificação (Claude Certified Architect – Foundations, CCAR-F)
-- A prova cobre como construir sistemas com Claude, não infraestrutura de nuvem. Por isso cada projeto tem um componente com Claude (via Amazon Bedrock ou API da Anthropic) que exercite pelo menos um domínio, e o ADR diz qual. Domínios e pesos segundo guias de terceiros, a confirmar no guia oficial da Anthropic (baixado na página da certificação) antes de citar em post:
-  1. Arquitetura agêntica e orquestração (27%): loop do agente, `stop_reason`, subagentes, handoff, human-in-the-loop.
-  2. Configuração e workflows do Claude Code (20%): CLAUDE.md, hooks, comandos, Claude Code em CI/CD.
-  3. Prompt engineering e saída estruturada (20%): JSON schema, validação e retentativa, few-shot.
-  4. Design de tools e integração MCP (18%): descrição de tools, erros estruturados, servidores MCP.
-  5. Gestão de contexto e confiabilidade (15%): orçamento de contexto, sumarização, proveniência, escalonamento, avaliação.
-- Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, domínio da prova exercitado e o que um arquiteto sênior faria em produção.
+- Fonte: guia oficial do exame, versão 1.0 (julho de 2026), na página da certificação em anthropic-partners.skilljar.com (exige login). Use o guia para alinhar os projetos, mas não copie trechos dele para o repositório; aqui entram só o mapeamento com palavras próprias e os ids das tarefas.
+- A prova cobre como construir sistemas com Claude. Configuração específica de cloud (AWS, GCP, Azure), deploy de servidores MCP, embeddings e bancos vetoriais estão fora do escopo. Então a AWS é a base da arquitetura, e cada projeto tem um componente com Claude (via Amazon Bedrock ou API da Anthropic) que exercita tarefas da prova.
+- Domínios (peso) e tarefas, pelos ids do guia:
+  1. Arquitetura agêntica e orquestração (27%): 1.1 loop do agente por `stop_reason` · 1.2 coordenador e subagentes · 1.3 invocação de subagentes e passagem de contexto · 1.4 workflows com gates programáticos e handoff para humano · 1.5 hooks do Agent SDK · 1.6 decomposição de tarefas · 1.7 sessões (`--resume`, fork).
+  2. Design de tools e integração MCP (18%): 2.1 interface e descrição de tools · 2.2 erros estruturados (`isError`, categorias, retentável) · 2.3 poucas tools por agente e `tool_choice` · 2.4 `.mcp.json` e resources · 2.5 tools nativas.
+  3. Configuração e workflows do Claude Code (20%): 3.1 hierarquia de CLAUDE.md · 3.2 comandos e skills · 3.3 regras por caminho · 3.4 plan mode · 3.5 refinamento iterativo · 3.6 CI/CD com `-p` e `--json-schema`.
+  4. Prompt engineering e saída estruturada (20%): 4.1 critérios explícitos · 4.2 few-shot · 4.3 saída estruturada via tool_use · 4.4 validação e retentativa · 4.5 Message Batches API · 4.6 revisão multi-instância.
+  5. Gestão de contexto e confiabilidade (15%): 5.1 preservação de contexto · 5.2 escalonamento · 5.3 propagação de erros · 5.4 exploração de codebase grande · 5.5 revisão humana e calibração · 5.6 proveniência e incerteza.
+- Cenários da prova (4 de 6 sorteados): agente de suporte ao cliente, geração de código com Claude Code, sistema de pesquisa multiagente, produtividade de devs, Claude Code em CI, extração de dados estruturados. Quando der, aproxime o componente Claude de um desses cenários.
+- Cursos oficiais de preparação (Skilljar): Building with the Claude API, Claude Code in Action, Introduction to Model Context Protocol, Claude with Amazon Bedrock, Claude on Google Cloud, Claude 101 e AI Fluency. Cite o curso relacionado no ADR.
+- Este repositório também é prática do domínio 3: mantenha CLAUDE.md, regras por caminho, skills e o uso de Claude Code em CI coerentes com o guia.
+- Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
 - Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
 
 ## Privacidade
