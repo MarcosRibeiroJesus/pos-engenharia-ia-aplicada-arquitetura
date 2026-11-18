@@ -4,7 +4,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Contexto
 - Dono: engenheiro de software (Java/Kotlin/Spring, AWS, Terraform) colocando em dia ~6 meses de curso.
-- Curso na plataforma Platos: https://infoprod.platosedu.io/v2/lms/aluno/disciplina/14085357 (módulo 1: sistemas de recomendação). Exige login: use o navegador integrado e peça para eu entrar; nunca digite senhas.
+- Curso na plataforma Platos: https://infoprod.platosedu.io/v2/lms/aluno/disciplina/14085357 (cada "módulo" deste repositório é uma disciplina da plataforma). Exige login: use o navegador integrado e peça para eu entrar; nunca digite senhas.
+- Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
 ## Estrutura

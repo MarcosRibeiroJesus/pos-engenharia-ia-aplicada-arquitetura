@@ -37,7 +37,7 @@
     <div class="side-block" id="modulos">
       <h3>Módulos da pós</h3>
       <div id="modules"></div>
-      <p class="note">Os módulos 2 a 6 entram aqui assim que a estrutura do curso for mapeada.</p>
+      <p class="note">As disciplinas seguintes entram aqui quando forem liberadas na plataforma.</p>
     </div>
     <div class="side-block">
       <h3>Padrão de cada projeto</h3>
@@ -59,12 +59,13 @@
 <script>
 // Fonte única de conteúdo do site. Os agentes de cada módulo atualizam apenas este bloco.
 const MODULES = [
-  { n: "01", title: "Sistemas de recomendação", status: "em andamento" },
-  { n: "02", title: "A definir", status: "aguardando estrutura do curso" },
-  { n: "03", title: "A definir", status: "aguardando estrutura do curso" },
-  { n: "04", title: "A definir", status: "aguardando estrutura do curso" },
-  { n: "05", title: "A definir", status: "aguardando estrutura do curso" },
-  { n: "06", title: "A definir", status: "aguardando estrutura do curso" },
+  { n: "01", title: "Fundamentos de IA e LLMs", status: "em andamento · projeto: IA que vence Doom" },
+  { n: "02", title: "APIs de IA Generativa e Prompt Engineering", status: "a iniciar" },
+  { n: "03", title: "Model Context Protocol (MCP)", status: "a iniciar" },
+  { n: "04", title: "Criação de Agentes Autônomos", status: "a iniciar" },
+  { n: "05", title: "Ferramentas de IA para UX e UI", status: "a iniciar" },
+  { n: "06", title: "Ferramentas de IA para DevOps", status: "a iniciar" },
+  { n: "07", title: "Ferramentas de IA para Gestão de projetos", status: "a iniciar" },
 ];
 
 const ITEMS = [
@@ -77,10 +78,10 @@ const ITEMS = [
   },
   {
     type: "projeto", module: "01", status: "choose", statusLabel: "Em escolha",
-    title: "Projeto do módulo 1: arquitetura de recomendação na AWS",
-    dek: "Implementação em Terraform com teste local no emulador, CI/CD, segurança e destroy automatizado. Projeto a ser escolhido entre as opções propostas.",
-    href: "posts/modulo-01-recomendacao.html#projeto", minutes: null, tags: ["Terraform", "FinOps"],
-    diagram: ["S3", "Pipeline", "Modelo", "DynamoDB"],
+    title: "Projeto do módulo 1: uma IA que aprende a vencer Doom",
+    dek: "Treino com reforço em escala na nuvem, pipeline de avaliação e promoção de modelos, e demonstração no navegador. Variante final em escolha.",
+    href: "posts/modulo-01-recomendacao.html#projeto", minutes: null, tags: ["Reinforcement Learning", "Web ML", "Terraform"],
+    diagram: ["ViZDoom", "Treino Spot", "Avaliação", "Navegador"],
   },
 ];
 
