@@ -21,25 +21,29 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Entregáveis
 - **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam):
-  1. Projeto Terraform na AWS, com uma arquitetura enterprise que abstrai o que a unidade ensina.
+  1. Projeto Terraform na AWS, escolhido por mim entre opções pesquisadas nas fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua sobre o tema. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo).
   2. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
-  3. Post da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
+  3. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
 - **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
 - Cada videoaula tem legenda em português (VTT) na Mediastream. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado: o JSON de `listCategories` da Platos traz o id de embed de cada aula, e `mdstrm.com/video/<id>.json` traz a URL do VTT.
 - Use as legendas para deixar a solução fiel ao que foi ensinado. Elas ficam fora do repositório; nas `notas/` entram só resumos com palavras próprias.
 
+## PDFs das disciplinas
+- Os PDFs de cada disciplina (indicação de leitura, material autoral, extras) são a base para sugerir e construir o conteúdo do projeto escolhido. Leia pelo navegador integrado, sem salvar no repositório.
+- O projeto deve ficar alinhado ao material e às boas práticas esperadas pela prova Claude Certified Architect – Foundations.
+
 ## Fluxo por unidade
 1. Mapear as aulas na Platos e registrar no PROGRESSO.md.
 2. Extrair de 1 a 3 temas de maior valor para engenheiros seniores que querem dominar arquitetura e design de produto.
-3. Pesquisar arquiteturas: priorize a AWS (Architecture Center, blogs oficiais) e casos públicos de FAANG e grandes bancos.
-4. Propor de 2 a 3 opções de projeto em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
+3. Ler as legendas das aulas da unidade e o PDF da disciplina. Pesquisar arquiteturas nas fontes oficiais da AWS e em casos públicos de FAANG e grandes bancos.
+4. Propor de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
 5. Implementar com TDD (abaixo).
 6. Testar no Floci só com o projeto 100% concluído e gerar o relatório.
 7. Escrever os dois posts e publicar a unidade no site. Ao concluir as unidades da disciplina, escrever o post de LinkedIn.
 
-## Duas arquiteturas por módulo
+## Duas arquiteturas por unidade
 - Principal, na AWS: Terraform implementado, testado e com deploy possível.
 - Comparativa, em outra cloud (Azure, GCP ou OCI): design doc e diagrama com mapeamento serviço a serviço. Implementar só se for barato validar.
 
@@ -63,14 +67,19 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nada inventado: o que estiver pendente aparece como pendente.
 
 ## Posts
-- Rascunho em `modulos/NN-slug/post.md` e versão curta para o LinkedIn, em tom técnico para engenheiros seniores.
+- Posts em `posts/` de cada unidade e `linkedin.md` por disciplina, em tom técnico para engenheiros seniores.
 - Toda afirmação sobre uma empresa tem fonte e data. Quando a fonte não detalhar a arquitetura (palestras, vídeos), diga isso e marque como inferência o que for reconstruído.
 - Resuma com palavras próprias; no máximo uma citação curta por fonte.
 
-## Lente de certificação (Claude Certified Architect – Professional)
-- Confirme o blueprint oficial do CCAR-P (arquitetura de integração, governança e avaliação) no site da Anthropic antes de citá-lo.
-- Cada decisão relevante vira ADR em `modulos/NN-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco e o que um arquiteto sênior faria em produção.
-- Ao orquestrar subagentes: um por módulo, em paralelo, cada um no seu worktree e branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
+## Lente de certificação (Claude Certified Architect – Foundations, CCAR-F)
+- A prova cobre como construir sistemas com Claude, não infraestrutura de nuvem. Por isso cada projeto tem um componente com Claude (via Amazon Bedrock ou API da Anthropic) que exercite pelo menos um domínio, e o ADR diz qual. Domínios e pesos segundo guias de terceiros, a confirmar no guia oficial da Anthropic (baixado na página da certificação) antes de citar em post:
+  1. Arquitetura agêntica e orquestração (27%): loop do agente, `stop_reason`, subagentes, handoff, human-in-the-loop.
+  2. Configuração e workflows do Claude Code (20%): CLAUDE.md, hooks, comandos, Claude Code em CI/CD.
+  3. Prompt engineering e saída estruturada (20%): JSON schema, validação e retentativa, few-shot.
+  4. Design de tools e integração MCP (18%): descrição de tools, erros estruturados, servidores MCP.
+  5. Gestão de contexto e confiabilidade (15%): orçamento de contexto, sumarização, proveniência, escalonamento, avaliação.
+- Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, domínio da prova exercitado e o que um arquiteto sênior faria em produção.
+- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
 
 ## Privacidade
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
