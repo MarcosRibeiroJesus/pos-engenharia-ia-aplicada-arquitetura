@@ -3,8 +3,8 @@
 Você é o arquiteto e orquestrador deste repositório. Transforme os módulos da pós em projetos de arquitetura implementados, testados e publicados, e em posts técnicos. Explique o porquê de cada decisão como um arquiteto sênior explicaria.
 
 ## Contexto
-- Dono: engenheiro de software (Java/Kotlin/Spring, AWS, Terraform) colocando em dia ~6 meses de curso.
-- Curso na plataforma Platos: https://infoprod.platosedu.io/v2/lms/aluno/disciplina/14085357 (cada "módulo" deste repositório é uma disciplina da plataforma). Exige login: use o navegador integrado e peça para eu entrar; nunca digite senhas.
+- Projetos de uma pós-graduação em engenharia de software com IA aplicada. Cada "módulo" deste repositório é uma disciplina do curso.
+- Os detalhes do curso e do aluno (plataforma, endereço, matrícula, datas, progresso nas aulas) ficam fora do repositório, no arquivo privado `CURSO-PRIVADO.md` da pasta local de materiais do curso. Sessões na minha máquina podem lê-lo; sessões de nuvem não. A plataforma exige login: use o navegador integrado e peça para eu entrar; nunca digite senhas.
 - Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
@@ -21,7 +21,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Entregáveis
 - **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam), sempre os dois projetos abaixo:
-  1. **Projeto de IA aplicada**: o exemplo da aula levado a sério e fiel ao que foi ensinado (como o agente que vence Doom na unidade 01.04), em `unidades/UU-slug/ia-aplicada/`.
+  1. **Projeto de IA aplicada**: um por unidade, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na unidade 01.04), em `unidades/UU-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
   2. **Arquitetura AWS completa**: a versão enterprise do tema da unidade, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica em `unidades/UU-slug/infra/` e `src/`.
   3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
   4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
@@ -29,7 +29,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
-- Cada videoaula tem legenda em português (VTT) na Mediastream. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado: o JSON de `listCategories` da Platos traz o id de embed de cada aula, e `mdstrm.com/video/<id>.json` traz a URL do VTT.
+- Cada videoaula tem legenda em português. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado, seguindo o roteiro do arquivo privado `CURSO-PRIVADO.md`.
 - Use as legendas para deixar a solução fiel ao que foi ensinado. Elas ficam fora do repositório; nas `notas/` entram só resumos com palavras próprias.
 
 ## PDFs das disciplinas
@@ -37,7 +37,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - O projeto deve ficar alinhado ao material e às boas práticas esperadas pela prova Claude Certified Architect – Foundations.
 
 ## Fluxo por unidade
-1. Mapear as aulas na Platos e registrar no PROGRESSO.md.
+1. Mapear as aulas da unidade (pelo arquivo privado) e registrar no PROGRESSO.md só o tema, com palavras próprias.
 2. Extrair de 1 a 3 temas de maior valor para engenheiros seniores que querem dominar arquitetura e design de produto.
 3. Ler as legendas das aulas da unidade e o PDF da disciplina. Pesquisar arquiteturas nas fontes oficiais da AWS e em casos públicos de FAANG e grandes bancos.
 4. Propor de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
@@ -65,9 +65,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Módulos.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas.
 - O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
+- O site não explica como o conteúdo é produzido (curso, módulos, unidades, aulas, a estratégia de dois projetos) nem traz detalhes do curso ou do meu progresso. Ele apresenta só os projetos, as arquiteturas e os posts.
 
 ## Posts
 - Posts em `posts/` de cada unidade e `linkedin.md` por disciplina, em tom técnico para engenheiros seniores.
@@ -89,7 +90,15 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
 - Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
 
+## Segurança e FinOps na esteira (obrigatório)
+- Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep e CodeQL), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov, Trivy config e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.
+- Achado de severidade alta ou crítica bloqueia o merge. Exceção só com justificativa versionada (`.checkov.yaml`, `.trivyignore`, `.semgrepignore`) e ADR.
+- Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
+- Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
+- Acesso dos agentes ao Claude: Amazon Bedrock via OIDC (sem chave estática), com a chave da API da Anthropic como alternativa em secret do repositório.
+
 ## Privacidade
+- Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
 - Segredos nunca entram no repositório.
 

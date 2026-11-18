@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arquitetura na Prática · Marcos Ribeiro</title>
-<meta name="description" content="Arquiteturas de referência, IaC e posts construídos a partir dos módulos da pós-graduação.">
+<meta name="description" content="Arquiteturas de nível enterprise e projetos de IA aplicada, com Terraform, CI/CD, segurança e FinOps.">
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 <header class="topbar"><div class="in">
   <a class="brand" href="./">Arquitetura na Prática</a>
-  <nav><a href="#" data-go="ia-aplicada">IA Aplicada</a><a href="#" data-go="arquitetura">Arquiteturas AWS</a><a href="#" data-go="post">Posts</a><a href="#modulos">Módulos</a></nav>
+  <nav><a href="#" data-go="ia-aplicada">IA Aplicada</a><a href="#" data-go="arquitetura">Arquiteturas AWS</a><a href="#" data-go="post">Posts</a><a href="#modulos">Temas</a></nav>
   <a class="btn ghost" href="https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura" rel="noopener">GitHub</a>
 </div></header>
 
 <section class="masthead">
   <div class="logo">AP</div>
   <h1>Arquitetura na Prática</h1>
-  <p>Arquiteturas de nível enterprise, com Terraform, CI/CD, segurança, observabilidade e FinOps, construídas a partir dos módulos da minha pós-graduação.</p>
+  <p>Arquiteturas de nível enterprise e projetos de IA aplicada, com Terraform, CI/CD, segurança, observabilidade e FinOps.</p>
   <a class="btn" href="#" data-go="arquitetura">Ver as arquiteturas</a>
   <div class="byline">por Marcos Ribeiro de Jesus · Engenharia de Software · AWS e multi-cloud</div>
 </section>
@@ -36,23 +36,17 @@
 
   <aside>
     <div class="side-block" id="modulos">
-      <h3>Módulos da pós</h3>
+      <h3>Temas</h3>
       <div id="modules"></div>
-      <p class="note">As disciplinas seguintes entram aqui quando forem liberadas na plataforma.</p>
     </div>
     <div class="side-block">
-      <h3>Dois projetos por unidade</h3>
-      <p class="note"><b>IA Aplicada</b>: o projeto da aula levado a sério, como o agente que vence Doom. <b>Arquitetura AWS</b>: a versão enterprise do tema, escolhida entre referências oficiais da AWS, com Terraform e um componente com Claude.</p>
-      <h3 style="margin-top:22px">Padrão de cada projeto</h3>
+      <h3>Padrão de cada projeto</h3>
       <div class="stack">
         <span class="chip">Terraform</span><span class="chip">GitHub Actions</span><span class="chip">OIDC</span>
+        <span class="chip">SAST e DAST</span><span class="chip">SCA e SBOM</span><span class="chip">Varredura de IaC</span>
         <span class="chip">Teste local em emulador</span><span class="chip">Observabilidade</span>
         <span class="chip">FinOps</span><span class="chip">Destroy automatizado</span><span class="chip">ADRs</span>
       </div>
-    </div>
-    <div class="side-block">
-      <h3>Sobre</h3>
-      <p class="note">Cada módulo vira uma arquitetura principal na AWS, implementada e testada, e uma arquitetura comparativa em outra cloud, documentada. Fontes públicas sempre citadas.</p>
     </div>
   </aside>
 </main>
@@ -62,27 +56,27 @@
 <script>
 // Fonte única de conteúdo do site. Os agentes de cada módulo atualizam apenas este bloco.
 const MODULES = [
-  { n: "01", title: "Fundamentos de IA e LLMs", status: "em andamento · projeto: IA que vence Doom" },
-  { n: "02", title: "APIs de IA Generativa e Prompt Engineering", status: "a iniciar" },
-  { n: "03", title: "Model Context Protocol (MCP)", status: "a iniciar" },
-  { n: "04", title: "Criação de Agentes Autônomos", status: "a iniciar" },
-  { n: "05", title: "Ferramentas de IA para UX e UI", status: "a iniciar" },
-  { n: "06", title: "Ferramentas de IA para DevOps", status: "a iniciar" },
-  { n: "07", title: "Ferramentas de IA para Gestão de projetos", status: "a iniciar" },
+  { n: "01", title: "Fundamentos de IA e LLMs" },
+  { n: "02", title: "APIs de IA generativa e prompt engineering" },
+  { n: "03", title: "Model Context Protocol (MCP)" },
+  { n: "04", title: "Agentes autônomos" },
+  { n: "05", title: "IA para UX e UI" },
+  { n: "06", title: "IA para DevOps" },
+  { n: "07", title: "IA para gestão de projetos" },
 ];
 
 const ITEMS = [
   {
     type: "ia-aplicada", module: "01", unit: "04", status: "choose", statusLabel: "Em escolha",
     title: "Uma IA que aprende a vencer Doom",
-    dek: "Projeto de IA aplicada da unidade 04 (Como vencer qualquer jogo): agente treinado com reforço, avaliação automática e demonstração no navegador.",
+    dek: "Agente treinado com aprendizado por reforço para vencer Doom, com avaliação automática e demonstração no navegador.",
     href: "https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/pull/8", minutes: null, tags: ["Reinforcement Learning", "Web ML", "ViZDoom"],
     diagram: ["ViZDoom", "Treino Spot", "Avaliação", "Navegador"],
   },
   {
     type: "arquitetura", module: "01", unit: "03", status: "draft", statusLabel: "Em construção",
     title: "Plataforma híbrida de recomendação na AWS",
-    dek: "Arquitetura AWS da unidade 03: batch com Glue, SageMaker e DynamoDB, tempo real com busca vetorial, serving resiliente em ECS e explicação das recomendações com Claude.",
+    dek: "Batch com Glue, SageMaker e DynamoDB, tempo real com busca vetorial, serving resiliente em ECS e explicação das recomendações com Claude.",
     href: "https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/pull/1", minutes: null, tags: ["AWS", "Terraform", "Claude"],
     diagram: ["S3/Glue", "SageMaker", "MemoryDB", "ECS"],
   },
@@ -116,7 +110,6 @@ function render(filter) {
     <article class="post">
       <div>
         <div class="meta">
-          <span class="chip">Módulo ${i.module}${i.unit ? " · Unidade " + i.unit : ""}</span>
           <span>${TYPE_LABEL[i.type]}</span>
           <span class="status ${i.status}">${i.statusLabel}</span>
           ${i.minutes ? `<span>· ${i.minutes} min de leitura</span>` : ""}
@@ -130,7 +123,7 @@ function render(filter) {
 }
 
 document.getElementById("modules").innerHTML = MODULES.map(m => `
-  <div class="module"><span class="n">${m.n}</span><span class="t">${m.title}<div class="s">${m.status}</div></span></div>`).join("");
+  <div class="module"><span class="n">${m.n}</span><span class="t">${m.title}</span></div>`).join("");
 
 function selectTab(tab) {
   document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x.dataset.tab === tab));
