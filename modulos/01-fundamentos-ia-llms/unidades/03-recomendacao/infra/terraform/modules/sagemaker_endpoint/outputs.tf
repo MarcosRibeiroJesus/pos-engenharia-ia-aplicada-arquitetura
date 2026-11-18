@@ -1,7 +1,9 @@
 output "endpoint_name" {
-  value = aws_sagemaker_endpoint.reranker.name
+  description = "Nome do endpoint."
+  value       = aws_sagemaker_endpoint.reranker.name
 }
 
 output "endpoint_arn" {
-  value = aws_sagemaker_endpoint.reranker.arn
+  description = "ARN do endpoint."
+  value       = aws_sagemaker_endpoint.reranker.arn
 }

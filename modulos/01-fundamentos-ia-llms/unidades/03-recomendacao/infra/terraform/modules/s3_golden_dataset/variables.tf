@@ -1,15 +1,20 @@
 variable "project_name" {
   type        = string
-  description = "Project name"
+  description = "Prefixo dos recursos."
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
+  description = "Ambiente."
 }
 
 variable "force_destroy" {
   type        = bool
   default     = true
-  description = "Force destroy bucket on teardown per Principle V"
+  description = "Permite o destroy com objetos (lab)."
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
 }

@@ -17,3 +17,8 @@ variable "s3_bucket_name" {
   type        = string
   description = "S3 Golden Dataset bucket name"
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
+}

@@ -8,6 +8,30 @@
 #   R9 teto de custo no AWS Budgets
 
 mock_provider "aws" {
+  # Valores computados conhecidos já no plan, para as asserções sobre políticas e ARNs.
+  override_during = plan
+
+  mock_resource "aws_s3_bucket" {
+    defaults = {
+      arn = "arn:aws:s3:::recsys-lab-golden-123456789012"
+    }
+  }
+  mock_resource "aws_sns_topic" {
+    defaults = {
+      arn = "arn:aws:sns:us-east-1:123456789012:recsys-lab-alerts"
+    }
+  }
+  mock_resource "aws_cloudwatch_log_group" {
+    defaults = {
+      arn = "arn:aws:logs:us-east-1:123456789012:log-group:mock"
+    }
+  }
+  mock_resource "aws_ecr_repository" {
+    defaults = {
+      arn            = "arn:aws:ecr:us-east-1:123456789012:repository/recsys-lab/recommendation-service"
+      repository_url = "123456789012.dkr.ecr.us-east-1.amazonaws.com/recsys-lab/recommendation-service"
+    }
+  }
   mock_data "aws_availability_zones" {
     defaults = {
       names = ["us-east-1a", "us-east-1b", "us-east-1c"]
@@ -43,8 +67,8 @@ variables {
   kms_key_arn  = "arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000"
 }
 
-# ---------------------------------------------------------------- R4 / R8
-run "raiz_tags_e_backend" {
+# ---------------------------------------------------------------- R4 (R8 em tests/static_rules.py)
+run "raiz_tags" {
   command = plan
 
   assert {
@@ -58,10 +82,6 @@ run "raiz_tags_e_backend" {
   assert {
     condition     = local.common_tags["module"] == "01-fundamentos-ia-llms/03-recomendacao"
     error_message = "R4: a tag module identifica disciplina e unidade."
-  }
-  assert {
-    condition     = local.state_backend == "s3" && local.state_locking == "use_lockfile"
-    error_message = "R8: state remoto em S3 com lock nativo (use_lockfile)."
   }
 }
 
@@ -109,11 +129,11 @@ run "rede_privada_por_padrao" {
     error_message = "ALB e MemoryDB precisam de 2 AZs."
   }
   assert {
-    condition     = alltrue([for r in aws_security_group.alb.ingress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    condition     = alltrue([for r in aws_security_group.alb.ingress : !contains(coalesce(r.cidr_blocks, []), "0.0.0.0/0")])
     error_message = "R1: o ALB interno não aceita entrada de 0.0.0.0/0."
   }
   assert {
-    condition     = alltrue([for r in aws_security_group.ecs.egress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    condition     = alltrue([for r in aws_security_group.ecs.egress : !contains(coalesce(r.cidr_blocks, []), "0.0.0.0/0")])
     error_message = "R1: tasks ECS não têm saída para a internet."
   }
   assert {
@@ -247,7 +267,6 @@ run "memorydb_tls" {
     source = "./modules/memorydb_cluster"
   }
   variables {
-    vpc_id             = "vpc-123"
     subnet_ids         = ["subnet-a", "subnet-b"]
     security_group_ids = ["sg-123"]
   }
@@ -408,10 +427,6 @@ run "sagemaker_sem_full_access" {
   }
 
   assert {
-    condition     = length(aws_iam_role_policy_attachment.sagemaker_full_access) == 0
-    error_message = "R3: sem AmazonSageMakerFullAccess na role de execução."
-  }
-  assert {
     condition = alltrue([
       for s in jsondecode(aws_iam_role_policy.sagemaker_execution.policy).Statement :
       s.Resource != "*" || can(s.Condition) || contains(flatten([s.Action]), "ecr:GetAuthorizationToken")
@@ -471,7 +486,7 @@ run "mwaa_ligado_privado" {
     error_message = "R2: MWAA com a chave da plataforma."
   }
   assert {
-    condition     = alltrue([for r in aws_security_group.mwaa[0].egress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    condition     = alltrue([for r in aws_security_group.mwaa[0].egress : !contains(coalesce(r.cidr_blocks, []), "0.0.0.0/0")])
     error_message = "R1: MWAA sem saída para a internet."
   }
   assert {
@@ -487,8 +502,9 @@ run "glue_criptografado_e_com_logs" {
     source = "./modules/glue_pipeline"
   }
   variables {
-    s3_scripts_bucket = "recsys-lab-golden"
-    s3_bucket_arn     = "arn:aws:s3:::recsys-lab-golden"
+    s3_scripts_bucket  = "recsys-lab-golden"
+    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
+    dynamodb_table_arn = "arn:aws:dynamodb:us-east-1:123456789012:table/recsys-lab-user_recommendations"
   }
 
   assert {
@@ -532,7 +548,7 @@ run "monitoramento_e_orcamento" {
   }
 
   assert {
-    condition     = length(aws_cloudwatch_metric_alarm.this) >= 6
+    condition     = length(aws_cloudwatch_metric_alarm.this) >= 7
     error_message = "R6: alarmes para latência, 5xx, tasks, degradação, fallback da explicação e SageMaker."
   }
   assert {

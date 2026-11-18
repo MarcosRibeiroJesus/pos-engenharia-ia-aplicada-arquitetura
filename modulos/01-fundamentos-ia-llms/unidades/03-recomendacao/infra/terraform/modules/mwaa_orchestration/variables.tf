@@ -1,35 +1,45 @@
 variable "project_name" {
   type        = string
-  description = "Project name"
+  description = "Prefixo dos recursos."
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
+  description = "Ambiente."
 }
 
 variable "vpc_id" {
   type        = string
-  description = "VPC ID"
+  description = "VPC."
+}
+
+variable "vpc_cidr" {
+  type        = string
+  description = "CIDR da VPC (destino da saída do SG)."
 }
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "Private Subnet IDs for MWAA (2 AZs required)"
+  description = "Subnets privadas (2 AZs)."
 }
 
 variable "s3_bucket_arn" {
   type        = string
-  description = "S3 Golden Dataset bucket ARN"
+  description = "Bucket dos DAGs."
 }
 
 variable "s3_bucket_name" {
   type        = string
-  description = "S3 Golden Dataset bucket name"
+  description = "Nome do bucket dos DAGs."
 }
 
 variable "enable_mwaa" {
   type        = bool
-  default     = false # Ephemeral lifecycle control: false by default to prevent $447.90/mo idle burn
-  description = "Enable MWAA environment on demand for verification"
+  default     = false
+  description = "Liga o ambiente MWAA (maior custo fixo do stack)."
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
 }

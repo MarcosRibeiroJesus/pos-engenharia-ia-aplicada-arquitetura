@@ -1,11 +1,14 @@
 output "glue_job_name" {
-  value = aws_glue_job.feature_engineering.name
+  description = "Nome do job."
+  value       = aws_glue_job.feature_engineering.name
 }
 
 output "glue_job_arn" {
-  value = aws_glue_job.feature_engineering.arn
+  description = "ARN do job."
+  value       = aws_glue_job.feature_engineering.arn
 }
 
 output "glue_role_arn" {
-  value = aws_iam_role.glue_service_role.arn
+  description = "Role do job."
+  value       = aws_iam_role.glue_service_role.arn
 }

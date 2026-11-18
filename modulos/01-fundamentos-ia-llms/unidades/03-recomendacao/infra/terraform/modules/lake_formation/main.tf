@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_glue_catalog_database" "ecommerce_golden_db" {
   name        = var.database_name
-  description = "Glue Catalog Database for E-Commerce Golden Datasets governed by Lake Formation"
+  description = "${var.project_name}: golden datasets governados pelo Lake Formation"
 
   parameters = {
     Classification = "parquet"
@@ -17,7 +17,7 @@ resource "aws_lakeformation_resource" "golden_dataset" {
 
 resource "aws_lakeformation_permissions" "database_permissions" {
   principal   = data.aws_caller_identity.current.arn
-  permissions = ["ALL", "ALTER", "CREATE_TABLE", "DESCRIBE", "DROP"]
+  permissions = ["ALTER", "CREATE_TABLE", "DESCRIBE", "DROP"] # sem ALL: menor privilégio
 
   database {
     name = aws_glue_catalog_database.ecommerce_golden_db.name

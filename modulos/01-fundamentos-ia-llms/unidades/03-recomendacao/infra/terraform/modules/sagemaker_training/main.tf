@@ -14,7 +14,8 @@ resource "aws_iam_role" "sagemaker_train_role" {
 }
 
 resource "aws_iam_policy" "sagemaker_s3_policy" {
-  name = "${var.project_name}-${var.environment}-sm-s3-policy"
+  name        = "${var.project_name}-${var.environment}-sm-s3-policy"
+  description = "Treino Spot: le o golden dataset e grava checkpoints e modelos"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -23,6 +24,11 @@ resource "aws_iam_policy" "sagemaker_s3_policy" {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
         Resource = [var.s3_bucket_arn, "${var.s3_bucket_arn}/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Resource = var.kms_key_arn
       }
     ]
   })

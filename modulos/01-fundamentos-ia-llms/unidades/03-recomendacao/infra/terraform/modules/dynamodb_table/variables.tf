@@ -1,15 +1,26 @@
 variable "project_name" {
   type        = string
-  description = "Project name"
+  description = "Prefixo dos recursos."
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
+  description = "Ambiente."
 }
 
 variable "table_name" {
   type        = string
   default     = "user_recommendations"
-  description = "DynamoDB table name for batch recommendation profiles"
+  description = "Sufixo do nome da tabela."
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
+}
+
+variable "deletion_protection" {
+  type        = bool
+  default     = false
+  description = "Proteção contra exclusão (true em produção)."
 }

@@ -1,20 +1,31 @@
 variable "project_name" {
   type        = string
-  description = "Project name"
+  description = "Prefixo dos recursos."
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
+  description = "Ambiente."
 }
 
 variable "s3_output_bucket" {
   type        = string
-  description = "S3 bucket for Athena query results"
+  description = "Bucket dos resultados."
 }
 
 variable "database_name" {
   type        = string
   default     = "ecommerce_golden_db"
-  description = "Glue database name"
+  description = "Banco do Glue Catalog."
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
+}
+
+variable "force_destroy" {
+  type        = bool
+  default     = true
+  description = "O destroy remove o workgroup com histórico (lab)."
 }

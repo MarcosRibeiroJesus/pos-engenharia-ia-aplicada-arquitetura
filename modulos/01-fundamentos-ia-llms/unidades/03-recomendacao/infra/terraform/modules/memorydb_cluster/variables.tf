@@ -1,30 +1,30 @@
 variable "project_name" {
   type        = string
-  description = "Project name"
+  description = "Prefixo dos recursos."
 }
 
 variable "environment" {
   type        = string
-  description = "Environment name"
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC ID"
+  description = "Ambiente."
 }
 
 variable "subnet_ids" {
   type        = list(string)
-  description = "Private Subnet IDs"
+  description = "Subnets privadas."
 }
 
 variable "security_group_ids" {
   type        = list(string)
-  description = "Security Group IDs"
+  description = "Security groups."
 }
 
 variable "node_type" {
   type        = string
   default     = "db.t4g.small"
-  description = "MemoryDB node type (minimum cost for PoC)"
+  description = "Menor nó que suporta busca vetorial."
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Chave KMS da plataforma."
 }
