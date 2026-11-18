@@ -379,7 +379,7 @@ Perguntas que dependem de você (não suponho):
 
 ## 15. Pendências desta proposta
 
-- Nenhuma legenda, PDF ou página da Platos foi lida; os escopos por unidade derivam só dos títulos do PROGRESSO.md.
+- Nenhuma legenda, PDF ou página da plataforma do curso foi lida; os escopos por unidade derivam só dos títulos do PROGRESSO.md.
 - Não consultei o guia oficial do exame (exige login); os ids de tarefa vêm do `CLAUDE.md`.
 - As equivalências em Azure e GCP não foram pesquisadas na documentação destas clouds.
 - Os custos não foram calculados com Infracost nem com a calculadora da AWS.
