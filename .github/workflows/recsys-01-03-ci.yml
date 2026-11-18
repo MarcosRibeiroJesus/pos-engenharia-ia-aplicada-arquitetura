@@ -1,0 +1,201 @@
+name: "01.03 recomendação · CI"
+
+# Roda só quando a unidade (ou este workflow) muda.
+on:
+  pull_request:
+    paths:
+      - "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/**"
+      - "testing/scripts/integracao_01_03_recomendacao.py"
+      - ".github/workflows/recsys-01-03-*.yml"
+  push:
+    branches: [main]
+    paths:
+      - "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/**"
+      - ".github/workflows/recsys-01-03-*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recsys-01-03-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNIT_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao
+  TF_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/infra/terraform
+  TF_VERSION: 1.13.4
+
+jobs:
+  app:
+    name: Serviço (lint, build, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.UNIT_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.UNIT_DIR }}/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: python -m unittest discover -s tests
+
+  infra-static:
+    name: Infra (fmt, validate, tflint, checkov, terraform test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - uses: terraform-linters/setup-tflint@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install checkov
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - run: tflint --recursive
+      - run: checkov -d .. --framework terraform --compact --quiet
+      - run: terraform test
+      - run: python3 tests/static_rules.py
+
+  integration-floci:
+    name: Integração no Floci (apply + asserts + destroy)
+    needs: infra-static
+    runs-on: ubuntu-latest
+    services:
+      floci:
+        image: floci/floci:latest
+        ports: ["4566:4566"]
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      EMULATOR_NAME: Floci (GitHub Actions)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install awscli
+      - name: Aguardar o Floci
+        run: |
+          for _ in $(seq 1 30); do curl -s -o /dev/null http://localhost:4566 && exit 0; sleep 2; done
+          echo "Floci não respondeu" && exit 1
+      - run: python3 testing/scripts/integracao_01_03_recomendacao.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-integracao-01-03
+          path: testing/reports/
+
+  plan:
+    name: Plan na AWS (comentado no PR)
+    if: github.event_name == 'pull_request' && vars.AWS_PLAN_ROLE_ARN != ''
+    needs: infra-static
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write       # OIDC
+      pull-requests: write  # comentário do plan
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+      - name: Plan
+        run: |
+          terraform plan -input=false -no-color -lock-timeout=120s -out=tfplan > plan.txt 2>&1 || (cat plan.txt; exit 1)
+          terraform show -no-color tfplan > plan-full.txt
+      - name: Comentar o plan no PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const dir = process.env.TF_DIR;
+            const full = fs.readFileSync(`${dir}/plan-full.txt`, 'utf8');
+            const summary = (full.match(/Plan: .*|No changes\..*/) || ['(sem resumo)'])[0];
+            const body = [
+              '### Terraform plan · 01.03 recomendação',
+              `**${summary}**`,
+              '<details><summary>plan completo</summary>',
+              '',
+              '```',
+              full.slice(-60000),
+              '```',
+              '</details>',
+              '',
+              '---',
+              '_Gerado pelo workflow recsys-01-03-ci_',
+            ].join('\n');
+            const marker = '### Terraform plan · 01.03 recomendação';
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: context.issue.number });
+            const old = comments.find(c => c.body.startsWith(marker));
+            if (old) await github.rest.issues.updateComment({ ...context.repo, comment_id: old.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+
+  infracost:
+    name: Infracost (diferença de custo no PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+    steps:
+      - name: Sem chave do Infracost
+        if: env.INFRACOST_API_KEY == ''
+        run: echo "::notice::Defina o secret INFRACOST_API_KEY para comentar a diferença de custo no PR."
+      - if: env.INFRACOST_API_KEY != ''
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+      - if: env.INFRACOST_API_KEY != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+      - if: env.INFRACOST_API_KEY != ''
+        run: |
+          if [ -d "$TF_DIR" ]; then
+            infracost breakdown --path="$TF_DIR" --format=json --out-file=/tmp/infracost-base.json
+          else
+            echo '{"version":"0.2","projects":[]}' > /tmp/infracost-base.json
+          fi
+      - if: env.INFRACOST_API_KEY != ''
+        uses: actions/checkout@v4
+      - if: env.INFRACOST_API_KEY != ''
+        run: |
+          infracost diff --path="$TF_DIR" --compare-to=/tmp/infracost-base.json --format=json --out-file=/tmp/infracost.json
+          infracost comment github --path=/tmp/infracost.json --repo="$GITHUB_REPOSITORY" \
+            --github-token="${{ github.token }}" --pull-request="${{ github.event.pull_request.number }}" --behavior=update
