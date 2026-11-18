@@ -1,6 +1,6 @@
 # Disciplina 03 · Model Context Protocol (MCP): opções de projeto
 
-Status: **proposta, nada implementado**. Data da pesquisa: 2026-11-18. Cobre as unidades 01 a 08 (o "Módulo 0X" de cada uma na Platos). Quem escolhe é você; este documento recomenda uma opção por unidade e justifica.
+Status: **proposta, nada implementado**. Data da pesquisa: 2026-11-18. Cobre as unidades 01 a 08 (o "Módulo 0X" de cada uma na plataforma do curso). Quem escolhe é você; este documento recomenda uma opção por unidade e justifica.
 
 ## 1. Como ler
 
