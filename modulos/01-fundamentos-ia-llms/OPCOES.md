@@ -412,7 +412,7 @@ Decisão a registrar em ADR: **Batch vs. SageMaker Training**. SageMaker Trainin
 3. **Teto de orçamento por módulo.** Com o teto definido, desenho o AWS Budgets e a escala do lab. Não assumi nenhum valor.
 4. **Execução real paga.** Opções que dependem de Claude (todas) só validam o contrato no Floci. Autoriza **uma rodada real e pequena** por projeto (Bedrock ou API da Anthropic) para medir acerto e custo reais? Se sim, com qual credencial (papel IAM com OIDC, sem chaves estáticas)?
 5. **Domínio 3.** Fazer a 07-B como projeto adicional, ou tratar o uso de Claude Code neste repositório como a prática do Domínio 3?
-6. **Fontes das aulas.** Para fechar cada opção preciso das legendas e do PDF da disciplina, pelo navegador integrado e com você logado na Platos. Sugiro começar pela unidade 04, que tem a variante mais dependente da técnica ensinada.
+6. **Fontes das aulas.** Para fechar cada opção preciso das legendas e do PDF da disciplina, pelo navegador integrado e com você logado na plataforma do curso. Sugiro começar pela unidade 04, que tem a variante mais dependente da técnica ensinada.
 7. **Guia do exame.** Posso conferir os ids de tarefa contra o guia oficial (exige login) antes de escrever os ADRs?
 
 **Verificações que ficaram pendentes por falta de ambiente:** `floci aws services` (lista completa de operações e versão), existência de Pipelines e Model Registry no SageMaker do Floci, execução real de jobs no Batch do Floci, detecção de PII no Comprehend do Floci, preços atuais (Infracost). Todas entram no início da implementação, antes de qualquer teste.
