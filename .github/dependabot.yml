@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }
+    groups: { actions: { patterns: ["*"] } }
+  - package-ecosystem: npm
+    directories: ["/modulos/**"]
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: pip
+    directories: ["/", "/modulos/**"]
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: terraform
+    directories: ["/modulos/**"]
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directories: ["/modulos/**"]
+    schedule: { interval: weekly }
