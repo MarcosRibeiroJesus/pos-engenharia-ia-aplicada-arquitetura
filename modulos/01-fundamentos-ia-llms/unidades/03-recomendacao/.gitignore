@@ -56,7 +56,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
-.terraform.lock.hcl
+# .terraform.lock.hcl é versionado (providers reprodutíveis)
 
 # IDE & OS
 .DS_Store

@@ -1,0 +1,558 @@
+# Regras base do CLAUDE.md como testes de plano, com mock provider (sem credenciais, sem custo).
+# Cada `run` aponta para um módulo reutilizável e verifica as regras que ele precisa cumprir.
+# Ids das regras (matriz em docs/matriz-cobertura.md):
+#   R1 nada público por padrão        R2 criptografia em repouso e em trânsito
+#   R3 menor privilégio no IAM        R4 tags project, module e managed-by
+#   R5 sem custo fixo ocioso sem ADR  R6 logs, métricas e alarmes
+#   R7 destroy sem sobras             R8 state remoto com lock
+#   R9 teto de custo no AWS Budgets
+
+mock_provider "aws" {
+  mock_data "aws_availability_zones" {
+    defaults = {
+      names = ["us-east-1a", "us-east-1b", "us-east-1c"]
+    }
+  }
+  mock_data "aws_region" {
+    defaults = {
+      region = "us-east-1"
+      name   = "us-east-1"
+    }
+  }
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:user/terraform"
+    }
+  }
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"sts:AssumeRole\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"}}]}"
+    }
+  }
+  mock_data "aws_partition" {
+    defaults = {
+      partition = "aws"
+    }
+  }
+}
+
+variables {
+  project_name = "recsys"
+  environment  = "lab"
+  kms_key_arn  = "arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000"
+}
+
+# ---------------------------------------------------------------- R4 / R8
+run "raiz_tags_e_backend" {
+  command = plan
+
+  assert {
+    condition     = alltrue([for k in ["project", "module", "managed-by"] : contains(keys(local.common_tags), k)])
+    error_message = "R4: default_tags precisa ter project, module e managed-by."
+  }
+  assert {
+    condition     = local.common_tags["managed-by"] == "terraform"
+    error_message = "R4: managed-by deve ser 'terraform'."
+  }
+  assert {
+    condition     = local.common_tags["module"] == "01-fundamentos-ia-llms/03-recomendacao"
+    error_message = "R4: a tag module identifica disciplina e unidade."
+  }
+  assert {
+    condition     = local.state_backend == "s3" && local.state_locking == "use_lockfile"
+    error_message = "R8: state remoto em S3 com lock nativo (use_lockfile)."
+  }
+}
+
+# ---------------------------------------------------------------- KMS (R2)
+run "kms_chave_da_plataforma" {
+  command = plan
+  module {
+    source = "./modules/kms_key"
+  }
+
+  assert {
+    condition     = aws_kms_key.platform.enable_key_rotation == true
+    error_message = "R2: a chave KMS precisa de rotação automática."
+  }
+  assert {
+    condition     = aws_kms_key.platform.deletion_window_in_days == 7
+    error_message = "R7: janela mínima de exclusão (7 dias) para o destroy do lab."
+  }
+  assert {
+    condition = contains(
+      flatten([for s in jsondecode(aws_kms_key.platform.policy).Statement : try(s.Principal.Service, [])]),
+      "logs.us-east-1.amazonaws.com"
+    )
+    error_message = "R2/R6: a política da chave precisa permitir o CloudWatch Logs para logs criptografados."
+  }
+}
+
+# ---------------------------------------------------------------- Rede (R1, R5, R6)
+run "rede_privada_por_padrao" {
+  command = plan
+  module {
+    source = "./modules/networking"
+  }
+
+  assert {
+    condition     = length(aws_internet_gateway.gw) == 0 && length(aws_subnet.public) == 0
+    error_message = "R1: sem API pública, não há internet gateway nem subnet pública."
+  }
+  assert {
+    condition     = alltrue([for s in aws_subnet.private : s.map_public_ip_on_launch == false])
+    error_message = "R1: subnets privadas não atribuem IP público."
+  }
+  assert {
+    condition     = length(aws_subnet.private) == 2
+    error_message = "ALB e MemoryDB precisam de 2 AZs."
+  }
+  assert {
+    condition     = alltrue([for r in aws_security_group.alb.ingress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    error_message = "R1: o ALB interno não aceita entrada de 0.0.0.0/0."
+  }
+  assert {
+    condition     = alltrue([for r in aws_security_group.ecs.egress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    error_message = "R1: tasks ECS não têm saída para a internet."
+  }
+  assert {
+    condition     = length(aws_default_security_group.default.ingress) == 0 && length(aws_default_security_group.default.egress) == 0
+    error_message = "R1: o security group padrão da VPC fica sem regras."
+  }
+  assert {
+    condition     = length(aws_flow_log.vpc) == 1 && aws_cloudwatch_log_group.flow_logs[0].kms_key_id == var.kms_key_arn
+    error_message = "R6/R2: VPC Flow Logs ligados e criptografados com a chave da plataforma."
+  }
+}
+
+run "rede_endpoints_de_interface_no_lab" {
+  command = plan
+  module {
+    source = "./modules/networking"
+  }
+
+  assert {
+    condition = toset(keys(aws_vpc_endpoint.interface)) == toset([
+      "ecr.api", "ecr.dkr", "logs", "monitoring", "sagemaker.runtime", "bedrock-runtime"
+    ])
+    error_message = "Saída do ECS (ADR-0002): endpoints para ECR, Logs, CloudWatch, SageMaker Runtime e Bedrock Runtime."
+  }
+  assert {
+    condition     = alltrue([for e in aws_vpc_endpoint.interface : length(e.subnet_ids) == 1 && e.private_dns_enabled])
+    error_message = "R5 (ADR-0002): no lab, endpoints em 1 AZ, com DNS privado."
+  }
+  assert {
+    condition     = toset([for e in aws_vpc_endpoint.gateway : e.vpc_endpoint_type]) == toset(["Gateway"]) && length(aws_vpc_endpoint.gateway) == 2
+    error_message = "S3 e DynamoDB por endpoint de gateway (sem custo por hora)."
+  }
+}
+
+run "rede_mwaa_ligado_adiciona_endpoints" {
+  command = plan
+  module {
+    source = "./modules/networking"
+  }
+  variables {
+    enable_mwaa = true
+  }
+
+  assert {
+    condition     = alltrue([for s in ["sqs", "airflow.api", "airflow.env", "airflow.ops"] : contains(keys(aws_vpc_endpoint.interface), s)])
+    error_message = "MWAA privado precisa dos endpoints de SQS e Airflow."
+  }
+}
+
+run "rede_api_publica_exige_opt_in" {
+  command = plan
+  module {
+    source = "./modules/networking"
+  }
+  variables {
+    expose_api_publicly = true
+  }
+
+  assert {
+    condition     = length(aws_internet_gateway.gw) == 1 && length(aws_subnet.public) == 2
+    error_message = "Com opt-in explícito, ALB público em 2 subnets públicas."
+  }
+  assert {
+    condition     = alltrue([for s in aws_subnet.public : s.map_public_ip_on_launch == false])
+    error_message = "R1: mesmo as subnets públicas não dão IP público automático."
+  }
+}
+
+# ---------------------------------------------------------------- S3 (R1, R2, R7)
+run "s3_golden_dataset" {
+  command = plan
+  module {
+    source = "./modules/s3_golden_dataset"
+  }
+
+  assert {
+    condition = alltrue([
+      aws_s3_bucket_public_access_block.golden_dataset.block_public_acls,
+      aws_s3_bucket_public_access_block.golden_dataset.block_public_policy,
+      aws_s3_bucket_public_access_block.golden_dataset.ignore_public_acls,
+      aws_s3_bucket_public_access_block.golden_dataset.restrict_public_buckets,
+    ])
+    error_message = "R1: bloqueio de acesso público completo."
+  }
+  assert {
+    condition     = one([for r in aws_s3_bucket_server_side_encryption_configuration.golden_dataset.rule : one(r.apply_server_side_encryption_by_default).kms_master_key_id]) == var.kms_key_arn
+    error_message = "R2: SSE-KMS com a chave da plataforma."
+  }
+  assert {
+    condition = anytrue([
+      for s in jsondecode(aws_s3_bucket_policy.tls_only.policy).Statement :
+      s.Effect == "Deny" && try(s.Condition.Bool["aws:SecureTransport"], "") == "false"
+    ])
+    error_message = "R2: a bucket policy nega requisições sem TLS."
+  }
+  assert {
+    condition     = aws_s3_bucket.golden_dataset.force_destroy == true
+    error_message = "R7: no lab, force_destroy para o destroy não deixar sobras."
+  }
+  assert {
+    condition     = one(aws_s3_bucket_versioning.golden_dataset.versioning_configuration).status == "Enabled"
+    error_message = "Golden dataset versionado (recuperação de sobrescrita)."
+  }
+}
+
+# ---------------------------------------------------------------- DynamoDB (R2, R7)
+run "dynamodb_criptografado" {
+  command = plan
+  module {
+    source = "./modules/dynamodb_table"
+  }
+
+  assert {
+    condition     = one(aws_dynamodb_table.user_recommendations.server_side_encryption).enabled && one(aws_dynamodb_table.user_recommendations.server_side_encryption).kms_key_arn == var.kms_key_arn
+    error_message = "R2: DynamoDB com SSE-KMS da chave da plataforma."
+  }
+  assert {
+    condition     = one(aws_dynamodb_table.user_recommendations.point_in_time_recovery).enabled
+    error_message = "PITR ligado (custo proporcional a dados; tabela pequena no lab)."
+  }
+  assert {
+    condition     = aws_dynamodb_table.user_recommendations.deletion_protection_enabled == false
+    error_message = "R7: no lab, sem proteção contra exclusão para o destroy completar."
+  }
+}
+
+# ---------------------------------------------------------------- MemoryDB (R2)
+run "memorydb_tls" {
+  command = plan
+  module {
+    source = "./modules/memorydb_cluster"
+  }
+  variables {
+    vpc_id             = "vpc-123"
+    subnet_ids         = ["subnet-a", "subnet-b"]
+    security_group_ids = ["sg-123"]
+  }
+
+  assert {
+    condition     = aws_memorydb_cluster.vector_cluster.tls_enabled == true
+    error_message = "R2: MemoryDB com TLS em trânsito."
+  }
+  assert {
+    condition     = aws_memorydb_cluster.vector_cluster.kms_key_arn == var.kms_key_arn
+    error_message = "R2: MemoryDB criptografado em repouso com a chave da plataforma."
+  }
+  assert {
+    condition     = aws_memorydb_cluster.vector_cluster.num_replicas_per_shard == 0 && aws_memorydb_cluster.vector_cluster.num_shards == 1
+    error_message = "R5: menor escala que demonstra o padrão (1 shard, 0 réplicas)."
+  }
+}
+
+# ---------------------------------------------------------------- ECS (R1, R2, R3, R5, R6, R7)
+run "ecs_menor_privilegio_e_privado" {
+  command = plan
+  module {
+    source = "./modules/ecs_service"
+  }
+  variables {
+    vpc_id                    = "vpc-123"
+    alb_subnet_ids            = ["subnet-a", "subnet-b"]
+    private_subnet_ids        = ["subnet-a", "subnet-b"]
+    alb_security_group_id     = "sg-alb"
+    ecs_security_group_id     = "sg-ecs"
+    dynamodb_table_name       = "recsys-lab-user_recommendations"
+    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/recsys-lab-user_recommendations"
+    memorydb_cluster_endpoint = "clustercfg.recsys.memorydb.us-east-1.amazonaws.com:6379"
+    sagemaker_endpoint_name   = "recsys-lab-reranker"
+    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/recsys-lab-reranker"
+    bedrock_model_id          = "anthropic.claude-haiku-5-5"
+  }
+
+  assert {
+    condition = alltrue([
+      for s in jsondecode(aws_iam_policy.ecs_task_policy.policy).Statement :
+      s.Resource != "*" || can(s.Condition)
+    ])
+    error_message = "R3: nenhuma permissão com Resource \"*\" sem condição na role das tasks."
+  }
+  assert {
+    condition = anytrue([
+      for s in jsondecode(aws_iam_policy.ecs_task_policy.policy).Statement :
+      contains(flatten([s.Action]), "bedrock:InvokeModel") && alltrue([for r in flatten([s.Resource]) : strcontains(r, "claude-haiku-5-5")])
+    ])
+    error_message = "R3/ADR-0004: a task invoca só o modelo Claude configurado."
+  }
+  assert {
+    condition     = aws_lb.alb.internal == true
+    error_message = "R1: ALB interno por padrão."
+  }
+  assert {
+    condition     = aws_lb.alb.drop_invalid_header_fields == true
+    error_message = "ALB descarta cabeçalhos HTTP inválidos."
+  }
+  assert {
+    condition     = one(aws_ecs_service.app.network_configuration).assign_public_ip == false
+    error_message = "R1: tasks sem IP público."
+  }
+  assert {
+    condition     = aws_ecs_service.app.desired_count == 1
+    error_message = "R5: lab com 1 task."
+  }
+  assert {
+    condition     = aws_cloudwatch_log_group.ecs.kms_key_id == var.kms_key_arn && aws_cloudwatch_log_group.ecs.retention_in_days > 0
+    error_message = "R6/R2: logs das tasks com retenção e KMS."
+  }
+  assert {
+    condition     = aws_ecr_repository.app.image_tag_mutability == "IMMUTABLE" && one(aws_ecr_repository.app.image_scanning_configuration).scan_on_push
+    error_message = "Imagem em ECR privado, tags imutáveis e scan no push."
+  }
+  assert {
+    condition     = aws_ecr_repository.app.force_delete == true
+    error_message = "R7: o destroy do lab remove o repositório com as imagens."
+  }
+  assert {
+    condition     = jsondecode(aws_ecs_task_definition.app.container_definitions)[0].readonlyRootFilesystem == true
+    error_message = "Container com sistema de arquivos somente leitura."
+  }
+  assert {
+    condition = contains(
+      [for e in jsondecode(aws_ecs_task_definition.app.container_definitions)[0].environment : e.name],
+      "BEDROCK_MODEL_ID"
+    )
+    error_message = "ADR-0004: o serviço recebe o modelo do Bedrock por variável de ambiente."
+  }
+}
+
+run "ecs_api_publica_exige_tls" {
+  command = plan
+  module {
+    source = "./modules/ecs_service"
+  }
+  variables {
+    vpc_id                    = "vpc-123"
+    alb_subnet_ids            = ["subnet-a", "subnet-b"]
+    private_subnet_ids        = ["subnet-a", "subnet-b"]
+    alb_security_group_id     = "sg-alb"
+    ecs_security_group_id     = "sg-ecs"
+    dynamodb_table_name       = "t"
+    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/t"
+    memorydb_cluster_endpoint = "x:6379"
+    sagemaker_endpoint_name   = "e"
+    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/e"
+    bedrock_model_id          = "anthropic.claude-haiku-5-5"
+    expose_api_publicly       = true
+    certificate_arn           = null
+  }
+
+  expect_failures = [var.certificate_arn]
+}
+
+run "ecs_api_publica_com_https" {
+  command = plan
+  module {
+    source = "./modules/ecs_service"
+  }
+  variables {
+    vpc_id                    = "vpc-123"
+    alb_subnet_ids            = ["subnet-a", "subnet-b"]
+    private_subnet_ids        = ["subnet-a", "subnet-b"]
+    alb_security_group_id     = "sg-alb"
+    ecs_security_group_id     = "sg-ecs"
+    dynamodb_table_name       = "t"
+    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/t"
+    memorydb_cluster_endpoint = "x:6379"
+    sagemaker_endpoint_name   = "e"
+    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/e"
+    bedrock_model_id          = "anthropic.claude-haiku-5-5"
+    expose_api_publicly       = true
+    certificate_arn           = "arn:aws:acm:us-east-1:123456789012:certificate/abc"
+  }
+
+  assert {
+    condition     = aws_lb.alb.internal == false && aws_lb_listener.https[0].protocol == "HTTPS"
+    error_message = "R2: API pública só com listener HTTPS."
+  }
+  assert {
+    condition     = startswith(aws_lb_listener.https[0].ssl_policy, "ELBSecurityPolicy-TLS13")
+    error_message = "R2: política TLS 1.3."
+  }
+  assert {
+    condition     = one(aws_lb_listener.http.default_action).type == "redirect"
+    error_message = "R2: HTTP redireciona para HTTPS quando a API é pública."
+  }
+}
+
+# ---------------------------------------------------------------- SageMaker (R3, R5, R6)
+run "sagemaker_sem_full_access" {
+  command = plan
+  module {
+    source = "./modules/sagemaker_endpoint"
+  }
+
+  assert {
+    condition     = length(aws_iam_role_policy_attachment.sagemaker_full_access) == 0
+    error_message = "R3: sem AmazonSageMakerFullAccess na role de execução."
+  }
+  assert {
+    condition = alltrue([
+      for s in jsondecode(aws_iam_role_policy.sagemaker_execution.policy).Statement :
+      s.Resource != "*" || can(s.Condition) || contains(flatten([s.Action]), "ecr:GetAuthorizationToken")
+    ])
+    error_message = "R3: permissões escopadas (só ecr:GetAuthorizationToken exige \"*\")."
+  }
+  assert {
+    condition     = one(one(aws_sagemaker_endpoint_configuration.reranker.production_variants).serverless_config).provisioned_concurrency == null || one(one(aws_sagemaker_endpoint_configuration.reranker.production_variants).serverless_config).provisioned_concurrency == 0
+    error_message = "R5: Serverless Inference sem concorrência provisionada (custo zero ocioso)."
+  }
+  assert {
+    condition     = aws_cloudwatch_log_group.endpoint.name == "/aws/sagemaker/Endpoints/recsys-lab-reranker"
+    error_message = "R7: o log group do endpoint é criado pelo Terraform para o destroy removê-lo."
+  }
+}
+
+# ---------------------------------------------------------------- MWAA (R1, R3, R5)
+run "mwaa_desligado_por_padrao" {
+  command = plan
+  module {
+    source = "./modules/mwaa_orchestration"
+  }
+  variables {
+    vpc_id             = "vpc-123"
+    vpc_cidr           = "10.0.0.0/16"
+    private_subnet_ids = ["subnet-a", "subnet-b"]
+    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
+    s3_bucket_name     = "recsys-lab-golden"
+  }
+
+  assert {
+    condition     = length(aws_mwaa_environment.pipeline) == 0
+    error_message = "R5: MWAA desligado por padrão (maior custo fixo do stack)."
+  }
+}
+
+run "mwaa_ligado_privado" {
+  command = plan
+  module {
+    source = "./modules/mwaa_orchestration"
+  }
+  variables {
+    vpc_id             = "vpc-123"
+    vpc_cidr           = "10.0.0.0/16"
+    private_subnet_ids = ["subnet-a", "subnet-b"]
+    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
+    s3_bucket_name     = "recsys-lab-golden"
+    enable_mwaa        = true
+  }
+
+  assert {
+    condition     = aws_mwaa_environment.pipeline[0].webserver_access_mode == "PRIVATE_ONLY"
+    error_message = "R1: UI do Airflow só pela VPC."
+  }
+  assert {
+    condition     = aws_mwaa_environment.pipeline[0].kms_key == var.kms_key_arn
+    error_message = "R2: MWAA com a chave da plataforma."
+  }
+  assert {
+    condition     = alltrue([for r in aws_security_group.mwaa[0].egress : !contains(r.cidr_blocks, "0.0.0.0/0")])
+    error_message = "R1: MWAA sem saída para a internet."
+  }
+  assert {
+    condition     = length(aws_iam_role_policy.mwaa_execution) == 1
+    error_message = "R3: a role do MWAA tem política escopada própria."
+  }
+}
+
+# ---------------------------------------------------------------- Glue / Athena (R2, R3, R6)
+run "glue_criptografado_e_com_logs" {
+  command = plan
+  module {
+    source = "./modules/glue_pipeline"
+  }
+  variables {
+    s3_scripts_bucket = "recsys-lab-golden"
+    s3_bucket_arn     = "arn:aws:s3:::recsys-lab-golden"
+  }
+
+  assert {
+    condition     = aws_glue_job.feature_engineering.security_configuration == aws_glue_security_configuration.main.name
+    error_message = "R2: job do Glue com security configuration (S3, logs e bookmarks criptografados)."
+  }
+  assert {
+    condition     = aws_glue_job.feature_engineering.default_arguments["--continuous-log-logGroup"] == aws_cloudwatch_log_group.glue.name
+    error_message = "R6/R7: logs do Glue em log group gerenciado pelo Terraform."
+  }
+}
+
+run "athena_resultados_kms" {
+  command = plan
+  module {
+    source = "./modules/athena_queries"
+  }
+  variables {
+    s3_output_bucket = "recsys-lab-golden"
+  }
+
+  assert {
+    condition     = one(one(one(aws_athena_workgroup.analytics.configuration).result_configuration).encryption_configuration).encryption_option == "SSE_KMS"
+    error_message = "R2: resultados do Athena com SSE-KMS."
+  }
+}
+
+# ---------------------------------------------------------------- Observabilidade e custo (R6, R9)
+run "monitoramento_e_orcamento" {
+  command = plan
+  module {
+    source = "./modules/cloudwatch_monitoring"
+  }
+  variables {
+    ecs_service_name        = "recsys-lab-service"
+    ecs_cluster_name        = "recsys-lab-cluster"
+    alb_arn_suffix          = "app/recsys-lab-alb/123"
+    target_group_arn_suffix = "targetgroup/recsys-lab-tg/456"
+    sagemaker_endpoint_name = "recsys-lab-reranker"
+    monthly_budget_usd      = 10
+  }
+
+  assert {
+    condition     = length(aws_cloudwatch_metric_alarm.this) >= 6
+    error_message = "R6: alarmes para latência, 5xx, tasks, degradação, fallback da explicação e SageMaker."
+  }
+  assert {
+    condition     = alltrue([for a in aws_cloudwatch_metric_alarm.this : contains(a.alarm_actions, aws_sns_topic.alerts.arn)])
+    error_message = "R6: todo alarme notifica o tópico SNS."
+  }
+  assert {
+    condition     = aws_sns_topic.alerts.kms_master_key_id == var.kms_key_arn
+    error_message = "R2: tópico de alertas criptografado."
+  }
+  assert {
+    condition     = aws_budgets_budget.monthly.limit_amount == "10" && aws_budgets_budget.monthly.limit_unit == "USD"
+    error_message = "R9: teto de US$ 10/mês no AWS Budgets."
+  }
+  assert {
+    condition     = toset([for n in aws_budgets_budget.monthly.notification : n.threshold]) == toset([80, 100])
+    error_message = "R9: alertas do orçamento em 80% e 100%."
+  }
+  assert {
+    condition     = aws_cloudwatch_metric_alarm.this["api_p95_latency"].extended_statistic == "p95"
+    error_message = "R6: o alarme de latência mede p95 de verdade."
+  }
+}
