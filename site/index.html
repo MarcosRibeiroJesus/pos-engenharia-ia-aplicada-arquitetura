@@ -59,7 +59,7 @@
 <script>
 // Fonte única de conteúdo do site. Os agentes de cada módulo atualizam apenas este bloco.
 const MODULES = [
-  { n: "01", title: "Fundamentos de IA e LLMs", status: "em andamento · projeto: IA que vence Doom" },
+  { n: "01", title: "Fundamentos de IA e LLMs", status: "em andamento · 01.03 recomendação em revisão · 01.04 Doom em escolha" },
   { n: "02", title: "APIs de IA Generativa e Prompt Engineering", status: "a iniciar" },
   { n: "03", title: "Model Context Protocol (MCP)", status: "a iniciar" },
   { n: "04", title: "Criação de Agentes Autônomos", status: "a iniciar" },
@@ -69,6 +69,13 @@ const MODULES = [
 ];
 
 const ITEMS = [
+  {
+    type: "projeto", module: "01", status: "draft", statusLabel: "Em revisão",
+    title: "Recomendação do lote ao tempo real na AWS, com um LLM que explica sem inventar",
+    dek: "Lote diário, busca vetorial em tempo real e re-ranking em Terraform testado, sem NAT e com teto de US$ 10/mês. Claude no Bedrock explica cada item por tool_use validado, com fallback que nunca vira 500.",
+    href: "projetos/01-03-recomendacao.html", minutes: 10, tags: ["Recomendação", "AWS", "Bedrock", "Terraform"],
+    diagram: ["Lote", "DynamoDB", "Claude", "ECS"],
+  },
   {
     type: "post", module: "01", status: "draft", statusLabel: "Rascunho",
     title: "Recomendação em escala: do batch ao LLM",

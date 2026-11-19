@@ -10,7 +10,7 @@ Legenda das aulas: ✅ assistida · ⬜ pendente.
 | Módulo | Disciplina | Início | Plataforma | Videoaulas assistidas | Projeto | Post |
 |---|---|---|---|---|---|---|
 | — | Ambientação | 09/06/2026 | concluída (100%) | — | — | — |
-| 01 | Fundamentos de IA e LLMs para Programadores | 10/06/2026 | em andamento (50%) | 17 de 38 | IA que vence Doom (variante em escolha) | rascunho sobre recomendação no site |
+| 01 | Fundamentos de IA e LLMs para Programadores | 10/06/2026 | em andamento (50%) | 17 de 38 | Unidade 03: recomendação (PR #1, em revisão) · Unidade 04: IA que vence Doom (variante em escolha) | rascunho sobre recomendação no site; posts AWS e GCP da unidade 03 em revisão |
 | 02 | APIs de IA Generativa e Prompt Engineering | 04/07/2026 | em andamento (0%) | 0 de 28 | a propor | — |
 | 03 | Model Context Protocol (MCP) | 28/07/2026 | em andamento (0%) | 0 de 23 | a propor | — |
 | 04 | Criação de Agentes Autônomos | 21/08/2026 | em andamento (0%) | 0 de 25 | a propor | — |
@@ -52,6 +52,20 @@ Base: módulo 04 da disciplina ("Como vencer qualquer jogo"), com o módulo 05 (
 Por que D2: é a que mais exercita decisões de arquiteto (orquestração, Spot com checkpoint, promoção de modelo por avaliação, separação entre treino e inferência) e ainda entrega a parte "Web ML" da unidade no navegador. Risco a validar: a política treinada no ViZDoom precisa ver no navegador as mesmas observações do treino; por isso a demo começa com replays e só depois tenta jogo ao vivo em WebAssembly.
 
 Assets: usar Freedoom (livre) e nunca os WADs comerciais do Doom.
+
+### Projeto da unidade 03 (recomendação) · PR #1, branch `modulo/01-fundamentos-ia-llms/03-recomendacao`
+
+Plataforma híbrida de recomendação na AWS, inspirada no post do AWS Big Data Blog citado abaixo, com componente Claude (explicação por recomendação via Bedrock). Código em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`.
+
+| Entregável | Status |
+|---|---|
+| Terraform (state remoto com lock, endpoints sem NAT, TLS, IAM escopado, Budgets US$ 10) | concluído, `terraform test` 19/19, checkov e tflint sem falhas |
+| Componente Claude (tool_use, validação, retentativa, fallback) | concluído, 39/39 Vitest |
+| Workflows na raiz (CI, apply e destroy protegidos, OIDC) | concluído; falta configurar variáveis e ambiente no GitHub |
+| Integração no Floci | ver relatório em `testing/reports/latest.html` e o PR #1 |
+| ADRs 0001 a 0006 | concluídos |
+| `posts/aws.md` e `posts/gcp.md` | rascunho para revisão |
+| Página no site | aguarda o merge do PR #1 |
 
 ### Post já rascunhado
 "Recomendação em escala: do batch ao LLM" (módulo 03 da disciplina). Referências:
