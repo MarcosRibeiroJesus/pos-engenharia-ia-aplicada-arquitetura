@@ -293,6 +293,88 @@ class TestPrazoDaInfra(unittest.TestCase):
             self.assertIn(trecho, wf)
 
 
+class TestEspecialistas(unittest.TestCase):
+    """D-026: um especialista por tarefa fim, com modelo do nível, skills existentes e sem subagentes."""
+    cat = json.loads((AQUI / "especialistas.json").read_text())
+    cfg = agente.config()
+    NIVEL_DO_MODELO = {"opus": "maximo", "sonnet": "equilibrado", "haiku": "rapido"}
+
+    def test_toda_tarefa_tem_um_unico_especialista(self):
+        donos = {}
+        for nome, e in self.cat["especialistas"].items():
+            for tarefa in e["tarefas"]:
+                self.assertNotIn(tarefa, donos, f"{tarefa} em {donos.get(tarefa)} e {nome}")
+                donos[tarefa] = nome
+        self.assertEqual(set(donos), set(self.cfg["tarefas"]))
+
+    def test_modelo_segue_o_nivel_da_tarefa(self):
+        for nome, e in self.cat["especialistas"].items():
+            for tarefa in e["tarefas"]:
+                self.assertEqual(self.NIVEL_DO_MODELO[e["modelo"]], self.cfg["tarefas"][tarefa], nome)
+
+    def test_skills_citadas_existem(self):
+        skills = {p.parent.name for p in (AQUI.parent / ".claude" / "skills").glob("*/SKILL.md")}
+        for nome, e in self.cat["especialistas"].items():
+            self.assertLessEqual(set(self.cat["comum"]["skills"] + e["skills"]), skills, nome)
+
+    def test_plugins_vem_de_marketplaces_conhecidos(self):
+        mercados = set(self.cat["plugins_marketplaces"])
+        todos = [p for e in self.cat["especialistas"].values() for p in e["plugins"]] + self.cat["plugins_ligados_no_projeto"]
+        for plugin in todos:
+            self.assertIn(plugin.split("@")[1], mercados, plugin)
+
+    def test_settings_liga_so_os_plugins_do_catalogo_e_impede_subagente_aninhado(self):
+        st = json.loads((AQUI.parent / ".claude" / "settings.json").read_text())
+        self.assertEqual(set(st["enabledPlugins"]), set(self.cat["plugins_ligados_no_projeto"]))
+        self.assertEqual(st["env"]["CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"], "1")
+        for nome in st["extraKnownMarketplaces"]:
+            self.assertIn(nome, self.cat["plugins_marketplaces"])
+
+    def test_agentes_gerados_tem_frontmatter_valido_e_sem_ferramenta_de_subagente(self):
+        for nome in self.cat["especialistas"]:
+            texto = (AQUI.parent / ".claude" / "agents" / f"{nome}.md").read_text()
+            fm = texto.split("---", 2)[1]
+            self.assertIn(f"name: {nome}", fm)
+            self.assertIn("disallowedTools:\n  - Agent", fm)
+            self.assertIn("  - regras-do-especialista", fm)
+            self.assertNotIn("Agent\n", fm.split("disallowedTools")[0])
+            self.assertTrue((AQUI.parent / ".github" / "agents" / f"{nome}.agent.md").exists())
+
+    def test_descricoes_entre_aspas_para_o_yaml(self):
+        for nome in self.cat["especialistas"]:
+            fm = (AQUI.parent / ".claude" / "agents" / f"{nome}.md").read_text().split("---", 2)[1]
+            self.assertRegex(fm, r'description: ".+"')
+
+    def test_roteamento_pelo_agente_py(self):
+        self.assertEqual(agente.especialista("mcp", self.cat), "engenheiro-mcp")
+        self.assertEqual(agente.especialista("mecanica", self.cat), "operador-harness")
+        self.assertIn(".github/agents/avaliador-llm.agent.md", agente.instrucao_do_papel("copilot", "avaliador-llm"))
+        self.assertIn("engenheiro-mcp", agente.prompt_de_passagem("antigravity", "mcp", "03-mcp-regras-cdb"))
+
+    def test_arquivos_gerados_em_dia(self):
+        self.assertEqual(sincronizar_agentes.diferencas_agentes(self.cat), [])
+
+
+class TestDecisaoDoDono(unittest.TestCase):
+    """D-025: decisão do dono registra onde foi aplicada."""
+    HIST = """### 2026-11-19 · D-030 · Algo · fonte: Marcos
+Texto.
+**Aplicado em:** CLAUDE.md, skill x.
+
+### 2026-11-19 · D-029 · Outra · fonte: Marcos
+Sem aplicação.
+
+### 2026-11-19 · D-028 · Técnica · fonte: delegada
+Sem aplicação, mas delegada.
+
+### 2026-11-19 · D-020 · Antiga · fonte: Marcos
+Antes da regra.
+"""
+
+    def test_auditoria_aponta_so_decisao_do_dono_recente_sem_aplicacao(self):
+        self.assertEqual(memoria.sem_aplicacao(self.HIST), ["D-029"])
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])

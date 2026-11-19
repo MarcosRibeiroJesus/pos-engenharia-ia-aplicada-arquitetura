@@ -55,3 +55,12 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - `python3 harness/infra.py status` mostra o que está no ar e quando expira.
 - `python3 harness/infra.py estender <chave> --horas N` adia o destroy automático, sem passar de 24 horas desde o apply. O destroy roda sem aprovação no ambiente `aws-lab-destroy`.
 - Nunca rode apply numa conta real por conta própria: o apply é disparado pelo dono, no ambiente protegido.
+
+## 8. Especialistas por tarefa fim
+- Cada tipo de tarefa tem um especialista em `harness/especialistas.json`; o catálogo legível está em `harness/AGENTES.md`.
+  - **Claude Code:** subagentes em `.claude/agents/`.
+  - **Copilot:** agentes customizados em `.github/agents/`.
+  - **Antigravity:** assuma o papel do arquivo do especialista e use as skills listadas em `.agents/skills/`.
+- `python3 harness/agente.py proximo --tarefa <tipo>` diz o agente de código, o modelo e o especialista.
+- O especialista faz uma tarefa e devolve o relatório da skill `regras-do-especialista`. Ele não cria subagentes.
+- **Decisão do dono vira regra ou skill no mesmo turno** (D-025). Use a skill `decisao-do-dono`.

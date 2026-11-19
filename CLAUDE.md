@@ -14,6 +14,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
 - A exceção são as decisões delegadas da seção "Boas práticas da certificação".
 - Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
+- **Toda decisão que só eu posso tomar vira regra ou skill com relação direta, no mesmo turno** (D-025, skill `decisao-do-dono`).
+  - O lugar preferido é um gate programático; depois a constituição, o `CLAUDE.md` ou o `AGENTS.md`; depois uma skill nova ou atualizada; por fim um template.
+  - A entrada da decisão no `HISTORICO.md` lista onde ela foi aplicada (`**Aplicado em:**`).
+  - O `python3 harness/memoria.py auditar` reprova decisão minha sem essa linha.
 
 - Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
 
@@ -51,6 +55,11 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
 - **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
 - **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
+- **Agentes especialistas:** um por tarefa fim, definidos em `harness/especialistas.json` e gerados em `.claude/agents/` e `.github/agents/` (catálogo em `harness/AGENTES.md`).
+  - **Delegue cada tarefa ao especialista dela,** com briefing completo: objetivo, arquivos, critério de aceite e restrições de custo e segurança.
+  - **Cada especialista tem** o modelo do nível da tarefa, só as skills dela (pré-carregadas) e nenhuma ferramenta para criar subagentes. O `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` reforça isso.
+  - **Nunca edite os arquivos gerados:** mude o JSON e rode `python3 harness/sincronizar_agentes.py`. O CI confere.
+- **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
 - **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
 
 ## Estrutura

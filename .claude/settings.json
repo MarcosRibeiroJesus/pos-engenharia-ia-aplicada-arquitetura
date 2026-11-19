@@ -77,5 +77,47 @@
         ]
       }
     ]
+  },
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  },
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "hashicorp": {
+      "source": {
+        "source": "github",
+        "repo": "hashicorp/agent-skills"
+      }
+    },
+    "trailofbits": {
+      "source": {
+        "source": "github",
+        "repo": "trailofbits/skills"
+      }
+    },
+    "promptfoo": {
+      "source": {
+        "source": "github",
+        "repo": "promptfoo/promptfoo"
+      }
+    },
+    "google-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "google/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "terraform@hashicorp": true,
+    "mcp-server-dev@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "promptfoo@promptfoo": true
   }
 }

@@ -15,37 +15,80 @@
     "pesquisa": "equilibrado",
     "post": "equilibrado",
     "teste": "equilibrado",
-    "mecanica": "rapido"
+    "mecanica": "rapido",
+    "infra": "maximo",
+    "componente-claude": "maximo",
+    "mcp": "maximo",
+    "ml": "maximo",
+    "visao-web": "maximo",
+    "avaliacao": "maximo",
+    "revisao": "maximo",
+    "finops": "equilibrado",
+    "cloud-comparativa": "equilibrado",
+    "site": "equilibrado"
   },
   "agentes": {
     "claude-code": {
       "nome": "Claude Code",
-      "instrucoes": ["AGENTS.md", "CLAUDE.md"],
+      "instrucoes": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
       "como_iniciar": "Sessão nova em claude.ai/code (ambiente pos-engenharia-ia-aplicada-arquitetura) ou `claude` no terminal",
       "assincrono": "GitHub Action claude-code-action (fase 4 do harness)",
       "cota": "limite de uso da assinatura em janela de 5 horas",
-      "modelos": {"maximo": "Claude Opus", "equilibrado": "Claude Sonnet", "rapido": "Claude Haiku"}
+      "modelos": {
+        "maximo": "Claude Opus",
+        "equilibrado": "Claude Sonnet",
+        "rapido": "Claude Haiku"
+      }
     },
     "antigravity": {
       "nome": "Google Antigravity",
-      "instrucoes": ["AGENTS.md", ".agents/skills/"],
+      "instrucoes": [
+        "AGENTS.md",
+        ".agents/skills/"
+      ],
       "como_iniciar": "Abrir a pasta do repositório no Antigravity (IDE ou CLI `agy`), modo Planning para tarefas de nível máximo",
       "assincrono": null,
       "cota": "cota da conta Google no Antigravity",
-      "modelos": {"maximo": "Claude Opus (se disponível no seletor) ou Gemini Pro", "equilibrado": "Gemini Pro", "rapido": "Gemini Flash"}
+      "modelos": {
+        "maximo": "Claude Opus (se disponível no seletor) ou Gemini Pro",
+        "equilibrado": "Gemini Pro",
+        "rapido": "Gemini Flash"
+      }
     },
     "copilot": {
       "nome": "GitHub Copilot",
-      "instrucoes": ["AGENTS.md", "CLAUDE.md"],
+      "instrucoes": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
       "como_iniciar": "Atribuir a issue ao Copilot (cloud agent, assíncrono) ou modo Agent no VS Code",
       "assincrono": "Copilot cloud agent atribuído à issue",
       "cota": "premium requests mensais (cada ação do agente consome conforme o multiplicador do modelo)",
-      "modelos": {"maximo": "Claude Opus", "equilibrado": "Claude Sonnet", "rapido": "Auto ou Claude Haiku"}
+      "modelos": {
+        "maximo": "Claude Opus",
+        "equilibrado": "Claude Sonnet",
+        "rapido": "Auto ou Claude Haiku"
+      }
     }
   },
   "ordem": {
-    "maximo": ["claude-code", "antigravity", "copilot"],
-    "equilibrado": ["claude-code", "copilot", "antigravity"],
-    "rapido": ["copilot", "antigravity", "claude-code"]
+    "maximo": [
+      "claude-code",
+      "antigravity",
+      "copilot"
+    ],
+    "equilibrado": [
+      "claude-code",
+      "copilot",
+      "antigravity"
+    ],
+    "rapido": [
+      "copilot",
+      "antigravity",
+      "claude-code"
+    ]
   }
 }
