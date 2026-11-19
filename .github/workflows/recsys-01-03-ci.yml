@@ -80,6 +80,9 @@ jobs:
       floci:
         image: floci/floci:latest
         ports: ["4566:4566"]
+        # O ECR do Floci sobe um registry de verdade pelo Docker; sem o socket, DeleteRepository falha (ADR-0006).
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
     env:
       AWS_ENDPOINT_URL: http://localhost:4566
       EMULATOR_NAME: Floci (GitHub Actions)
@@ -97,6 +100,14 @@ jobs:
         run: |
           for _ in $(seq 1 30); do curl -s -o /dev/null http://localhost:4566 && exit 0; sleep 2; done
           echo "Floci não respondeu" && exit 1
+      - name: Host do S3 Control do emulador
+        run: echo "127.0.0.1 000000000000.localhost" | sudo tee -a /etc/hosts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Dependências do serviço (teste do componente com Claude)
+        working-directory: ${{ env.UNIT_DIR }}
+        run: npm ci
       - run: python3 testing/scripts/integracao_01_03_recomendacao.py
       - if: always()
         uses: actions/upload-artifact@v4
