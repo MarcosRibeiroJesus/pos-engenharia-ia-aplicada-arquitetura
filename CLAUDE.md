@@ -16,6 +16,11 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 - Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
 
+## Memória compartilhada (decisões macro)
+- As decisões macro que tomo na conversa de orquestração ficam em `DECISOES.md`, no branch `memoria-compartilhada` (fora do fluxo de PR, para chegar às sessões na hora). Leia com `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
+- Toda sessão lê esse arquivo ao começar e sempre que ele mudar. O hook `.claude/hooks/memoria_compartilhada.py` faz isso: no início da sessão, a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
+- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei. Pendências ficam como pendências.
+
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
 - `modulos/NN-slug/`: uma disciplina. Dentro, `unidades/UU-slug/` para cada unidade (os "Módulo 0X" dentro da disciplina na plataforma), com `notas/`, `infra/` (Terraform), `src/`, `tests/`, `adr/`, `docs/` e `posts/`. Na raiz da disciplina, `linkedin.md` com o post de divulgação.
