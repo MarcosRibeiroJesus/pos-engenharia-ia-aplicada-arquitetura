@@ -1,0 +1,14 @@
+# Alvo de DAST da esteira de segurança (ZAP baseline): o painel com uma pasta de transcripts vazia.
+services:
+  painel:
+    build: ..
+    ports:
+      - "127.0.0.1:4317:4317"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /dados
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
