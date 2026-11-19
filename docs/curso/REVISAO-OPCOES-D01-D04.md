@@ -107,8 +107,10 @@ Ajustes:
 
 ## Decisões (2026-11-19)
 
-- **Escopo agora:** disciplinas 01, 02 e 03. A D04 fica para depois.
-- **D01 e D02:** pendentes. Aguardam a escolha do dono, unidade a unidade.
-- **D03:** 02-S, 03-S e R4 nas unidades 04 a 08, com o produto sintético **CDB com liquidez diária**.
+- **Escopo agora:** disciplinas 01, 02 e 03; a D04 fica para depois.
+- **Formato:** um projeto de IA aplicada e uma arquitetura AWS por disciplina, e não por unidade. As tabelas por unidade acima ficam como referência.
+- **D01:** arquitetura AWS = recomendação de e-commerce (PR #1). IA aplicada = Doom com detecção YOLO no navegador.
+- **D02:** arquitetura AWS = assistente de agendamento completo, que junta gateway com fallback, grafo de etapas, intenção em JSON, cancelamento com aprovação humana, memória, defesa contra prompt injection e avaliações. IA aplicada: pendente.
+- **D03:** arquitetura AWS = MCP de regras de negócio do produto sintético CDB com liquidez diária (R4). IA aplicada: pendente.
 - **Cloud comparativa:** GCP na D01 e na D02, Azure na D03.
-- **Custo de modelo:** os testes usam só respostas gravadas, sem chamadas ao Claude real. Cada unidade registra em ADR que o comportamento real do modelo fica sem validação.
+- **Custo de modelo:** os testes usam só respostas gravadas, sem chamadas ao Claude real. Cada projeto registra em ADR que o comportamento real do modelo fica sem validação.
