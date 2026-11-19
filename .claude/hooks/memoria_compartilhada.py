@@ -52,6 +52,17 @@ def contexto(evento: str, raiz: Path, agora: float | None = None) -> str | None:
     if evento == "PostToolUse" and agora - estado.get("checado", 0) < INTERVALO:
         return None
     estado["checado"] = agora
+    return _ler_e_marcar(evento, raiz, estado)
+
+
+def novidades_pendentes(raiz: Path) -> str | None:
+    """Sem throttle: devolve o que mudou desde a última leitura (e marca como lido). Usado pelo gate."""
+    estado = ler_estado(raiz)
+    estado["checado"] = time.time()
+    return _ler_e_marcar("Gate", raiz, estado)
+
+
+def _ler_e_marcar(evento: str, raiz: Path, estado: dict) -> str | None:
     if git(raiz, "fetch", "-q", "origin", f"+refs/heads/{RAMO}:refs/remotes/origin/{RAMO}") is None:
         gravar_estado(raiz, estado)
         return None

@@ -8,18 +8,34 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
-## Decisões do dono (regra sem exceção)
+## Decisões do dono
 - Nunca assuma uma escolha que cabe a mim: opção de arquitetura, projeto de IA aplicada, cloud comparativa, orçamento, produto, escopo, publicação, merge, aprovação de plano ou qualquer coisa que eu tenha sido perguntado. Silêncio, pergunta pulada ou "sem objeção" não são resposta.
 - Antes de agir sobre um conjunto de decisões, confira se falta alguma resposta minha. Se faltar, liste o que falta, diga em uma linha o que cada item bloqueia e peça a resposta. Siga só com o trabalho que não depende dela.
 - Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
+- A exceção são as decisões delegadas da seção "Boas práticas da certificação".
 - Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
 
 - Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
 
 ## Memória compartilhada (decisões macro)
-- As decisões macro que tomo na conversa de orquestração ficam em `DECISOES.md`, no branch `memoria-compartilhada` (fora do fluxo de PR, para chegar às sessões na hora). Leia com `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
-- Toda sessão lê esse arquivo ao começar e sempre que ele mudar. O hook `.claude/hooks/memoria_compartilhada.py` faz isso: no início da sessão, a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
-- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei. Pendências ficam como pendências.
+- As decisões macro que tomo na conversa de orquestração ficam no branch `memoria-compartilhada`, fora do fluxo de PR, para chegar às sessões na hora:
+  - `DECISOES.md`: estado atual, regras ativas e pendências. É curto e sempre entra no contexto.
+  - `HISTORICO.md`: registro completo, com data, id e fonte de cada decisão. Leia só quando precisar do porquê.
+  - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
+- O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
+- O gate `.claude/hooks/gate_entrega.py` nega push e abertura de PR enquanto a sessão não tiver recebido a versão mais recente da memória.
+- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
+
+## Boas práticas da certificação (decisões delegadas)
+- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Explique sempre o porquê, com os ids das tarefas, e registre a decisão na memória compartilhada (fonte: "delegada").
+- Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
+
+## Retomada de sessão
+- Ao retomar uma sessão parada (limite de uso ou pausa), avalie se o contexto ainda vale. Se ela ficou parada mais de 8 horas, ou se a memória compartilhada mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado a continuar sobre resultados de ferramenta antigos (tarefas 1.7 e 5.1).
+- O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
+
+## Perguntas ao dono
+- Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
