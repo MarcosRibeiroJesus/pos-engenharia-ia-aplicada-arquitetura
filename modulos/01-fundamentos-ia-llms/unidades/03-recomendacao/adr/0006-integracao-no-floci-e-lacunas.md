@@ -29,9 +29,12 @@ O provider aponta para o emulador por um override também gerado em tempo de exe
 |---|---|---|
 | `aws_memorydb_subnet_group`, `aws_memorydb_parameter_group` | O Floci responde `UnknownOperationException: Operation CreateSubnetGroup is not supported` (e o mesmo para `CreateParameterGroup`) | `plan` completo; `terraform test memorydb_tls` |
 | `aws_memorydb_cluster` | `describe-clusters --show-shard-details` devolve `"Shards": null`, e o provider aborta com `no available shards found` logo depois de criar | `plan` completo; `terraform test memorydb_tls` (TLS, KMS, 1 shard, 0 réplica) |
+| `aws_lakeformation_permissions` (banco e localização de dados) | Revogar uma permissão inexistente devolve 200 no Floci. O provider v6.73.0 (`internal/service/lakeformation/permissions.go`, linhas 699 a 705) revoga de novo depois do delete e só aceita a remoção quando a AWS devolve `InvalidInputException: No permissions revoked. Grantee has no permissions`; com o 200, aborta com "empty retryable error" e o destroy para | `plan` completo; `terraform test lake_formation_concede_a_role_do_glue` |
 | `aws_sagemaker_endpoint` | O endpoint vai a `Failed` com `java.net.SocketException: No such file or directory`: o Floci tenta subir o container do modelo pelo socket do Docker, que não existe no container dele | `plan` completo; `terraform test sagemaker_sem_full_access` |
 
-Todo o resto do stack (VPC, endpoints, SGs, flow logs, KMS, S3, DynamoDB, ECR, ECS, ALB, IAM, Glue, Athena, Lake Formation, CloudWatch, SNS, Budgets) é criado no emulador e verificado.
+Todo o resto do stack (VPC, endpoints, SGs, flow logs, KMS, S3, DynamoDB, ECR, ECS, ALB, IAM, Glue, Athena, registro do bucket no Lake Formation, CloudWatch, SNS, Budgets) é criado no emulador e verificado.
+
+A verificação de sobras ignora chaves KMS em `PendingDeletion` e serviços ECS que não estão `ACTIVE` nem `DRAINING`. Serviço apagado fica `INACTIVE` e continua no índice de tags por um tempo, no emulador e na AWS. Não é sobra com custo. O workflow de destroy aplica a mesma regra.
 
 ## Falhas reais encontradas pela integração
 

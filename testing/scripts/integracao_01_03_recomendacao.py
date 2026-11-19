@@ -110,6 +110,20 @@ output "cluster_arn" {
 }
 """,
     },
+    "lake_formation": {
+        "evidence": ("RevokePermissions de permissão inexistente devolve 200 no Floci; a AWS devolve "
+                     "InvalidInputException 'No permissions revoked. Grantee has no permissions', que o provider "
+                     "v6.73.0 exige para confirmar o delete (internal/service/lakeformation/permissions.go, "
+                     "linhas 699-705), senão aborta com 'empty retryable error'"),
+        "resources": ["aws_lakeformation_permissions.database_permissions", "aws_lakeformation_permissions.data_location"],
+        "override": """resource "aws_lakeformation_permissions" "database_permissions" {
+  count = 0
+}
+resource "aws_lakeformation_permissions" "data_location" {
+  count = 0
+}
+""",
+    },
     "sagemaker_endpoint": {
         "evidence": "endpoint vai a Failed: java.net.SocketException (o Floci tenta subir o container do modelo via Docker)",
         "resources": ["aws_sagemaker_endpoint.reranker"],
@@ -477,9 +491,17 @@ def main():
                         k, _ = aws("kms", "describe-key", "--key-id", a)
                         if k and k["KeyMetadata"].get("KeyState") == "PendingDeletion":
                             continue
+                    if a.startswith("arn:aws:ecs:") and ":service/" in a:
+                        # Serviço apagado fica INACTIVE e ainda aparece no índice de tags (na AWS também).
+                        cluster, service = a.split(":service/")[1].split("/", 1)
+                        s, _ = aws("ecs", "describe-services", "--cluster", cluster, "--services", service)
+                        status = ((s or {}).get("services") or [{}])[0].get("status")
+                        if status not in ("ACTIVE", "DRAINING"):
+                            continue
                     real.append(a)
                 return f"{len(real)} sobras", not real, json.dumps(real, indent=1)
-            check("Destroy sem sobras (tag project, exceto KMS em PendingDeletion)", leftovers, rule="R7", expected="0 sobras")
+            check("Destroy sem sobras (tag project; ignora KMS em PendingDeletion e serviço ECS inativo)", leftovers,
+                  rule="R7", expected="0 sobras")
 
             def state_kept():
                 d, raw = aws("s3api", "list-objects-v2", "--bucket", STATE_BUCKET)

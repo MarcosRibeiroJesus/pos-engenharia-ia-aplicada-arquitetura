@@ -61,7 +61,8 @@ jobs:
         run: terraform destroy -input=false -auto-approve -lock-timeout=120s
       - name: Verificar sobras pela tag do projeto
         run: |
-          # Chaves KMS ficam em PendingDeletion por 7 dias e não contam como sobra.
+          # Chaves KMS ficam em PendingDeletion por 7 dias e serviços ECS apagados ficam INACTIVE
+          # (ainda visíveis no índice de tags); nenhum dos dois é sobra com custo.
           left=$(aws resourcegroupstaggingapi get-resources \
             --tag-filters Key=project,Values="$PROJECT_TAG" Key=environment,Values="$ENVIRONMENT_TAG" \
             --query 'ResourceTagMappingList[].ResourceARN' --output text | tr '\t' '\n' | grep -v '^$' || true)
@@ -71,6 +72,11 @@ jobs:
               arn:aws:kms:*)
                 state=$(aws kms describe-key --key-id "$arn" --query KeyMetadata.KeyState --output text 2>/dev/null || echo Unknown)
                 [ "$state" = "PendingDeletion" ] && continue ;;
+              arn:aws:ecs:*:service/*)
+                path=${arn#*:service/}
+                svc_state=$(aws ecs describe-services --cluster "${path%%/*}" --services "${path#*/}" \
+                  --query 'services[0].status' --output text 2>/dev/null || echo MISSING)
+                case "$svc_state" in ACTIVE|DRAINING) ;; *) continue ;; esac ;;
             esac
             real="$real $arn"
           done
