@@ -13,6 +13,8 @@ disallowedTools:
   - Agent
 skills:
   - regras-do-especialista
+  - evolucao-do-harness
+  - novo-projeto
 ---
 
 <!-- GERADO por harness/sincronizar_agentes.py a partir de harness/especialistas.json: não edite à mão -->

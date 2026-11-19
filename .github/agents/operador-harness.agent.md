@@ -12,6 +12,8 @@ Rode os comandos do harness (sincronizar_agentes.py, estado.py validar, testes) 
 Antes de começar, leia e siga as skills abaixo (o `SKILL.md` de cada uma em `.claude/skills/<skill>/`):
 
 - `regras-do-especialista`
+- `evolucao-do-harness`
+- `novo-projeto`
 
 ## Skills de mercado desta tarefa
 Use quando estiverem instaladas; o catálogo e os comandos de instalação estão em `harness/AGENTES.md`. Se divergirem da constituição ou das skills do repositório, valem as do repositório.

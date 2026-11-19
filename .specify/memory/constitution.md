@@ -43,6 +43,11 @@ Nenhuma spec assume escopo, produto, orçamento, cloud comparativa, projeto de I
 
 ## Artigo VI · Operável e replicável
 - Tags `project`, `module` e `managed-by` em todos os recursos.
+- **Conta única, isolamento por tag** (D-029):
+  - nome com o prefixo da chave do projeto;
+  - roles por projeto com condição na tag `project` (ABAC);
+  - nenhum projeto acessa recurso de outro, a não ser pela plataforma compartilhada.
+- Todo projeto nasce pelo caminho padrão (`harness/novo_projeto.py`), na mesma esteira e com os mesmos gates.
 - Logs, métricas e alarmes nos componentes críticos.
 - State remoto com lock.
 - README com no máximo 5 passos.

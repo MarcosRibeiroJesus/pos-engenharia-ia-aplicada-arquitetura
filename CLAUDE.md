@@ -159,8 +159,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep e CodeQL), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov, Trivy config e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.
 - Achado de severidade alta ou crítica bloqueia o merge. Exceção só com justificativa versionada (`.checkov.yaml`, `.trivyignore`, `.semgrepignore`) e ADR.
 - Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
+- **Conta AWS única, com isolamento por tag e prefixo** (D-029):
+  - todo recurso leva a tag `project` e o prefixo da chave do projeto no nome;
+  - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
+- **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
+  - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.
+  - Projeto novo entra pelo caminho padrão: `python3 harness/novo_projeto.py`.
 - Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
-- Acesso dos agentes ao Claude: Amazon Bedrock via OIDC (sem chave estática), com a chave da API da Anthropic como alternativa em secret do repositório.
+- **Acesso aos modelos (modelo híbrido, D-028):**
+  - **Agentes de código e revisores na esteira:** usam a assinatura Pro do dono (Claude Code e `claude-code-action` com o token da assinatura em secret). Na troca, o Antigravity usa Gemini e o Copilot usa OpenAI.
+  - **Na AWS:** rodam só a plataforma compartilhada e os agentes dos produtos durante as demonstrações. O Claude é acessado pelo Bedrock via OIDC, sem chave estática, com um perfil de inferência por produto para atribuir custo.
 
 ## Privacidade
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.

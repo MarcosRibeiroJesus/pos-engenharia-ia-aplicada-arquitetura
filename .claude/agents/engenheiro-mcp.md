@@ -17,6 +17,7 @@ skills:
   - servidor-mcp
   - sdd-implementar
   - componente-claude
+  - plataforma-agentes
 ---
 
 <!-- GERADO por harness/sincronizar_agentes.py a partir de harness/especialistas.json: não edite à mão -->

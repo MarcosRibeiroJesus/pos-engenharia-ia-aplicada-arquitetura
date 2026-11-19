@@ -6,12 +6,12 @@ Cada tarefa fim tem um especialista com o modelo do nível da tarefa, só as ski
 
 | Especialista | Tarefas | Modelo | Skills do repositório | Skills de mercado |
 |---|---|---|---|---|
-| `especificador` | especificacao | opus | `regras-do-especialista`, `sdd-especificar`, `pesquisa-fontes` | — |
-| `arquiteto-aws` | arquitetura | opus | `regras-do-especialista`, `sdd-planejar`, `sdd-tarefas`, `custo-diario`, `ciclo-demonstracao`, `modelo-de-ameacas`, `pesquisa-fontes` | `aws-core@claude-plugins-official` |
+| `especificador` | especificacao | opus | `regras-do-especialista`, `sdd-especificar`, `pesquisa-fontes`, `novo-projeto` | — |
+| `arquiteto-aws` | arquitetura | opus | `regras-do-especialista`, `sdd-planejar`, `sdd-tarefas`, `plataforma-agentes`, `custo-diario`, `ciclo-demonstracao`, `modelo-de-ameacas`, `pesquisa-fontes` | `aws-core@claude-plugins-official` |
 | `analista-sdd` | analise-sdd | opus | `regras-do-especialista`, `sdd-analisar` | `spec-to-code-compliance@trailofbits` |
 | `engenheiro-terraform` | codigo, infra | opus | `regras-do-especialista`, `terraform-tdd`, `sdd-implementar`, `ciclo-demonstracao`, `custo-diario` | `terraform@hashicorp` (ligado) |
-| `engenheiro-claude` | componente-claude | opus | `regras-do-especialista`, `componente-claude`, `sdd-implementar`, `avaliacao-llm` | `claude-api@anthropic-agent-skills` |
-| `engenheiro-mcp` | mcp | opus | `regras-do-especialista`, `servidor-mcp`, `sdd-implementar`, `componente-claude` | `mcp-server-dev@claude-plugins-official` (ligado), `example-skills@anthropic-agent-skills` |
+| `engenheiro-claude` | componente-claude | opus | `regras-do-especialista`, `componente-claude`, `sdd-implementar`, `avaliacao-llm`, `plataforma-agentes` | `claude-api@anthropic-agent-skills` |
+| `engenheiro-mcp` | mcp | opus | `regras-do-especialista`, `servidor-mcp`, `sdd-implementar`, `componente-claude`, `plataforma-agentes` | `mcp-server-dev@claude-plugins-official` (ligado), `example-skills@anthropic-agent-skills` |
 | `engenheiro-ml` | ml | opus | `regras-do-especialista`, `sdd-implementar`, `terraform-tdd`, `custo-diario` | `aws-core@claude-plugins-official` |
 | `engenheiro-visao-web` | visao-web | opus | `regras-do-especialista`, `sdd-implementar` | `playwright@claude-plugins-official`, `example-skills@anthropic-agent-skills` |
 | `avaliador-llm` | avaliacao | opus | `regras-do-especialista`, `avaliacao-llm`, `modelo-de-ameacas` | `promptfoo@promptfoo` (ligado) |
@@ -23,7 +23,7 @@ Cada tarefa fim tem um especialista com o modelo do nível da tarefa, só as ski
 | `redator-tecnico` | post | sonnet | `regras-do-especialista`, `post-tecnico`, `pesquisa-fontes` | — |
 | `desenvolvedor-site` | site | sonnet | `regras-do-especialista`, `site-projeto` | `frontend-design@claude-plugins-official`, `playwright@claude-plugins-official` |
 | `revisor-independente` | revisao | opus | `regras-do-especialista`, `sdd-analisar`, `modelo-de-ameacas` | `pr-review-toolkit@claude-plugins-official` (ligado), `code-review@claude-plugins-official`, `second-opinion@trailofbits` |
-| `operador-harness` | mecanica | haiku | `regras-do-especialista` | `claude-md-management@claude-plugins-official` |
+| `operador-harness` | mecanica | haiku | `regras-do-especialista`, `evolucao-do-harness`, `novo-projeto` | `claude-md-management@claude-plugins-official` |
 
 ## Skills de mercado
 
