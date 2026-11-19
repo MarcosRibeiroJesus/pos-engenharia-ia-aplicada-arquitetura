@@ -21,18 +21,18 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
-- Uma sessão por unidade (ou por disciplina, nas pequenas), no branch `modulo/NN-slug/UU-slug`, com PR para `main`. O merge depende da minha aprovação.
+- Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
-- **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam), sempre os dois projetos abaixo:
-  1. **Projeto de IA aplicada**: um por unidade, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na unidade 01.04), em `unidades/UU-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
-  2. **Arquitetura AWS completa**: a versão enterprise do tema da unidade, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica em `unidades/UU-slug/infra/` e `src/`.
+- **Por disciplina** (não por unidade), sempre os dois projetos abaixo:
+  1. **Projeto de IA aplicada**: um por disciplina, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na D01), em `modulos/NN-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
+  2. **Arquitetura AWS completa**: uma por disciplina, a versão enterprise de um tema da disciplina, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica na pasta da unidade de onde o tema vem (`unidades/UU-slug/infra/` e `src/`) ou, quando cobre várias unidades, em `modulos/NN-slug/arquitetura/`.
   3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
   4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
-- As opções de cada unidade ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
-- **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
+- As opções da disciplina ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
+- E um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
 - Cada videoaula tem legenda em português. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado, seguindo o roteiro do arquivo privado `CURSO-PRIVADO.md`.
@@ -42,16 +42,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Os PDFs de cada disciplina (indicação de leitura, material autoral, extras) são a base para sugerir e construir o conteúdo do projeto escolhido. Leia pelo navegador integrado, sem salvar no repositório.
 - O projeto deve ficar alinhado ao material e às boas práticas esperadas pela prova Claude Certified Architect – Foundations.
 
-## Fluxo por unidade
-1. Mapear as aulas da unidade (pelo arquivo privado) e registrar no PROGRESSO.md só o tema, com palavras próprias.
+## Fluxo por disciplina
+1. Mapear as aulas de cada unidade (pelo arquivo privado) e registrar no PROGRESSO.md só o tema, com palavras próprias.
 2. Extrair de 1 a 3 temas de maior valor para engenheiros seniores que querem dominar arquitetura e design de produto.
 3. Ler as legendas das aulas da unidade e o PDF da disciplina. Pesquisar arquiteturas nas fontes oficiais da AWS e em casos públicos de FAANG e grandes bancos.
-4. Propor de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
+4. Propor, para a disciplina, de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho uma por disciplina.
 5. Implementar com TDD (abaixo).
 6. Testar no Floci só com o projeto 100% concluído e gerar o relatório.
 7. Escrever os dois posts e publicar a unidade no site. Ao concluir as unidades da disciplina, escrever o post de LinkedIn.
 
-## Duas arquiteturas por unidade
+## Duas arquiteturas por disciplina
 - Principal, na AWS: Terraform implementado, testado e com deploy possível.
 - Comparativa, em outra cloud (Azure, GCP ou OCI): design doc e diagrama com mapeamento serviço a serviço. Implementar só se for barato validar.
 
