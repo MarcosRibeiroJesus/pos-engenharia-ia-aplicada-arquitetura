@@ -6,6 +6,19 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-019 · Harness agnóstico de agente · fonte: delegada
+- **`AGENTS.md` canônico na raiz**, importado pelo `CLAUDE.md`. O Antigravity e o Copilot leem esse arquivo, e as skills ficam espelhadas em `.agents/skills/` (3.1, 3.2).
+- **Gates no git e no CI, não só em hooks do Claude Code.** Os hooks só valem dentro do Claude Code; o `pre-commit`, o `pre-push` e o workflow `harness.yml` valem para qualquer agente (1.4, 3.6).
+- **Disponibilidade compartilhada no branch `agentes-status`**, gravada por plumbing do git, com o mesmo padrão da memória. Qualquer máquina e qualquer agente leem o mesmo estado (5.1).
+- **Roteamento por nível da tarefa:** cada agente tem um modelo equivalente para cada nível. A paridade usa modelos Claude também no Antigravity e no Copilot quando disponíveis, para as skills se comportarem igual.
+- **Ordem por nível:**
+  - Nível máximo: Claude Code primeiro.
+  - Tarefas mecânicas: Copilot primeiro, para poupar a janela do Claude.
+- **A marcação de cota esgotada é explícita.** Um agente sem cota não consegue se reportar, então quem percebe marca: o próprio agente, o Marcos ou a orquestração. O failover assíncrono pelo Copilot cloud agent fica para a fase 4, junto com a fila de issues (5.2, 5.3).
+
+### 2026-11-19 · D-018 · Troca de agente quando a cota acaba · fonte: Marcos
+O harness controla a troca entre Claude Code, Antigravity e Copilot quando a cota de um acaba. O agente que assume usa o modelo de qualidade equivalente mais indicado para a tarefa, e a memória é compartilhada entre os agentes.
+
 ### 2026-11-19 · D-017 · Harness fase 1 · fonte: delegada
 - **Continuidade em arquivos** (estado.json, progresso.md, init.sh e ritual `retomar`), não em chat. É o padrão de harness para agentes de longa duração da Anthropic (1.7, 5.1).
 - **Gate de SDD por hook:** uma instrução pode ser ignorada; o gate garante o Artigo I (1.4, 1.5).

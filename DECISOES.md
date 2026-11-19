@@ -13,6 +13,11 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 
 ## Regras ativas
 - **SDD obrigatório** (D-016, D-017). Todo código nasce de spec → plano → tarefas → análise aprovada, em `specs/<chave>/`; o gate nega código antes da fase implementar. Projetos em andamento fazem primeiro a spec retroativa. Comece toda sessão pela skill `retomar`.
+- **Qualquer agente (Claude Code, Antigravity, Copilot) segue o `AGENTS.md`** (D-018, D-019).
+  - Comece com `bash harness/init.sh` e `python3 harness/memoria.py ler`.
+  - Cota esgotada: `python3 harness/agente.py marcar <agente> --ate ...`.
+  - Quem assume e com qual modelo: `python3 harness/agente.py proximo --tarefa <tipo>`.
+  - Registre o agente em `harness/progresso.md`.
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).
 - **Testes do componente Claude só com respostas gravadas**, sem chamadas ao Claude real (D-006).
