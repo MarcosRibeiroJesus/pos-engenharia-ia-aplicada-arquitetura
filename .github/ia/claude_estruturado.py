@@ -5,6 +5,7 @@ Se a saída vier inválida, repete uma vez mandando o erro de validação de vol
 (validação com retentativa). Uso: claude_estruturado.py <schema> <saida> <ferramentas> <prompt>
 """
 import json
+import os
 import subprocess
 import sys
 
@@ -16,7 +17,7 @@ schema = json.load(open(schema_path, encoding="utf-8"))
 
 def rodar(texto):
     proc = subprocess.run(
-        ["claude", "-p", texto, "--output-format", "json", "--json-schema", json.dumps(schema),
+        ["claude", "-p", texto, "--model", os.environ.get("MODELO_CLAUDE", "sonnet"), "--output-format", "json", "--json-schema", json.dumps(schema),
          "--allowedTools", ferramentas, "--max-turns", "20"],
         capture_output=True, text=True)
     if proc.returncode != 0:

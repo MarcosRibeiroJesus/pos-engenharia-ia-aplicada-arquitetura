@@ -1,5 +1,6 @@
 ---
 name: revisor-seguranca
+model: opus
 description: Revisa um PR em busca de falhas de segurança, combinando o diff com os achados de SAST, SCA, IaC, contêiner e DAST. Use em code review e na esteira de CI.
 tools: Read, Grep, Glob
 ---

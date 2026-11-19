@@ -7,7 +7,7 @@ python3 .github/ia/resumir_sarif.py achados > /tmp/achados.md
 
 claude -p "Você é o agente definido em .claude/agents/corretor-seguranca.md; siga essas instruções. Achados a corrigir: /tmp/achados.md." \
   --allowedTools "Read,Edit,Grep,Glob,Bash(terraform fmt:*),Bash(terraform validate:*),Bash(terraform init -backend=false:*)" \
-  --max-turns 40 --output-format json > /tmp/correcao.json || { echo "::error::agente corretor falhou"; exit 1; }
+  --model opus --max-turns 40 --output-format json > /tmp/correcao.json || { echo "::error::agente corretor falhou"; exit 1; }
 
 mudados=$(git diff --name-only)
 proibidos=$(printf '%s\n' "$mudados" | grep -E '^(\.github/|\.claude/)|\.tfstate|(^|/)\.env|secret|credential' || true)

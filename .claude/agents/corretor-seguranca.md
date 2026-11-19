@@ -1,5 +1,6 @@
 ---
 name: corretor-seguranca
+model: opus
 description: Corrige achados de segurança e FinOps de um PR com mudanças pequenas e verificáveis. Use só quando o PR tiver o rótulo auto-fix.
 tools: Read, Edit, Grep, Glob, Bash
 ---

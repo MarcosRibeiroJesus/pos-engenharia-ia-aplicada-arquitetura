@@ -1,5 +1,6 @@
 ---
 name: revisor-finops
+model: sonnet
 description: Revisa o custo de um PR de infraestrutura, comparando a estimativa do Infracost e o Terraform com o teto mensal do laboratório. Use em code review e na esteira de CI.
 tools: Read, Grep, Glob
 ---

@@ -11,9 +11,9 @@ python3 .github/ia/comentario.py anterior > /tmp/revisao/anterior.md
 
 ENTRADAS="Entradas (somente leitura): /tmp/revisao/diff.patch (diff do PR), /tmp/revisao/achados.md (achados das ferramentas e custo), /tmp/revisao/anterior.md (revisão anterior). Reporte só achados novos ou ainda não resolvidos."
 
-python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/seguranca.json "Read,Grep,Glob" \
+MODELO_CLAUDE=opus python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/seguranca.json "Read,Grep,Glob" \
   "Você é o agente definido em .claude/agents/revisor-seguranca.md; siga essas instruções. $ENTRADAS"
-python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/finops.json "Read,Grep,Glob" \
+MODELO_CLAUDE=sonnet python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/finops.json "Read,Grep,Glob" \
   "Você é o agente definido em .claude/agents/revisor-finops.md; siga essas instruções. Teto mensal: US\$ ${CUSTO_MAX_MENSAL_USD}. $ENTRADAS"
 
 python3 .github/ia/comentario.py publicar /tmp/revisao/seguranca.json /tmp/revisao/finops.json
