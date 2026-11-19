@@ -17,6 +17,7 @@ skills:
   - regras-do-especialista
   - sdd-planejar
   - sdd-tarefas
+  - plataforma-agentes
   - custo-diario
   - ciclo-demonstracao
   - modelo-de-ameacas

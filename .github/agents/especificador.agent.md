@@ -14,6 +14,7 @@ Antes de começar, leia e siga as skills abaixo (o `SKILL.md` de cada uma em `.c
 - `regras-do-especialista`
 - `sdd-especificar`
 - `pesquisa-fontes`
+- `novo-projeto`
 
 ## Skills de mercado desta tarefa
 Nenhuma: as skills do repositório cobrem a tarefa.

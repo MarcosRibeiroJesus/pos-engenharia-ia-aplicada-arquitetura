@@ -21,9 +21,11 @@ Todo projeto tem um componente que exercita tarefas da prova CCAR-F (Artigo VII)
 - O cliente recebe um transporte injetável: em teste, um fake que devolve a resposta gravada pelo hash do pedido.
 - **Casos mínimos:** resposta válida, JSON inválido seguido de correção, `max_tokens`, erro transitório com retentativa, recusa e prompt injection no dado de entrada.
 
-## Bedrock
-- Credencial via role com OIDC; a política IAM só permite `bedrock:InvokeModel` no ARN do modelo.
-- O ID do modelo fica em variável, nunca fixo no código.
+## Bedrock (só na demonstração, D-028)
+- **Credencial:** via role com OIDC. A política IAM só permite `bedrock:InvokeModel` no perfil de inferência de aplicação do produto, criado pela plataforma para atribuir custo.
+- **Guardrail da plataforma** em toda chamada (skill `plataforma-agentes`).
+- **O ID do modelo e o do perfil** ficam em variável, nunca fixos no código.
+- **Os agentes de código não passam por aqui:** usam a assinatura do dono.
 
 ## Skill de mercado complementar
 `claude-api`, da Anthropic. Ela vem embutida no Claude Code e, para os outros agentes, está no repositório `anthropics/skills`. Use-a para a referência atualizada de SDK, parâmetros e modelos.

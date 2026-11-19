@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "nota": "Modelos por família e nível, não por versão: em cada agente, use a versão mais recente da família no seletor. Preferir modelos Claude também no Antigravity e no Copilot mantém o comportamento das skills e prompts (paridade); Gemini e GPT entram como reserva.",
+  "nota": "D-028: o agente principal é o Claude Code com a assinatura Pro do dono (Opus é o padrão do Pro desde 2026-09). Quando a cota acaba, assumem o Antigravity com Gemini e o Copilot com modelos da OpenAI. Modelos por família e nível, não por versão: use a versão mais recente da família no seletor. Como as famílias diferem, skills e prompts não dependem de recurso exclusivo do Claude, e a revisão independente pode rodar em outra família de modelo (4.6).",
   "niveis": {
     "maximo": "raciocínio profundo: arquitetura, código de produção, segurança, análise SDD",
     "equilibrado": "pesquisa, posts, testes a partir de regras escritas, site",
@@ -36,7 +36,7 @@
       ],
       "como_iniciar": "Sessão nova em claude.ai/code (ambiente pos-engenharia-ia-aplicada-arquitetura) ou `claude` no terminal",
       "assincrono": "GitHub Action claude-code-action (fase 4 do harness)",
-      "cota": "limite de uso da assinatura em janela de 5 horas",
+      "cota": "assinatura Pro: janela de 5 horas e limite semanal; Opus consome a cota mais rápido que Sonnet",
       "modelos": {
         "maximo": "Claude Opus",
         "equilibrado": "Claude Sonnet",
@@ -53,7 +53,7 @@
       "assincrono": null,
       "cota": "cota da conta Google no Antigravity",
       "modelos": {
-        "maximo": "Claude Opus (se disponível no seletor) ou Gemini Pro",
+        "maximo": "Gemini Pro (mais recente, raciocínio alto)",
         "equilibrado": "Gemini Pro",
         "rapido": "Gemini Flash"
       }
@@ -68,9 +68,9 @@
       "assincrono": "Copilot cloud agent atribuído à issue",
       "cota": "premium requests mensais (cada ação do agente consome conforme o multiplicador do modelo)",
       "modelos": {
-        "maximo": "Claude Opus",
-        "equilibrado": "Claude Sonnet",
-        "rapido": "Auto ou Claude Haiku"
+        "maximo": "GPT de raciocínio mais capaz no seletor",
+        "equilibrado": "GPT padrão do seletor",
+        "rapido": "GPT mini"
       }
     }
   },

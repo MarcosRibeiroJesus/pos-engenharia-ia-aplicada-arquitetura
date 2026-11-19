@@ -14,6 +14,7 @@ Antes de começar, leia e siga as skills abaixo (o `SKILL.md` de cada uma em `.c
 - `regras-do-especialista`
 - `sdd-planejar`
 - `sdd-tarefas`
+- `plataforma-agentes`
 - `custo-diario`
 - `ciclo-demonstracao`
 - `modelo-de-ameacas`

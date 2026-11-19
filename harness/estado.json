@@ -112,6 +112,35 @@
       "destroy_workflow": ".github/workflows/03-mcp-regras-cdb-destroy.yml",
       "teto_diario_usd": null,
       "apply_workflow": ".github/workflows/03-mcp-regras-cdb-apply.yml"
+    },
+    {
+      "chave": "00-plataforma-agentes",
+      "disciplina": "00",
+      "tipo": "plataforma",
+      "titulo": "Plataforma de agentes compartilhada na AWS",
+      "branch": "plataforma/caminho-padrao",
+      "pastas": [
+        "plataforma/agentes/"
+      ],
+      "specs": "specs/00-plataforma-agentes/",
+      "fase": "especificar",
+      "retroativo": false,
+      "pr": null,
+      "cloud": null,
+      "decisoes": [
+        "D-021",
+        "D-022",
+        "D-024",
+        "D-027",
+        "D-028",
+        "D-029",
+        "D-030"
+      ],
+      "nota": "Primeiro projeto criado pelo caminho padrão. Plataforma compartilhada consumida pelos produtos; sobe e desce com as demonstrações.",
+      "infra_real": true,
+      "apply_workflow": ".github/workflows/00-plataforma-agentes-apply.yml",
+      "destroy_workflow": ".github/workflows/00-plataforma-agentes-destroy.yml",
+      "teto_diario_usd": null
     }
   ]
 }

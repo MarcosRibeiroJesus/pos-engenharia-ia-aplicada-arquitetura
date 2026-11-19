@@ -17,6 +17,7 @@ description: "Terraform com TDD neste repositório. Use para escrever ou mudar i
 | Criptografia | KMS ou SSE em repouso; TLS obrigatório (policy `aws:SecureTransport`) |
 | Menor privilégio | sem `"*"` em `Action` e `Resource` juntos; condições por recurso |
 | Tags | `project`, `module` e `managed-by` via `default_tags`, conferidas no recurso |
+| Isolamento (D-029) | nome com o prefixo da chave; policy das roles do projeto com `aws:ResourceTag/project` ou `aws:RequestTag/project` igual à chave |
 | Custo | nada fixo ocioso (NAT, endpoint de interface, cluster) sem ADR; AWS Budgets diário com `teto_diario_usd` |
 | Operação | log group com retenção, alarme nos componentes críticos |
 | Destroy sem sobras | `force_destroy` no lab, `deletion_protection` falso no lab, com ADR |

@@ -40,7 +40,8 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - **Para saber quem assume e com qual modelo:**
   `python3 harness/agente.py proximo --tarefa <arquitetura|codigo|seguranca|analise-sdd|especificacao|pesquisa|post|teste|mecanica> --projeto <chave>`
   Ele imprime o agente, o modelo de qualidade equivalente para o nível da tarefa, como iniciar e o prompt de passagem.
-- **Equivalência de modelos** (`harness/agentes.json`): por nível (máximo, equilibrado, rápido) e por família. Prefira modelos Claude também no Antigravity e no Copilot, para as skills se comportarem igual; Gemini e GPT são reserva.
+- **Equivalência de modelos** (`harness/agentes.json`, D-028): por nível (máximo, equilibrado, rápido) e por família. O principal é o Claude Code, com a assinatura Pro do dono; na troca, o Antigravity usa Gemini e o Copilot usa modelos da OpenAI.
+- **Escreva skills e prompts sem depender de recurso exclusivo do Claude,** para funcionarem igual nas três famílias.
 - O agente que assume começa pelo ritual da seção 1. Nada do agente anterior é necessário além do que está commitado.
 
 ## 6. Modelos por tipo de trabalho
