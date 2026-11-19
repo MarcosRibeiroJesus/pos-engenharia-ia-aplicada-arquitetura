@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Memória compartilhada para qualquer agente (Claude Code, Antigravity, Copilot).
+
+  ler        mostra DECISOES.md e registra, neste clone, que a versão atual foi lida
+  verificar  exit 1 se a memória mudou desde a última leitura (usado no pre-push)
+
+No Claude Code os hooks fazem isso sozinhos; nos outros agentes o AGENTS.md manda rodar `ler`
+no início, e o pre-push do git (.githooks) bloqueia o envio se houver decisão nova não lida.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+import ramo  # noqa: E402
+
+RAIZ = Path(__file__).resolve().parents[1]
+RAMO = "memoria-compartilhada"
+
+
+def marca(raiz: Path) -> Path:
+    return Path(ramo.git(raiz, "rev-parse", "--absolute-git-dir").strip()) / "harness-memoria-lida"
+
+
+def main(argv: list[str], raiz: Path = RAIZ) -> int:
+    cmd = argv[0] if argv else "ler"
+    sha = ramo.buscar(raiz, RAMO)
+    if not sha:
+        print("memória compartilhada indisponível (sem rede?); siga com o que está no repositório")
+        return 0
+    if cmd == "ler":
+        print(ramo.git(raiz, "show", f"{sha}:DECISOES.md"))
+        marca(raiz).write_text(sha)
+        return 0
+    if cmd == "verificar":
+        try:
+            lido = marca(raiz).read_text().strip()
+        except OSError:
+            lido = ""
+        if lido == sha:
+            return 0
+        print("A memória compartilhada mudou desde a sua última leitura.")
+        if lido:
+            try:
+                print(ramo.git(raiz, "diff", "--unified=0", lido, sha, "--", "DECISOES.md"))
+            except RuntimeError:
+                pass  # versão lida não existe mais neste clone: basta ler de novo
+        print("Rode `python3 harness/memoria.py ler`, ajuste o trabalho às decisões e repita o push.")
+        return 1
+    print(__doc__)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

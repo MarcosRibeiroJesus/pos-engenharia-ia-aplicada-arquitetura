@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Memória compartilhada para qualquer agente: não envie trabalho baseado em decisão velha.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+PY=$(command -v python3 || command -v python) || exit 0
+while read -r _ _ remote_ref _; do
+  case "$remote_ref" in refs/heads/memoria-compartilhada|refs/heads/agentes-status) exit 0;; esac
+done
+"$PY" harness/memoria.py verificar
