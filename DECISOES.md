@@ -28,10 +28,5 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - Teto do lab da D01 e da D02.
 - Projetos de IA aplicada da D02 e da D03.
 - Revisores de IA na esteira (custo de tokens) e conta AWS com OIDC para o `terraform plan` nos PRs.
-- Configurações do GitHub:
-  - variável `FLOCI_IMAGE`;
-  - secret `INFRACOST_API_KEY`;
-  - Dependency graph;
-  - ruleset do `main`;
-  - ruleset que protege o branch `memoria-compartilhada`.
+- Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
 - Merges dos PRs #9, #10, #11, #12 e #16 (harness com SDD).
