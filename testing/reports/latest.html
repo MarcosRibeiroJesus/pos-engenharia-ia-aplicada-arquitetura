@@ -1,0 +1,1892 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integração 01.03 · 20261118-084152</title>
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --ink:#e7e9ee; --mute:#9aa3b2; --line:#262b36;
+          --ok:#3ecf8e; --fail:#ff6b6b; --warn:#f5c451; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 Georgia,serif }
+  main { max-width:1080px; margin:0 auto; padding:40px 16px 64px }
+  h1 { font:700 26px/1.2 system-ui,sans-serif; margin:4px 0 6px }
+  .sub { color:var(--mute); font:14px system-ui,sans-serif; margin-bottom:24px }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:24px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font:14px system-ui,sans-serif }
+  .card b { display:block; font-size:22px; margin-top:4px }
+  .verdict { font:700 13px system-ui,sans-serif; letter-spacing:.08em }
+  .verdict.ok { color:var(--ok) } .verdict.falha { color:var(--fail) } .verdict.lacuna { color:var(--warn) }
+  .wrap { overflow-x:auto }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); font:14px system-ui,sans-serif }
+  th,td { text-align:left; padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top }
+  th { color:var(--mute); font-weight:600 }
+  tr.detail td { padding:0 11px 9px }
+  .note { color:var(--mute); font-size:12.5px; margin-top:3px }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; word-break:break-word }
+  .num { text-align:right; white-space:nowrap; color:var(--mute) }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font:600 12px system-ui,sans-serif; white-space:nowrap }
+  .badge.ok { background:#173b2c; color:var(--ok) } .badge.falha { background:#3d1d1f; color:var(--fail) }
+  .badge.pulado { background:#242832; color:var(--mute) } .badge.lacuna { background:#3a3117; color:var(--warn) }
+  details summary { cursor:pointer; color:var(--mute); font:13px system-ui,sans-serif; padding:4px 0 }
+  pre { background:#0b0d11; padding:12px; border-radius:8px; overflow:auto; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:420px }
+  footer { margin-top:24px; color:var(--mute); font:13px system-ui,sans-serif }
+</style></head>
+<body><main>
+  <div class="verdict falha">REPROVADO</div>
+  <h1>Integração da unidade 01.03 · recomendação</h1>
+  <div class="sub">Execução 20261118-084152 · stack <code>recsys-lab</code> · emulador Floci · endpoint <code>http://localhost:4566</code></div>
+  <div class="cards">
+    <div class="card">Passos<b>32</b></div>
+    <div class="card">Passaram<b style="color:var(--ok)">24</b></div>
+    <div class="card">Falharam<b style="color:var(--fail)">3</b></div>
+    <div class="card">Lacunas do emulador<b style="color:var(--warn)">5</b></div>
+    <div class="card">Pulados<b>0</b></div>
+    <div class="card">Tempo<b>2592.1s</b></div>
+  </div>
+  <div class="wrap"><table>
+    <thead><tr><th>#</th><th>Passo</th><th>Regra</th><th>Status</th><th>Esperado</th><th>Obtido</th><th>Tempo</th></tr></thead>
+    <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td>Host do S3 Control do emulador resolve<div class="note"></div></td>
+          <td class="mono"></td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">000000000000.localhost -&gt; 127.0.0.1</td>
+          <td class="mono">resolve</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">2</td>
+          <td>Emulador responde (STS)<div class="note"></div></td>
+          <td class="mono"></td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">1.08s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ aws --endpoint-url http://localhost:4566 sts get-caller-identity
+
+{
+    &quot;UserId&quot;: &quot;000000000000&quot;,
+    &quot;Account&quot;: &quot;000000000000&quot;,
+    &quot;Arn&quot;: &quot;arn:aws:iam::000000000000:root&quot;
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">3</td>
+          <td>Bootstrap: init<div class="note"></div></td>
+          <td class="mono">R8</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">13.58s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform init -input=false -no-color
+
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/aws versions matching &quot;~&gt; 6.0&quot;...
+- Installing hashicorp/aws v6.73.0...
+- Installed hashicorp/aws v6.73.0 (signed by HashiCorp)
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run &quot;terraform init&quot; in the future.
+
+Terraform has been successfully initialized!</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">4</td>
+          <td>Bootstrap: apply do bucket de state<div class="note"></div></td>
+          <td class="mono">R8</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">63.45s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform apply -auto-approve -input=false -no-color -var=state_bucket_name=recsys-tfstate-floci
+
+data.aws_caller_identity.current: Reading...
+data.aws_caller_identity.current: Read complete after 0s [id=000000000000]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_s3_bucket.state will be created
+  + resource &quot;aws_s3_bucket&quot; &quot;state&quot; {
+      + acceleration_status         = (known after apply)
+      + acl                         = (known after apply)
+      + arn                         = (known after apply)
+      + bucket                      = &quot;recsys-tfstate-floci&quot;
+      + bucket_domain_name          = (known after apply)
+      + bucket_namespace            = (known after apply)
+      + bucket_prefix               = (known after apply)
+      + bucket_region               = (known after apply)
+      + bucket_regional_domain_name = (known after apply)
+      + force_destroy               = false
+      + hosted_zone_id              = (known after apply)
+      + id                          = (known after apply)
+      + object_lock_enabled         = (known after apply)
+      + policy                      = (known after apply)
+      + region                      = &quot;us-east-1&quot;
+      + request_payer               = (known after apply)
+      + tags_all                    = {
+          + &quot;component&quot;  = &quot;tfstate&quot;
+          + &quot;managed-by&quot; = &quot;terraform&quot;
+          + &quot;module&quot;     = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;    = &quot;recsys&quot;
+        }
+      + website_domain              = (known after apply)
+      + website_endpoint            = (known after apply)
+
+      + cors_rule (known after apply)
+
+      + grant (known after apply)
+
+      + lifecycle_rule (known after apply)
+
+      + logging (known after apply)
+
+      + object_lock_configuration (known after apply)
+
+      + replication_configuration (known after apply)
+
+      + server_side_encryption_configuration (known after apply)
+
+      + versioning (known after apply)
+
+      + website (known after apply)
+    }
+
+  # aws_s3_bucket_lifecycle_configuration.state will be created
+  + resource &quot;aws_s3_bucket_lifecycle_configuration&quot; &quot;state&quot; {
+      + bucket                                 = (known after apply)
+      + expected_bucket_owner                  = (known after apply)
+      + id                                     = (known after apply)
+      + region                                 = &quot;us-east-1&quot;
+      + transition_default_minimum_object_size = &quot;all_storage_classes_128K&quot;
+
+      + rule {
+          + id     = &quot;expire-old-state-versions&quot;
+          + status = &quot;Enabled&quot;
+            # (1 unchanged attribute hidden)
+
+          + abort_incomplete_multipart_upload {
+              + days_after_initiation = 1
+            }
+
+          + filter {
+                # (1 unchanged attribute hidden)
+            }
+
+          + noncurrent_version_expiration {
+              + noncurrent_days = 90
+            }
+        }
+    }
+
+  # aws_s3_bucket_ownership_controls.state will be created
+  + resource &quot;aws_s3_bucket_ownership_controls&quot; &quot;state&quot; {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = &quot;us-east-1&quot;
+
+      + rule {
+          + object_ownership = &quot;BucketOwnerEnforced&quot;
+        }
+    }
+
+  # aws_s3_bucket_policy.state will be created
+  + resource &quot;aws_s3_bucket_policy&quot; &quot;state&quot; {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + policy = (known after apply)
+      + region = &quot;us-east-1&quot;
+    }
+
+  # aws_s3_bucket_public_access_block.state will be created
+  + resource &quot;aws_s3_bucket_public_access_block&quot; &quot;state&quot; {
+      + block_public_acls       = true
+      + block_public_policy     = true
+      + bucket                  = (known after apply)
+      + id                      = (known after apply)
+      + ignore_public_acls      = true
+      + region                  = &quot;us-east-1&quot;
+      + restrict_public_buckets = true
+    }
+
+  # aws_s3_bucket_server_side_encryption_configuration.state will be created
+  + resource &quot;aws_s3_bucket_server_side_encryption_configuration&quot; &quot;state&quot; {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = &quot;us-east-1&quot;
+
+      + rule {
+          + blocked_encryption_types = (known after apply)
+          + bucket_key_enabled       = (known after apply)
+
+          + apply_server_side_encryption_by_default {
+              + kms_master_key_id = (known after apply)
+              + sse_algorithm     = &quot;AES256&quot;
+            }
+        }
+    }
+
+  # aws_s3_bucket_versioning.state will be created
+  + resource &quot;aws_s3_bucket_versioning&quot; &quot;state&quot; {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = &quot;us-east-1&quot;
+
+      + versioning_configuration {
+          + mfa_delete = (known after apply)
+          + status     = &quot;Enabled&quot;
+        }
+    }
+
+Plan: 7 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + state_bucket    = &quot;recsys-tfstate-floci&quot;
+aws_s3_bucket.state: Creating...
+aws_s3_bucket.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_versioning.state: Creating...
+aws_s3_bucket_ownership_controls.state: Creating...
+aws_s3_bucket_server_side_encryption_configuration.state: Creating...
+aws_s3_bucket_public_access_block.state: Creating...
+aws_s3_bucket_public_access_block.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_ownership_controls.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_server_side_encryption_configuration.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_lifecycle_configuration.state: Creating...
+aws_s3_bucket_policy.state: Creating...
+aws_s3_bucket_policy.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_versioning.state: Creation complete after 1s [id=recsys-tfstate-floci]
+aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m10s elapsed]
+aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m20s elapsed]
+aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m30s elapsed]
+aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m40s elapsed]
+aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m50s elapsed]
+aws_s3_bucket_lifecycle_configuration.state: Creation complete after 55s [id=recsys-tfstate-floci]
+
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+state_bucket = &quot;recsys-tfstate-floci&quot;</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">5</td>
+          <td>Stack: init com backend S3 + use_lockfile<div class="note"></div></td>
+          <td class="mono">R8</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">17.02s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform init -input=false -no-color -reconfigure -backend-config=bucket=recsys-tfstate-floci -backend-config=key=modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate -backend-config=region=us-east-1 -backend-config=use_lockfile=true -backend-config=endpoints={s3=&quot;http://localhost:4566&quot;} -backend-config=use_path_style=true -backend-config=skip_credentials_validation=true -backend-config=skip_requesting_account_id=true -backend-config=skip_metadata_api_check=true -backend-config=skip_s3_checksum=true
+
+Initializing the backend...
+
+Successfully configured the backend &quot;s3&quot;! Terraform will automatically
+use this backend unless the backend configuration changes.
+Initializing modules...
+- athena_queries in modules/athena_queries
+- cloudwatch_monitoring in modules/cloudwatch_monitoring
+- dynamodb_table in modules/dynamodb_table
+- ecs_service in modules/ecs_service
+- glue_pipeline in modules/glue_pipeline
+- kms in modules/kms_key
+- lake_formation in modules/lake_formation
+- memorydb_cluster in modules/memorydb_cluster
+- mwaa_orchestration in modules/mwaa_orchestration
+- networking in modules/networking
+- s3_golden_dataset in modules/s3_golden_dataset
+- sagemaker_endpoint in modules/sagemaker_endpoint
+- sagemaker_training in modules/sagemaker_training
+- test.tests.regras_base.kms_chave_da_plataforma in modules/kms_key
+- test.tests.regras_base.rede_privada_por_padrao in modules/networking
+- test.tests.regras_base.rede_endpoints_de_interface_no_lab in modules/networking
+- test.tests.regras_base.rede_mwaa_ligado_adiciona_endpoints in modules/networking
+- test.tests.regras_base.rede_api_publica_exige_opt_in in modules/networking
+- test.tests.regras_base.s3_golden_dataset in modules/s3_golden_dataset
+- test.tests.regras_base.dynamodb_criptografado in modules/dynamodb_table
+- test.tests.regras_base.memorydb_tls in modules/memorydb_cluster
+- test.tests.regras_base.ecs_menor_privilegio_e_privado in modules/ecs_service
+- test.tests.regras_base.ecs_api_publica_exige_tls in modules/ecs_service
+- test.tests.regras_base.ecs_api_publica_com_https in modules/ecs_service
+- test.tests.regras_base.sagemaker_sem_full_access in modules/sagemaker_endpoint
+- test.tests.regras_base.mwaa_desligado_por_padrao in modules/mwaa_orchestration
+- test.tests.regras_base.mwaa_ligado_privado in modules/mwaa_orchestration
+- test.tests.regras_base.glue_criptografado_e_com_logs in modules/glue_pipeline
+- test.tests.regras_base.athena_resultados_kms in modules/athena_queries
+- test.tests.regras_base.monitoramento_e_orcamento in modules/cloudwatch_monitoring
+- test.tests.regras_base.lake_formation_concede_a_role_do_glue in modules/lake_formation
+Initializing provider plugins...
+- Reusing previous version of hashicorp/aws from the dependency lock file
+- Installing hashicorp/aws v6.73.0...
+- Installed hashicorp/aws v6.73.0 (signed by HashiCorp)
+
+Terraform has been successfully initialized!</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">6</td>
+          <td>Stack: plan completo (código real, sem substitutos)<div class="note"></div></td>
+          <td class="mono"></td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">6.49s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform plan -input=false -no-color -lock=false
+
+ = (known after apply)
+      + id     = (known after apply)
+      + region = &quot;us-east-1&quot;
+
+      + rule {
+          + blocked_encryption_types = (known after apply)
+          + bucket_key_enabled       = true
+
+          + apply_server_side_encryption_by_default {
+              + kms_master_key_id = (known after apply)
+              + sse_algorithm     = &quot;aws:kms&quot;
+            }
+        }
+    }
+
+  # module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset will be created
+  + resource &quot;aws_s3_bucket_versioning&quot; &quot;golden_dataset&quot; {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = &quot;us-east-1&quot;
+
+      + versioning_configuration {
+          + mfa_delete = (known after apply)
+          + status     = &quot;Enabled&quot;
+        }
+    }
+
+  # module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;] will be created
+  + resource &quot;aws_s3_object&quot; &quot;prefix&quot; {
+      + acl                    = (known after apply)
+      + arn                    = (known after apply)
+      + bucket                 = (known after apply)
+      + bucket_key_enabled     = (known after apply)
+      + checksum_crc32         = (known after apply)
+      + checksum_crc32c        = (known after apply)
+      + checksum_crc64nvme     = (known after apply)
+      + checksum_sha1          = (known after apply)
+      + checksum_sha256        = (known after apply)
+      + content_type           = (known after apply)
+      + etag                   = (known after apply)
+      + force_destroy          = false
+      + id                     = (known after apply)
+      + key                    = &quot;catalog/&quot;
+      + kms_key_id             = (known after apply)
+      + region                 = &quot;us-east-1&quot;
+      + server_side_encryption = (known after apply)
+      + storage_class          = (known after apply)
+      + tags_all               = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + version_id             = (known after apply)
+    }
+
+  # module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;] will be created
+  + resource &quot;aws_s3_object&quot; &quot;prefix&quot; {
+      + acl                    = (known after apply)
+      + arn                    = (known after apply)
+      + bucket                 = (known after apply)
+      + bucket_key_enabled     = (known after apply)
+      + checksum_crc32         = (known after apply)
+      + checksum_crc32c        = (known after apply)
+      + checksum_crc64nvme     = (known after apply)
+      + checksum_sha1          = (known after apply)
+      + checksum_sha256        = (known after apply)
+      + content_type           = (known after apply)
+      + etag                   = (known after apply)
+      + force_destroy          = false
+      + id                     = (known after apply)
+      + key                    = &quot;interactions/&quot;
+      + kms_key_id             = (known after apply)
+      + region                 = &quot;us-east-1&quot;
+      + server_side_encryption = (known after apply)
+      + storage_class          = (known after apply)
+      + tags_all               = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + version_id             = (known after apply)
+    }
+
+  # module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;] will be created
+  + resource &quot;aws_s3_object&quot; &quot;prefix&quot; {
+      + acl                    = (known after apply)
+      + arn                    = (known after apply)
+      + bucket                 = (known after apply)
+      + bucket_key_enabled     = (known after apply)
+      + checksum_crc32         = (known after apply)
+      + checksum_crc32c        = (known after apply)
+      + checksum_crc64nvme     = (known after apply)
+      + checksum_sha1          = (known after apply)
+      + checksum_sha256        = (known after apply)
+      + content_type           = (known after apply)
+      + etag                   = (known after apply)
+      + force_destroy          = false
+      + id                     = (known after apply)
+      + key                    = &quot;recommendations/&quot;
+      + kms_key_id             = (known after apply)
+      + region                 = &quot;us-east-1&quot;
+      + server_side_encryption = (known after apply)
+      + storage_class          = (known after apply)
+      + tags_all               = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + version_id             = (known after apply)
+    }
+
+  # module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;] will be created
+  + resource &quot;aws_s3_object&quot; &quot;prefix&quot; {
+      + acl                    = (known after apply)
+      + arn                    = (known after apply)
+      + bucket                 = (known after apply)
+      + bucket_key_enabled     = (known after apply)
+      + checksum_crc32         = (known after apply)
+      + checksum_crc32c        = (known after apply)
+      + checksum_crc64nvme     = (known after apply)
+      + checksum_sha1          = (known after apply)
+      + checksum_sha256        = (known after apply)
+      + content_type           = (known after apply)
+      + etag                   = (known after apply)
+      + force_destroy          = false
+      + id                     = (known after apply)
+      + key                    = &quot;user_features/&quot;
+      + kms_key_id             = (known after apply)
+      + region                 = &quot;us-east-1&quot;
+      + server_side_encryption = (known after apply)
+      + storage_class          = (known after apply)
+      + tags_all               = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + version_id             = (known after apply)
+    }
+
+  # module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint will be created
+  + resource &quot;aws_cloudwatch_log_group&quot; &quot;endpoint&quot; {
+      + arn                         = (known after apply)
+      + deletion_protection_enabled = (known after apply)
+      + id                          = (known after apply)
+      + kms_key_id                  = (known after apply)
+      + log_group_class             = (known after apply)
+      + name                        = &quot;/aws/sagemaker/Endpoints/recsys-lab-reranker&quot;
+      + name_prefix                 = (known after apply)
+      + region                      = &quot;us-east-1&quot;
+      + retention_in_days           = 14
+      + skip_destroy                = false
+      + tags_all                    = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+    }
+
+  # module.sagemaker_endpoint.aws_iam_role.sagemaker_execution will be created
+  + resource &quot;aws_iam_role&quot; &quot;sagemaker_execution&quot; {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = &quot;sts:AssumeRole&quot;
+                      + Effect    = &quot;Allow&quot;
+                      + Principal = {
+                          + Service = &quot;sagemaker.amazonaws.com&quot;
+                        }
+                    },
+                ]
+              + Version   = &quot;2012-10-17&quot;
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = &quot;recsys-lab-sagemaker-role&quot;
+      + name_prefix           = (known after apply)
+      + path                  = &quot;/&quot;
+      + tags_all              = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution will be created
+  + resource &quot;aws_iam_role_policy&quot; &quot;sagemaker_execution&quot; {
+      + id          = (known after apply)
+      + name        = &quot;serve-reranker&quot;
+      + name_prefix = (known after apply)
+      + policy      = (known after apply)
+      + role        = (known after apply)
+    }
+
+  # module.sagemaker_endpoint.aws_sagemaker_endpoint.reranker will be created
+  + resource &quot;aws_sagemaker_endpoint&quot; &quot;reranker&quot; {
+      + arn                  = (known after apply)
+      + endpoint_config_name = &quot;recsys-lab-reranker-config&quot;
+      + id                   = (known after apply)
+      + name                 = &quot;recsys-lab-reranker&quot;
+      + region               = &quot;us-east-1&quot;
+      + tags_all             = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+    }
+
+  # module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker will be created
+  + resource &quot;aws_sagemaker_endpoint_configuration&quot; &quot;reranker&quot; {
+      + arn         = (known after apply)
+      + id          = (known after apply)
+      + name        = &quot;recsys-lab-reranker-config&quot;
+      + name_prefix = (known after apply)
+      + region      = &quot;us-east-1&quot;
+      + tags_all    = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+
+      + production_variants {
+          + initial_variant_weight = 1
+          + model_name             = &quot;recsys-lab-reranker-model&quot;
+          + variant_name           = &quot;AllTraffic&quot;
+          + volume_size_in_gb      = (known after apply)
+
+          + serverless_config {
+              + max_concurrency   = 5
+              + memory_size_in_mb = 2048
+            }
+        }
+    }
+
+  # module.sagemaker_endpoint.aws_sagemaker_model.reranker will be created
+  + resource &quot;aws_sagemaker_model&quot; &quot;reranker&quot; {
+      + arn                      = (known after apply)
+      + enable_network_isolation = true
+      + execution_role_arn       = (known after apply)
+      + id                       = (known after apply)
+      + name                     = &quot;recsys-lab-reranker-model&quot;
+      + region                   = &quot;us-east-1&quot;
+      + tags_all                 = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+
+      + inference_execution_config (known after apply)
+
+      + primary_container {
+          + image = &quot;683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1&quot;
+          + mode  = &quot;SingleModel&quot;
+
+          + additional_model_data_source (known after apply)
+
+          + model_data_source (known after apply)
+        }
+    }
+
+  # module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy will be created
+  + resource &quot;aws_iam_policy&quot; &quot;sagemaker_s3_policy&quot; {
+      + arn              = (known after apply)
+      + attachment_count = (known after apply)
+      + description      = &quot;Treino Spot: le o golden dataset e grava checkpoints e modelos&quot;
+      + id               = (known after apply)
+      + name             = &quot;recsys-lab-sm-s3-policy&quot;
+      + name_prefix      = (known after apply)
+      + path             = &quot;/&quot;
+      + policy           = (known after apply)
+      + policy_id        = (known after apply)
+      + tags_all         = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+    }
+
+  # module.sagemaker_training.aws_iam_role.sagemaker_train_role will be created
+  + resource &quot;aws_iam_role&quot; &quot;sagemaker_train_role&quot; {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = &quot;sts:AssumeRole&quot;
+                      + Effect    = &quot;Allow&quot;
+                      + Principal = {
+                          + Service = &quot;sagemaker.amazonaws.com&quot;
+                        }
+                    },
+                ]
+              + Version   = &quot;2012-10-17&quot;
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = &quot;recsys-lab-sm-train-role&quot;
+      + name_prefix           = (known after apply)
+      + path                  = &quot;/&quot;
+      + tags_all              = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach will be created
+  + resource &quot;aws_iam_role_policy_attachment&quot; &quot;sagemaker_s3_attach&quot; {
+      + id         = (known after apply)
+      + policy_arn = (known after apply)
+      + role       = &quot;recsys-lab-sm-train-role&quot;
+    }
+
+  # module.sagemaker_training.aws_s3_object.train_script will be created
+  + resource &quot;aws_s3_object&quot; &quot;train_script&quot; {
+      + acl                    = (known after apply)
+      + arn                    = (known after apply)
+      + bucket                 = &quot;recsys-lab-golden-000000000000&quot;
+      + bucket_key_enabled     = (known after apply)
+      + checksum_crc32         = (known after apply)
+      + checksum_crc32c        = (known after apply)
+      + checksum_crc64nvme     = (known after apply)
+      + checksum_sha1          = (known after apply)
+      + checksum_sha256        = (known after apply)
+      + content_type           = (known after apply)
+      + etag                   = &quot;0d42d1d8feefbc0292f720a9ebe2f179&quot;
+      + force_destroy          = false
+      + id                     = (known after apply)
+      + key                    = &quot;scripts/train_model.py&quot;
+      + kms_key_id             = (known after apply)
+      + region                 = &quot;us-east-1&quot;
+      + server_side_encryption = (known after apply)
+      + source                 = &quot;modules/sagemaker_training/../../../../src/batch/sagemaker/train_model.py&quot;
+      + storage_class          = (known after apply)
+      + tags_all               = {
+          + &quot;environment&quot; = &quot;lab&quot;
+          + &quot;managed-by&quot;  = &quot;terraform&quot;
+          + &quot;module&quot;      = &quot;01-fundamentos-ia-llms/03-recomendacao&quot;
+          + &quot;project&quot;     = &quot;recsys&quot;
+        }
+      + version_id             = (known after apply)
+    }
+
+Plan: 89 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + alerts_topic_arn           = (known after apply)
+  + athena_workgroup_name      = &quot;recsys-lab-workgroup&quot;
+  + cloudwatch_dashboard_name  = &quot;recsys-lab-dashboard&quot;
+  + dynamodb_table_name        = &quot;recsys-lab-user_recommendations&quot;
+  + ecr_repository_url         = (known after apply)
+  + ecs_service_alb_dns        = (known after apply)
+  + glue_job_name              = &quot;recsys-lab-feature-engineering&quot;
+  + memorydb_cluster_endpoint  = (known after apply)
+  + s3_golden_dataset_bucket   = &quot;recsys-lab-golden-000000000000&quot;
+  + sagemaker_endpoint_name    = &quot;recsys-lab-reranker&quot;
+  + sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/train_model.py&quot;</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">7</td>
+          <td>Coberto só no plan: module.memorydb_cluster.aws_memorydb_subnet_group.main<div class="note">Lacuna do Floci 2.5: CreateSubnetGroup e CreateParameterGroup devolvem UnknownOperationException; DescribeClusters com ShowShardDetails devolve Shards: null e o provider falha em &#x27;no available shards found&#x27;</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">8</td>
+          <td>Coberto só no plan: module.memorydb_cluster.aws_memorydb_parameter_group.redis7<div class="note">Lacuna do Floci 2.5: CreateSubnetGroup e CreateParameterGroup devolvem UnknownOperationException; DescribeClusters com ShowShardDetails devolve Shards: null e o provider falha em &#x27;no available shards found&#x27;</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">9</td>
+          <td>Coberto só no plan: module.memorydb_cluster.aws_memorydb_cluster.vector_cluster<div class="note">Lacuna do Floci 2.5: CreateSubnetGroup e CreateParameterGroup devolvem UnknownOperationException; DescribeClusters com ShowShardDetails devolve Shards: null e o provider falha em &#x27;no available shards found&#x27;</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">10</td>
+          <td>Coberto só no plan: module.sagemaker_endpoint.aws_sagemaker_endpoint.reranker<div class="note">Lacuna do Floci 2.5: endpoint vai a Failed: java.net.SocketException (o Floci tenta subir o container do modelo via Docker)</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">11</td>
+          <td>Stack: terraform apply<div class="note"></div></td>
+          <td class="mono"></td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">73.71s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform apply -auto-approve -input=false -no-color
+
+: Creation complete after 0s [id=sg-54c033d2df603432e]
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Creating...
+module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Creating...
+module.s3_golden_dataset.aws_s3_bucket_public_access_block.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Creating...
+module.ecs_service.aws_lb_target_group.app: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/e7daa7d0f1c64c0e]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/catalog/]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/interactions/]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creating...
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Creating...
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/recommendations/]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/user_features/]
+module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Creating...
+module.sagemaker_training.aws_s3_object.train_script: Creating...
+module.mwaa_orchestration.aws_s3_object.pipeline_dag: Creating...
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Creation complete after 0s [id=recsys-lab-golden-000000000000/scripts/feature_engineering.py]
+module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.lake_formation.aws_lakeformation_resource.golden_dataset: Creating...
+module.sagemaker_training.aws_s3_object.train_script: Creation complete after 0s [id=recsys-lab-golden-000000000000/scripts/train_model.py]
+module.mwaa_orchestration.aws_s3_object.pipeline_dag: Creation complete after 0s [id=recsys-lab-golden-000000000000/dags/daily_hybrid_recommendation_pipeline.py]
+module.lake_formation.aws_lakeformation_resource.golden_dataset: Creation complete after 0s [id=arn:aws:s3:::recsys-lab-golden-000000000000]
+module.lake_formation.aws_lakeformation_permissions.data_location: Creating...
+module.lake_formation.aws_lakeformation_permissions.data_location: Creation complete after 0s [id=1929339907]
+module.networking.aws_route_table.private: Creation complete after 0s [id=rtb-201a3ed5]
+module.networking.aws_route_table_association.private[1]: Creating...
+module.networking.aws_route_table_association.private[0]: Creating...
+module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Creating...
+module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Creating...
+module.networking.aws_route_table_association.private[0]: Creation complete after 0s [id=rtbassoc-5898d2ed]
+module.networking.aws_route_table_association.private[1]: Creation complete after 0s [id=rtbassoc-d5cc48d5]
+module.networking.aws_security_group.endpoints: Creation complete after 0s [id=sg-f182bbf7d87bddaa0]
+module.networking.aws_security_group.alb: Creation complete after 0s [id=sg-7f36cef77da439660]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Creation complete after 1s [id=recsys-lab-golden-000000000000]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creating...
+module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Creation complete after 5s [id=vpce-efd0fb0af39b15502]
+module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Creation complete after 5s [id=vpce-3800a1e71dbd35790]
+module.networking.aws_security_group.ecs: Creating...
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creation complete after 5s [id=vpce-5da431df394a7d1ea]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creation complete after 5s [id=vpce-76bf28f46807bc0b9]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Creation complete after 5s [id=vpce-020c28adc27b635e6]
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creation complete after 5s [id=vpce-4c05e76a3fec370db]
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creation complete after 5s [id=vpce-1e3142d8401c82183]
+module.ecs_service.aws_lb.alb: Creating...
+module.networking.aws_security_group.ecs: Creation complete after 0s [id=sg-d3643a615de543728]
+module.networking.aws_security_group.internal: Creating...
+module.networking.aws_security_group.internal: Creation complete after 1s [id=sg-80e6f583fbac0c0eb]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creation complete after 5s [id=vpce-baff51de703ecce18]
+module.ecs_service.aws_ecs_cluster.main: Still creating... [00m10s elapsed]
+module.kms.aws_kms_key.platform: Still creating... [00m10s elapsed]
+module.ecs_service.aws_ecs_cluster.main: Creation complete after 10s [id=arn:aws:ecs:us-east-1:000000000000:cluster/recsys-lab-cluster]
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Creating...
+module.kms.aws_kms_key.platform: Creation complete after 12s [id=85d9b7f7-99b2-49a5-bd26-a8420c1bc594]
+module.kms.aws_kms_alias.platform: Creating...
+module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Creating...
+module.networking.aws_cloudwatch_log_group.flow_logs[0]: Creating...
+module.athena_queries.aws_athena_workgroup.analytics: Creating...
+module.kms.aws_kms_alias.platform: Creation complete after 0s [id=alias/recsys-lab-platform]
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Creating...
+module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Creating...
+module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creating...
+module.glue_pipeline.aws_glue_security_configuration.main: Creating...
+module.ecs_service.aws_ecr_repository.app: Creating...
+module.glue_pipeline.aws_glue_security_configuration.main: Creation complete after 0s [id=recsys-lab-glue-security]
+module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Creation complete after 0s [id=/aws/sagemaker/Endpoints/recsys-lab-reranker]
+module.athena_queries.aws_athena_workgroup.analytics: Creation complete after 0s [id=recsys-lab-workgroup]
+module.networking.aws_cloudwatch_log_group.flow_logs[0]: Creation complete after 0s [id=/vpc/recsys-lab/flow-logs]
+module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creation complete after 0s [id=recsys-lab-reranker-config]
+module.ecs_service.aws_ecr_repository.app: Creation complete after 0s [id=recsys-lab/recommendation-service]
+module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Creating...
+module.ecs_service.aws_cloudwatch_log_group.ecs: Creating...
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creating...
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Creating...
+module.athena_queries.aws_athena_named_query.extract_curated_features: Creating...
+module.networking.aws_iam_role_policy.flow_logs[0]: Creating...
+module.dynamodb_table.aws_dynamodb_table.user_recommendations: Creating...
+module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Creation complete after 0s [id=recsys-lab-sagemaker-role:serve-reranker]
+module.networking.aws_flow_log.vpc[0]: Creating...
+module.athena_queries.aws_athena_named_query.extract_curated_features: Creation complete after 0s [id=3f1ffa10-9c34-432c-a740-271e50c34fa3]
+module.ecs_service.aws_ecr_lifecycle_policy.app: Creating...
+module.networking.aws_iam_role_policy.flow_logs[0]: Creation complete after 0s [id=recsys-lab-flow-logs-role:write-flow-logs]
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creation complete after 0s [id=arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
+module.ecs_service.aws_cloudwatch_log_group.ecs: Creation complete after 0s [id=/ecs/recsys-lab]
+module.networking.aws_flow_log.vpc[0]: Creation complete after 0s [id=fl-b2b30f97441cb9932]
+module.cloudwatch_monitoring.data.aws_iam_policy_document.alerts: Reading...
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Creation complete after 0s [id=/aws-glue/jobs/recsys-lab-feature-engineering]
+module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Creating...
+module.ecs_service.aws_iam_role_policy.ecs_execution: Creating...
+module.ecs_service.aws_ecr_lifecycle_policy.app: Creation complete after 0s [id=recsys-lab/recommendation-service]
+module.cloudwatch_monitoring.data.aws_iam_policy_document.alerts: Read complete after 0s [id=4093629395]
+module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Creation complete after 0s [id=recsys-lab-sm-train-role/arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creating...
+module.glue_pipeline.aws_glue_job.feature_engineering: Creating...
+module.ecs_service.aws_iam_role_policy.ecs_execution: Creation complete after 0s [id=recsys-lab-ecs-exec-role:pull-image-and-write-logs]
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
+module.glue_pipeline.aws_glue_job.feature_engineering: Creation complete after 0s [id=recsys-lab-feature-engineering]
+module.cloudwatch_monitoring.aws_budgets_budget.monthly: Creating...
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m10s elapsed]
+module.ecs_service.aws_lb.alb: Still creating... [00m10s elapsed]
+module.cloudwatch_monitoring.aws_budgets_budget.monthly: Creation complete after 5s [id=000000000000:recsys-lab-monthly]
+module.dynamodb_table.aws_dynamodb_table.user_recommendations: Creation complete after 6s [id=recsys-lab-user_recommendations]
+module.ecs_service.aws_iam_policy.ecs_task_policy: Creating...
+module.glue_pipeline.aws_iam_role_policy.glue: Creating...
+module.ecs_service.aws_ecs_task_definition.app: Creating...
+module.ecs_service.aws_iam_policy.ecs_task_policy: Creation complete after 0s [id=arn:aws:iam::000000000000:policy/recsys-lab-ecs-task-policy]
+module.glue_pipeline.aws_iam_role_policy.glue: Creation complete after 0s [id=recsys-lab-glue-role:feature-engineering]
+module.ecs_service.aws_iam_role_policy_attachment.ecs_task_policy_attach: Creating...
+module.ecs_service.aws_ecs_task_definition.app: Creation complete after 0s [id=recsys-lab-task]
+module.ecs_service.aws_iam_role_policy_attachment.ecs_task_policy_attach: Creation complete after 0s [id=recsys-lab-ecs-task-role/arn:aws:iam::000000000000:policy/recsys-lab-ecs-task-policy]
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Still creating... [00m10s elapsed]
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Creation complete after 10s [id=recsys-lab-cluster]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m20s elapsed]
+module.ecs_service.aws_lb.alb: Still creating... [00m20s elapsed]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m30s elapsed]
+module.ecs_service.aws_lb.alb: Still creating... [00m30s elapsed]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m40s elapsed]
+module.ecs_service.aws_lb.alb: Still creating... [00m40s elapsed]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m50s elapsed]
+module.ecs_service.aws_lb.alb: Still creating... [00m50s elapsed]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Creation complete after 55s [id=recsys-lab-golden-000000000000]
+module.ecs_service.aws_lb.alb: Still creating... [01m00s elapsed]
+module.ecs_service.aws_lb.alb: Creation complete after 1m0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/5a94de84bb9642d3]
+module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Creating...
+module.ecs_service.aws_lb_listener.http: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Creation complete after 0s [id=recsys-lab-dashboard]
+module.ecs_service.aws_lb_listener.http: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/recsys-lab-alb/5a94de84bb9642d3/e5a718d5f3e54d46]
+module.ecs_service.aws_ecs_service.app: Creating...
+module.ecs_service.aws_ecs_service.app: Creation complete after 0s [id=arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_5xx&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Creation complete after 0s [id=recsys-lab-healthy-targets]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_5xx&quot;]: Creation complete after 0s [id=recsys-lab-api-5xx]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Creation complete after 0s [id=recsys-lab-api-p95-latency]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Creation complete after 0s [id=recsys-lab-degraded-mode]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Creation complete after 0s [id=recsys-lab-sagemaker-errors]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creation complete after 0s [id=recsys-lab-explanation-fallback]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Creation complete after 0s [id=recsys-lab-running-tasks]
+
+Apply complete! Resources: 85 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+alerts_topic_arn = &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+athena_workgroup_name = &quot;recsys-lab-workgroup&quot;
+cloudwatch_dashboard_name = &quot;recsys-lab-dashboard&quot;
+dynamodb_table_name = &quot;recsys-lab-user_recommendations&quot;
+ecr_repository_url = &quot;000000000000.dkr.ecr.us-east-1.localhost:4566/recsys-lab/recommendation-service&quot;
+ecs_service_alb_dns = &quot;recsys-lab-alb-5a94de84bb9642d3.elb.localhost.floci.io&quot;
+glue_job_name = &quot;recsys-lab-feature-engineering&quot;
+memorydb_cluster_endpoint = &quot;memorydb-lacuna-do-emulador:6379&quot;
+s3_golden_dataset_bucket = &quot;recsys-lab-golden-000000000000&quot;
+sagemaker_endpoint_name = &quot;recsys-lab-reranker&quot;
+sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/train_model.py&quot;</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">12</td>
+          <td>S3: SSE-KMS no golden dataset<div class="note"></div></td>
+          <td class="mono">R2</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">aws:kms</td>
+          <td class="mono">aws:kms</td>
+          <td class="num">0.46s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;ServerSideEncryptionConfiguration&quot;: {
+        &quot;Rules&quot;: [
+            {
+                &quot;ApplyServerSideEncryptionByDefault&quot;: {
+                    &quot;SSEAlgorithm&quot;: &quot;aws:kms&quot;,
+                    &quot;KMSMasterKeyID&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;
+                },
+                &quot;BucketKeyEnabled&quot;: true
+            }
+        ]
+    }
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">13</td>
+          <td>S3: bloqueio de acesso público completo<div class="note"></div></td>
+          <td class="mono">R1</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">4 flags true</td>
+          <td class="mono">[True, True, True, True]</td>
+          <td class="num">0.45s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;PublicAccessBlockConfiguration&quot;: {
+        &quot;BlockPublicAcls&quot;: true,
+        &quot;IgnorePublicAcls&quot;: true,
+        &quot;BlockPublicPolicy&quot;: true,
+        &quot;RestrictPublicBuckets&quot;: true
+    }
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">14</td>
+          <td>S3: política nega acesso sem TLS<div class="note"></div></td>
+          <td class="mono">R2</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">Deny aws:SecureTransport=false</td>
+          <td class="mono">Deny sem TLS</td>
+          <td class="num">0.48s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;Policy&quot;: &quot;{\&quot;Statement\&quot;:[{\&quot;Action\&quot;:\&quot;s3:*\&quot;,\&quot;Condition\&quot;:{\&quot;Bool\&quot;:{\&quot;aws:SecureTransport\&quot;:\&quot;false\&quot;}},\&quot;Effect\&quot;:\&quot;Deny\&quot;,\&quot;Principal\&quot;:\&quot;*\&quot;,\&quot;Resource\&quot;:[\&quot;arn:aws:s3:::recsys-lab-golden-000000000000\&quot;,\&quot;arn:aws:s3:::recsys-lab-golden-000000000000/*\&quot;],\&quot;Sid\&quot;:\&quot;DenyInsecureTransport\&quot;}],\&quot;Version\&quot;:\&quot;2012-10-17\&quot;}&quot;
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">15</td>
+          <td>DynamoDB: SSE com KMS<div class="note"></div></td>
+          <td class="mono">R2</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">KMS / ENABLED</td>
+          <td class="mono">KMS</td>
+          <td class="num">0.51s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;Table&quot;: {
+        &quot;AttributeDefinitions&quot;: [
+            {
+                &quot;AttributeName&quot;: &quot;userId&quot;,
+                &quot;AttributeType&quot;: &quot;S&quot;
+            }
+        ],
+        &quot;TableName&quot;: &quot;recsys-lab-user_recommendations&quot;,
+        &quot;KeySchema&quot;: [
+            {
+                &quot;AttributeName&quot;: &quot;userId&quot;,
+                &quot;KeyType&quot;: &quot;HASH&quot;
+            }
+        ],
+        &quot;TableStatus&quot;: &quot;ACTIVE&quot;,
+        &quot;CreationDateTime&quot;: 1794991435.158,
+        &quot;ProvisionedThroughput&quot;: {
+            &quot;NumberOfDecreasesToday&quot;: 0,
+            &quot;ReadCapacityUnits&quot;: 0,
+            &quot;WriteCapacityUnits&quot;: 0
+        },
+        &quot;TableSizeBytes&quot;: 0,
+        &quot;ItemCount&quot;: 0,
+        &quot;TableArn&quot;: &quot;arn:aws:dynamodb:us-east-1:000000000000:table/recsys-lab-user_recommendations&quot;,
+        &quot;TableId&quot;: &quot;4be1bd40-3747-403f-a351-efa78ff5bd33&quot;,
+        &quot;BillingModeSummary&quot;: {
+            &quot;BillingMode&quot;: &quot;PAY_PER_REQUEST&quot;,
+            &quot;LastUpdateToPayPerRequestDateTime&quot;: 1794991435.158
+        },
+        &quot;SSEDescription&quot;: {
+            &quot;Status&quot;: &quot;ENABLED&quot;,
+            &quot;SSEType&quot;: &quot;KMS&quot;,
+            &quot;KMSMasterKeyArn&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;
+        },
+        &quot;TableClassSummary&quot;: {
+            &quot;TableClass&quot;: &quot;STANDARD&quot;
+        },
+        &quot;DeletionProtectionEnabled&quot;: false,
+        &quot;WarmThroughput&quot;: {
+            &quot;ReadUnitsPerSecond&quot;: 12000,
+            &quot;WriteUnitsPerSecond&quot;: 4000,
+            &quot;Status&quot;: &quot;ACTIVE&quot;
+        }
+    }
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">16</td>
+          <td>MemoryDB: TLS em trânsito<div class="note">Cluster fora do apply (lacuna do Floci, ADR-0006); TLS verificado no plan por terraform test memorydb_tls</div></td>
+          <td class="mono">R2</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">True</td>
+          <td class="mono">None</td>
+          <td class="num">0.47s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+An error occurred (ClusterNotFoundFault) when calling the DescribeClusters operation: Cluster not found.</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">17</td>
+          <td>ALB interno por padrão<div class="note"></div></td>
+          <td class="mono">R1</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">internal</td>
+          <td class="mono">internal</td>
+          <td class="num">0.52s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;LoadBalancers&quot;: [
+        {
+            &quot;LoadBalancerArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/5a94de84bb9642d3&quot;,
+            &quot;DNSName&quot;: &quot;recsys-lab-alb-5a94de84bb9642d3.elb.localhost.floci.io&quot;,
+            &quot;CanonicalHostedZoneId&quot;: &quot;Z35SXDOTRQ7X7K&quot;,
+            &quot;CreatedTime&quot;: &quot;2026-11-18T08:43:48.284Z&quot;,
+            &quot;LoadBalancerName&quot;: &quot;recsys-lab-alb&quot;,
+            &quot;Scheme&quot;: &quot;internal&quot;,
+            &quot;VpcId&quot;: &quot;vpc-1cd80d19&quot;,
+            &quot;State&quot;: {
+                &quot;Code&quot;: &quot;active&quot;
+            },
+            &quot;Type&quot;: &quot;application&quot;,
+            &quot;AvailabilityZones&quot;: [
+                {
+                    &quot;ZoneName&quot;: &quot;us-east-1b&quot;,
+                    &quot;SubnetId&quot;: &quot;subnet-a524bd5b&quot;
+                },
+                {
+                    &quot;ZoneName&quot;: &quot;us-east-1a&quot;,
+                    &quot;SubnetId&quot;: &quot;subnet-c524febf&quot;
+                }
+            ],
+            &quot;SecurityGroups&quot;: [
+                &quot;sg-7f36cef77da439660&quot;
+            ],
+            &quot;IpAddressType&quot;: &quot;ipv4&quot;
+        }
+    ]
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">18</td>
+          <td>ECS: tasks sem IP público, 1 task no lab<div class="note"></div></td>
+          <td class="mono">R1/R5</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">DISABLED, 1</td>
+          <td class="mono">assignPublicIp=DISABLED, desired=1</td>
+          <td class="num">0.47s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;services&quot;: [
+        {
+            &quot;serviceArn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service&quot;,
+            &quot;serviceName&quot;: &quot;recsys-lab-service&quot;,
+            &quot;clusterArn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:cluster/recsys-lab-cluster&quot;,
+            &quot;loadBalancers&quot;: [
+                {
+                    &quot;targetGroupArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/e7daa7d0f1c64c0e&quot;,
+                    &quot;containerName&quot;: &quot;recommendation-service&quot;,
+                    &quot;containerPort&quot;: 8080
+                }
+            ],
+            &quot;status&quot;: &quot;ACTIVE&quot;,
+            &quot;desiredCount&quot;: 1,
+            &quot;runningCount&quot;: 0,
+            &quot;pendingCount&quot;: 0,
+            &quot;capacityProviderStrategy&quot;: [
+                {
+                    &quot;capacityProvider&quot;: &quot;FARGATE&quot;,
+                    &quot;weight&quot;: 20,
+                    &quot;base&quot;: 1
+                },
+                {
+                    &quot;capacityProvider&quot;: &quot;FARGATE_SPOT&quot;,
+                    &quot;weight&quot;: 80,
+                    &quot;base&quot;: 0
+                }
+            ],
+            &quot;platformVersion&quot;: &quot;LATEST&quot;,
+            &quot;platformFamily&quot;: &quot;Linux&quot;,
+            &quot;taskDefinition&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:task-definition/recsys-lab-task:1&quot;,
+            &quot;deploymentConfiguration&quot;: {
+                &quot;deploymentCircuitBreaker&quot;: {
+                    &quot;enable&quot;: true,
+                    &quot;rollback&quot;: true
+                },
+                &quot;maximumPercent&quot;: 200,
+                &quot;minimumHealthyPercent&quot;: 100
+            },
+            &quot;taskSets&quot;: [],
+            &quot;deployments&quot;: [
+                {
+                    &quot;id&quot;: &quot;ecs-svc/cb6a6b7c21474938ba4a31ff2c969b59&quot;,
+                    &quot;status&quot;: &quot;PRIMARY&quot;,
+                    &quot;taskDefinition&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:task-definition/recsys-lab-task:1&quot;,
+                    &quot;desiredCount&quot;: 1,
+                    &quot;pendingCount&quot;: 0,
+                    &quot;runningCount&quot;: 0,
+                    &quot;failedTasks&quot;: 0,
+                    &quot;createdAt&quot;: 1794991488.337,
+                    &quot;updatedAt&quot;: 1794991488.337,
+                    &quot;capacityProviderStrategy&quot;: [
+                        {
+                            &quot;capacityProvider&quot;: &quot;FARGATE&quot;,
+                            &quot;weight&quot;: 20,
+                            &quot;base&quot;: 1
+                        },
+                        {
+                            &quot;capacityProvider&quot;: &quot;FARGATE_SPOT&quot;,
+                            &quot;weight&quot;: 80,
+                            &quot;base&quot;: 0
+                        }
+                    ],
+                    &quot;platformVersion&quot;: &quot;1.4.0&quot;,
+                    &quot;platformFamily&quot;: &quot;Linux&quot;,
+                    &quot;networkConfiguration&quot;: {
+                        &quot;awsvpcConfiguration&quot;: {
+                            &quot;subnets&quot;: [
+                                &quot;subnet-a524bd5b&quot;,
+                                &quot;subnet-c524febf&quot;
+                            ],
+                            &quot;securityGroups&quot;: [
+                                &quot;sg-d3643a615de543728&quot;
+                            ],
+                            &quot;assignPublicIp&quot;: &quot;DISABLED&quot;
+                        }
+                    },
+                    &quot;rolloutState&quot;: &quot;IN_PROGRESS&quot;,
+                    &quot;rolloutStateReason&quot;: &quot;ECS deployment ecs-svc/cb6a6b7c21474938ba4a31ff2c969b59 in progress.&quot;
+                }
+            ],
+            &quot;events&quot;: [],
+            &quot;createdAt&quot;: 1794991488.337,
+            &quot;currentServiceDeployment&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-deployment/recsys-lab-cluster/recsys-lab-service/4b5c082a075d424699bfc3f08ffe9acb&quot;,
+            &quot;currentServiceRevisions&quot;: [
+                {
+                    &quot;arn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-revision/recsys-lab-cluster/recsys-lab-service/cb6a6b7c21474938ba4a31ff2c969b59&quot;,
+                    &quot;requestedTaskCount&quot;: 1,
+                    &quot;runningTaskCount&quot;: 0,
+                    &quot;pendingTaskCount&quot;: 0
+                }
+            ],
+            &quot;networkConfiguration&quot;: {
+                &quot;awsvpcConfiguration&quot;: {
+                    &quot;subnets&quot;: [
+                        &quot;subnet-a524bd5b&quot;,
+                        &quot;subnet-c524febf&quot;
+                    ],
+                    &quot;securityGroups&quot;: [
+                        &quot;sg-d3643a615de543728&quot;
+                    ],
+                    &quot;assignPublicIp&quot;: &quot;DISABLED&quot;
+                }
+            },
+            &quot;healthCheckGracePeriodSeconds&quot;: 0,
+            &quot;schedulingStrategy&quot;: &quot;REPLICA&quot;,
+            &quot;deploymentController&quot;: {
+                &quot;type&quot;: &quot;ECS&quot;
+            },
+            &quot;enableECSManagedTags&quot;: false,
+            &quot;propagateTags&quot;: &quot;NONE&quot;,
+            &quot;enableExecuteCommand&quot;: false,
+            &quot;availabilityZoneRebalancing&quot;: &quot;ENABLED&quot;
+        }
+    ],
+    &quot;failures&quot;: []
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">19</td>
+          <td>Rede: 6 endpoints de interface e 2 de gateway<div class="note"></div></td>
+          <td class="mono">ADR-0002</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">6 interface, 2 gateway</td>
+          <td class="mono">6 interface, 2 gateway</td>
+          <td class="num">0.53s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+[[&quot;Gateway&quot;, &quot;dynamodb&quot;], [&quot;Gateway&quot;, &quot;s3&quot;], [&quot;Interface&quot;, &quot;bedrock-runtime&quot;], [&quot;Interface&quot;, &quot;ecr.api&quot;], [&quot;Interface&quot;, &quot;ecr.dkr&quot;], [&quot;Interface&quot;, &quot;logs&quot;], [&quot;Interface&quot;, &quot;monitoring&quot;], [&quot;Interface&quot;, &quot;sagemaker.runtime&quot;]]</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">20</td>
+          <td>Rede: nenhum NAT Gateway<div class="note"></div></td>
+          <td class="mono">R5</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">0</td>
+          <td class="mono">0</td>
+          <td class="num">0.5s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;NatGateways&quot;: []
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">21</td>
+          <td>Rede: sem internet gateway sem opt-in<div class="note"></div></td>
+          <td class="mono">R1</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">0</td>
+          <td class="mono">0</td>
+          <td class="num">0.55s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;InternetGateways&quot;: []
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">22</td>
+          <td>IAM: task role sem Resource &quot;*&quot; incondicional<div class="note"></div></td>
+          <td class="mono">R3</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">nenhum</td>
+          <td class="mono">nenhum</td>
+          <td class="num">1.34s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;PolicyVersion&quot;: {
+        &quot;Document&quot;: {
+            &quot;Statement&quot;: [
+                {
+                    &quot;Action&quot;: [
+                        &quot;dynamodb:GetItem&quot;,
+                        &quot;dynamodb:BatchGetItem&quot;,
+                        &quot;dynamodb:Query&quot;
+                    ],
+                    &quot;Effect&quot;: &quot;Allow&quot;,
+                    &quot;Resource&quot;: &quot;arn:aws:dynamodb:us-east-1:000000000000:table/recsys-lab-user_recommendations&quot;,
+                    &quot;Sid&quot;: &quot;ReadBatchRecommendations&quot;
+                },
+                {
+                    &quot;Action&quot;: [
+                        &quot;kms:Decrypt&quot;
+                    ],
+                    &quot;Condition&quot;: {
+                        &quot;StringEquals&quot;: {
+                            &quot;kms:ViaService&quot;: &quot;dynamodb.us-east-1.amazonaws.com&quot;
+                        }
+                    },
+                    &quot;Effect&quot;: &quot;Allow&quot;,
+                    &quot;Resource&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+                    &quot;Sid&quot;: &quot;DecryptTableData&quot;
+                },
+                {
+                    &quot;Action&quot;: [
+                        &quot;sagemaker:InvokeEndpoint&quot;
+                    ],
+                    &quot;Effect&quot;: &quot;Allow&quot;,
+                    &quot;Resource&quot;: &quot;arn:aws:sagemaker:us-east-1:000000000000:endpoint/recsys-lab-reranker&quot;,
+                    &quot;Sid&quot;: &quot;ScoreCandidates&quot;
+                },
+                {
+                    &quot;Action&quot;: [
+                        &quot;bedrock:InvokeModel&quot;
+                    ],
+                    &quot;Effect&quot;: &quot;Allow&quot;,
+                    &quot;Resource&quot;: [
+                        &quot;arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-5-5&quot;,
+                        &quot;arn:aws:bedrock:us-east-1:000000000000:inference-profile/*anthropic.claude-haiku-5-5&quot;
+                    ],
+                    &quot;Sid&quot;: &quot;ExplainWithClaude&quot;
+                },
+                {
+                    &quot;Action&quot;: [
+                        &quot;cloudwatch:PutMetricData&quot;
+                    ],
+                    &quot;Condition&quot;: {
+                        &quot;StringEquals&quot;: {
+                            &quot;cloudwatch:namespace&quot;: &quot;Ecommerce/Recommendations&quot;
+                        }
+                    },
+                    &quot;Effect&quot;: &quot;Allow&quot;,
+                    &quot;Resource&quot;: &quot;*&quot;,
+                    &quot;Sid&quot;: &quot;PublishServiceMetrics&quot;
+                }
+            ],
+            &quot;Version&quot;: &quot;2012-10-17&quot;
+        },
+        &quot;VersionId&quot;: &quot;v1&quot;,
+        &quot;IsDefaultVersion&quot;: true,
+        &quot;CreateDate&quot;: &quot;2026-11-18T08:44:01.191Z&quot;
+    }
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">23</td>
+          <td>Tags project, module e managed-by<div class="note"></div></td>
+          <td class="mono">R4</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">&gt;0 recursos, 0 sem tags</td>
+          <td class="mono">25 recursos, 0 sem as 3 tags</td>
+          <td class="num">0.4s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+[]</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">24</td>
+          <td>Alarmes com ação no SNS<div class="note"></div></td>
+          <td class="mono">R6</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">&gt;=7 alarmes, todos com ação</td>
+          <td class="mono">7 alarmes, 0 sem ação</td>
+          <td class="num">0.42s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;MetricAlarms&quot;: [
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-running-tasks&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-running-tasks&quot;,
+            &quot;AlarmDescription&quot;: &quot;Servico ECS sem tasks em execucao&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;RunningTaskCount&quot;,
+            &quot;Namespace&quot;: &quot;ECS/ContainerInsights&quot;,
+            &quot;Statistic&quot;: &quot;Minimum&quot;,
+            &quot;Dimensions&quot;: [
+                {
+                    &quot;Name&quot;: &quot;ClusterName&quot;,
+                    &quot;Value&quot;: &quot;recsys-lab-cluster&quot;
+                },
+                {
+                    &quot;Name&quot;: &quot;ServiceName&quot;,
+                    &quot;Value&quot;: &quot;recsys-lab-service&quot;
+                }
+            ],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 2,
+            &quot;Threshold&quot;: 1.0,
+            &quot;ComparisonOperator&quot;: &quot;LessThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-explanation-fallback&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-explanation-fallback&quot;,
+            &quot;AlarmDescription&quot;: &quot;Explicacoes com Claude caindo no fallback (resposta sem explicacao)&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;ExplanationFallbackCount&quot;,
+            &quot;Namespace&quot;: &quot;Ecommerce/Recommendations&quot;,
+            &quot;Statistic&quot;: &quot;Sum&quot;,
+            &quot;Dimensions&quot;: [],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 5,
+            &quot;Threshold&quot;: 20.0,
+            &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-api-p95-latency&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-api-p95-latency&quot;,
+            &quot;AlarmDescription&quot;: &quot;p95 da API acima de 60 ms (SLO de latencia)&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;INSUFFICIENT_DATA&quot;,
+            &quot;StateReason&quot;: &quot;Unchecked&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991488,
+            &quot;MetricName&quot;: &quot;TargetResponseTime&quot;,
+            &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
+            &quot;Dimensions&quot;: [
+                {
+                    &quot;Name&quot;: &quot;LoadBalancer&quot;,
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/5a94de84bb9642d3&quot;
+                }
+            ],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 3,
+            &quot;Threshold&quot;: 0.06,
+            &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991488
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-api-5xx&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-api-5xx&quot;,
+            &quot;AlarmDescription&quot;: &quot;Respostas 5xx do servico (meta zero: a degradacao deve absorver falhas)&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;HTTPCode_Target_5XX_Count&quot;,
+            &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
+            &quot;Statistic&quot;: &quot;Sum&quot;,
+            &quot;Dimensions&quot;: [
+                {
+                    &quot;Name&quot;: &quot;LoadBalancer&quot;,
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/5a94de84bb9642d3&quot;
+                }
+            ],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 1,
+            &quot;Threshold&quot;: 0.0,
+            &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-healthy-targets&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-healthy-targets&quot;,
+            &quot;AlarmDescription&quot;: &quot;Nenhum target saudavel atras do ALB&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;HealthyHostCount&quot;,
+            &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
+            &quot;Statistic&quot;: &quot;Minimum&quot;,
+            &quot;Dimensions&quot;: [
+                {
+                    &quot;Name&quot;: &quot;TargetGroup&quot;,
+                    &quot;Value&quot;: &quot;targetgroup/recsys-lab-tg/e7daa7d0f1c64c0e&quot;
+                },
+                {
+                    &quot;Name&quot;: &quot;LoadBalancer&quot;,
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/5a94de84bb9642d3&quot;
+                }
+            ],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 2,
+            &quot;Threshold&quot;: 1.0,
+            &quot;ComparisonOperator&quot;: &quot;LessThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-degraded-mode&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-degraded-mode&quot;,
+            &quot;AlarmDescription&quot;: &quot;Respostas em modo degradado (fallbacks de DynamoDB, MemoryDB ou SageMaker)&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;DegradedModeCount&quot;,
+            &quot;Namespace&quot;: &quot;Ecommerce/Recommendations&quot;,
+            &quot;Statistic&quot;: &quot;Sum&quot;,
+            &quot;Dimensions&quot;: [],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 5,
+            &quot;Threshold&quot;: 50.0,
+            &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        },
+        {
+            &quot;AlarmName&quot;: &quot;recsys-lab-sagemaker-errors&quot;,
+            &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-sagemaker-errors&quot;,
+            &quot;AlarmDescription&quot;: &quot;Erros 5xx no endpoint do re-ranker&quot;,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1794991488,
+            &quot;ActionsEnabled&quot;: true,
+            &quot;OKActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;AlarmActions&quot;: [
+                &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
+            ],
+            &quot;InsufficientDataActions&quot;: [],
+            &quot;StateValue&quot;: &quot;OK&quot;,
+            &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
+            &quot;StateUpdatedTimestamp&quot;: 1794991491,
+            &quot;MetricName&quot;: &quot;Invocation5XXErrors&quot;,
+            &quot;Namespace&quot;: &quot;AWS/SageMaker&quot;,
+            &quot;Statistic&quot;: &quot;Sum&quot;,
+            &quot;Dimensions&quot;: [
+                {
+                    &quot;Name&quot;: &quot;VariantName&quot;,
+                    &quot;Value&quot;: &quot;AllTraffic&quot;
+                },
+                {
+                    &quot;Name&quot;: &quot;EndpointName&quot;,
+                    &quot;Value&quot;: &quot;recsys-lab-reranker&quot;
+                }
+            ],
+            &quot;Period&quot;: 60,
+            &quot;EvaluationPeriods&quot;: 3,
+            &quot;Threshold&quot;: 5.0,
+            &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
+            &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
+            &quot;StateTransitionedTimestamp&quot;: 1794991491
+        }
+    ],
+    &quot;CompositeAlarms&quot;: [],
+    &quot;LogAlarms&quot;: []
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">25</td>
+          <td>Log groups com KMS e retenção<div class="note"></div></td>
+          <td class="mono">R6/R2</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">&gt;=4, todos com KMS e retenção</td>
+          <td class="mono">4 log groups, 0 sem KMS, 0 sem retenção</td>
+          <td class="num">0.43s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;logGroups&quot;: [
+        {
+            &quot;logGroupName&quot;: &quot;/aws-glue/jobs/recsys-lab-feature-engineering&quot;,
+            &quot;creationTime&quot;: 1794991435158,
+            &quot;retentionInDays&quot;: 14,
+            &quot;metricFilterCount&quot;: 0,
+            &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws-glue/jobs/recsys-lab-feature-engineering:*&quot;,
+            &quot;storedBytes&quot;: 0,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+            &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
+            &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws-glue/jobs/recsys-lab-feature-engineering&quot;,
+            &quot;deletionProtectionEnabled&quot;: false
+        },
+        {
+            &quot;logGroupName&quot;: &quot;/aws/sagemaker/Endpoints/recsys-lab-reranker&quot;,
+            &quot;creationTime&quot;: 1794991435078,
+            &quot;retentionInDays&quot;: 14,
+            &quot;metricFilterCount&quot;: 0,
+            &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/sagemaker/Endpoints/recsys-lab-reranker:*&quot;,
+            &quot;storedBytes&quot;: 0,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+            &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
+            &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/sagemaker/Endpoints/recsys-lab-reranker&quot;,
+            &quot;deletionProtectionEnabled&quot;: false
+        },
+        {
+            &quot;logGroupName&quot;: &quot;/ecs/recsys-lab&quot;,
+            &quot;creationTime&quot;: 1794991435110,
+            &quot;retentionInDays&quot;: 14,
+            &quot;metricFilterCount&quot;: 0,
+            &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/ecs/recsys-lab:*&quot;,
+            &quot;storedBytes&quot;: 0,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+            &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
+            &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/ecs/recsys-lab&quot;,
+            &quot;deletionProtectionEnabled&quot;: false
+        },
+        {
+            &quot;logGroupName&quot;: &quot;/vpc/recsys-lab/flow-logs&quot;,
+            &quot;creationTime&quot;: 1794991435074,
+            &quot;retentionInDays&quot;: 14,
+            &quot;metricFilterCount&quot;: 0,
+            &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/vpc/recsys-lab/flow-logs:*&quot;,
+            &quot;storedBytes&quot;: 0,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+            &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
+            &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/vpc/recsys-lab/flow-logs&quot;,
+            &quot;deletionProtectionEnabled&quot;: false
+        }
+    ]
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">26</td>
+          <td>AWS Budgets com teto de US$ 10<div class="note"></div></td>
+          <td class="mono">R9</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">10 USD</td>
+          <td class="mono">10 USD</td>
+          <td class="num">0.86s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;Budget&quot;: {
+        &quot;BudgetName&quot;: &quot;recsys-lab-monthly&quot;,
+        &quot;BudgetLimit&quot;: {
+            &quot;Amount&quot;: &quot;10&quot;,
+            &quot;Unit&quot;: &quot;USD&quot;
+        },
+        &quot;TimeUnit&quot;: &quot;MONTHLY&quot;,
+        &quot;TimePeriod&quot;: {
+            &quot;End&quot;: 3706473600
+        },
+        &quot;CalculatedSpend&quot;: {
+            &quot;ActualSpend&quot;: {
+                &quot;Amount&quot;: &quot;0&quot;,
+                &quot;Unit&quot;: &quot;USD&quot;
+            }
+        },
+        &quot;BudgetType&quot;: &quot;COST&quot;,
+        &quot;LastUpdatedTime&quot;: 1794991435
+    }
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">27</td>
+          <td>State remoto no S3 e lock liberado após o apply<div class="note"></div></td>
+          <td class="mono">R8</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate sem .tflock</td>
+          <td class="mono">[&#x27;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&#x27;]</td>
+          <td class="num">0.45s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;Contents&quot;: [
+        {
+            &quot;Key&quot;: &quot;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&quot;,
+            &quot;LastModified&quot;: &quot;2026-11-18T08:44:48Z&quot;,
+            &quot;ETag&quot;: &quot;\&quot;732b9e8f8f46534d32808dd7b70d8ae7\&quot;&quot;,
+            &quot;Size&quot;: 231177,
+            &quot;StorageClass&quot;: &quot;STANDARD&quot;
+        }
+    ],
+    &quot;RequestCharged&quot;: null,
+    &quot;Prefix&quot;: &quot;&quot;
+}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">28</td>
+          <td>Serviço: build para o teste do componente com Claude<div class="note"></div></td>
+          <td class="mono"></td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=0</td>
+          <td class="num">4.5s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ npm run build --silent
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">29</td>
+          <td>Claude via bedrock-runtime do emulador: nunca lança, devolve estado explícito<div class="note"></div></td>
+          <td class="mono">ADR-0004 (5.3)</td>
+          <td><span class="badge ok">passou</span></td>
+          <td class="mono">status ok ou unavailable, sem exceção</td>
+          <td class="mono">unavailable / validation</td>
+          <td class="num">0.88s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ node -e &lt;explainer contra o emulador&gt;
+
+{&quot;status&quot;:&quot;unavailable&quot;,&quot;attempts&quot;:2,&quot;errorCategory&quot;:&quot;validation&quot;,&quot;retryable&quot;:true,&quot;detail&quot;:&quot;a resposta não chamou a ferramenta record_explanations&quot;}</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">30</td>
+          <td>Stack: terraform destroy<div class="note"></div></td>
+          <td class="mono">R7</td>
+          <td><span class="badge falha">falhou</span></td>
+          <td class="mono">rc=0</td>
+          <td class="mono">rc=124</td>
+          <td class="num">2400.02s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ terraform destroy -auto-approve -input=false -no-color
+
+tempo esgotado após 2400s</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">31</td>
+          <td>Destroy sem sobras (tag project, exceto KMS em PendingDeletion)<div class="note"></div></td>
+          <td class="mono">R7</td>
+          <td><span class="badge falha">falhou</span></td>
+          <td class="mono">0 sobras</td>
+          <td class="mono">5 sobras</td>
+          <td class="num">1.9s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+[
+ &quot;arn:aws:ecr:us-east-1:000000000000:repository/recsys-lab/recommendation-service&quot;,
+ &quot;arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service&quot;,
+ &quot;arn:aws:glue:us-east-1:000000000000:database/ecommerce_golden_db&quot;,
+ &quot;arn:aws:kms:us-east-1:000000000000:key/85d9b7f7-99b2-49a5-bd26-a8420c1bc594&quot;,
+ &quot;arn:aws:s3:::recsys-lab-golden-000000000000&quot;
+]</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">32</td>
+          <td>State remoto preservado e lock liberado após o destroy<div class="note"></div></td>
+          <td class="mono">R8</td>
+          <td><span class="badge falha">falhou</span></td>
+          <td class="mono">state sem .tflock</td>
+          <td class="mono">[&#x27;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&#x27;, &#x27;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate.tflock&#x27;]</td>
+          <td class="num">0.65s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+{
+    &quot;Contents&quot;: [
+        {
+            &quot;Key&quot;: &quot;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&quot;,
+            &quot;LastModified&quot;: &quot;2026-11-18T08:44:48Z&quot;,
+            &quot;ETag&quot;: &quot;\&quot;732b9e8f8f46534d32808dd7b70d8ae7\&quot;&quot;,
+            &quot;Size&quot;: 231177,
+            &quot;StorageClass&quot;: &quot;STANDARD&quot;
+        },
+        {
+            &quot;Key&quot;: &quot;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate.tflock&quot;,
+            &quot;LastModified&quot;: &quot;2026-11-18T08:45:04Z&quot;,
+            &quot;ETag&quot;: &quot;\&quot;04dee196410d28f464cd9c0cea72bfc2\&quot;&quot;,
+            &quot;Size&quot;: 255,
+            &quot;StorageClass&quot;: &quot;STANDARD&quot;
+        }
+    ],
+    &quot;RequestCharged&quot;: null,
+    &quot;Prefix&quot;: &quot;&quot;
+}</pre>
+        </details></td></tr></tbody>
+  </table></div>
+  <footer>Lacuna do emulador só com evidência (código ou documentação do emulador), registrada no ADR-0006 da unidade. Código correto não é alterado para agradar o emulador.</footer>
+</main></body></html>
