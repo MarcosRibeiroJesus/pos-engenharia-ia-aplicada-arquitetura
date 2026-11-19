@@ -1,0 +1,3 @@
+data,sessao,projeto,disciplina,unidade,tarefa,modelo,requisicoes,input,cache_write,cache_read,output,fonte,observacao
+2026-11-18,orquestracao-2026-11-a,plataforma,,,"Orquestração: bootstrap do repositório, catálogo de opções, esteira de segurança, site",claude-opus-5-5,0,0,0,0,0,nao-medido,Trecho da conversa de orquestração anterior ao último resumo; sem medição disponível
+2026-11-18,orquestracao-2026-11-b,plataforma,,,"Orquestração: revisão das opções D01–D04, board no Monday, painel de uso",claude-opus-5-5,26,60,171223,6103133,27928,medido,Medido desde o último resumo da conversa; a resposta que fez esta medição não conta

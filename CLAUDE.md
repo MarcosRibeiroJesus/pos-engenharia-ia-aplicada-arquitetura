@@ -97,6 +97,19 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
 - Acesso dos agentes ao Claude: Amazon Bedrock via OIDC (sem chave estática), com a chave da API da Anthropic como alternativa em secret do repositório.
 
+## Modelo por tarefa
+Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao abrir sessão ou subagente, defina o modelo explicitamente e registre a escolha no briefing.
+- **Opus** (padrão das sessões de unidade): decisões de arquitetura e ADRs, Terraform e código de produção, modelagem de ameaças, revisor e corretor de segurança na esteira, diagnóstico de falhas difíceis.
+- **Sonnet**: pesquisa e síntese de fontes, rascunho de posts e do LinkedIn, páginas do site, testes a partir de regras já escritas, revisor FinOps.
+- **Haiku**: tarefas mecânicas e verificáveis, como formatação, renomeações, atualização de índices e do registro de uso, e checagens de links.
+- **Fable (camada Mythos)**: só com a minha aprovação, para uma segunda opinião em decisão cara de reverter.
+- Na dúvida entre dois modelos, use o mais capaz para decidir e o mais barato para executar o que já foi decidido.
+
+## Registro de uso de IA
+- O registro físico é `docs/uso/uso-tokens.csv`, com uma linha por sessão e modelo. Toda sessão registra o próprio uso ao terminar uma entrega, com `scripts/uso/uso.py registrar` (lê o transcript do Claude Code) ou `manual` quando só houver a medição da conversa, e roda `uso.py painel`.
+- O painel fica em `site/uso.html`, e cada página de projeto tem o widget `<!-- uso:projeto=CHAVE --><!-- /uso -->`. A chave do projeto é `NN.UU-slug` (ex.: `01.03-recomendacao`), ou `plataforma` para orquestração, esteira e site.
+- Trecho sem medição entra como `nao-medido`; nunca estime números.
+
 ## Privacidade
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
