@@ -38,7 +38,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
 
 ## Harness e SDD (spec-driven development)
+@AGENTS.md
 @.specify/memory/constitution.md
+
+- O `AGENTS.md` é o manual comum a todos os agentes (Claude Code, Antigravity, Copilot), incluindo a troca de agente quando a cota acaba (`harness/agente.py`). Este CLAUDE.md acrescenta os hooks e as skills do Claude Code.
 
 - **Todo projeto passa pelo SDD**, no fluxo do Spec Kit, com os artefatos em `specs/<chave>/`:
 

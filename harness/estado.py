@@ -6,6 +6,7 @@ Fonte de verdade de "onde cada projeto está" no fluxo SDD. Comandos:
   validar           confere o esquema e se os artefatos SDD existem para a fase declarada (exit 1 se falhar)
   projeto-de PATH   diz a qual projeto um caminho pertence (usado pelo gate SDD)
   avancar CHAVE FASE  muda a fase, só se os artefatos exigidos pela nova fase existirem
+  checar-arquivos [ARQ...]  exit 1 se algum arquivo é código de projeto antes da fase implementar (git hook e CI)
 """
 from __future__ import annotations
 
@@ -73,6 +74,16 @@ def projeto_de(estado: dict, caminho: str) -> dict | None:
     return None
 
 
+def bloqueios(estado: dict, arquivos: list[str]) -> list[tuple[str, str, str]]:
+    """Arquivos de código de projetos que ainda não chegaram à fase implementar (Artigo I)."""
+    saida = []
+    for arq in arquivos:
+        p = projeto_de(estado, arq)
+        if p and indice(estado, p["fase"]) < indice(estado, "implementar"):
+            saida.append((arq, p["chave"], p["fase"]))
+    return saida
+
+
 def main(argv: list[str]) -> int:
     estado = carregar()
     cmd = argv[0] if argv else "status"
@@ -87,6 +98,12 @@ def main(argv: list[str]) -> int:
             print(f"ERRO {e}")
         print("ok" if not erros else f"{len(erros)} problema(s)")
         return 1 if erros else 0
+    if cmd == "checar-arquivos":
+        arquivos = [a for a in (argv[1:] or sys.stdin.read().split()) if a]
+        bl = bloqueios(estado, arquivos)
+        for arq, chave, fase in bl:
+            print(f"BLOQUEADO {arq}: projeto {chave} na fase '{fase}' (Artigo I: spec, plano, tarefas e análise antes do código)")
+        return 1 if bl else 0
     if cmd == "projeto-de" and len(argv) > 1:
         p = projeto_de(estado, argv[1])
         print(json.dumps(p, ensure_ascii=False) if p else "")

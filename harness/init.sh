@@ -3,6 +3,7 @@
 # Mostra o ambiente, a memória compartilhada, o estado SDD e o que mudou no git. Não altera nada.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
+git config core.hooksPath .githooks  # gates SDD e de memória valem para qualquer agente
 
 echo "== Ambiente"
 for t in git python3 terraform docker node; do
@@ -19,12 +20,10 @@ echo "  branch: $(git branch --show-current)"
 git log --oneline -5 | sed 's/^/  /'
 [ -n "$(git status --porcelain)" ] && echo "  (há alterações não commitadas)"
 
-echo "== Memória compartilhada (estado e pendências)"
-if git fetch -q origin memoria-compartilhada 2>/dev/null; then
-  git show origin/memoria-compartilhada:DECISOES.md | sed -n '/^## Pendências/,$p' | sed 's/^/  /'
-else
-  echo "  indisponível (sem rede); siga com o que está no repositório"
-fi
+echo "== Agentes de código (cota)"
+python3 harness/agente.py status 2>/dev/null | sed 's/^/  /' || echo "  indisponível (sem rede)"
+
+echo "== Memória compartilhada: rode 'python3 harness/memoria.py ler' para ler as decisões em vigor"
 
 echo "== Estado SDD"
 python3 harness/estado.py status | sed 's/^/  /'
