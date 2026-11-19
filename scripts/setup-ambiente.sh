@@ -30,7 +30,9 @@ if ! docker info >/dev/null 2>&1; then
   (nohup dockerd >/tmp/dockerd.log 2>&1 &)
   for _ in $(seq 1 20); do docker info >/dev/null 2>&1 && break; sleep 1; done
 fi
-docker pull -q floci/floci:latest || echo "AVISO: não foi possível baixar floci/floci."
+# Mesma versão do CI: defina FLOCI_IMAGE nas variáveis do ambiente (ex.: floci/floci:2.5.0).
+FLOCI_IMAGE="${FLOCI_IMAGE:-floci/floci:latest}"
+docker pull -q "$FLOCI_IMAGE" || echo "AVISO: não foi possível baixar $FLOCI_IMAGE."
 
 terraform version | head -1
 docker images floci/floci --format '{{.Repository}}:{{.Tag}} {{.Size}}' || true
