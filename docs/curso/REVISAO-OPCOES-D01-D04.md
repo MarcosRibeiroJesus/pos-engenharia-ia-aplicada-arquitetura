@@ -108,7 +108,7 @@ Ajustes:
 ## Decisões (2026-11-19)
 
 - **Escopo agora:** disciplinas 01, 02 e 03. A D04 fica para depois.
-- **D01 e D02:** recomendações desta revisão, assumidas por falta de objeção. D01: 02-S, 04 V1 com revisor (V3 como experimento), 05-S, 06-B, 07-A, 08-C, 09-C, 10-C. D02: C, C, B, B, C, A reduzida, C.
+- **D01 e D02:** pendentes. Aguardam a escolha do dono, unidade a unidade.
 - **D03:** 02-S, 03-S e R4 nas unidades 04 a 08, com o produto sintético **CDB com liquidez diária**.
 - **Cloud comparativa:** GCP na D01 e na D02, Azure na D03.
 - **Custo de modelo:** os testes usam só respostas gravadas, sem chamadas ao Claude real. Cada unidade registra em ADR que o comportamento real do modelo fica sem validação.
