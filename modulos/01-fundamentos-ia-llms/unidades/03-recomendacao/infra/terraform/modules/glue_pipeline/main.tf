@@ -55,6 +55,13 @@ resource "aws_iam_role_policy" "glue" {
         ]
       },
       {
+        # Credenciais temporárias do Lake Formation para ler o golden dataset; não aceita ARN de recurso.
+        Sid      = "LakeFormationDataAccess"
+        Effect   = "Allow"
+        Action   = ["lakeformation:GetDataAccess"]
+        Resource = "*"
+      },
+      {
         Sid      = "JobLogs"
         Effect   = "Allow"
         Action   = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:AssociateKmsKey"]

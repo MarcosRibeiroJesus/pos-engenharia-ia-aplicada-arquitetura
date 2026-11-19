@@ -48,6 +48,7 @@ module "lake_formation" {
   project_name  = var.project_name
   environment   = var.environment
   s3_bucket_arn = module.s3_golden_dataset.bucket_arn
+  glue_role_arn = module.glue_pipeline.glue_role_arn
 }
 
 module "dynamodb_table" {

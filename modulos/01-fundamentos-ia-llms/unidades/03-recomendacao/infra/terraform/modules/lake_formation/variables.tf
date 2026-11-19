@@ -18,3 +18,8 @@ variable "database_name" {
   default     = "ecommerce_golden_db"
   description = "Glue Catalog Database Name"
 }
+
+variable "glue_role_arn" {
+  type        = string
+  description = "Role do job do Glue que lê e escreve no catálogo."
+}

@@ -572,3 +572,29 @@ run "monitoramento_e_orcamento" {
     error_message = "R6: o alarme de latência mede p95 de verdade."
   }
 }
+
+# ---------------------------------------------------------------- Lake Formation (R3)
+# Achado do teste de integração: o ARN do chamador (root ou assumed-role) não é principal válido.
+run "lake_formation_concede_a_role_do_glue" {
+  command = plan
+  module {
+    source = "./modules/lake_formation"
+  }
+  variables {
+    s3_bucket_arn = "arn:aws:s3:::recsys-lab-golden"
+    glue_role_arn = "arn:aws:iam::123456789012:role/recsys-lab-glue-role"
+  }
+
+  assert {
+    condition     = aws_lakeformation_permissions.database_permissions.principal == var.glue_role_arn
+    error_message = "R3: permissões do catálogo para a role do Glue, não para quem roda o Terraform."
+  }
+  assert {
+    condition     = !contains(aws_lakeformation_permissions.database_permissions.permissions, "ALL")
+    error_message = "R3: sem ALL no Lake Formation."
+  }
+  assert {
+    condition     = aws_lakeformation_permissions.data_location.principal == var.glue_role_arn
+    error_message = "R3: a role do Glue precisa de acesso à localização do golden dataset."
+  }
+}
