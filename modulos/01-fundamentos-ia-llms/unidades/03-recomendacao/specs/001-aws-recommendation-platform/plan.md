@@ -7,7 +7,7 @@
 
 ## Summary
 
-The AWS Hybrid Recommendation Platform implements an enterprise-grade, low-latency personalization engine combining offline batch precomputation with real-time semantic retrieval, online ML re-ranking, and business-rule filtering for Amazon.com users.
+The AWS Hybrid Recommendation Platform implements an enterprise-grade, low-latency personalization engine combining offline batch precomputation with real-time semantic retrieval, online ML re-ranking, and business-rule filtering for a fictional e-commerce storefront (synthetic data).
 
 The implementation realizes the approved 11-service AWS architecture:
 1. **Batch Pipeline**: Amazon S3 (Snappy-compressed Parquet Golden Dataset), AWS Lake Formation (Governance), Amazon MWAA (Airflow DAGs), Amazon Athena (Curated SQL views), AWS Glue (Incremental feature engineering ETL & publishers), Amazon SageMaker (Managed Spot collaborative filtering training & batch transform), and Amazon DynamoDB (On-Demand batch profile store with 7-day TTL).

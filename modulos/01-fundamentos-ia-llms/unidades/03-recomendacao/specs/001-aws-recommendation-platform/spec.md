@@ -9,7 +9,7 @@
 
 ## Executive Summary & System Overview
 
-The AWS Hybrid Recommendation Platform provides low-latency, personalized e-commerce product recommendations to Amazon.com users by blending offline precomputed batch intelligence with real-time semantic retrieval, dynamic ML scoring, and rigorous business-rule governance.
+The AWS Hybrid Recommendation Platform provides low-latency, personalized e-commerce product recommendations for a fictional storefront (synthetic data; inspired by the public AWS reference architecture) by blending offline precomputed batch intelligence with real-time semantic retrieval, dynamic ML scoring, and rigorous business-rule governance.
 
 ### Architectural Blueprint (Fixed & Approved)
 
@@ -34,7 +34,7 @@ flowchart TD
     end
 
     subgraph Realtime_Layer ["Real-time Serving Layer"]
-        User(["Client / Amazon.com User"]) --> ALB["Application Load Balancer"]
+        User(["Client / Storefront User"]) --> ALB["Application Load Balancer"]
         ALB --> ECS["Amazon ECS (Fargate)\nRecommendation Service"]
         ECS -->|1. Fetch Precomputed Recs| DynamoDB
         ECS -->|2. Query Semantic Candidates| MemoryDB
@@ -70,7 +70,7 @@ flowchart TD
 
 ### User Story 1 - Personalized Hybrid E-Commerce Recommendations (Priority: P1)
 
-As an active Amazon.com shopper browsing the storefront, I want to see personalized product recommendations combining my long-term purchasing history with my current in-session interests, so that I discover relevant products immediately.
+As an active shopper browsing the storefront, I want to see personalized product recommendations combining my long-term purchasing history with my current in-session interests, so that I discover relevant products immediately.
 
 - **Why this priority**: Core revenue driver and primary platform purpose. Demonstrates end-to-end integration across DynamoDB, MemoryDB, SageMaker, and ECS.
 - **Independent Test**: Deploy ECS service with seeded DynamoDB batch profiles and MemoryDB embeddings. Send user request with active session signals. Verify response returns Top-10 items with `provenance` metadata and relevance scores within 60ms P95.
@@ -162,7 +162,7 @@ As a Machine Learning Engineer, I want the MWAA Airflow DAG to autonomously coor
 
 ### Key Entities
 
-- **User**: Represents an Amazon.com shopper. Key attributes: `userId`, `marketSegment`, `countryCode`, `preferredCategories`, `lastInteractionTimestamp`.
+- **User**: Represents a storefront shopper (synthetic). Key attributes: `userId`, `marketSegment`, `countryCode`, `preferredCategories`, `lastInteractionTimestamp`.
 - **Item (Product)**: Represents a catalog product. Key attributes: `itemId`, `title`, `categoryPath`, `brand`, `priceCents`, `inStockStatus`, `restrictedGeos`, `embeddingVector`.
 - **User Interaction Event**: User behavior event. Key attributes: `eventId`, `userId`, `itemId`, `eventType` (`view`, `click`, `add_to_cart`, `purchase`), `eventTimestamp`, `context`.
 - **Batch Recommendation Profile**: Precomputed user recommendations. Key attributes: `userId` (PK), `generatedAt`, `recommendations` (array of `itemId`, `batchScore`, `modelId`), `ttlTimestamp`.
