@@ -126,10 +126,13 @@ resource "aws_iam_role_policy" "deploy_iam" {
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/*"
       },
       {
-        Sid      = "ReadIam"
-        Effect   = "Allow"
-        Action   = ["iam:Get*", "iam:List*"]
-        Resource = "*"
+        Sid    = "ReadIam"
+        Effect = "Allow"
+        Action = ["iam:Get*", "iam:List*"]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:*",
+          "arn:aws:iam::aws:policy/*",
+        ]
       },
       {
         Sid      = "State"
