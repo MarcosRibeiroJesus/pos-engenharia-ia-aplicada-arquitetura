@@ -59,7 +59,7 @@ Plataforma híbrida de recomendação na AWS, inspirada no post do AWS Big Data 
 
 | Entregável | Status |
 |---|---|
-| Terraform (state remoto com lock, endpoints sem NAT, TLS, IAM escopado, Budgets US$ 10) | concluído, `terraform test` 19/19, checkov 321/0, tflint sem avisos |
+| Terraform (state remoto com lock, endpoints sem NAT, TLS, IAM escopado, Budgets US$ 10) | concluído, `terraform test` 20/20, checkov 315/0, tflint sem avisos |
 | Componente Claude (tool_use, validação, retentativa, fallback) | concluído, 39/39 Vitest |
 | Workflows na raiz (CI, apply e destroy protegidos, OIDC) | concluído; falta configurar variáveis e ambiente no GitHub |
 | Integração no Floci | aprovada com ressalvas (2026-11-19): 27 ok, 0 falhas, 7 lacunas do emulador (ADR-0006); relatório em `testing/reports/latest.html` |

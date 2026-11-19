@@ -598,3 +598,46 @@ run "lake_formation_concede_a_role_do_glue" {
     error_message = "R3: a role do Glue precisa de acesso à localização do golden dataset."
   }
 }
+
+# ---------------------------------------------------------------- Bedrock com perfil de inferência (R3, ADR-0004)
+# Com perfil (us.anthropic...), a role precisa do perfil e do foundation model SEM o prefixo,
+# nas regiões de destino, e só quando a chamada passa pelo perfil.
+run "ecs_bedrock_via_perfil_de_inferencia" {
+  command = plan
+  module {
+    source = "./modules/ecs_service"
+  }
+  variables {
+    vpc_id                    = "vpc-123"
+    alb_subnet_ids            = ["subnet-a", "subnet-b"]
+    private_subnet_ids        = ["subnet-a", "subnet-b"]
+    alb_security_group_id     = "sg-alb"
+    ecs_security_group_id     = "sg-ecs"
+    dynamodb_table_name       = "t"
+    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/t"
+    memorydb_cluster_endpoint = "x:6379"
+    sagemaker_endpoint_name   = "e"
+    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/e"
+    bedrock_model_id          = "us.anthropic.claude-haiku-5-5"
+  }
+
+  assert {
+    condition = anytrue([
+      for s in jsondecode(aws_iam_policy.ecs_task_policy.policy).Statement :
+      contains(flatten([s.Resource]), "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-haiku-5-5")
+    ])
+    error_message = "R3: permissão no perfil de inferência exato, na região do stack."
+  }
+  assert {
+    condition = anytrue([
+      for s in jsondecode(aws_iam_policy.ecs_task_policy.policy).Statement :
+      contains(flatten([s.Resource]), "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-5-5")
+      && try(s.Condition.StringLike["bedrock:InferenceProfileArn"], "") == "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-haiku-5-5"
+    ])
+    error_message = "R3: foundation model sem o prefixo do perfil, só via o perfil (condição bedrock:InferenceProfileArn)."
+  }
+  assert {
+    condition     = !strcontains(aws_iam_policy.ecs_task_policy.policy, "foundation-model/us.")
+    error_message = "ARN de foundation model não leva o prefixo do perfil (us., eu., global.)."
+  }
+}

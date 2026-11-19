@@ -51,7 +51,7 @@ A explicação fica fora do SLO de 60 ms de propósito: nenhuma chamada a LLM ca
 
 ## Como foi testado
 
-- **Regras antes do código.** As regras do repositório (nada público, criptografia, menor privilégio, tags, custo ocioso, logs e alarmes, destroy limpo, state com lock, orçamento) viraram 19 blocos de `terraform test` com mock provider, vermelhos antes da implementação. Mais checkov sem falhas (as exceções justificadas no próprio recurso) e tflint.
+- **Regras antes do código.** As regras do repositório (nada público, criptografia, menor privilégio, tags, custo ocioso, logs e alarmes, destroy limpo, state com lock, orçamento) viraram 20 blocos de `terraform test` com mock provider, vermelhos antes da implementação. Mais checkov sem falhas (as exceções justificadas no próprio recurso) e tflint.
 - **Serviço.** 39 testes Vitest, incluindo 13 do componente com Claude contra um cliente falso: schema, retentativa, sinais inventados, recusa, 429, timeout, disjuntor.
 - **Integração.** Apply real contra o emulador Floci, com o backend S3 e o lock apontando para o emulador, asserts por regra e destroy. O emulador não cobre o MemoryDB nem o endpoint do SageMaker; esses recursos ficam provados no plan e nos testes de unidade, e o relatório marca cada lacuna com a mensagem do próprio emulador como evidência. A integração encontrou um bug real: o Lake Formation recusa como principal o ARN de quem roda o Terraform. A correção concede as permissões à role do Glue, que é quem usa o catálogo.
 

@@ -26,6 +26,7 @@ Regra sem teste conta como falha (CLAUDE.md). Camadas:
 |---|---|---|
 | ADR-0002 | Saída das tasks só por endpoints; MWAA ligado acrescenta os endpoints dele | TT `rede_endpoints_de_interface_no_lab`, `rede_mwaa_ligado_adiciona_endpoints` · IT "Rede: 6 endpoints de interface e 2 de gateway" |
 | ADR-0003 | API pública exige HTTPS com TLS 1.3 | TT `ecs_api_publica_exige_tls`, `ecs_api_publica_com_https` |
+| ADR-0004 | IAM do Bedrock: modelo direto na região do stack, ou perfil de inferência + foundation model sem prefixo só via o perfil | TT `ecs_menor_privilegio_e_privado`, `ecs_bedrock_via_perfil_de_inferencia` |
 | ADR-0004 | Saída estruturada via tool_use com schema estrito e `tool_choice` forçado (4.3) | VT `tests/unit/recommendation-explainer.test.ts` "força a tool..." |
 | ADR-0004 | Critérios explícitos e few-shot no prompt (4.1, 4.2) | VT "o prompt tem critérios explícitos e um exemplo" |
 | ADR-0004 | Retentativa com o erro de validação como `tool_result` `is_error` (4.4) | VT "reenvia o erro de validação...", "trata resposta sem tool_use...", "respeita o limite de tentativas" |

@@ -8,11 +8,36 @@ locals {
   account   = data.aws_caller_identity.current.account_id
   partition = data.aws_partition.current.partition
 
-  # O modelo pode ser chamado direto ou por perfil de inferência entre regiões (prefixo us.).
-  bedrock_model_arns = [
-    "arn:${local.partition}:bedrock:*::foundation-model/${var.bedrock_model_id}",
-    "arn:${local.partition}:bedrock:${local.region}:${local.account}:inference-profile/*${var.bedrock_model_id}",
-  ]
+  # O modelo pode ser chamado direto (anthropic.<modelo>) ou por perfil de inferência entre regiões
+  # (us.|eu.|apac.|global.anthropic.<modelo>). Com perfil, a role precisa do perfil e do foundation
+  # model SEM o prefixo em todas as regiões de destino, só quando a chamada passa pelo perfil.
+  bedrock_base_model_id = replace(var.bedrock_model_id, "/^(us|eu|apac|au|jp|ca|global)\\./", "")
+  bedrock_uses_profile  = local.bedrock_base_model_id != var.bedrock_model_id
+  bedrock_profile_arn   = "arn:${local.partition}:bedrock:${local.region}:${local.account}:inference-profile/${var.bedrock_model_id}"
+
+  # jsonencode/jsondecode: os dois ramos têm formatos diferentes (2 statements com condição contra 1).
+  bedrock_statements = jsondecode(local.bedrock_uses_profile ? jsonencode([
+    {
+      Sid      = "ExplainWithClaudeViaInferenceProfile"
+      Effect   = "Allow"
+      Action   = ["bedrock:InvokeModel"]
+      Resource = [local.bedrock_profile_arn]
+    },
+    {
+      Sid       = "ExplainWithClaudeDestinationModel"
+      Effect    = "Allow"
+      Action    = ["bedrock:InvokeModel"]
+      Resource  = ["arn:${local.partition}:bedrock:*::foundation-model/${local.bedrock_base_model_id}"]
+      Condition = { StringLike = { "bedrock:InferenceProfileArn" = local.bedrock_profile_arn } }
+    },
+    ]) : jsonencode([
+    {
+      Sid      = "ExplainWithClaude"
+      Effect   = "Allow"
+      Action   = ["bedrock:InvokeModel"]
+      Resource = ["arn:${local.partition}:bedrock:${local.region}::foundation-model/${var.bedrock_model_id}"]
+    },
+  ]))
 
   public_https = var.expose_api_publicly
 }
@@ -148,7 +173,7 @@ resource "aws_iam_policy" "ecs_task_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid      = "ReadBatchRecommendations"
         Effect   = "Allow"
@@ -171,12 +196,6 @@ resource "aws_iam_policy" "ecs_task_policy" {
         Resource = var.sagemaker_endpoint_arn
       },
       {
-        Sid      = "ExplainWithClaude"
-        Effect   = "Allow"
-        Action   = ["bedrock:InvokeModel"]
-        Resource = local.bedrock_model_arns
-      },
-      {
         # PutMetricData não aceita ARN de recurso: a condição restringe ao namespace do serviço.
         Sid      = "PublishServiceMetrics"
         Effect   = "Allow"
@@ -186,7 +205,7 @@ resource "aws_iam_policy" "ecs_task_policy" {
           StringEquals = { "cloudwatch:namespace" = var.metrics_namespace }
         }
       }
-    ]
+    ], local.bedrock_statements)
   })
 }
 
