@@ -34,4 +34,6 @@ Regra sem teste conta como falha (CLAUDE.md). Camadas:
 | ADR-0004 | Erros por categoria com flag de retentável (2.2, 5.3) | VT "refusal não é retentado", "429 é retentável...", "400 do modelo não é retentado", "estoura o orçamento de tempo", "abre o disjuntor..." |
 | ADR-0004 | Fallback sem explicação, nunca 500, fora do SLO de 60 ms | VT `tests/integration/explanation-in-recommendations.test.ts` (5 casos) · IT "Claude via bedrock-runtime do emulador: nunca lança" |
 | ADR-0005 | Workflows com OIDC, ambiente protegido, confirmação pelo nome do stack, verificação de sobras, filtro de caminho | ST (seção de workflows: sem chave estática, `environment: aws-lab`, `id-token: write`, confirmação, `enable_mwaa` repassado, etapas do CI) |
+| CLAUDE.md (supply chain) | Actions fixadas por SHA de commit | ST (todo `uses:` dos workflows da unidade com SHA de 40 caracteres) |
+| CLAUDE.md (D-013) | Floci fixado por tag via `vars.FLOCI_IMAGE` | Revisão do workflow de CI (`image: ${{ vars.FLOCI_IMAGE \|\| ... }}`) |
 | Unidade | 5 modos de degradação, filtros 100% | VT `tests/integration/fallback-*.test.ts`, `business-filter-enforcement.test.ts`, `tests/unit/*` |

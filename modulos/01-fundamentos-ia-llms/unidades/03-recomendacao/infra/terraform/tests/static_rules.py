@@ -52,6 +52,12 @@ for name, text in wf.items():
         continue
     if re.search(r"AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|aws-access-key-id", text):
         failures.append(f"ADR-0005: {name} usa chave estática; use OIDC")
+    # CLAUDE.md (supply chain): toda action fixada por SHA de commit, com a tag em comentário.
+    for ref in re.findall(r"uses:\s*([^\s#]+)", text):
+        if ref.startswith("./") or ref.startswith("docker://"):
+            continue
+        if not re.fullmatch(r"[^@]+@[0-9a-f]{40}", ref):
+            failures.append(f"Supply chain: {name} usa {ref} sem SHA fixo")
 for name in ("recsys-01-03-apply.yml", "recsys-01-03-destroy.yml"):
     text = wf[name]
     if text and not re.search(r"^\s+environment:\s*aws-lab\s*$", text, flags=re.M):
