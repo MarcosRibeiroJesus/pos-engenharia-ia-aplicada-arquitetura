@@ -3,6 +3,7 @@
 
 R5: nenhum recurso de custo fixo ocioso sem ADR que o cite.
 R8: state remoto em S3 com lock nativo.
+ADR-0005: workflows com OIDC, ambiente protegido, confirmação e verificação de sobras.
 Roda sem rede e sem credenciais: `python3 tests/static_rules.py`.
 """
 import pathlib
@@ -40,6 +41,39 @@ if not re.search(r"^use_lockfile\s*=\s*true", example, flags=re.M):
     failures.append("R8: backend.hcl.example precisa de use_lockfile = true")
 if "dynamodb_table" in example:
     failures.append("R8: lock por DynamoDB está obsoleto; use use_lockfile")
+
+# ADR-0005: workflows da unidade na raiz do repositório.
+WF = UNIT.parents[3] / ".github" / "workflows"
+wf = {name: (WF / name).read_text(encoding="utf-8") if (WF / name).exists() else ""
+      for name in ("recsys-01-03-ci.yml", "recsys-01-03-apply.yml", "recsys-01-03-destroy.yml")}
+for name, text in wf.items():
+    if not text:
+        failures.append(f"ADR-0005: falta .github/workflows/{name}")
+        continue
+    if re.search(r"AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|aws-access-key-id", text):
+        failures.append(f"ADR-0005: {name} usa chave estática; use OIDC")
+for name in ("recsys-01-03-apply.yml", "recsys-01-03-destroy.yml"):
+    text = wf[name]
+    if text and not re.search(r"^\s+environment:\s*aws-lab\s*$", text, flags=re.M):
+        failures.append(f"ADR-0005: {name} precisa rodar no ambiente protegido aws-lab")
+    if text and "id-token: write" not in text:
+        failures.append(f"ADR-0005: {name} precisa de id-token: write (OIDC)")
+    if text and "workflow_dispatch" not in text:
+        failures.append(f"ADR-0005: {name} só por disparo manual")
+d = wf["recsys-01-03-destroy.yml"]
+if d and not ('"$CONFIRM" != "$STACK_NAME"' in d and "STACK_NAME: recsys-lab" in d):
+    failures.append("ADR-0005: destroy precisa confirmar digitando o nome do stack")
+if d and "resourcegroupstaggingapi get-resources" not in d:
+    failures.append("ADR-0005: destroy precisa verificar sobras pela tag do projeto")
+if wf["recsys-01-03-apply.yml"] and "TF_VAR_enable_mwaa" not in wf["recsys-01-03-apply.yml"]:
+    failures.append("ADR-0005: apply precisa repassar enable_mwaa")
+ci = wf["recsys-01-03-ci.yml"]
+for needle, why in [("modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/**", "filtro de caminho"),
+                    ("terraform test", "terraform test"), ("checkov", "checkov"), ("tflint", "tflint"),
+                    ("floci/floci", "Floci como container de serviço"), ("createComment", "plan comentado no PR"),
+                    ("infracost", "Infracost")]:
+    if ci and needle not in ci:
+        failures.append(f"ADR-0005: CI sem {why}")
 
 for f in failures:
     print("FALHA", f)
