@@ -37,6 +37,19 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Perguntas ao dono
 - Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
 
+## Harness e SDD (spec-driven development)
+@.specify/memory/constitution.md
+
+- **Todo projeto passa pelo SDD**, no fluxo do Spec Kit, com os artefatos em `specs/<chave>/`:
+
+  especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar
+
+  O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
+- **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
+- **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
+- **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
+- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
+
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
 - `modulos/NN-slug/`: uma disciplina. Dentro, `unidades/UU-slug/` para cada unidade (os "Módulo 0X" dentro da disciplina na plataforma), com `notas/`, `infra/` (Terraform), `src/`, `tests/`, `adr/`, `docs/` e `posts/`. Na raiz da disciplina, `linkedin.md` com o post de divulgação.
