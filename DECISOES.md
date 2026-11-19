@@ -4,11 +4,11 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 
 ## Projetos
 
-| Disciplina | Arquitetura AWS | IA aplicada | Cloud comparativa | Teto do lab |
+| Disciplina | Arquitetura AWS | IA aplicada | Cloud comparativa | Teto (custo de 1 dia) |
 |---|---|---|---|---|
-| D01 Fundamentos | Recomendação de e-commerce (PR #1) | Doom: detecção YOLO em TF.js num Web Worker, Doom em WASM (fiel à aula; não é aprendizado por reforço) | GCP | pendente |
-| D02 APIs de IA generativa | Assistente de agendamento completo | pendente | GCP | pendente |
-| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade | pendente | Azure | US$ 10/mês |
+| D01 Fundamentos | Recomendação de e-commerce (PR #1) | Doom: detecção YOLO em TF.js num Web Worker, Doom em WASM (fiel à aula; não é aprendizado por reforço) | GCP | calcular no plano |
+| D02 APIs de IA generativa | Assistente de agendamento completo | pendente | GCP | calcular no plano |
+| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
@@ -25,14 +25,20 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Variável ou secret novo criado pelo Marcos:** troque em todo lugar que depende dele, com fallback seguro (D-012).
 - **Push e PR:** só depois de receber a memória mais recente, porque o gate nega antes disso. Perguntas ao Marcos vão no PR, na seção `## Perguntas ao dono` (D-015).
 - **Retomada:** se a sessão ficou parada mais de 8 horas, ou se a memória mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado (D-015).
-- **Teto do gate de FinOps por PR: US$ 20/mês** (D-020). O valor vem de `vars.CUSTO_MAX_MENSAL_USD`, com padrão `'20'`. É diferente do teto do lab de cada disciplina.
+- **Infraestrutura real é demonstração de um dia: subir, gravar um vídeo curto, destruir** (D-021, D-022, D-023).
+  - **Teto de cada projeto:** o custo estimado de um dia de execução, calculado no plano. Ele fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets **diário**. O gate do PR compara o custo de 24 horas com esse teto.
+  - **Limite mensal da conta:** US$ 20 (`vars.CUSTO_MAX_MENSAL_USD`, padrão `'20'`), num AWS Budgets mensal em `infra/conta`, somando todas as demonstrações do mês.
+  - **Workflow de destroy obrigatório em todo projeto com infraestrutura real:** disparo manual ou pelo agendador, ambiente protegido, input `confirm_stack`, OIDC, verificação de sobras pela tag `project` e `harness/infra.py remover` no fim.
+  - **O apply tem input `prazo_horas`** (padrão 24, máximo 72) e registra o prazo com `harness/infra.py registrar`. O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence. Para adiar: `harness/infra.py estender`.
+  - **Ponto de partida:** os modelos em `harness/modelos/`. O `estado.py validar` reprova sem teto a partir de `tarefas` e sem apply ou destroy completos a partir de `verificar`.
+  - **D02:** o AWS Budgets do módulo de monitoramento passa de mensal para diário, com o teto calculado.
 - **Modelos:** Opus para arquitetura, código e segurança; Sonnet para pesquisa, posts e site; Haiku para tarefas mecânicas (D-002).
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
 - D02: avaliações e observabilidade (gate no CI, Langfuse só local ou Langfuse na AWS), mais a 2ª pergunta aberta na sessão D02.
-- Teto do lab da D01 e da D02.
+- Ambiente do GitHub para o destroy automático: hoje o destroy usa o ambiente `aws-lab`. Se esse ambiente exigir aprovação, o destroy automático vai ficar esperando alguém aprovar.
 - Projetos de IA aplicada da D02 e da D03.
 - Revisores de IA na esteira (custo de tokens) e conta AWS com OIDC para o `terraform plan` nos PRs.
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges dos PRs #9, #10, #11, #12 e #16 (harness com SDD).
+- Merges dos PRs #9 (esteira, gate diário e limite da conta), #10, #11, #12 e #16 (harness com SDD, troca de agentes, teto diário, destroy e prazo).

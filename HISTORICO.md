@@ -6,8 +6,26 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-023 · Mecânica do teto diário e do prazo de vida · fonte: delegada
+- **Gate de FinOps:** compara o custo de 24 horas com o teto do projeto. Custo de um dia = custo mensal do Infracost × 24/730.
+  - Com o custo mensal, a D01 com MWAA seria barrada mesmo custando poucos dólares no dia da demonstração.
+  - Sem teto calculado, o gate só avisa. Bloqueia mesmo sem teto quando um dia sozinho passa do limite mensal da conta (1.4).
+- **Prazo no branch `infra-no-ar`,** gravado por plumbing do git, com o mesmo padrão da memória e da disponibilidade dos agentes. É visível a qualquer agente e máquina, sem credencial AWS para ler (5.1).
+- **O destroy automático reusa o workflow de destroy do projeto** (com `confirm_stack` e verificação de sobras), em vez de um caminho paralelo. Assim um caminho só é testado e auditado.
+- **Redisparo e estado de erro:** se o registro continuar 3 horas depois do disparo, o agendador dispara de novo. Um destroy que falha deixa o registro, e esse é o estado de erro visível (5.3).
+- **Validação no `estado.py`:** reprova o projeto sem teto a partir de `tarefas` e sem apply ou destroy completos a partir de `verificar`. É um gate programático, não uma instrução (1.4).
+
+### 2026-11-19 · D-022 · Limite mensal da conta e destroy automático · fonte: Marcos
+- **Limite mensal:** o US$ 20 da D-020 passa a ser o limite mensal da conta, num AWS Budgets mensal que soma todas as demonstrações. O gate do PR usa o teto diário de cada projeto.
+- **Destroy automático:** destroy automático com prazo. O apply informa o prazo (padrão 24 horas, dá para estender); um workflow agendado avisa uma hora antes e roda o mesmo destroy, com verificação de sobras.
+
+### 2026-11-19 · D-021 · Teto de um dia e destroy obrigatório · fonte: Marcos
+- **Uso da infraestrutura real:** subir a arquitetura, ver em ação, gravar um vídeo curto e destruir tudo.
+- **Teto de cada projeto:** o valor estimado de cobrança de um dia de execução. Substitui os tetos mensais por disciplina (D03 tinha US$ 10/mês).
+- **Workflow de destroy:** obrigatório em todo projeto de infraestrutura real.
+
 ### 2026-11-19 · D-020 · Teto do gate de FinOps · fonte: Marcos
-O teto padrão do gate de custo por PR cai de US$ 50 para US$ 20 por mês. O pedido veio em comentário no card do Monday: remover o teto de US$ 50 imediatamente e definir US$ 20. Os tetos de lab por disciplina são outra decisão e continuam como estavam: a D03 em US$ 10, e a D01 e a D02 pendentes.
+O teto padrão do gate de custo por PR cai de US$ 50 para US$ 20 por mês. O significado mudou na D-022: o valor passou a ser o limite mensal da conta. O pedido veio em comentário no card do Monday: remover o teto de US$ 50 imediatamente e definir US$ 20. Os tetos de lab por disciplina são outra decisão e continuam como estavam: a D03 em US$ 10, e a D01 e a D02 pendentes.
 
 ### 2026-11-19 · D-019 · Harness agnóstico de agente · fonte: delegada
 - **`AGENTS.md` canônico na raiz**, importado pelo `CLAUDE.md`. O Antigravity e o Copilot leem esse arquivo, e as skills ficam espelhadas em `.agents/skills/` (3.1, 3.2).
