@@ -32,6 +32,12 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
   4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
 - As opções da disciplina ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
+- **Arquitetura âncora (regra sem exceção):** toda arquitetura AWS parte de uma arquitetura enterprise publicada pela AWS sobre o mesmo tema, em site oficial (Architecture Center, Solutions Library/Guidance, Prescriptive Guidance, blogs oficiais da AWS), com diagrama e componentes descritos.
+  - A sugestão própria entra só como extensão de uma âncora, nunca no lugar dela.
+  - Juntar trechos de várias fontes sem uma âncora principal não atende a regra.
+  - Antes de propor uma âncora, abra a página e confira que ela existe e descreve a arquitetura. Link visto só em resultado de busca não conta.
+  - O ADR-0001 do projeto e o post citam a âncora: link, data, o que foi seguido, o que mudou e por quê.
+  - A escolha da âncora é minha. Enquanto ela não for escolhida, o projeto fica como "âncora pendente".
 - E um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
