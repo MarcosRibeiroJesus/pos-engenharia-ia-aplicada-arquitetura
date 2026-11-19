@@ -1,0 +1,21 @@
+# Copie para terraform.tfvars (fora do git).
+aws_region = "us-east-1"
+ambiente   = "lab"
+
+# PENDENTE: o teto mensal é decisão do dono do repositório. Preencha antes do apply.
+teto_mensal_usd = 0
+
+# gravado = respostas gravadas, sem chamada ao Claude. bedrock = Claude no Amazon Bedrock (custa tokens).
+modo_llm = "gravado"
+
+cadeia_modelos              = ["anthropic.claude-haiku-5-5", "anthropic.claude-sonnet-5-5"]
+cota_tokens_dia_por_cliente = 200000
+custo_diario_llm_alarme_usd = 1
+
+# WAF tem custo fixo mensal (ADR-0007). Ligue só se quiser a camada de borda.
+habilitar_waf = false
+
+# Se outro stack da conta já configurou a role de logs do API Gateway, use false.
+configurar_conta_logs_apigw = true
+
+emails_alerta = []

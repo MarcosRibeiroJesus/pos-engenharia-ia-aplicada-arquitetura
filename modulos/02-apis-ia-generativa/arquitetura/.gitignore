@@ -1,0 +1,6 @@
+infra/terraform/.build/
+infra/**/.terraform/
+infra/terraform/provider_override.tf
+src/dist/
+src/node_modules/
+src/coverage/
