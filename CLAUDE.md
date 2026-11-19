@@ -8,6 +8,12 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
+## Decisões do dono (regra sem exceção)
+- Nunca assuma uma escolha que cabe a mim: opção de arquitetura, projeto de IA aplicada, cloud comparativa, orçamento, produto, escopo, publicação, merge, aprovação de plano ou qualquer coisa que eu tenha sido perguntado. Silêncio, pergunta pulada ou "sem objeção" não são resposta.
+- Antes de agir sobre um conjunto de decisões, confira se falta alguma resposta minha. Se faltar, liste o que falta, diga em uma linha o que cada item bloqueia e peça a resposta. Siga só com o trabalho que não depende dela.
+- Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
+- Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
+
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
 - `modulos/NN-slug/`: uma disciplina. Dentro, `unidades/UU-slug/` para cada unidade (os "Módulo 0X" dentro da disciplina na plataforma), com `notas/`, `infra/` (Terraform), `src/`, `tests/`, `adr/`, `docs/` e `posts/`. Na raiz da disciplina, `linkedin.md` com o post de divulgação.
