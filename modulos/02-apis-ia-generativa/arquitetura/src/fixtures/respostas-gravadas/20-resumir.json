@@ -1,0 +1,14 @@
+[
+  {
+    "id": "resumo-padrao",
+    "descricao": "Resumo genérico da sessão.",
+    "tarefa": "resumir",
+    "quando": { "contem": [] },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": { "input_tokens": 900, "output_tokens": 60 },
+      "content": [{ "type": "tool_use", "id": "toolu_r01", "name": "registrar_resumo", "input": {
+        "resumo": "O paciente tratou de horários e consultas com o assistente nesta sessão." } }]
+    }
+  }
+]

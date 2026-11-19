@@ -1,0 +1,568 @@
+[
+  {
+    "id": "primario-fora",
+    "descricao": "O modelo primário está sobrecarregado: o gateway cai para o seguinte.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "simular-falha-primario"
+      ],
+      "modelo": "anthropic.claude-haiku-5-5"
+    },
+    "erro": {
+      "categoria": "transitorio",
+      "status": 529,
+      "mensagem": "overloaded_error (gravado)"
+    }
+  },
+  {
+    "id": "primario-fora-fallback",
+    "descricao": "Resposta do modelo de fallback.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "simular-falha-primario"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1800,
+        "output_tokens": 90
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g08",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "consultar",
+            "especialidade": null,
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.9,
+            "ambiguidades": [],
+            "evidencias": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "todos-fora",
+    "descricao": "Todos os modelos indisponíveis: o grafo vai para o fallback e faz handoff.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "simular-instabilidade"
+      ]
+    },
+    "erro": {
+      "categoria": "transitorio",
+      "status": 503,
+      "mensagem": "service unavailable (gravado)"
+    }
+  },
+  {
+    "id": "agendar-cardio-10h",
+    "descricao": "Agendamento completo: especialidade, data relativa e horário.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "cardiologia",
+        "10h"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1850,
+        "output_tokens": 140
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g01",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": "cardiologia",
+            "data": "2026-11-26",
+            "horario": "10:00",
+            "periodo": "manha",
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.93,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "mensagem",
+                "trecho": "cardiologia"
+              },
+              {
+                "campo": "data",
+                "origem": "mensagem",
+                "trecho": "quinta"
+              },
+              {
+                "campo": "horario",
+                "origem": "mensagem",
+                "trecho": "10h"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "agendar-cardio-manha",
+    "descricao": "Agendamento sem horário: o gate oferece opções.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "cardiologia",
+        "de manhã"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1840,
+        "output_tokens": 120
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g02",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": "cardiologia",
+            "data": "2026-11-26",
+            "horario": null,
+            "periodo": "manha",
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.88,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "mensagem",
+                "trecho": "cardiologia"
+              },
+              {
+                "campo": "data",
+                "origem": "mensagem",
+                "trecho": "quinta"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cancelar-ambiguo",
+    "descricao": "Cancelamento com duas consultas no dia: baixa confiança e pergunta.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "cancela a de quinta"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1990,
+        "output_tokens": 110
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g03",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "cancelar",
+            "especialidade": null,
+            "data": "2026-11-26",
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.45,
+            "ambiguidades": [
+              "Há duas consultas na quinta: qual delas?"
+            ],
+            "evidencias": [
+              {
+                "campo": "data",
+                "origem": "mensagem",
+                "trecho": "quinta"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cancelar-escolha-dermato",
+    "descricao": "Resposta à desambiguação: o id vem dos candidatos na memória.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [
+        "C-C2DERM03"
+      ],
+      "mensagem": [
+        "a de dermatologia"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2100,
+        "output_tokens": 120
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g04",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "cancelar",
+            "especialidade": "dermatologia",
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": "C-C2DERM03",
+            "preferencias": [],
+            "confianca": 0.91,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "mensagem",
+                "trecho": "dermatologia"
+              },
+              {
+                "campo": "consulta_id",
+                "origem": "memoria",
+                "trecho": "C-C2DERM03"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "consultar-com-preferencia",
+    "descricao": "Consulta + preferência duradoura declarada.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "quais consultas",
+        "prefiro"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1800,
+        "output_tokens": 100
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g05",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "consultar",
+            "especialidade": null,
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [
+              {
+                "chave": "periodo_preferido",
+                "valor": "manha",
+                "origem": "mensagem"
+              }
+            ],
+            "confianca": 0.9,
+            "ambiguidades": [],
+            "evidencias": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "consultar",
+    "descricao": "Consulta simples.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "quais consultas"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1780,
+        "output_tokens": 90
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g06",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "consultar",
+            "especialidade": null,
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.95,
+            "ambiguidades": [],
+            "evidencias": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "dermato-27-corrigida",
+    "descricao": "Segunda tentativa, depois do ERRO_VALIDACAO: data no formato certo.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [
+        "ERRO_VALIDACAO"
+      ],
+      "mensagem": [
+        "dermatologia dia 27"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2300,
+        "output_tokens": 120
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g07b",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": "dermatologia",
+            "data": "2026-11-27",
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.86,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "mensagem",
+                "trecho": "dermatologia"
+              },
+              {
+                "campo": "data",
+                "origem": "mensagem",
+                "trecho": "dia 27"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "dermato-27-data-errada",
+    "descricao": "Primeira tentativa com data fora do formato: força a retentativa.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "naoContem": [
+        "ERRO_VALIDACAO"
+      ],
+      "mensagem": [
+        "dermatologia dia 27"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1820,
+        "output_tokens": 115
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g07",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": "dermatologia",
+            "data": "27/11",
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.86,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "mensagem",
+                "trecho": "dermatologia"
+              },
+              {
+                "campo": "data",
+                "origem": "mensagem",
+                "trecho": "dia 27"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "encaminhamento-anexo",
+    "descricao": "Especialidade vinda de um anexo legítimo: evidência com origem anexo.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [
+        "encaminhamento para dermatologia"
+      ],
+      "mensagem": [
+        "anexo"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 2050,
+        "output_tokens": 100
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g09",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": "dermatologia",
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.8,
+            "ambiguidades": [],
+            "evidencias": [
+              {
+                "campo": "especialidade",
+                "origem": "anexo",
+                "trecho": "encaminhamento para dermatologia"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "anexo-sem-conteudo",
+    "descricao": "Pedido que depende de anexo que não chegou ao modelo (quarentena): falta especialidade.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": [],
+      "mensagem": [
+        "anexo"
+      ]
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1700,
+        "output_tokens": 80
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g10",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "agendar",
+            "especialidade": null,
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.7,
+            "ambiguidades": [],
+            "evidencias": []
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "padrao",
+    "descricao": "Nada casou: intenção fora de escopo, confiança baixa.",
+    "tarefa": "extrair_intencao",
+    "quando": {
+      "contem": []
+    },
+    "resposta": {
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 1700,
+        "output_tokens": 70
+      },
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_g99",
+          "name": "registrar_intencao",
+          "input": {
+            "intencao": "outra",
+            "especialidade": null,
+            "data": null,
+            "horario": null,
+            "periodo": null,
+            "consulta_id": null,
+            "preferencias": [],
+            "confianca": 0.3,
+            "ambiguidades": [],
+            "evidencias": []
+          }
+        }
+      ]
+    }
+  }
+]
