@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CUSTO_MAX_MENSAL_USD: ${{ vars.CUSTO_MAX_MENSAL_USD || '50' }}
+  CUSTO_MAX_MENSAL_USD: ${{ vars.CUSTO_MAX_MENSAL_USD || '20' }}
 
 jobs:
   descobrir:
