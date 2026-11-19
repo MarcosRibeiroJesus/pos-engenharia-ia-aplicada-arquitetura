@@ -21,7 +21,14 @@ Diagrama e componentes. Para cada serviço AWS: por que este, alternativa rejeit
 ## Cloud comparativa
 Mapeamento serviço a serviço e o que muda quando não há equivalente.
 
-## Custo do lab
-Estimativa, teto e o que fica ligado.
+## Custo do lab (um dia de execução)
+O uso é demonstração: subir, gravar, destruir no mesmo dia.
+
+| Componente | Custo de 24 h (US$) | Fonte da estimativa |
+|---|---|---|
+
+- **Teto diário** = total acima. Copie para `teto_diario_usd` em `harness/estado.json`, para o README e para o AWS Budgets diário.
+- **Fica cobrando depois do destroy?** Liste o que sobra (state, chaves KMS em exclusão, logs) e o custo de cada item.
+- **Workflow de destroy:** caminho e nome do stack para a confirmação.
 
 ## Riscos e lacunas do emulador

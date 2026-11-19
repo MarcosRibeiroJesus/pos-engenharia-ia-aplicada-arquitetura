@@ -16,7 +16,7 @@ O que existe hoje, para quem, o que muda e como sabemos que deu certo. Descreva 
 
 ## Requisitos não funcionais
 - **RNF-001** (segurança, Art. IV): ...
-- **RNF-002** (custo, Art. V): teto mensal `[PENDENTE: valor]`
+- **RNF-002** (custo, Art. V): teto = custo estimado de um dia de execução, calculado no plano; destroy por workflow sem sobras
 - **RNF-003** (operação, Art. VI): ...
 
 ## Componente Claude e tarefas da prova

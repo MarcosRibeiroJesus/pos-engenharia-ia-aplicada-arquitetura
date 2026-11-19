@@ -63,7 +63,54 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
         for arq in exigidos(estado, p["fase"]):
             if not (raiz / p["specs"] / arq).exists():
                 erros.append(f"{p['chave']}: fase '{p['fase']}' exige {p['specs']}{arq}")
+        erros += problemas_infra(estado, p, raiz)
     return erros
+
+
+def problemas_infra(estado: dict, p: dict, raiz: Path = RAIZ) -> list[str]:
+    """Artigo V: infraestrutura real tem teto de um dia de execução e workflow de destroy (D-021)."""
+    if not p.get("infra_real"):
+        return []
+    erros, fase = [], indice(estado, p["fase"])
+    for campo in ("apply_workflow", "destroy_workflow", "teto_diario_usd"):
+        if campo not in p:
+            erros.append(f"{p['chave']}: infra real sem o campo {campo}")
+    if erros:
+        return erros
+    teto = p["teto_diario_usd"]
+    if fase >= indice(estado, "tarefas") and not (isinstance(teto, (int, float)) and teto > 0):
+        erros.append(f"{p['chave']}: a partir de 'tarefas' exige teto_diario_usd (custo estimado de 1 dia, do plan.md)")
+    if fase >= indice(estado, "verificar"):
+        for campo, checar in (("apply_workflow", checar_apply), ("destroy_workflow", checar_destroy)):
+            wf = raiz / p[campo]
+            if not wf.exists():
+                erros.append(f"{p['chave']}: a partir de 'verificar' exige {campo} em {p[campo]}")
+            else:
+                erros += [f"{p['chave']}: {x}" for x in checar(wf.read_text(encoding="utf-8"))]
+    return erros
+
+
+def checar_apply(texto: str) -> list[str]:
+    """O apply registra o prazo de vida da demonstração (D-022)."""
+    exigencias = {
+        "input prazo_horas": r"^\s*prazo_horas\s*:",
+        "registro do prazo (harness/infra.py registrar)": r"harness/infra\.py\s+registrar",
+    }
+    return [f"workflow de apply sem {nome}" for nome, rx in exigencias.items() if not re.search(rx, texto, re.M)]
+
+
+def checar_destroy(texto: str) -> list[str]:
+    """Requisitos mínimos do workflow de destroy (CLAUDE.md, Engenharia)."""
+    exigencias = {
+        "disparo manual (workflow_dispatch)": r"^\s*workflow_dispatch\s*:",
+        "ambiente protegido (environment)": r"^\s*environment\s*:",
+        "confirmação pelo nome do stack (input confirm_stack)": r"^\s*confirm_stack\s*:",
+        "terraform destroy": r"terraform\s+destroy",
+        "verificação final de sobras pela tag project": r"tag:project|TagFilters|resourcegroupstaggingapi",
+        "OIDC sem chave estática (id-token: write)": r"id-token\s*:\s*write",
+        "remoção do registro de prazo (harness/infra.py remover)": r"harness/infra\.py\s+remover",
+    }
+    return [f"workflow de destroy sem {nome}" for nome, rx in exigencias.items() if not re.search(rx, texto, re.M)]
 
 
 def projeto_de(estado: dict, caminho: str) -> dict | None:

@@ -1,0 +1,80 @@
+name: "TROCAR-CHAVE · destroy (ambiente protegido)"
+
+# Modelo (harness/modelos). Disparo manual ou pelo expirar-infra.yml quando o prazo vence (D-022).
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_stack:
+        description: "Digite o nome do stack para confirmar (TROCAR-STACK)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: TROCAR-CHAVE-state
+  cancel-in-progress: false
+
+env:
+  CHAVE: TROCAR-CHAVE
+  STACK_NAME: TROCAR-STACK
+  PROJECT_TAG: TROCAR-TAG
+  TF_DIR: TROCAR/infra/terraform
+  STATE_KEY: TROCAR/lab.tfstate
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: aws-lab
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - name: Confirmação pelo nome do stack
+        env:
+          CONFIRM: ${{ inputs.confirm_stack }}
+        run: |
+          if [ "$CONFIRM" != "$STACK_NAME" ]; then
+            echo "::error::Confirmação '$CONFIRM' não confere com '$STACK_NAME'. Nada foi destruído."; exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" -backend-config="key=$STATE_KEY" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+      - name: Destroy
+        run: terraform destroy -input=false -auto-approve -lock-timeout=120s
+      - name: Verificar sobras pela tag do projeto
+        run: |
+          left=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=project,Values="$PROJECT_TAG" \
+            --query 'ResourceTagMappingList[].ResourceARN' --output text | tr '\t' '\n' | grep -v '^$' || true)
+          # Ajuste por projeto: chaves KMS em PendingDeletion e serviços INACTIVE não são sobra com custo.
+          if [ -n "$left" ]; then
+            echo "::error::Recursos com tag project=$PROJECT_TAG ainda existem:"; echo "$left"; exit 1
+          fi
+          echo "Nenhuma sobra com a tag project=$PROJECT_TAG."
+
+  prazo:
+    # Só depois da verificação de sobras: se o destroy falhar, o registro fica e o agendador tenta de novo.
+    needs: destroy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Remover o registro de prazo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 harness/infra.py remover "$CHAVE"

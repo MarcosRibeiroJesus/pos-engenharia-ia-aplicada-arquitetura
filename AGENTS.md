@@ -48,3 +48,10 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - **Equilibrado:** pesquisa, posts, testes a partir de regras escritas e site.
 - **Rápido:** tarefas mecânicas.
 - Revisão independente roda em outra instância (ou outro agente), nunca na que escreveu.
+
+## 7. Infraestrutura real: subir, demonstrar, destruir
+- O uso é demonstração de um dia. O teto do projeto é `teto_diario_usd` no `harness/estado.json`, e o limite mensal da conta é US$ 20.
+- Todo projeto com `infra_real: true` tem workflow de apply com `prazo_horas` e workflow de destroy com `confirm_stack`. O ponto de partida está em `harness/modelos/`.
+- `python3 harness/infra.py status` mostra o que está no ar e quando expira.
+- `python3 harness/infra.py estender <chave> --horas N` adia o destroy automático.
+- Nunca rode apply numa conta real por conta própria: o apply é disparado pelo dono, no ambiente protegido.

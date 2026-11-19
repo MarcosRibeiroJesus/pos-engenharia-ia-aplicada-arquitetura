@@ -14,6 +14,11 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 ## Fase 3 · Componente Claude
 - [ ] T020 ... · RF-00x
 
-## Fase 4 · Verificação
+## Fase 4 · Operação e custo (obrigatória com infraestrutura real)
+- [ ] T080 Workflow de destroy: disparo manual ou pelo agendador, ambiente protegido, `confirm_stack`, OIDC, verificação de sobras pela tag e `harness/infra.py remover` (Art. V)
+- [ ] T082 Workflow de apply registra o prazo com `harness/infra.py registrar` (input `prazo_horas`, padrão 24)
+- [ ] T081 AWS Budgets diário com o teto do plano e alerta
+
+## Fase 5 · Verificação
 - [ ] T090 Integração no Floci e relatório
 - [ ] T091 Posts (AWS e cloud comparativa) e página no site

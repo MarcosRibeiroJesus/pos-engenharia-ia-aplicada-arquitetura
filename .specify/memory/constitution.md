@@ -29,7 +29,16 @@ Nenhuma spec assume escopo, produto, orçamento, cloud comparativa, projeto de I
 ## Artigo V · Custo consciente
 - Sem custo fixo ocioso sem ADR.
 - Versão "lab" na menor escala que demonstre o padrão.
-- Teto mensal do projeto no README e no gate de FinOps.
+- O uso é demonstração: subir, gravar a demonstração e destruir no mesmo dia. Por isso o teto de cada projeto é o **custo estimado de um dia de execução** (`teto_diario_usd`), calculado no plano. Ele vai no README, no AWS Budgets diário e no gate de FinOps.
+- **Limite mensal da conta: US$ 20**, num AWS Budgets mensal que soma todas as demonstrações do mês. É a segunda camada, para o caso de um destroy esquecido.
+- **Workflow de destroy obrigatório** em todo projeto com infraestrutura real:
+  - disparo manual ou pelo agendador de prazo;
+  - ambiente protegido;
+  - confirmação pelo nome do stack no input `confirm_stack`;
+  - OIDC, sem chave estática;
+  - verificação final de sobras pela tag `project`;
+  - no fim, remove o registro de prazo (`harness/infra.py remover`).
+- **Prazo de vida:** o apply registra o prazo (`harness/infra.py registrar`, padrão de 24 horas, máximo de 72). O workflow `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
 - `destroy` sem sobras.
 
 ## Artigo VI · Operável e replicável

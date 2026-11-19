@@ -104,8 +104,19 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Engenharia
 - Terraform: módulos reutilizáveis, state remoto com lock, `terraform.tfvars.example`.
 - GitHub Actions com OIDC na AWS, sem chaves estáticas. Pipeline: fmt, validate, tflint, checkov, `terraform test`, integração com o Floci como container de serviço, plan comentado no PR, apply só em ambiente protegido com aprovação.
-- Workflow de destroy: disparo manual, ambiente protegido, confirmação digitando o nome do stack, verificação final de recursos com a tag do projeto.
-- FinOps: versão "lab" na menor escala que demonstre o padrão; Infracost no PR; alerta no AWS Budgets; teto mensal no README.
+- Workflow de destroy **obrigatório em todo projeto com infraestrutura real** (Artigo V, D-021 e D-022):
+  - disparo manual ou pelo agendador de prazo;
+  - ambiente protegido;
+  - confirmação pelo nome do stack no input `confirm_stack`;
+  - OIDC;
+  - verificação final de recursos com a tag do projeto;
+  - remoção do registro de prazo.
+- **Prazo do apply:** o workflow de apply registra o prazo de vida com `harness/infra.py registrar` (padrão 24 h, máximo 72 h; dá para estender com `harness/infra.py estender`). O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
+- **Onde fica e quem valida:** os caminhos ficam em `apply_workflow` e `destroy_workflow` no `harness/estado.json`. O `estado.py validar` reprova o projeto na fase `verificar` se um dos dois faltar ou estiver incompleto.
+- FinOps: versão "lab" na menor escala que demonstre o padrão. O uso é demonstração (subir, gravar um vídeo curto, destruir no mesmo dia), então o teto de cada projeto é o custo estimado de um dia de execução:
+  - fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets com período diário;
+  - o Infracost do PR compara o custo de 24 horas com esse teto;
+  - acima de todos os projetos, o limite mensal da conta é US$ 20 (`vars.CUSTO_MAX_MENSAL_USD`), num AWS Budgets mensal (D-022).
 - Replicável: README de cada módulo com pré-requisitos e no máximo 5 passos para subir.
 
 ## Site (GitHub Pages)

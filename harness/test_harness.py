@@ -15,6 +15,7 @@ sys.path.insert(0, str(AQUI))
 import agente  # noqa: E402
 import estado  # noqa: E402
 import memoria  # noqa: E402
+import infra  # noqa: E402
 import ramo  # noqa: E402
 import sincronizar_agentes  # noqa: E402
 
@@ -140,6 +141,153 @@ class TestGateSddPorArquivo(unittest.TestCase):
         r = subprocess.run([sys.executable, str(AQUI / "estado.py"), "validar"], cwd=raiz,
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+DESTROY_OK = """
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_stack:
+        required: true
+permissions:
+  id-token: write
+jobs:
+  destroy:
+    environment: aws-lab
+    steps:
+      - run: terraform destroy -auto-approve
+      - run: aws resourcegroupstaggingapi get-resources --tag-filters Key=project,Values=x
+      - run: python3 harness/infra.py remover p
+"""
+
+APPLY_OK = """
+on:
+  workflow_dispatch:
+    inputs:
+      prazo_horas:
+        default: 24
+jobs:
+  prazo:
+    steps:
+      - run: python3 harness/infra.py registrar p --stack s --horas 24
+"""
+
+
+class TestInfraReal(unittest.TestCase):
+    """D-021: teto de um dia de execução e workflow de destroy obrigatório."""
+    fases = estado.carregar()["fases"]
+
+    def projeto(self, fase, **extra):
+        base = {"chave": "p", "fase": fase, "infra_real": True, "apply_workflow": "ap.yml",
+                "destroy_workflow": "wf.yml", "teto_diario_usd": None}
+        base.update(extra)
+        return base
+
+    def checar(self, p, raiz):
+        return estado.problemas_infra({"fases": self.fases}, p, raiz)
+
+    def test_sem_infra_real_nao_exige_nada(self):
+        self.assertEqual(self.checar({"chave": "d", "fase": "publicar", "infra_real": False}, AQUI), [])
+
+    def test_infra_real_precisa_declarar_os_campos(self):
+        erros = self.checar({"chave": "p", "fase": "especificar", "infra_real": True}, AQUI)
+        self.assertEqual(len(erros), 3)
+
+    def test_teto_pode_ficar_pendente_ate_o_plano(self):
+        self.assertEqual(self.checar(self.projeto("planejar"), AQUI), [])
+
+    def test_teto_diario_obrigatorio_a_partir_de_tarefas(self):
+        self.assertTrue(any("teto_diario_usd" in e for e in self.checar(self.projeto("tarefas"), AQUI)))
+        self.assertEqual(self.checar(self.projeto("tarefas", teto_diario_usd=1.8), AQUI), [])
+
+    def test_destroy_obrigatorio_na_verificacao(self):
+        with tempfile.TemporaryDirectory() as t:
+            erros = self.checar(self.projeto("verificar", teto_diario_usd=2), Path(t))
+            self.assertTrue(any("destroy_workflow" in e for e in erros))
+            (Path(t) / "wf.yml").write_text(DESTROY_OK)
+            self.assertTrue(any("apply_workflow" in e for e in self.checar(self.projeto("verificar", teto_diario_usd=2), Path(t))))
+            (Path(t) / "ap.yml").write_text(APPLY_OK)
+            self.assertEqual(self.checar(self.projeto("verificar", teto_diario_usd=2), Path(t)), [])
+
+    def test_destroy_incompleto_e_reprovado(self):
+        for trecho in ("workflow_dispatch", "environment", "confirm_stack", "id-token", "resourcegroupstaggingapi",
+                       "infra.py remover"):
+            with self.subTest(sem=trecho):
+                incompleto = "\n".join(l for l in DESTROY_OK.splitlines() if trecho not in l)
+                self.assertTrue(estado.checar_destroy(incompleto))
+
+    def test_destroy_completo_passa(self):
+        self.assertEqual(estado.checar_destroy(DESTROY_OK), [])
+
+    def test_apply_sem_prazo_e_reprovado(self):
+        self.assertEqual(estado.checar_apply(APPLY_OK), [])
+        self.assertEqual(len(estado.checar_apply("on: workflow_dispatch")), 2)
+
+    def test_modelos_do_harness_cumprem_as_regras(self):
+        modelos = AQUI / "modelos"
+        self.assertEqual(estado.checar_apply((modelos / "apply.yml").read_text()), [])
+        self.assertEqual(estado.checar_destroy((modelos / "destroy.yml").read_text()), [])
+
+    def test_projetos_de_arquitetura_do_repositorio_sao_infra_real(self):
+        for p in estado.carregar()["projetos"]:
+            if p["tipo"] == "arquitetura":
+                self.assertTrue(p.get("infra_real"), p["chave"])
+
+
+class TestPrazoDaInfra(unittest.TestCase):
+    """D-022: prazo de vida registrado no apply e destroy automático quando vence."""
+    p = {"chave": "x", "infra_real": True, "destroy_workflow": ".github/workflows/x-destroy.yml"}
+
+    def ativo(self, horas=24):
+        return infra.registrar({}, self.p, "x-lab", horas, AGORA)
+
+    def test_registrar_calcula_o_prazo(self):
+        reg = self.ativo()["x"]
+        self.assertEqual(datetime.fromisoformat(reg["expira_em"]), AGORA + timedelta(hours=24))
+        self.assertEqual(reg["destroy_workflow"], self.p["destroy_workflow"])
+
+    def test_prazo_fora_dos_limites_e_recusado(self):
+        for horas in (0, -1, 73):
+            with self.subTest(horas=horas), self.assertRaises(ValueError):
+                infra.registrar({}, self.p, "x-lab", horas, AGORA)
+
+    def test_avisa_uma_hora_antes_e_so_uma_vez(self):
+        ativos = self.ativo(1)
+        self.assertEqual([i["projeto"] for i in infra.vencidos(ativos, AGORA + timedelta(minutes=5))["avisar"]], ["x"])
+        ativos["x"]["avisado"] = True
+        self.assertEqual(infra.vencidos(ativos, AGORA + timedelta(minutes=5))["avisar"], [])
+
+    def test_nada_a_fazer_longe_do_prazo(self):
+        self.assertEqual(infra.vencidos(self.ativo(), AGORA + timedelta(hours=2)),
+                         {"avisar": [], "destruir": [], "aguardando": []})
+
+    def test_vencido_e_destruido_com_o_stack_para_confirmacao(self):
+        v = infra.vencidos(self.ativo(), AGORA + timedelta(hours=24))
+        self.assertEqual(v["destruir"][0]["stack"], "x-lab")
+
+    def test_disparado_aguarda_e_redispara_se_continuar_no_ar(self):
+        ativos = self.ativo()
+        ativos["x"]["destroy_disparado_em"] = (AGORA + timedelta(hours=24)).isoformat()
+        self.assertEqual(len(infra.vencidos(ativos, AGORA + timedelta(hours=25))["aguardando"]), 1)
+        self.assertEqual(len(infra.vencidos(ativos, AGORA + timedelta(hours=28))["destruir"]), 1)
+
+    def test_estender_adia_e_respeita_o_maximo(self):
+        ativos = infra.estender(self.ativo(), "x", 2, AGORA + timedelta(hours=23))
+        self.assertEqual(datetime.fromisoformat(ativos["x"]["expira_em"]), AGORA + timedelta(hours=26))
+        self.assertFalse(ativos["x"]["avisado"])
+        with self.assertRaises(ValueError):
+            infra.estender(ativos, "x", 50, AGORA + timedelta(hours=23))
+
+    def test_registro_vai_para_o_branch_compartilhado(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone = repo_com_remoto(Path(t))
+            infra.gravar(self.ativo(), "registrar x", clone)
+            self.assertIn("x", infra.ler(clone))
+
+    def test_agendador_dispara_o_destroy_com_confirm_stack(self):
+        wf = (AQUI.parent / ".github" / "workflows" / "expirar-infra.yml").read_text()
+        for trecho in ("cron:", "gh workflow run", "confirm_stack=", "marcar-disparado", "actions: write"):
+            self.assertIn(trecho, wf)
 
 
 class TestSincronizarSkills(unittest.TestCase):

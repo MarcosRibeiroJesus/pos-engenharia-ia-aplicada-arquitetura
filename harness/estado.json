@@ -1,6 +1,16 @@
 {
   "versao": 1,
-  "fases": ["especificar", "esclarecer", "planejar", "tarefas", "analisar", "implementar", "verificar", "publicar", "concluido"],
+  "fases": [
+    "especificar",
+    "esclarecer",
+    "planejar",
+    "tarefas",
+    "analisar",
+    "implementar",
+    "verificar",
+    "publicar",
+    "concluido"
+  ],
   "projetos": [
     {
       "chave": "01-recomendacao",
@@ -8,14 +18,25 @@
       "tipo": "arquitetura",
       "titulo": "Recomendação de e-commerce",
       "branch": "modulo/01-fundamentos-ia-llms/03-recomendacao",
-      "pastas": ["modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"],
+      "pastas": [
+        "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"
+      ],
       "specs": "specs/01-recomendacao/",
       "fase": "especificar",
       "retroativo": true,
       "pr": 1,
       "cloud": "gcp",
-      "decisoes": ["D-008", "D-007"],
-      "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças."
+      "decisoes": [
+        "D-007",
+        "D-008",
+        "D-021",
+        "D-022"
+      ],
+      "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml"
     },
     {
       "chave": "01-doom",
@@ -23,14 +44,19 @@
       "tipo": "ia-aplicada",
       "titulo": "Doom com detecção YOLO no navegador",
       "branch": "modulo/01-fundamentos-ia-llms/doom",
-      "pastas": ["modulos/01-fundamentos-ia-llms/ia-aplicada/"],
+      "pastas": [
+        "modulos/01-fundamentos-ia-llms/ia-aplicada/"
+      ],
       "specs": "specs/01-doom/",
       "fase": "especificar",
       "retroativo": false,
       "pr": null,
       "cloud": null,
-      "decisoes": ["D-010"],
-      "nota": "Onda 2 do plano."
+      "decisoes": [
+        "D-010"
+      ],
+      "nota": "Onda 2 do plano.",
+      "infra_real": false
     },
     {
       "chave": "02-assistente-agendamento",
@@ -38,14 +64,26 @@
       "tipo": "arquitetura",
       "titulo": "Assistente de agendamento completo",
       "branch": "modulo/02-apis-ia-generativa/assistente-agendamento",
-      "pastas": ["modulos/02-apis-ia-generativa/arquitetura/"],
+      "pastas": [
+        "modulos/02-apis-ia-generativa/arquitetura/"
+      ],
       "specs": "specs/02-assistente-agendamento/",
       "fase": "especificar",
       "retroativo": true,
       "pr": null,
       "cloud": "gcp",
-      "decisoes": ["D-008", "D-007", "D-006"],
-      "nota": "142 testes antes do SDD; spec retroativa antes da camada 6 (avaliações, pendente do dono)."
+      "decisoes": [
+        "D-006",
+        "D-007",
+        "D-008",
+        "D-021",
+        "D-022"
+      ],
+      "nota": "142 testes antes do SDD; spec retroativa antes da camada 6 (avaliações, pendente do dono).",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/02-assistente-agendamento-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/02-assistente-agendamento-apply.yml"
     },
     {
       "chave": "03-mcp-regras-cdb",
@@ -53,14 +91,27 @@
       "tipo": "arquitetura",
       "titulo": "MCP de regras do CDB com liquidez diária",
       "branch": "modulo/03-mcp/mcp-regras-cdb",
-      "pastas": ["modulos/03-mcp/arquitetura/"],
+      "pastas": [
+        "modulos/03-mcp/arquitetura/"
+      ],
       "specs": "specs/03-mcp-regras-cdb/",
       "fase": "especificar",
       "retroativo": true,
       "pr": null,
       "cloud": "azure",
-      "decisoes": ["D-008", "D-011", "D-007", "D-006"],
-      "nota": "Pouca implementação antes do SDD."
+      "decisoes": [
+        "D-006",
+        "D-007",
+        "D-008",
+        "D-011",
+        "D-021",
+        "D-022"
+      ],
+      "nota": "Pouca implementação antes do SDD.",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/03-mcp-regras-cdb-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/03-mcp-regras-cdb-apply.yml"
     }
   ]
 }
