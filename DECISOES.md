@@ -20,6 +20,10 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - Registre o agente em `harness/progresso.md`.
 - **Decisão do Marcos vira regra ou skill no mesmo turno** (D-025). A entrada no histórico lista `**Aplicado em:**`, e o `harness/memoria.py auditar` confere no CI. Na orquestração, use a skill `decisao-do-dono`.
 - **Agentes especialistas por tarefa fim** (D-026). Delegue a tarefa ao especialista dela (`harness/AGENTES.md`; `harness/agente.py proximo --tarefa <tipo>`). Especialista não cria subagente. Arquivos de agente são gerados: mude `harness/especialistas.json` e rode `harness/sincronizar_agentes.py`.
+- **Harness:** versão 0.5.0, pré-estável. O pacote npx só sai depois dos critérios de `harness/VERSAO.md` e com a aprovação do Marcos (D-027).
+- **Modelos (D-028):** agentes de código na assinatura Pro do Claude Code; na troca, Antigravity com Gemini e Copilot com OpenAI. Na AWS, só a plataforma e os agentes dos produtos, durante as demonstrações.
+- **Conta AWS única com isolamento por tag e prefixo, com ABAC** (D-029).
+- **Projeto novo só pelo caminho padrão:** `python3 harness/novo_projeto.py` (D-030). A plataforma compartilhada é o projeto `00-plataforma-agentes`; o produto consome gateway, política, guardrail, perfil de inferência e observabilidade da plataforma (skill `plataforma-agentes`).
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).
 - **Testes do componente Claude só com respostas gravadas**, sem chamadas ao Claude real (D-006).
@@ -43,6 +47,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
 - Projetos de IA aplicada da D02 e da D03.
-- Revisores de IA na esteira (custo de tokens) e conta AWS com OIDC para o `terraform plan` nos PRs.
+- Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
+- P00-P1: dentro de um plano SDD aprovado, a orquestração pode delegar aos especialistas sem aprovar cada disparo?
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges dos PRs #9 (esteira, gate diário e limite da conta), #10, #11, #12 e #16 (harness com SDD, troca de agentes, teto diário, destroy e prazo) e #17 (especialistas e skills, empilhado sobre o #16).
+- Merges dos PRs #9 (esteira, gate diário e limite da conta), #10, #11, #12 e #16 (harness com SDD, troca de agentes, teto diário, destroy e prazo) #17 (especialistas e skills, empilhado sobre o #16) e #18 (caminho padrão e plataforma, empilhado sobre o #17).

@@ -6,6 +6,34 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-030 · Plataforma de agentes compartilhada e caminho padrão · fonte: delegada (o Marcos delegou a escolha dos componentes)
+- **Na plataforma** (projeto `00-plataforma-agentes`), escolhidos por caberem no modelo de uso e no limite de US$ 20:
+  - gateway MCP (AgentCore Gateway) com política Cedar e Identity: um ponto de controle de tools, nega por padrão (1.4, 2.1, 2.4);
+  - guardrails do Bedrock e perfil de inferência de aplicação por produto, para defesa contra injeção e custo atribuído por tag (5.2);
+  - observabilidade e evals por uso (AgentCore Observability e Evaluations), com o gate de CI seguindo nas respostas gravadas (4.6, 5.5).
+  - A plataforma sobe e desce com as demonstrações.
+- **Fora:**
+  - memória de longo prazo (fica no produto que precisar);
+  - gateway de inferência sempre ligado e Langfuse hospedado (custo fixo; Langfuse segue pendente na D02);
+  - multi-conta.
+- **Caminho padrão:** `harness/novo_projeto.py` coloca todo projeto novo na mesma esteira (estado, spec, workflows de apply e destroy) sem criar código antes da fase implementar. É a prática central de plataforma interna de desenvolvimento do AWS Prescriptive Guidance.
+
+### 2026-11-19 · D-029 · Conta AWS única, isolamento por tag · fonte: Marcos
+Plataforma e produtos na mesma conta, separados por prefixo, tag `project` e políticas IAM.
+**Aplicado em:** constituição (Art. VI), `CLAUDE.md` (Segurança e FinOps), skill `terraform-tdd` (regra de isolamento com ABAC), skill `novo-projeto`, spec `00-plataforma-agentes` (RNF-004).
+
+### 2026-11-19 · D-028 · Acesso híbrido aos modelos · fonte: Marcos
+O harness roda agora com a assinatura Pro do Claude Code, trocando para Antigravity (Gemini) ou Copilot (OpenAI) quando a cota acaba. Na AWS rodam só a plataforma e os agentes dos produtos, durante as demonstrações, com o Claude via Bedrock.
+**Aplicado em:**
+- `harness/agentes.json`: modelos Gemini e OpenAI e a nota;
+- `AGENTS.md` (seção 5) e `CLAUDE.md` (Acesso aos modelos);
+- skills `componente-claude` e `plataforma-agentes`;
+- spec `00-plataforma-agentes` (RNF-005).
+
+### 2026-11-19 · D-027 · Pacote npx depois da versão estável · fonte: Marcos
+Não criar o pacote npx agora: primeiro criar e testar o harness até uma versão estável e testada.
+**Aplicado em:** `harness/VERSAO.md` (versão 0.5.0 e critérios da 1.0), skill `evolucao-do-harness`, especialista `operador-harness`.
+
 ### 2026-11-19 · D-026 · Agentes especialistas e skills de mercado · fonte: delegada
 - **Um especialista por tarefa fim** (18), definidos em `harness/especialistas.json` e gerados para o Claude Code (`.claude/agents/`) e o Copilot (`.github/agents/`).
   - Cada um recebe só as skills da tarefa, pré-carregadas pelo campo `skills`. Isso mantém poucas ferramentas e pouco contexto por agente (2.3, 5.1).
