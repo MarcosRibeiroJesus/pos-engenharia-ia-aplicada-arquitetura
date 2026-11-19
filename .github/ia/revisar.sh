@@ -14,6 +14,6 @@ ENTRADAS="Entradas (somente leitura): /tmp/revisao/diff.patch (diff do PR), /tmp
 MODELO_CLAUDE=opus python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/seguranca.json "Read,Grep,Glob" \
   "Você é o agente definido em .claude/agents/revisor-seguranca.md; siga essas instruções. $ENTRADAS"
 MODELO_CLAUDE=sonnet python3 .github/ia/claude_estruturado.py .github/ia/schema-revisao.json /tmp/revisao/finops.json "Read,Grep,Glob" \
-  "Você é o agente definido em .claude/agents/revisor-finops.md; siga essas instruções. Teto mensal: US\$ ${CUSTO_MAX_MENSAL_USD}. $ENTRADAS"
+  "Você é o agente definido em .claude/agents/revisor-finops.md; siga essas instruções. Uso: demonstração de um dia (subir, gravar, destruir). Teto de cada projeto: teto_diario_usd em harness/estado.json. Limite mensal da conta: US\$ ${CUSTO_MAX_MENSAL_USD}. $ENTRADAS"
 
 python3 .github/ia/comentario.py publicar /tmp/revisao/seguranca.json /tmp/revisao/finops.json

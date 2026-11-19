@@ -20,6 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Limite mensal da conta, somando todas as demonstrações do mês (D-022). O teto de cada projeto é diário (D-021).
   CUSTO_MAX_MENSAL_USD: ${{ vars.CUSTO_MAX_MENSAL_USD || '20' }}
 
 jobs:
@@ -322,9 +323,12 @@ jobs:
         with:
           name: finops
           path: infracost.json
-      - name: Bloquear acima do teto mensal
+      - name: Testes do gate de custo
+        run: python3 -m unittest discover -s .github/ia/testes
+      - name: Bloquear acima do teto diário do projeto ou do limite mensal da conta
         if: steps.chave.outputs.ok == 'true'
-        run: python3 .github/ia/gate_custo.py infracost.json "$CUSTO_MAX_MENSAL_USD"
+        # D-021: teto = custo de um dia de demonstração (harness/estado.json). D-022: limite mensal da conta.
+        run: python3 .github/ia/gate_custo.py infracost.json "$CUSTO_MAX_MENSAL_USD" harness/estado.json
 
   revisao-ia:
     name: Agentes revisores (segurança e FinOps)
