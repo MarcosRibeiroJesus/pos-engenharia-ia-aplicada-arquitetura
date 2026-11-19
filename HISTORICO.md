@@ -6,6 +6,9 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-020 · Teto do gate de FinOps · fonte: Marcos
+O teto padrão do gate de custo por PR cai de US$ 50 para US$ 20 por mês. O pedido veio em comentário no card do Monday: remover o teto de US$ 50 imediatamente e definir US$ 20. Os tetos de lab por disciplina são outra decisão e continuam como estavam: a D03 em US$ 10, e a D01 e a D02 pendentes.
+
 ### 2026-11-19 · D-019 · Harness agnóstico de agente · fonte: delegada
 - **`AGENTS.md` canônico na raiz**, importado pelo `CLAUDE.md`. O Antigravity e o Copilot leem esse arquivo, e as skills ficam espelhadas em `.agents/skills/` (3.1, 3.2).
 - **Gates no git e no CI, não só em hooks do Claude Code.** Os hooks só valem dentro do Claude Code; o `pre-commit`, o `pre-push` e o workflow `harness.yml` valem para qualquer agente (1.4, 3.6).

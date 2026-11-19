@@ -25,6 +25,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Variável ou secret novo criado pelo Marcos:** troque em todo lugar que depende dele, com fallback seguro (D-012).
 - **Push e PR:** só depois de receber a memória mais recente, porque o gate nega antes disso. Perguntas ao Marcos vão no PR, na seção `## Perguntas ao dono` (D-015).
 - **Retomada:** se a sessão ficou parada mais de 8 horas, ou se a memória mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado (D-015).
+- **Teto do gate de FinOps por PR: US$ 20/mês** (D-020). O valor vem de `vars.CUSTO_MAX_MENSAL_USD`, com padrão `'20'`. É diferente do teto do lab de cada disciplina.
 - **Modelos:** Opus para arquitetura, código e segurança; Sonnet para pesquisa, posts e site; Haiku para tarefas mecânicas (D-002).
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
