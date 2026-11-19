@@ -24,6 +24,18 @@ for (const f of funcoes) {
   });
 }
 
+// Laboratório local (Langfuse e gate de avaliação): roda na máquina, não vai para a AWS.
+mkdirSync("dist/cli", { recursive: true });
+await build({
+  entryPoints: ["lib/lab/cli.ts"],
+  bundle: true,
+  platform: "node",
+  target: "node22",
+  format: "esm",
+  outfile: "dist/cli/lab.mjs",
+  banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
+});
+
 // O gateway leva as respostas gravadas (modo "gravado", sem chamada ao Claude).
 cpSync("fixtures/respostas-gravadas", "dist/gateway/respostas-gravadas", { recursive: true });
 console.log(`pacotes: ${funcoes.map((f) => `dist/${f}`).join(", ")}`);

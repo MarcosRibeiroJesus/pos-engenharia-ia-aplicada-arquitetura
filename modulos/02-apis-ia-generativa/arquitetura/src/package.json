@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:redteam": "vitest run tests/redteam",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "test:avaliacao": "vitest run tests/avaliacao",
+    "lab:conversa": "npm run build && node dist/cli/lab.mjs conversa",
+    "lab:avaliar": "npm run build && node dist/cli/lab.mjs avaliar"
   },
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "1.1.2",

@@ -8,6 +8,9 @@ import { ClienteGatewayLambda, ExecutorLambda, FluxoAprovacaoSfn, LeitorAnexosS3
 import { TabelaDynamo } from "../infra/aws/tabela-dynamo.js";
 import { MetricasEmf } from "../infra/metricas.js";
 import { Memoria } from "../memoria/memoria.js";
+import { rastreadorDoAmbiente } from "../observabilidade/rastreador.js";
+
+const rastreador = rastreadorDoAmbiente();
 
 interface EventoApi {
   httpMethod: string;
@@ -65,7 +68,7 @@ export async function handler(e: EventoApi) {
         return resposta(400, { erro: "corpo_invalido" });
       }
       const anexos = Array.isArray(b.anexos) ? b.anexos.filter((a): a is string => typeof a === "string").slice(0, 2) : [];
-      const r = await executarTurno(sistema.grafo, { usuarioId: String(b.usuarioId), sessaoId: String(b.sessaoId), texto: b.texto, anexos });
+      const r = await executarTurno(sistema.grafo, { usuarioId: String(b.usuarioId), sessaoId: String(b.sessaoId), texto: b.texto, anexos, traceId: requestId }, rastreador);
       log("INFO", "turno", { requestId, eventos: r.eventos, tipo: r.resposta.tipo, acaoId: r.acaoId, consultaId: r.consultaId });
       return resposta(200, {
         requestId,

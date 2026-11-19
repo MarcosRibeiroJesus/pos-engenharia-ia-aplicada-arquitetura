@@ -1,6 +1,7 @@
 // Gateway de LLM serverless: a versão gerenciada do roteamento multi-modelo da aula (ADR-0001).
 // Decide o modelo, aplica cota e circuit breaker, faz fallback em cadeia e contabiliza custo.
 import type { Metricas } from "../infra/metricas.js";
+import { RastreadorNulo, type Rastreador } from "../observabilidade/rastreador.js";
 import type {
   CategoriaErro,
   EstadoGateway,
@@ -24,6 +25,7 @@ export interface ConfigGateway {
   relogio?: () => Date;
   limiteFalhas?: number;
   aberturaMs?: number;
+  rastreador?: Rastreador;
 }
 
 /** Categorias em que tentar o próximo modelo da cadeia faz sentido. */
@@ -35,14 +37,38 @@ export class GatewayLlm {
   private readonly relogio: () => Date;
   private readonly limiteFalhas: number;
   private readonly aberturaMs: number;
+  private readonly rastreador: Rastreador;
 
   constructor(private readonly cfg: ConfigGateway) {
+    this.rastreador = cfg.rastreador ?? new RastreadorNulo();
     this.relogio = cfg.relogio ?? (() => new Date());
     this.limiteFalhas = cfg.limiteFalhas ?? 3;
     this.aberturaMs = cfg.aberturaMs ?? 60_000;
   }
 
   async chamar(pedido: PedidoGateway): Promise<RespostaGateway> {
+    const inicio = this.relogio().toISOString();
+    const r = await this.rotear(pedido);
+    const fim = this.relogio().toISOString();
+    const ultimo = r.tentativas.at(-1)?.modelo ?? "nenhum";
+    this.rastreador.geracao({
+      traceId: pedido.traceId ?? "sem-trace",
+      nome: pedido.tarefa,
+      modelo: r.ok ? r.modelo : ultimo,
+      entrada: pedido.requisicao.messages,
+      saida: r.ok ? r.resposta.content : null,
+      tokensEntrada: r.ok ? r.resposta.usage.input_tokens : 0,
+      tokensSaida: r.ok ? r.resposta.usage.output_tokens : 0,
+      custoUsd: r.ok ? r.custoUsd : 0,
+      inicio,
+      fim,
+      ...(r.ok ? {} : { erro: `${r.erro.categoria}: ${r.erro.mensagem}` }),
+      metadados: { tentativas: r.tentativas, fallback: r.tentativas.length > 1 },
+    });
+    return r;
+  }
+
+  private async rotear(pedido: PedidoGateway): Promise<RespostaGateway> {
     const tentativas: Tentativa[] = [];
     const agora = this.relogio();
     const dia = agora.toISOString().slice(0, 10);

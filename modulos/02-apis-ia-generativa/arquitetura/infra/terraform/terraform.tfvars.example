@@ -2,8 +2,8 @@
 aws_region = "us-east-1"
 ambiente   = "lab"
 
-# PENDENTE: o teto mensal é decisão do dono do repositório. Preencha antes do apply.
-teto_mensal_usd = 0
+# Teto mensal do lab definido pelo dono do repositório (2026-11-19).
+teto_mensal_usd = 5
 
 # gravado = respostas gravadas, sem chamada ao Claude. bedrock = Claude no Amazon Bedrock (custa tokens).
 modo_llm = "gravado"

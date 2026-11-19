@@ -166,3 +166,7 @@ output "politica" {
   description = "Política efetiva, para os testes da raiz conferirem o menor privilégio entre funções."
   value       = jsondecode(aws_iam_role_policy.this.policy)
 }
+output "variaveis" {
+  description = "Variáveis de ambiente (sem segredos: segredos não entram em variável de ambiente)."
+  value       = var.variaveis
+}

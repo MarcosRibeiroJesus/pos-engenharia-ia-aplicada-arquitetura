@@ -62,7 +62,7 @@ mock_provider "archive" {
 }
 
 variables {
-  teto_mensal_usd = 10
+  teto_mensal_usd = 5
 }
 
 run "so_o_gateway_fala_com_o_modelo" {
@@ -126,6 +126,34 @@ run "padroes_do_lab_sem_custo_fixo_nem_modelo_real" {
   assert {
     condition     = var.modo_llm == "gravado"
     error_message = "ADR-0006: o padrão é resposta gravada, sem chamada ao Claude real."
+  }
+}
+
+run "teto_do_lab_e_trilha_so_no_lab" {
+  command = apply
+
+  assert {
+    condition     = var.teto_mensal_usd == 5
+    error_message = "FinOps: teto mensal do lab de US$ 5, decidido pelo dono."
+  }
+  assert {
+    condition     = module.orquestrador.variaveis["EXPOR_TRILHA"] == "true"
+    error_message = "No lab a trilha do turno vai na resposta para os testes de integração."
+  }
+  assert {
+    condition     = module.gateway.variaveis["MODO_LLM"] == "gravado"
+    error_message = "ADR-0006: o lambda do gateway sobe em modo gravado por padrão."
+  }
+}
+
+run "prod_nao_expoe_trilha" {
+  command = plan
+  variables {
+    ambiente = "prod"
+  }
+  assert {
+    condition     = module.orquestrador.variaveis["EXPOR_TRILHA"] == "false" && !contains(keys(module.orquestrador.variaveis), "RELOGIO_FIXO")
+    error_message = "Produção não expõe a trilha interna do turno nem usa relógio fixo."
   }
 }
 

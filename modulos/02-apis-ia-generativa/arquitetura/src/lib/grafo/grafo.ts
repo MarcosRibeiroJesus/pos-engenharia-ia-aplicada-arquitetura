@@ -34,6 +34,7 @@ import { extrairIntencao, type ClienteGateway, type ResultadoExtracao } from "..
 import type { ContextoMemoria, Memoria } from "../memoria/memoria.js";
 import { resumirHistorico } from "../memoria/resumidor.js";
 import type { ResultadoAgendar } from "../executor/executor.js";
+import { RastreadorNulo, type Rastreador } from "../observabilidade/rastreador.js";
 
 export interface PortaExecutor {
   agendar(p: { usuarioId: string; slot: Slot; idempotencia: string }): Promise<ResultadoAgendar>;
@@ -57,6 +58,7 @@ export interface Entrada {
   sessaoId: string;
   texto: string;
   anexos?: string[];
+  traceId?: string;
 }
 
 const Estado = Annotation.Root({
@@ -112,6 +114,7 @@ export function construirGrafo(d: Dependencias) {
       idsConhecidos: [...new Set([...minhas.map((c) => c.consultaId), ...s.contexto.candidatos.map((c) => c.consultaId)])],
       canario: d.canario,
       nonce: nonce(),
+      ...(s.entrada.traceId ? { traceId: s.entrada.traceId } : {}),
     });
     return r.ok
       ? { extracao: r, intencao: r.intencao, eventos: [`intencao:${r.intencao.intencao}`, `tentativas:${r.tentativas}`, `modelo:${r.modelo}`] }
@@ -175,7 +178,7 @@ export function construirGrafo(d: Dependencias) {
     }
     if (await d.memoria.precisaResumir(usuarioId, sessaoId)) {
       const turnos = await d.memoria.turnosParaResumir(usuarioId, sessaoId);
-      const resumo = await resumirHistorico(d.gateway, { resumoAnterior: s.contexto.resumo, turnos, nonce: nonce() });
+      const resumo = await resumirHistorico(d.gateway, { resumoAnterior: s.contexto.resumo, turnos, nonce: nonce(), ...(s.entrada.traceId ? { traceId: s.entrada.traceId } : {}) });
       if (resumo) {
         await d.memoria.aplicarResumo(usuarioId, sessaoId, resumo);
         eventos.push("memoria_resumida");
@@ -219,9 +222,23 @@ export function hojeLocal(agora: Date) {
   return new Date(agora.getTime() - 3 * 3_600_000).toISOString().slice(0, 10);
 }
 
-export async function executarTurno(grafo: ReturnType<typeof construirGrafo>, entrada: Entrada) {
-  const final = (await grafo.invoke({ entrada })) as EstadoTurno;
+export async function executarTurno(grafo: ReturnType<typeof construirGrafo>, entrada: Entrada, rastreador: Rastreador = new RastreadorNulo()) {
+  const traceId = entrada.traceId ?? randomUUID();
+  const inicio = new Date().toISOString();
+  const final = (await grafo.invoke({ entrada: { ...entrada, traceId } })) as EstadoTurno;
+  rastreador.turno({
+    traceId,
+    usuarioId: entrada.usuarioId,
+    sessaoId: entrada.sessaoId,
+    entrada: entrada.texto,
+    saida: final.resposta.texto,
+    eventos: final.eventos,
+    inicio,
+    fim: new Date().toISOString(),
+  });
+  await rastreador.descarregar();
   return {
+    traceId,
     resposta: final.resposta,
     eventos: final.eventos,
     intencao: final.intencao,

@@ -10,6 +10,8 @@ export interface PedidoGateway {
   clienteId: string;
   tarefa: Tarefa;
   requisicao: RequisicaoLlm;
+  /** Liga as chamadas ao modelo ao turno da conversa no rastreamento. */
+  traceId?: string;
 }
 
 export type CategoriaErro =

@@ -19,8 +19,9 @@ variable "ambiente" {
 }
 
 variable "teto_mensal_usd" {
-  description = "Teto do AWS Budgets. PENDENTE: decisão do dono do repositório; sem valor padrão de propósito."
+  description = "Teto mensal do AWS Budgets do lab. Definido pelo dono do repositório: US$ 5 (2026-11-19)."
   type        = number
+  default     = 5
 }
 
 variable "custo_diario_llm_alarme_usd" {
@@ -93,4 +94,10 @@ variable "diretorio_pacotes" {
   description = "Onde o build (npm run build) deixa os pacotes das Lambdas."
   type        = string
   default     = null
+}
+
+variable "relogio_fixo" {
+  description = "Só no lab com respostas gravadas: data e hora fixas (ISO 8601) para as datas das fixtures valerem. Vazio usa o relógio real."
+  type        = string
+  default     = ""
 }

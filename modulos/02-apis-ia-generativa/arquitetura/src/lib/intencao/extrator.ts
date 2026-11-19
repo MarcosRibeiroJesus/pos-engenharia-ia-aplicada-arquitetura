@@ -29,6 +29,7 @@ export interface ContextoExtracao {
   idsConhecidos: string[];
   canario: string;
   nonce: string;
+  traceId?: string;
 }
 
 export type ResultadoExtracao =
@@ -56,6 +57,7 @@ export async function extrairIntencao(gateway: ClienteGateway, c: ContextoExtrac
     const r = await gateway.chamar({
       clienteId,
       tarefa: "extrair_intencao",
+      ...(c.traceId ? { traceId: c.traceId } : {}),
       requisicao: {
         system: montarSistema(c.canario, c.hoje),
         max_tokens: 1024,

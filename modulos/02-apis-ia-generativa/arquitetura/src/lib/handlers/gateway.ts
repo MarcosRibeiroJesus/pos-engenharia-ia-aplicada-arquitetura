@@ -9,6 +9,10 @@ import type { PedidoGateway, ProvedorLlm, RespostaGateway } from "../gateway/tip
 import { exigir, log } from "../infra/ambiente.js";
 import { TabelaDynamo } from "../infra/aws/tabela-dynamo.js";
 import { MetricasEmf } from "../infra/metricas.js";
+import { rastreadorDoAmbiente } from "../observabilidade/rastreador.js";
+
+// Na AWS não há LANGFUSE_*: o rastreador é nulo e a observabilidade fica em CloudWatch e X-Ray.
+const rastreador = rastreadorDoAmbiente();
 
 let gateway: GatewayLlm | undefined;
 
@@ -26,6 +30,7 @@ function montar() {
     cadeia: JSON.parse(exigir("CADEIA_MODELOS")) as string[],
     precos: JSON.parse(exigir("PRECOS_USD_MTOK")),
     cotaTokensDia: Number(exigir("COTA_TOKENS_DIA")),
+    rastreador,
   });
 }
 
@@ -35,6 +40,7 @@ export async function handler(evento: PedidoGateway): Promise<RespostaGateway> {
   }
   gateway ??= montar();
   const r = await gateway.chamar(evento);
+  await rastreador.descarregar();
   log(r.ok ? "INFO" : "WARN", "chamada_llm", {
     clienteId: evento.clienteId,
     tarefa: evento.tarefa,

@@ -197,7 +197,7 @@ module "orquestrador" {
   kms_key_arn = module.kms.arn
   account_id  = local.account_id
   tags        = local.tags
-  variaveis = {
+  variaveis = merge({
     TABELA_AGENDA      = module.tabela_agenda.nome
     TABELA_MEMORIA     = module.tabela_memoria.nome
     TABELA_OPERACOES   = module.tabela_operacoes.nome
@@ -206,7 +206,9 @@ module "orquestrador" {
     FUNCAO_EXECUTOR    = module.executor.nome
     STATE_MACHINE_ARN  = local.sm_arn
     NAMESPACE_METRICAS = local.namespace
-  }
+    # Trilha do turno na resposta só no lab (os testes de integração conferem as camadas por ela).
+    EXPOR_TRILHA = tostring(var.ambiente == "lab")
+  }, var.relogio_fixo == "" ? {} : { RELOGIO_FIXO = var.relogio_fixo })
   permissoes = [
     {
       # Só leitura: o orquestrador nunca escreve na agenda (o executor escreve).
