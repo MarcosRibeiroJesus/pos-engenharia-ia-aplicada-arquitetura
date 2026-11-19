@@ -73,10 +73,10 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 |---|---|---|
 | Regras da infra | `cd infra/terraform && terraform test` | 19 runs com mock provider: R1 a R9 por módulo ([matriz](docs/matriz-cobertura.md)) |
 | Regras estruturais | `python3 infra/terraform/tests/static_rules.py` | Custo fixo citado em ADR, backend S3 com `use_lockfile` |
-| Lint e segurança | `tflint --recursive`, `checkov -d infra` | 0 falhas; exceções justificadas inline |
+| Lint e segurança | `tflint --recursive`, `checkov -d infra` | checkov 321 ok, 0 falhas; 18 exceções justificadas inline |
 | Serviço | `npm test` | 39 testes: fluxo híbrido, 5 modos de degradação, filtros e explicação com Claude |
 | Lote | `python -m unittest discover -s tests` | 14 testes: DAG, transformações do Glue, contratos |
-| Integração | `python3 testing/scripts/integracao_01_03_recomendacao.py` (raiz do repo) | apply, asserts, componente com Claude e destroy contra o Floci; relatório em `testing/reports/` |
+| Integração | `python3 testing/scripts/integracao_01_03_recomendacao.py` (raiz do repo) | apply, asserts, componente com Claude e destroy contra o Floci. Último run: 27 ok, 0 falhas, 7 lacunas do emulador ([ADR-0006](adr/0006-integracao-no-floci-e-lacunas.md)); relatório em `testing/reports/latest.html` |
 
 ## API
 

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Integração 01.03 · 20261119-032041</title>
+<title>Integração 01.03 · 20261119-032618</title>
 <style>
   :root { --bg:#0f1115; --card:#171a21; --ink:#e7e9ee; --mute:#9aa3b2; --line:#262b36;
           --ok:#3ecf8e; --fail:#ff6b6b; --warn:#f5c451; }
@@ -31,16 +31,16 @@
   footer { margin-top:24px; color:var(--mute); font:13px system-ui,sans-serif }
 </style></head>
 <body><main>
-  <div class="verdict falha">REPROVADO</div>
+  <div class="verdict lacuna">APROVADO COM RESSALVAS</div>
   <h1>Integração da unidade 01.03 · recomendação</h1>
-  <div class="sub">Execução 20261119-032041 · stack <code>recsys-lab</code> · emulador Floci · endpoint <code>http://localhost:4566</code></div>
+  <div class="sub">Execução 20261119-032618 · stack <code>recsys-lab</code> · emulador Floci · endpoint <code>http://localhost:4566</code></div>
   <div class="cards">
-    <div class="card">Passos<b>32</b></div>
-    <div class="card">Passaram<b style="color:var(--ok)">25</b></div>
-    <div class="card">Falharam<b style="color:var(--fail)">2</b></div>
-    <div class="card">Lacunas do emulador<b style="color:var(--warn)">5</b></div>
+    <div class="card">Passos<b>34</b></div>
+    <div class="card">Passaram<b style="color:var(--ok)">27</b></div>
+    <div class="card">Falharam<b style="color:var(--fail)">0</b></div>
+    <div class="card">Lacunas do emulador<b style="color:var(--warn)">7</b></div>
     <div class="card">Pulados<b>0</b></div>
-    <div class="card">Tempo<b>200.7s</b></div>
+    <div class="card">Tempo<b>201.2s</b></div>
   </div>
   <div class="wrap"><table>
     <thead><tr><th>#</th><th>Passo</th><th>Regra</th><th>Status</th><th>Esperado</th><th>Obtido</th><th>Tempo</th></tr></thead>
@@ -84,7 +84,7 @@
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">12.41s</td>
+          <td class="num">11.9s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform init -input=false -no-color
@@ -108,7 +108,7 @@ Terraform has been successfully initialized!</pre>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">61.9s</td>
+          <td class="num">62.02s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform apply -auto-approve -input=false -no-color -var=state_bucket_name=recsys-tfstate-floci
@@ -260,15 +260,15 @@ Changes to Outputs:
   + state_bucket    = &quot;recsys-tfstate-floci&quot;
 aws_s3_bucket.state: Creating...
 aws_s3_bucket.state: Creation complete after 0s [id=recsys-tfstate-floci]
-aws_s3_bucket_ownership_controls.state: Creating...
 aws_s3_bucket_public_access_block.state: Creating...
-aws_s3_bucket_server_side_encryption_configuration.state: Creating...
+aws_s3_bucket_ownership_controls.state: Creating...
 aws_s3_bucket_versioning.state: Creating...
-aws_s3_bucket_server_side_encryption_configuration.state: Creation complete after 0s [id=recsys-tfstate-floci]
+aws_s3_bucket_server_side_encryption_configuration.state: Creating...
 aws_s3_bucket_public_access_block.state: Creation complete after 0s [id=recsys-tfstate-floci]
-aws_s3_bucket_ownership_controls.state: Creation complete after 0s [id=recsys-tfstate-floci]
-aws_s3_bucket_policy.state: Creating...
+aws_s3_bucket_server_side_encryption_configuration.state: Creation complete after 0s [id=recsys-tfstate-floci]
 aws_s3_bucket_lifecycle_configuration.state: Creating...
+aws_s3_bucket_policy.state: Creating...
+aws_s3_bucket_ownership_controls.state: Creation complete after 0s [id=recsys-tfstate-floci]
 aws_s3_bucket_policy.state: Creation complete after 0s [id=recsys-tfstate-floci]
 aws_s3_bucket_versioning.state: Creation complete after 1s [id=recsys-tfstate-floci]
 aws_s3_bucket_lifecycle_configuration.state: Still creating... [00m10s elapsed]
@@ -291,7 +291,7 @@ state_bucket = &quot;recsys-tfstate-floci&quot;</pre>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">15.57s</td>
+          <td class="num">14.77s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform init -input=false -no-color -reconfigure -backend-config=bucket=recsys-tfstate-floci -backend-config=key=modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate -backend-config=region=us-east-1 -backend-config=use_lockfile=true -backend-config=endpoints={s3=&quot;http://localhost:4566&quot;} -backend-config=use_path_style=true -backend-config=skip_credentials_validation=true -backend-config=skip_requesting_account_id=true -backend-config=skip_metadata_api_check=true -backend-config=skip_s3_checksum=true
@@ -346,7 +346,7 @@ Terraform has been successfully initialized!</pre>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">4.85s</td>
+          <td class="num">5.05s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform plan -input=false -no-color -lock=false
@@ -779,7 +779,7 @@ Changes to Outputs:
         </details></td></tr>
         <tr>
           <td class="num">10</td>
-          <td>Coberto só no plan: module.sagemaker_endpoint.aws_sagemaker_endpoint.reranker<div class="note">Lacuna do Floci 2.5: endpoint vai a Failed: java.net.SocketException (o Floci tenta subir o container do modelo via Docker)</div></td>
+          <td>Coberto só no plan: module.lake_formation.aws_lakeformation_permissions.database_permissions<div class="note">Lacuna do Floci 2.5: RevokePermissions de permissão inexistente devolve 200 no Floci; a AWS devolve InvalidInputException &#x27;No permissions revoked. Grantee has no permissions&#x27;, que o provider v6.73.0 exige para confirmar o delete (internal/service/lakeformation/permissions.go, linhas 699-705), senão aborta com &#x27;empty retryable error&#x27;</div></td>
           <td class="mono">ADR-0006</td>
           <td><span class="badge lacuna">lacuna do emulador</span></td>
           <td class="mono">presente no plan</td>
@@ -793,121 +793,149 @@ Changes to Outputs:
         </details></td></tr>
         <tr>
           <td class="num">11</td>
+          <td>Coberto só no plan: module.lake_formation.aws_lakeformation_permissions.data_location<div class="note">Lacuna do Floci 2.5: RevokePermissions de permissão inexistente devolve 200 no Floci; a AWS devolve InvalidInputException &#x27;No permissions revoked. Grantee has no permissions&#x27;, que o provider v6.73.0 exige para confirmar o delete (internal/service/lakeformation/permissions.go, linhas 699-705), senão aborta com &#x27;empty retryable error&#x27;</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">12</td>
+          <td>Coberto só no plan: module.sagemaker_endpoint.aws_sagemaker_endpoint.reranker<div class="note">Lacuna do Floci 2.5: endpoint vai a Failed: java.net.SocketException (o Floci tenta subir o container do modelo via Docker)</div></td>
+          <td class="mono">ADR-0006</td>
+          <td><span class="badge lacuna">lacuna do emulador</span></td>
+          <td class="mono">presente no plan</td>
+          <td class="mono">presente no plan</td>
+          <td class="num">0.0s</td>
+        </tr>
+        <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
+          <pre>$ (verificação em Python)
+
+(sem saída)</pre>
+        </details></td></tr>
+        <tr>
+          <td class="num">13</td>
           <td>Stack: terraform apply<div class="note"></div></td>
           <td class="mono"></td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">72.52s</td>
+          <td class="num">72.62s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform apply -auto-approve -input=false -no-color
 
-trols.golden_dataset: Creating...
-module.networking.aws_default_security_group.default: Creation complete after 0s [id=sg-d3133594390bdacd2]
+ete after 0s [id=sg-c0898af1fb0eb1b50]
+module.s3_golden_dataset.aws_s3_bucket.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_bucket_public_access_block.golden_dataset: Creating...
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Creating...
 module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Creating...
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Creating...
 module.s3_golden_dataset.aws_s3_bucket_public_access_block.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
-module.ecs_service.aws_lb_target_group.app: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/bf42c4062d484d29]
-module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creating...
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/recommendations/]
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Creating...
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creating...
+module.ecs_service.aws_lb_target_group.app: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/2a8e1ed80a3d466b]
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Creation complete after 0s [id=recsys-lab-golden-000000000000/scripts/feature_engineering.py]
 module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Creating...
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/recommendations/]
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Creating...
 module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Creating...
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/user_features/]
-module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/catalog/]
 module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/interactions/]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/catalog/]
+module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Creation complete after 0s [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Creation complete after 0s [id=recsys-lab-golden-000000000000/user_features/]
 module.lake_formation.aws_lakeformation_resource.golden_dataset: Creating...
 module.sagemaker_training.aws_s3_object.train_script: Creating...
-module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Creation complete after 0s [id=recsys-lab-golden-000000000000]
 module.mwaa_orchestration.aws_s3_object.pipeline_dag: Creating...
 module.lake_formation.aws_lakeformation_resource.golden_dataset: Creation complete after 0s [id=arn:aws:s3:::recsys-lab-golden-000000000000]
-module.glue_pipeline.aws_s3_object.script_feature_engineering: Creating...
+module.mwaa_orchestration.aws_s3_object.pipeline_dag: Creation complete after 0s [id=recsys-lab-golden-000000000000/dags/daily_hybrid_recommendation_pipeline.py]
 module.sagemaker_training.aws_s3_object.train_script: Creation complete after 0s [id=recsys-lab-golden-000000000000/scripts/train_model.py]
-module.glue_pipeline.aws_s3_object.script_feature_engineering: Creation complete after 1s [id=recsys-lab-golden-000000000000/scripts/feature_engineering.py]
-module.lake_formation.aws_lakeformation_permissions.data_location: Creating...
-module.mwaa_orchestration.aws_s3_object.pipeline_dag: Creation complete after 1s [id=recsys-lab-golden-000000000000/dags/daily_hybrid_recommendation_pipeline.py]
-module.lake_formation.aws_lakeformation_permissions.data_location: Creation complete after 0s [id=1929339907]
-module.networking.aws_route_table.private: Creation complete after 1s [id=rtb-f6f61626]
-module.networking.aws_route_table_association.private[1]: Creating...
-module.networking.aws_route_table_association.private[0]: Creating...
+module.networking.aws_route_table.private: Creation complete after 0s [id=rtb-c3f7f905]
 module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Creating...
+module.networking.aws_route_table_association.private[0]: Creating...
+module.networking.aws_route_table_association.private[1]: Creating...
 module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Creating...
-module.networking.aws_route_table_association.private[1]: Creation complete after 0s [id=rtbassoc-9682a191]
-module.networking.aws_route_table_association.private[0]: Creation complete after 0s [id=rtbassoc-c8e4f3ed]
-module.networking.aws_security_group.endpoints: Creation complete after 1s [id=sg-89192f4f028caf679]
-module.networking.aws_security_group.alb: Creation complete after 1s [id=sg-961f223608ef66829]
-module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creating...
-module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Creation complete after 2s [id=recsys-lab-golden-000000000000]
+module.networking.aws_route_table_association.private[0]: Creation complete after 0s [id=rtbassoc-6389f7a8]
+module.networking.aws_route_table_association.private[1]: Creation complete after 0s [id=rtbassoc-eae3da16]
+module.networking.aws_security_group.endpoints: Creation complete after 0s [id=sg-babdca6f392dc3262]
+module.networking.aws_security_group.alb: Creation complete after 0s [id=sg-6876e4503ef02df56]
 module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Creating...
-module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Creation complete after 5s [id=vpce-61bbebf238b79d9c2]
-module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Creation complete after 5s [id=vpce-c8586cda1952b98fa]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creating...
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creating...
+module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Creation complete after 1s [id=recsys-lab-golden-000000000000]
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creating...
+module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Creation complete after 5s [id=vpce-048964fe7dfc6c0f2]
+module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Creation complete after 5s [id=vpce-653c16ecea99f1b7d]
 module.networking.aws_security_group.ecs: Creating...
 module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creation complete after 5s [id=vpce-5f93c91d488d66326]
-module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creation complete after 5s [id=vpce-b2844313f4cc3c9fd]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creation complete after 5s [id=vpce-8385a752ae0021d97]
 module.ecs_service.aws_lb.alb: Creating...
-module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Creation complete after 5s [id=vpce-4d31c554cffd667ba]
-module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creation complete after 5s [id=vpce-c945a27570135b4b8]
-module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creation complete after 5s [id=vpce-94c1e0926338933ea]
-module.networking.aws_security_group.ecs: Creation complete after 0s [id=sg-f5a4e8fa4fc3ab5f1]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Creation complete after 5s [id=vpce-5c7fd51c5a18ead82]
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Creation complete after 5s [id=vpce-76ea884889fe21a4d]
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Creation complete after 5s [id=vpce-4e3f8e8b1132a5675]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Creation complete after 5s [id=vpce-9e0a908cf3904b2b3]
+module.networking.aws_security_group.ecs: Creation complete after 0s [id=sg-0760f6e8ada79df8e]
 module.networking.aws_security_group.internal: Creating...
-module.networking.aws_security_group.internal: Creation complete after 0s [id=sg-4551a220da43e3d7e]
-module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Creation complete after 5s [id=vpce-40dc6037d5df6cc4f]
+module.networking.aws_security_group.internal: Creation complete after 1s [id=sg-290bed38a03f5fe80]
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Creation complete after 5s [id=vpce-e875a71f16a12e228]
+module.kms.aws_kms_key.platform: Still creating... [00m10s elapsed]
 module.ecs_service.aws_ecs_cluster.main: Still creating... [00m10s elapsed]
 module.ecs_service.aws_ecs_cluster.main: Creation complete after 10s [id=arn:aws:ecs:us-east-1:000000000000:cluster/recsys-lab-cluster]
 module.ecs_service.aws_ecs_cluster_capacity_providers.main: Creating...
-module.kms.aws_kms_key.platform: Still creating... [00m10s elapsed]
-module.kms.aws_kms_key.platform: Creation complete after 12s [id=54fe1525-1f3a-49e2-a84a-05bd0fe6cc31]
-module.kms.aws_kms_alias.platform: Creating...
-module.glue_pipeline.aws_glue_security_configuration.main: Creating...
-module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creating...
-module.athena_queries.aws_athena_workgroup.analytics: Creating...
-module.cloudwatch_monitoring.aws_sns_topic.alerts: Creating...
-module.kms.aws_kms_alias.platform: Creation complete after 0s [id=alias/recsys-lab-platform]
-module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creating...
+module.kms.aws_kms_key.platform: Creation complete after 12s [id=d431419d-3e09-4b25-b8fd-da8317571983]
 module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Creating...
-module.glue_pipeline.aws_cloudwatch_log_group.glue: Creating...
-module.glue_pipeline.aws_glue_security_configuration.main: Creation complete after 1s [id=recsys-lab-glue-security]
-module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creation complete after 1s [id=arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
-module.athena_queries.aws_athena_workgroup.analytics: Creation complete after 1s [id=recsys-lab-workgroup]
-module.ecs_service.aws_cloudwatch_log_group.ecs: Creating...
-module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Creation complete after 1s [id=recsys-lab-golden-000000000000]
-module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creation complete after 1s [id=recsys-lab-reranker-config]
-module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Creating...
-module.networking.aws_cloudwatch_log_group.flow_logs[0]: Creating...
-module.glue_pipeline.aws_cloudwatch_log_group.glue: Creation complete after 0s [id=/aws-glue/jobs/recsys-lab-feature-engineering]
+module.glue_pipeline.aws_glue_security_configuration.main: Creating...
 module.ecs_service.aws_ecr_repository.app: Creating...
+module.networking.aws_cloudwatch_log_group.flow_logs[0]: Creating...
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Creating...
+module.kms.aws_kms_alias.platform: Creating...
+module.athena_queries.aws_athena_workgroup.analytics: Creating...
+module.glue_pipeline.aws_glue_security_configuration.main: Creation complete after 0s [id=recsys-lab-glue-security]
+module.kms.aws_kms_alias.platform: Creation complete after 0s [id=alias/recsys-lab-platform]
+module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Creation complete after 0s [id=recsys-lab-golden-000000000000]
 module.dynamodb_table.aws_dynamodb_table.user_recommendations: Creating...
-module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Creating...
-module.cloudwatch_monitoring.aws_sns_topic.alerts: Creation complete after 1s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
-module.ecs_service.aws_cloudwatch_log_group.ecs: Creation complete after 0s [id=/ecs/recsys-lab]
-module.athena_queries.aws_athena_named_query.extract_curated_features: Creating...
-module.glue_pipeline.aws_glue_job.feature_engineering: Creating...
+module.ecs_service.aws_cloudwatch_log_group.ecs: Creating...
+module.athena_queries.aws_athena_workgroup.analytics: Creation complete after 0s [id=recsys-lab-workgroup]
 module.networking.aws_cloudwatch_log_group.flow_logs[0]: Creation complete after 0s [id=/vpc/recsys-lab/flow-logs]
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Creation complete after 0s [id=/aws-glue/jobs/recsys-lab-feature-engineering]
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Creating...
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creating...
+module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Creating...
+module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creating...
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Creation complete after 0s [id=arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
+module.athena_queries.aws_athena_named_query.extract_curated_features: Creating...
+module.ecs_service.aws_cloudwatch_log_group.ecs: Creation complete after 0s [id=/ecs/recsys-lab]
+module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Creation complete after 0s [id=recsys-lab-reranker-config]
+module.glue_pipeline.aws_glue_job.feature_engineering: Creating...
+module.athena_queries.aws_athena_named_query.extract_curated_features: Creation complete after 0s [id=d159a694-1e04-42fd-a406-df6773f18ea2]
 module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Creation complete after 0s [id=/aws/sagemaker/Endpoints/recsys-lab-reranker]
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
+module.networking.aws_iam_role_policy.flow_logs[0]: Creating...
+module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Creating...
+module.glue_pipeline.aws_glue_job.feature_engineering: Creation complete after 0s [id=recsys-lab-feature-engineering]
+module.networking.aws_flow_log.vpc[0]: Creating...
+module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Creating...
 module.cloudwatch_monitoring.data.aws_iam_policy_document.alerts: Reading...
 module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Creation complete after 0s [id=recsys-lab-sm-train-role/arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
 module.cloudwatch_monitoring.data.aws_iam_policy_document.alerts: Read complete after 0s [id=4093629395]
-module.athena_queries.aws_athena_named_query.extract_curated_features: Creation complete after 0s [id=d374e1ec-0a52-4df4-a1cb-8fe9646a6e8c]
-module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Creating...
-module.networking.aws_flow_log.vpc[0]: Creating...
-module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creating...
-module.networking.aws_iam_role_policy.flow_logs[0]: Creating...
-module.glue_pipeline.aws_glue_job.feature_engineering: Creation complete after 0s [id=recsys-lab-feature-engineering]
-module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
 module.networking.aws_iam_role_policy.flow_logs[0]: Creation complete after 0s [id=recsys-lab-flow-logs-role:write-flow-logs]
 module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Creation complete after 0s [id=recsys-lab-sagemaker-role:serve-reranker]
-module.networking.aws_flow_log.vpc[0]: Creation complete after 0s [id=fl-abc2dda8d2c992400]
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creating...
+module.networking.aws_flow_log.vpc[0]: Creation complete after 0s [id=fl-6d64d22d5ce6de303]
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Creation complete after 0s [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
 module.cloudwatch_monitoring.aws_budgets_budget.monthly: Creating...
 module.ecs_service.aws_ecr_repository.app: Creation complete after 1s [id=recsys-lab/recommendation-service]
-module.ecs_service.aws_iam_role_policy.ecs_execution: Creating...
 module.ecs_service.aws_ecr_lifecycle_policy.app: Creating...
+module.ecs_service.aws_iam_role_policy.ecs_execution: Creating...
 module.ecs_service.aws_ecr_lifecycle_policy.app: Creation complete after 0s [id=recsys-lab/recommendation-service]
 module.ecs_service.aws_iam_role_policy.ecs_execution: Creation complete after 0s [id=recsys-lab-ecs-exec-role:pull-image-and-write-logs]
 module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Still creating... [00m10s elapsed]
@@ -934,29 +962,29 @@ module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: S
 module.ecs_service.aws_lb.alb: Still creating... [00m50s elapsed]
 module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Creation complete after 55s [id=recsys-lab-golden-000000000000]
 module.ecs_service.aws_lb.alb: Still creating... [01m00s elapsed]
-module.ecs_service.aws_lb.alb: Creation complete after 1m0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/4497154bc80f4cef]
+module.ecs_service.aws_lb.alb: Creation complete after 1m0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/e15608a8d387431f]
 module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Creating...
 module.ecs_service.aws_lb_listener.http: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Creation complete after 0s [id=recsys-lab-dashboard]
-module.ecs_service.aws_lb_listener.http: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/recsys-lab-alb/4497154bc80f4cef/025e945ed69c4931]
+module.ecs_service.aws_lb_listener.http: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/recsys-lab-alb/e15608a8d387431f/8408ced4cd244e0c]
 module.ecs_service.aws_ecs_service.app: Creating...
 module.ecs_service.aws_ecs_service.app: Creation complete after 0s [id=arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service]
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_5xx&quot;]: Creating...
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Creating...
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Creating...
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creation complete after 0s [id=recsys-lab-explanation-fallback]
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Creation complete after 0s [id=recsys-lab-running-tasks]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creating...
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Creation complete after 0s [id=recsys-lab-sagemaker-errors]
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Creation complete after 0s [id=recsys-lab-degraded-mode]
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Creation complete after 0s [id=recsys-lab-healthy-targets]
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_5xx&quot;]: Creation complete after 0s [id=recsys-lab-api-5xx]
-module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Creation complete after 0s [id=recsys-lab-sagemaker-errors]
 module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Creation complete after 0s [id=recsys-lab-api-p95-latency]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Creation complete after 0s [id=recsys-lab-running-tasks]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_5xx&quot;]: Creation complete after 0s [id=recsys-lab-api-5xx]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Creation complete after 0s [id=recsys-lab-explanation-fallback]
 
-Apply complete! Resources: 85 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 83 added, 0 changed, 0 destroyed.
 
 Outputs:
 
@@ -965,7 +993,7 @@ athena_workgroup_name = &quot;recsys-lab-workgroup&quot;
 cloudwatch_dashboard_name = &quot;recsys-lab-dashboard&quot;
 dynamodb_table_name = &quot;recsys-lab-user_recommendations&quot;
 ecr_repository_url = &quot;000000000000.dkr.ecr.us-east-1.localhost:4566/recsys-lab/recommendation-service&quot;
-ecs_service_alb_dns = &quot;recsys-lab-alb-4497154bc80f4cef.elb.localhost.floci.io&quot;
+ecs_service_alb_dns = &quot;recsys-lab-alb-e15608a8d387431f.elb.localhost.floci.io&quot;
 glue_job_name = &quot;recsys-lab-feature-engineering&quot;
 memorydb_cluster_endpoint = &quot;memorydb-lacuna-do-emulador:6379&quot;
 s3_golden_dataset_bucket = &quot;recsys-lab-golden-000000000000&quot;
@@ -973,13 +1001,13 @@ sagemaker_endpoint_name = &quot;recsys-lab-reranker&quot;
 sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/train_model.py&quot;</pre>
         </details></td></tr>
         <tr>
-          <td class="num">12</td>
+          <td class="num">14</td>
           <td>S3: SSE-KMS no golden dataset<div class="note"></div></td>
           <td class="mono">R2</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">aws:kms</td>
           <td class="mono">aws:kms</td>
-          <td class="num">0.42s</td>
+          <td class="num">0.52s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -990,7 +1018,7 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
             {
                 &quot;ApplyServerSideEncryptionByDefault&quot;: {
                     &quot;SSEAlgorithm&quot;: &quot;aws:kms&quot;,
-                    &quot;KMSMasterKeyID&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;
+                    &quot;KMSMasterKeyID&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;
                 },
                 &quot;BucketKeyEnabled&quot;: true
             }
@@ -999,13 +1027,13 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">13</td>
+          <td class="num">15</td>
           <td>S3: bloqueio de acesso público completo<div class="note"></div></td>
           <td class="mono">R1</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">4 flags true</td>
           <td class="mono">[True, True, True, True]</td>
-          <td class="num">0.42s</td>
+          <td class="num">0.47s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1020,13 +1048,13 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">14</td>
+          <td class="num">16</td>
           <td>S3: política nega acesso sem TLS<div class="note"></div></td>
           <td class="mono">R2</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">Deny aws:SecureTransport=false</td>
           <td class="mono">Deny sem TLS</td>
-          <td class="num">0.47s</td>
+          <td class="num">0.42s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1036,7 +1064,7 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">15</td>
+          <td class="num">17</td>
           <td>DynamoDB: SSE com KMS<div class="note"></div></td>
           <td class="mono">R2</td>
           <td><span class="badge ok">passou</span></td>
@@ -1063,7 +1091,7 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
             }
         ],
         &quot;TableStatus&quot;: &quot;ACTIVE&quot;,
-        &quot;CreationDateTime&quot;: 1795058556.522,
+        &quot;CreationDateTime&quot;: 1795058891.976,
         &quot;ProvisionedThroughput&quot;: {
             &quot;NumberOfDecreasesToday&quot;: 0,
             &quot;ReadCapacityUnits&quot;: 0,
@@ -1072,15 +1100,15 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
         &quot;TableSizeBytes&quot;: 0,
         &quot;ItemCount&quot;: 0,
         &quot;TableArn&quot;: &quot;arn:aws:dynamodb:us-east-1:000000000000:table/recsys-lab-user_recommendations&quot;,
-        &quot;TableId&quot;: &quot;3797900f-65f7-4ef2-afef-cb52c4915bf0&quot;,
+        &quot;TableId&quot;: &quot;ecc43d35-1704-4a3a-acfd-f5b592c8051b&quot;,
         &quot;BillingModeSummary&quot;: {
             &quot;BillingMode&quot;: &quot;PAY_PER_REQUEST&quot;,
-            &quot;LastUpdateToPayPerRequestDateTime&quot;: 1795058556.522
+            &quot;LastUpdateToPayPerRequestDateTime&quot;: 1795058891.976
         },
         &quot;SSEDescription&quot;: {
             &quot;Status&quot;: &quot;ENABLED&quot;,
             &quot;SSEType&quot;: &quot;KMS&quot;,
-            &quot;KMSMasterKeyArn&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;
+            &quot;KMSMasterKeyArn&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;
         },
         &quot;TableClassSummary&quot;: {
             &quot;TableClass&quot;: &quot;STANDARD&quot;
@@ -1095,13 +1123,13 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">16</td>
+          <td class="num">18</td>
           <td>MemoryDB: TLS em trânsito<div class="note">Cluster fora do apply (lacuna do Floci, ADR-0006); TLS verificado no plan por terraform test memorydb_tls</div></td>
           <td class="mono">R2</td>
           <td><span class="badge lacuna">lacuna do emulador</span></td>
           <td class="mono">True</td>
           <td class="mono">None</td>
-          <td class="num">0.37s</td>
+          <td class="num">0.42s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1109,7 +1137,7 @@ sagemaker_train_script_uri = &quot;s3://recsys-lab-golden-000000000000/scripts/t
 An error occurred (ClusterNotFoundFault) when calling the DescribeClusters operation: Cluster not found.</pre>
         </details></td></tr>
         <tr>
-          <td class="num">17</td>
+          <td class="num">19</td>
           <td>ALB interno por padrão<div class="note"></div></td>
           <td class="mono">R1</td>
           <td><span class="badge ok">passou</span></td>
@@ -1123,13 +1151,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 {
     &quot;LoadBalancers&quot;: [
         {
-            &quot;LoadBalancerArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/4497154bc80f4cef&quot;,
-            &quot;DNSName&quot;: &quot;recsys-lab-alb-4497154bc80f4cef.elb.localhost.floci.io&quot;,
+            &quot;LoadBalancerArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/e15608a8d387431f&quot;,
+            &quot;DNSName&quot;: &quot;recsys-lab-alb-e15608a8d387431f.elb.localhost.floci.io&quot;,
             &quot;CanonicalHostedZoneId&quot;: &quot;Z35SXDOTRQ7X7K&quot;,
-            &quot;CreatedTime&quot;: &quot;2026-11-19T03:22:29.706Z&quot;,
+            &quot;CreatedTime&quot;: &quot;2026-11-19T03:28:05.223Z&quot;,
             &quot;LoadBalancerName&quot;: &quot;recsys-lab-alb&quot;,
             &quot;Scheme&quot;: &quot;internal&quot;,
-            &quot;VpcId&quot;: &quot;vpc-d84e5acd&quot;,
+            &quot;VpcId&quot;: &quot;vpc-bb48ba5b&quot;,
             &quot;State&quot;: {
                 &quot;Code&quot;: &quot;active&quot;
             },
@@ -1137,15 +1165,15 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;AvailabilityZones&quot;: [
                 {
                     &quot;ZoneName&quot;: &quot;us-east-1b&quot;,
-                    &quot;SubnetId&quot;: &quot;subnet-19e6f959&quot;
+                    &quot;SubnetId&quot;: &quot;subnet-d675e4a0&quot;
                 },
                 {
                     &quot;ZoneName&quot;: &quot;us-east-1a&quot;,
-                    &quot;SubnetId&quot;: &quot;subnet-ed5fba51&quot;
+                    &quot;SubnetId&quot;: &quot;subnet-6aedbde5&quot;
                 }
             ],
             &quot;SecurityGroups&quot;: [
-                &quot;sg-961f223608ef66829&quot;
+                &quot;sg-6876e4503ef02df56&quot;
             ],
             &quot;IpAddressType&quot;: &quot;ipv4&quot;
         }
@@ -1153,13 +1181,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">18</td>
+          <td class="num">20</td>
           <td>ECS: tasks sem IP público, 1 task no lab<div class="note"></div></td>
           <td class="mono">R1/R5</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">DISABLED, 1</td>
           <td class="mono">assignPublicIp=DISABLED, desired=1</td>
-          <td class="num">0.42s</td>
+          <td class="num">0.47s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1172,7 +1200,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;clusterArn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:cluster/recsys-lab-cluster&quot;,
             &quot;loadBalancers&quot;: [
                 {
-                    &quot;targetGroupArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/bf42c4062d484d29&quot;,
+                    &quot;targetGroupArn&quot;: &quot;arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/2a8e1ed80a3d466b&quot;,
                     &quot;containerName&quot;: &quot;recommendation-service&quot;,
                     &quot;containerPort&quot;: 8080
                 }
@@ -1207,15 +1235,15 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;taskSets&quot;: [],
             &quot;deployments&quot;: [
                 {
-                    &quot;id&quot;: &quot;ecs-svc/5ed2c39c33f842309fd5de3d85c9dc24&quot;,
+                    &quot;id&quot;: &quot;ecs-svc/e1732282d75b40e7a5a2d08c2ff6c82e&quot;,
                     &quot;status&quot;: &quot;PRIMARY&quot;,
                     &quot;taskDefinition&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:task-definition/recsys-lab-task:1&quot;,
                     &quot;desiredCount&quot;: 1,
                     &quot;pendingCount&quot;: 0,
                     &quot;runningCount&quot;: 0,
                     &quot;failedTasks&quot;: 1,
-                    &quot;createdAt&quot;: 1795058609.755,
-                    &quot;updatedAt&quot;: 1795058609.755,
+                    &quot;createdAt&quot;: 1795058945.281,
+                    &quot;updatedAt&quot;: 1795058945.281,
                     &quot;capacityProviderStrategy&quot;: [
                         {
                             &quot;capacityProvider&quot;: &quot;FARGATE&quot;,
@@ -1233,25 +1261,25 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
                     &quot;networkConfiguration&quot;: {
                         &quot;awsvpcConfiguration&quot;: {
                             &quot;subnets&quot;: [
-                                &quot;subnet-19e6f959&quot;,
-                                &quot;subnet-ed5fba51&quot;
+                                &quot;subnet-d675e4a0&quot;,
+                                &quot;subnet-6aedbde5&quot;
                             ],
                             &quot;securityGroups&quot;: [
-                                &quot;sg-f5a4e8fa4fc3ab5f1&quot;
+                                &quot;sg-0760f6e8ada79df8e&quot;
                             ],
                             &quot;assignPublicIp&quot;: &quot;DISABLED&quot;
                         }
                     },
                     &quot;rolloutState&quot;: &quot;IN_PROGRESS&quot;,
-                    &quot;rolloutStateReason&quot;: &quot;ECS deployment ecs-svc/5ed2c39c33f842309fd5de3d85c9dc24 in progress.&quot;
+                    &quot;rolloutStateReason&quot;: &quot;ECS deployment ecs-svc/e1732282d75b40e7a5a2d08c2ff6c82e in progress.&quot;
                 }
             ],
             &quot;events&quot;: [],
-            &quot;createdAt&quot;: 1795058609.755,
-            &quot;currentServiceDeployment&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-deployment/recsys-lab-cluster/recsys-lab-service/7773da2846784b9b9f5e82701ae9a3ac&quot;,
+            &quot;createdAt&quot;: 1795058945.281,
+            &quot;currentServiceDeployment&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-deployment/recsys-lab-cluster/recsys-lab-service/c0dd423da25a4232ba54565417653b41&quot;,
             &quot;currentServiceRevisions&quot;: [
                 {
-                    &quot;arn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-revision/recsys-lab-cluster/recsys-lab-service/5ed2c39c33f842309fd5de3d85c9dc24&quot;,
+                    &quot;arn&quot;: &quot;arn:aws:ecs:us-east-1:000000000000:service-revision/recsys-lab-cluster/recsys-lab-service/e1732282d75b40e7a5a2d08c2ff6c82e&quot;,
                     &quot;requestedTaskCount&quot;: 1,
                     &quot;runningTaskCount&quot;: 0,
                     &quot;pendingTaskCount&quot;: 0
@@ -1260,11 +1288,11 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;networkConfiguration&quot;: {
                 &quot;awsvpcConfiguration&quot;: {
                     &quot;subnets&quot;: [
-                        &quot;subnet-19e6f959&quot;,
-                        &quot;subnet-ed5fba51&quot;
+                        &quot;subnet-d675e4a0&quot;,
+                        &quot;subnet-6aedbde5&quot;
                     ],
                     &quot;securityGroups&quot;: [
-                        &quot;sg-f5a4e8fa4fc3ab5f1&quot;
+                        &quot;sg-0760f6e8ada79df8e&quot;
                     ],
                     &quot;assignPublicIp&quot;: &quot;DISABLED&quot;
                 }
@@ -1284,7 +1312,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">19</td>
+          <td class="num">21</td>
           <td>Rede: 6 endpoints de interface e 2 de gateway<div class="note"></div></td>
           <td class="mono">ADR-0002</td>
           <td><span class="badge ok">passou</span></td>
@@ -1298,13 +1326,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 [[&quot;Gateway&quot;, &quot;dynamodb&quot;], [&quot;Gateway&quot;, &quot;s3&quot;], [&quot;Interface&quot;, &quot;bedrock-runtime&quot;], [&quot;Interface&quot;, &quot;ecr.api&quot;], [&quot;Interface&quot;, &quot;ecr.dkr&quot;], [&quot;Interface&quot;, &quot;logs&quot;], [&quot;Interface&quot;, &quot;monitoring&quot;], [&quot;Interface&quot;, &quot;sagemaker.runtime&quot;]]</pre>
         </details></td></tr>
         <tr>
-          <td class="num">20</td>
+          <td class="num">22</td>
           <td>Rede: nenhum NAT Gateway<div class="note"></div></td>
           <td class="mono">R5</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">0</td>
           <td class="mono">0</td>
-          <td class="num">0.47s</td>
+          <td class="num">0.52s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1314,13 +1342,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">21</td>
+          <td class="num">23</td>
           <td>Rede: sem internet gateway sem opt-in<div class="note"></div></td>
           <td class="mono">R1</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">0</td>
           <td class="mono">0</td>
-          <td class="num">0.47s</td>
+          <td class="num">0.42s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1330,13 +1358,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">22</td>
+          <td class="num">24</td>
           <td>IAM: task role sem Resource &quot;*&quot; incondicional<div class="note"></div></td>
           <td class="mono">R3</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">nenhum</td>
           <td class="mono">nenhum</td>
-          <td class="num">1.2s</td>
+          <td class="num">1.3s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1365,7 +1393,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
                         }
                     },
                     &quot;Effect&quot;: &quot;Allow&quot;,
-                    &quot;Resource&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;,
+                    &quot;Resource&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;,
                     &quot;Sid&quot;: &quot;DecryptTableData&quot;
                 },
                 {
@@ -1405,12 +1433,12 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
         },
         &quot;VersionId&quot;: &quot;v1&quot;,
         &quot;IsDefaultVersion&quot;: true,
-        &quot;CreateDate&quot;: &quot;2026-11-19T03:22:42.557Z&quot;
+        &quot;CreateDate&quot;: &quot;2026-11-19T03:28:18.009Z&quot;
     }
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">23</td>
+          <td class="num">25</td>
           <td>Tags project, module e managed-by<div class="note"></div></td>
           <td class="mono">R4</td>
           <td><span class="badge ok">passou</span></td>
@@ -1424,7 +1452,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 []</pre>
         </details></td></tr>
         <tr>
-          <td class="num">24</td>
+          <td class="num">26</td>
           <td>Alarmes com ação no SNS<div class="note"></div></td>
           <td class="mono">R6</td>
           <td><span class="badge ok">passou</span></td>
@@ -1441,7 +1469,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;AlarmName&quot;: &quot;recsys-lab-running-tasks&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-running-tasks&quot;,
             &quot;AlarmDescription&quot;: &quot;Servico ECS sem tasks em execucao&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1452,7 +1480,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;RunningTaskCount&quot;,
             &quot;Namespace&quot;: &quot;ECS/ContainerInsights&quot;,
             &quot;Statistic&quot;: &quot;Minimum&quot;,
@@ -1471,13 +1499,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 1.0,
             &quot;ComparisonOperator&quot;: &quot;LessThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-explanation-fallback&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-explanation-fallback&quot;,
             &quot;AlarmDescription&quot;: &quot;Explicacoes com Claude caindo no fallback (resposta sem explicacao)&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1488,7 +1516,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;ExplanationFallbackCount&quot;,
             &quot;Namespace&quot;: &quot;Ecommerce/Recommendations&quot;,
             &quot;Statistic&quot;: &quot;Sum&quot;,
@@ -1498,13 +1526,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 20.0,
             &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-api-p95-latency&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-api-p95-latency&quot;,
             &quot;AlarmDescription&quot;: &quot;p95 da API acima de 60 ms (SLO de latencia)&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1515,13 +1543,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;INSUFFICIENT_DATA&quot;,
             &quot;StateReason&quot;: &quot;Unchecked&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058609,
+            &quot;StateUpdatedTimestamp&quot;: 1795058945,
             &quot;MetricName&quot;: &quot;TargetResponseTime&quot;,
             &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
             &quot;Dimensions&quot;: [
                 {
                     &quot;Name&quot;: &quot;LoadBalancer&quot;,
-                    &quot;Value&quot;: &quot;app/recsys-lab-alb/4497154bc80f4cef&quot;
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/e15608a8d387431f&quot;
                 }
             ],
             &quot;Period&quot;: 60,
@@ -1529,13 +1557,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 0.06,
             &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058609
+            &quot;StateTransitionedTimestamp&quot;: 1795058945
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-api-5xx&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-api-5xx&quot;,
             &quot;AlarmDescription&quot;: &quot;Respostas 5xx do servico (meta zero: a degradacao deve absorver falhas)&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1546,14 +1574,14 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;HTTPCode_Target_5XX_Count&quot;,
             &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
             &quot;Statistic&quot;: &quot;Sum&quot;,
             &quot;Dimensions&quot;: [
                 {
                     &quot;Name&quot;: &quot;LoadBalancer&quot;,
-                    &quot;Value&quot;: &quot;app/recsys-lab-alb/4497154bc80f4cef&quot;
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/e15608a8d387431f&quot;
                 }
             ],
             &quot;Period&quot;: 60,
@@ -1561,13 +1589,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 0.0,
             &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-healthy-targets&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-healthy-targets&quot;,
             &quot;AlarmDescription&quot;: &quot;Nenhum target saudavel atras do ALB&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1578,18 +1606,18 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;HealthyHostCount&quot;,
             &quot;Namespace&quot;: &quot;AWS/ApplicationELB&quot;,
             &quot;Statistic&quot;: &quot;Minimum&quot;,
             &quot;Dimensions&quot;: [
                 {
                     &quot;Name&quot;: &quot;LoadBalancer&quot;,
-                    &quot;Value&quot;: &quot;app/recsys-lab-alb/4497154bc80f4cef&quot;
+                    &quot;Value&quot;: &quot;app/recsys-lab-alb/e15608a8d387431f&quot;
                 },
                 {
                     &quot;Name&quot;: &quot;TargetGroup&quot;,
-                    &quot;Value&quot;: &quot;targetgroup/recsys-lab-tg/bf42c4062d484d29&quot;
+                    &quot;Value&quot;: &quot;targetgroup/recsys-lab-tg/2a8e1ed80a3d466b&quot;
                 }
             ],
             &quot;Period&quot;: 60,
@@ -1597,13 +1625,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 1.0,
             &quot;ComparisonOperator&quot;: &quot;LessThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-degraded-mode&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-degraded-mode&quot;,
             &quot;AlarmDescription&quot;: &quot;Respostas em modo degradado (fallbacks de DynamoDB, MemoryDB ou SageMaker)&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1614,7 +1642,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;DegradedModeCount&quot;,
             &quot;Namespace&quot;: &quot;Ecommerce/Recommendations&quot;,
             &quot;Statistic&quot;: &quot;Sum&quot;,
@@ -1624,13 +1652,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 50.0,
             &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         },
         {
             &quot;AlarmName&quot;: &quot;recsys-lab-sagemaker-errors&quot;,
             &quot;AlarmArn&quot;: &quot;arn:aws:cloudwatch:us-east-1:000000000000:alarm:recsys-lab-sagemaker-errors&quot;,
             &quot;AlarmDescription&quot;: &quot;Erros 5xx no endpoint do re-ranker&quot;,
-            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058609,
+            &quot;AlarmConfigurationUpdatedTimestamp&quot;: 1795058945,
             &quot;ActionsEnabled&quot;: true,
             &quot;OKActions&quot;: [
                 &quot;arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts&quot;
@@ -1641,7 +1669,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;InsufficientDataActions&quot;: [],
             &quot;StateValue&quot;: &quot;OK&quot;,
             &quot;StateReason&quot;: &quot;Threshold evaluated with missing datapoints treated as not breaching: 0 datapoint(s) breaching the threshold.&quot;,
-            &quot;StateUpdatedTimestamp&quot;: 1795058611,
+            &quot;StateUpdatedTimestamp&quot;: 1795058952,
             &quot;MetricName&quot;: &quot;Invocation5XXErrors&quot;,
             &quot;Namespace&quot;: &quot;AWS/SageMaker&quot;,
             &quot;Statistic&quot;: &quot;Sum&quot;,
@@ -1660,7 +1688,7 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             &quot;Threshold&quot;: 5.0,
             &quot;ComparisonOperator&quot;: &quot;GreaterThanThreshold&quot;,
             &quot;TreatMissingData&quot;: &quot;notBreaching&quot;,
-            &quot;StateTransitionedTimestamp&quot;: 1795058611
+            &quot;StateTransitionedTimestamp&quot;: 1795058952
         }
     ],
     &quot;CompositeAlarms&quot;: [],
@@ -1668,13 +1696,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">25</td>
+          <td class="num">27</td>
           <td>Log groups com KMS e retenção<div class="note"></div></td>
           <td class="mono">R6/R2</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">&gt;=4, todos com KMS e retenção</td>
           <td class="mono">4 log groups, 0 sem KMS, 0 sem retenção</td>
-          <td class="num">0.42s</td>
+          <td class="num">0.47s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1683,58 +1711,58 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
     &quot;logGroups&quot;: [
         {
             &quot;logGroupName&quot;: &quot;/aws-glue/jobs/recsys-lab-feature-engineering&quot;,
-            &quot;creationTime&quot;: 1795058556504,
+            &quot;creationTime&quot;: 1795058891955,
             &quot;retentionInDays&quot;: 14,
             &quot;metricFilterCount&quot;: 0,
             &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws-glue/jobs/recsys-lab-feature-engineering:*&quot;,
             &quot;storedBytes&quot;: 0,
-            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;,
             &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
             &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws-glue/jobs/recsys-lab-feature-engineering&quot;,
             &quot;deletionProtectionEnabled&quot;: false
         },
         {
             &quot;logGroupName&quot;: &quot;/aws/ecr/registry&quot;,
-            &quot;creationTime&quot;: 1795058410385,
+            &quot;creationTime&quot;: 1795058892961,
             &quot;metricFilterCount&quot;: 0,
             &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/ecr/registry:*&quot;,
-            &quot;storedBytes&quot;: 7170,
+            &quot;storedBytes&quot;: 2509,
             &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
             &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/ecr/registry&quot;,
             &quot;deletionProtectionEnabled&quot;: false
         },
         {
             &quot;logGroupName&quot;: &quot;/aws/sagemaker/Endpoints/recsys-lab-reranker&quot;,
-            &quot;creationTime&quot;: 1795058556517,
+            &quot;creationTime&quot;: 1795058891993,
             &quot;retentionInDays&quot;: 14,
             &quot;metricFilterCount&quot;: 0,
             &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/sagemaker/Endpoints/recsys-lab-reranker:*&quot;,
             &quot;storedBytes&quot;: 0,
-            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;,
             &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
             &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/aws/sagemaker/Endpoints/recsys-lab-reranker&quot;,
             &quot;deletionProtectionEnabled&quot;: false
         },
         {
             &quot;logGroupName&quot;: &quot;/ecs/recsys-lab&quot;,
-            &quot;creationTime&quot;: 1795058556511,
+            &quot;creationTime&quot;: 1795058891994,
             &quot;retentionInDays&quot;: 14,
             &quot;metricFilterCount&quot;: 0,
             &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/ecs/recsys-lab:*&quot;,
             &quot;storedBytes&quot;: 0,
-            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;,
             &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
             &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/ecs/recsys-lab&quot;,
             &quot;deletionProtectionEnabled&quot;: false
         },
         {
             &quot;logGroupName&quot;: &quot;/vpc/recsys-lab/flow-logs&quot;,
-            &quot;creationTime&quot;: 1795058556516,
+            &quot;creationTime&quot;: 1795058891950,
             &quot;retentionInDays&quot;: 14,
             &quot;metricFilterCount&quot;: 0,
             &quot;arn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/vpc/recsys-lab/flow-logs:*&quot;,
             &quot;storedBytes&quot;: 0,
-            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/54fe1525-1f3a-49e2-a84a-05bd0fe6cc31&quot;,
+            &quot;kmsKeyId&quot;: &quot;arn:aws:kms:us-east-1:000000000000:key/d431419d-3e09-4b25-b8fd-da8317571983&quot;,
             &quot;logGroupClass&quot;: &quot;STANDARD&quot;,
             &quot;logGroupArn&quot;: &quot;arn:aws:logs:us-east-1:000000000000:log-group:/vpc/recsys-lab/flow-logs&quot;,
             &quot;deletionProtectionEnabled&quot;: false
@@ -1743,13 +1771,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">26</td>
+          <td class="num">28</td>
           <td>AWS Budgets com teto de US$ 10<div class="note"></div></td>
           <td class="mono">R9</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">10 USD</td>
           <td class="mono">10 USD</td>
-          <td class="num">0.78s</td>
+          <td class="num">0.83s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
@@ -1772,12 +1800,12 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
             }
         },
         &quot;BudgetType&quot;: &quot;COST&quot;,
-        &quot;LastUpdatedTime&quot;: 1795058556
+        &quot;LastUpdatedTime&quot;: 1795058892
     }
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">27</td>
+          <td class="num">29</td>
           <td>State remoto no S3 e lock liberado após o apply<div class="note"></div></td>
           <td class="mono">R8</td>
           <td><span class="badge ok">passou</span></td>
@@ -1792,9 +1820,9 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
     &quot;Contents&quot;: [
         {
             &quot;Key&quot;: &quot;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&quot;,
-            &quot;LastModified&quot;: &quot;2026-11-19T03:23:29Z&quot;,
-            &quot;ETag&quot;: &quot;\&quot;1c7a5b3fe0407ea4e8778928a142ad26\&quot;&quot;,
-            &quot;Size&quot;: 231033,
+            &quot;LastModified&quot;: &quot;2026-11-19T03:29:05Z&quot;,
+            &quot;ETag&quot;: &quot;\&quot;c4bc042b686e857a8e9f7fc2d3af7ef0\&quot;&quot;,
+            &quot;Size&quot;: 228054,
             &quot;StorageClass&quot;: &quot;STANDARD&quot;
         }
     ],
@@ -1803,13 +1831,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 }</pre>
         </details></td></tr>
         <tr>
-          <td class="num">28</td>
+          <td class="num">30</td>
           <td>Serviço: build para o teste do componente com Claude<div class="note"></div></td>
           <td class="mono"></td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
           <td class="mono">rc=0</td>
-          <td class="num">2.39s</td>
+          <td class="num">2.58s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ npm run build --silent
@@ -1817,13 +1845,13 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 (sem saída)</pre>
         </details></td></tr>
         <tr>
-          <td class="num">29</td>
+          <td class="num">31</td>
           <td>Claude via bedrock-runtime do emulador: nunca lança, devolve estado explícito<div class="note"></div></td>
           <td class="mono">ADR-0004 (5.3)</td>
           <td><span class="badge ok">passou</span></td>
           <td class="mono">status ok ou unavailable, sem exceção</td>
           <td class="mono">unavailable / validation</td>
-          <td class="num">0.19s</td>
+          <td class="num">0.25s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ node -e &lt;explainer contra o emulador&gt;
@@ -1831,66 +1859,196 @@ An error occurred (ClusterNotFoundFault) when calling the DescribeClusters opera
 {&quot;status&quot;:&quot;unavailable&quot;,&quot;attempts&quot;:2,&quot;errorCategory&quot;:&quot;validation&quot;,&quot;retryable&quot;:true,&quot;detail&quot;:&quot;a resposta não chamou a ferramenta record_explanations&quot;}</pre>
         </details></td></tr>
         <tr>
-          <td class="num">30</td>
+          <td class="num">32</td>
           <td>Stack: terraform destroy<div class="note"></div></td>
           <td class="mono">R7</td>
-          <td><span class="badge falha">falhou</span></td>
+          <td><span class="badge ok">passou</span></td>
           <td class="mono">rc=0</td>
-          <td class="mono">rc=1</td>
-          <td class="num">20.86s</td>
+          <td class="mono">rc=0</td>
+          <td class="num">21.55s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ terraform destroy -auto-approve -input=false -no-color
 
-Error: unable to revoke LakeFormation Permissions (input: &amp;{[DESCRIBE CREATE_TABLE ALTER] 0x1d55dc704f50 0x1d55dc62ea80 &lt;nil&gt; &lt;nil&gt; [] {}}): empty retryable error received. This is a bug with the Terraform AWS Provider and should be reported as a GitHub issue in the provider repository.
-
-
-Error: unable to revoke LakeFormation Permissions (input: &amp;{[DATA_LOCATION_ACCESS] 0x1d55db8b7880 0x1d55db8987e0 &lt;nil&gt; &lt;nil&gt; [] {}}): empty retryable error received. This is a bug with the Terraform AWS Provider and should be reported as a GitHub issue in the provider repository.
-
-[...]
-networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Destruction complete after 10s
-module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Still destroying... [id=vpce-40dc6037d5df6cc4f, 00m10s elapsed]
+le.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;running_tasks&quot;]: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;degraded_mode&quot;]: Destruction complete after 0s
+module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Destroying... [id=recsys-lab-sagemaker-role:serve-reranker]
+module.sagemaker_endpoint.aws_sagemaker_endpoint_configuration.reranker: Destruction complete after 0s
+module.sagemaker_training.aws_iam_role_policy_attachment.sagemaker_s3_attach: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_server_side_encryption_configuration.golden_dataset: Destruction complete after 0s
+module.lake_formation.aws_lakeformation_resource.golden_dataset: Destroying... [id=arn:aws:s3:::recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Destroying... [id=recsys-lab-golden-000000000000/interactions/]
+module.networking.aws_flow_log.vpc[0]: Destroying... [id=fl-6d64d22d5ce6de303]
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Destroying... [id=recsys-lab-golden-000000000000]
+module.mwaa_orchestration.aws_s3_object.pipeline_dag: Destruction complete after 0s
+module.lake_formation.aws_lakeformation_resource.golden_dataset: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Destroying... [id=recsys-lab-explanation-fallback]
+module.sagemaker_endpoint.aws_iam_role_policy.sagemaker_execution: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_ownership_controls.golden_dataset: Destruction complete after 0s
+module.networking.aws_flow_log.vpc[0]: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Destroying... [id=recsys-lab-dashboard]
+module.sagemaker_training.aws_s3_object.train_script: Destruction complete after 0s
+module.glue_pipeline.aws_glue_job.feature_engineering: Destroying... [id=recsys-lab-feature-engineering]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Destroying... [id=vpce-9e0a908cf3904b2b3]
+module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Destroying... [id=recsys-lab-golden-000000000000]
+module.glue_pipeline.aws_iam_role_policy.glue: Destroying... [id=recsys-lab-glue-role:feature-engineering]
+module.networking.aws_route_table_association.private[1]: Destroying... [id=rtbassoc-eae3da16]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;explanation_fallback&quot;]: Destruction complete after 1s
+module.cloudwatch_monitoring.aws_cloudwatch_dashboard.platform: Destruction complete after 1s
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Destroying... [id=recsys-lab-api-p95-latency]
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Destroying... [id=recsys-lab-golden-000000000000/catalog/]
+module.glue_pipeline.aws_glue_job.feature_engineering: Destruction complete after 1s
+module.glue_pipeline.aws_iam_role_policy.glue: Destruction complete after 1s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;interactions/&quot;]: Destruction complete after 1s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Destroying... [id=recsys-lab-golden-000000000000/user_features/]
+module.ecs_service.aws_iam_role_policy.ecs_execution: Destroying... [id=recsys-lab-ecs-exec-role:pull-image-and-write-logs]
+module.cloudwatch_monitoring.aws_budgets_budget.monthly: Destroying... [id=000000000000:recsys-lab-monthly]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;api_p95_latency&quot;]: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;catalog/&quot;]: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_policy.tls_only: Destruction complete after 1s
+module.networking.aws_route_table_association.private[1]: Destruction complete after 1s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Destroying... [id=recsys-lab-golden-000000000000/recommendations/]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Destroying... [id=vpce-5c7fd51c5a18ead82]
+module.cloudwatch_monitoring.aws_budgets_budget.monthly: Destruction complete after 0s
+module.ecs_service.aws_iam_role_policy.ecs_execution: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;user_features/&quot;]: Destruction complete after 0s
+module.athena_queries.aws_athena_named_query.extract_curated_features: Destroying... [id=d159a694-1e04-42fd-a406-df6773f18ea2]
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Destroying... [id=recsys-lab-cluster]
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Destroying... [id=recsys-lab-golden-000000000000]
+module.networking.aws_security_group.internal: Destroying... [id=sg-290bed38a03f5fe80]
+module.athena_queries.aws_athena_named_query.extract_curated_features: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_object.prefix[&quot;recommendations/&quot;]: Destruction complete after 0s
+module.networking.aws_route_table_association.private[0]: Destroying... [id=rtbassoc-6389f7a8]
+module.networking.aws_iam_role_policy.flow_logs[0]: Destroying... [id=recsys-lab-flow-logs-role:write-flow-logs]
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Destroying... [id=vpce-76ea884889fe21a4d]
+module.networking.aws_iam_role_policy.flow_logs[0]: Destruction complete after 0s
+module.networking.aws_route_table_association.private[0]: Destruction complete after 0s
+module.ecs_service.aws_iam_role_policy_attachment.ecs_task_policy_attach: Destroying... [id=recsys-lab-ecs-task-role/arn:aws:iam::000000000000:policy/recsys-lab-ecs-task-policy]
+module.kms.aws_kms_alias.platform: Destroying... [id=alias/recsys-lab-platform]
+module.networking.aws_security_group.internal: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Destroying... [id=recsys-lab-sagemaker-errors]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;sagemaker_errors&quot;]: Destruction complete after 0s
+module.kms.aws_kms_alias.platform: Destruction complete after 0s
+module.ecs_service.aws_iam_role_policy_attachment.ecs_task_policy_attach: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_lifecycle_configuration.golden_dataset: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Destroying... [id=vpce-8385a752ae0021d97]
+module.sagemaker_endpoint.aws_sagemaker_model.reranker: Destroying... [id=recsys-lab-reranker-model]
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Destroying... [id=arn:aws:iam::000000000000:policy/recsys-lab-sm-s3-policy]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Destroying... [id=recsys-lab-healthy-targets]
+module.cloudwatch_monitoring.aws_cloudwatch_metric_alarm.this[&quot;healthy_targets&quot;]: Destruction complete after 0s
+module.sagemaker_endpoint.aws_sagemaker_model.reranker: Destruction complete after 0s
+module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Destroying... [id=/aws/sagemaker/Endpoints/recsys-lab-reranker]
+module.sagemaker_training.aws_iam_policy.sagemaker_s3_policy: Destruction complete after 0s
+module.sagemaker_training.aws_iam_role.sagemaker_train_role: Destroying... [id=recsys-lab-sm-train-role]
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Destroying... [id=recsys-lab-golden-000000000000/scripts/feature_engineering.py]
+module.sagemaker_endpoint.aws_cloudwatch_log_group.endpoint: Destruction complete after 0s
+module.sagemaker_training.aws_iam_role.sagemaker_train_role: Destruction complete after 0s
+module.glue_pipeline.aws_s3_object.script_feature_engineering: Destruction complete after 0s
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Destroying... [id=/aws-glue/jobs/recsys-lab-feature-engineering]
+module.glue_pipeline.aws_iam_role.glue_service_role: Destroying... [id=recsys-lab-glue-role]
+module.glue_pipeline.aws_glue_security_configuration.main: Destroying... [id=recsys-lab-glue-security]
+module.glue_pipeline.aws_cloudwatch_log_group.glue: Destruction complete after 0s
+module.glue_pipeline.aws_glue_security_configuration.main: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Destroying... [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
+module.s3_golden_dataset.aws_s3_bucket_public_access_block.golden_dataset: Destroying... [id=recsys-lab-golden-000000000000]
+module.cloudwatch_monitoring.aws_sns_topic_policy.alerts: Destruction complete after 0s
+module.glue_pipeline.aws_iam_role.glue_service_role: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_public_access_block.golden_dataset: Destruction complete after 0s
+module.athena_queries.aws_athena_workgroup.analytics: Destroying... [id=recsys-lab-workgroup]
+module.networking.aws_iam_role.flow_logs[0]: Destroying... [id=recsys-lab-flow-logs-role]
+module.lake_formation.aws_glue_catalog_database.ecommerce_golden_db: Destroying... [id=000000000000:ecommerce_golden_db]
+module.athena_queries.aws_athena_workgroup.analytics: Destruction complete after 0s
+module.lake_formation.aws_glue_catalog_database.ecommerce_golden_db: Destruction complete after 0s
+module.ecs_service.aws_iam_policy.ecs_task_policy: Destroying... [id=arn:aws:iam::000000000000:policy/recsys-lab-ecs-task-policy]
+module.networking.aws_cloudwatch_log_group.flow_logs[0]: Destroying... [id=/vpc/recsys-lab/flow-logs]
+module.networking.aws_iam_role.flow_logs[0]: Destruction complete after 0s
+module.networking.aws_cloudwatch_log_group.flow_logs[0]: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Destroying... [id=recsys-lab-golden-000000000000]
+module.s3_golden_dataset.aws_s3_bucket_versioning.golden_dataset: Destruction complete after 0s
+module.ecs_service.aws_ecs_service.app: Destroying... [id=arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service]
+module.ecs_service.aws_iam_policy.ecs_task_policy: Destruction complete after 0s
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Destroying... [id=arn:aws:sns:us-east-1:000000000000:recsys-lab-alerts]
+module.sagemaker_endpoint.aws_iam_role.sagemaker_execution: Destroying... [id=recsys-lab-sagemaker-role]
+module.cloudwatch_monitoring.aws_sns_topic.alerts: Destruction complete after 0s
+module.sagemaker_endpoint.aws_iam_role.sagemaker_execution: Destruction complete after 0s
+module.s3_golden_dataset.aws_s3_bucket.golden_dataset: Destroying... [id=recsys-lab-golden-000000000000]
+module.ecs_service.aws_ecs_service.app: Destruction complete after 0s
+module.networking.aws_security_group.ecs: Destroying... [id=sg-0760f6e8ada79df8e]
+module.ecs_service.aws_lb_listener.http: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:listener/app/recsys-lab-alb/e15608a8d387431f/8408ced4cd244e0c]
+module.ecs_service.aws_lb_listener.http: Destruction complete after 0s
+module.ecs_service.aws_ecs_task_definition.app: Destroying... [id=recsys-lab-task]
+module.networking.aws_security_group.ecs: Destruction complete after 0s
+module.ecs_service.aws_ecs_task_definition.app: Destruction complete after 0s
+module.ecs_service.aws_lb_target_group.app: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:targetgroup/recsys-lab-tg/2a8e1ed80a3d466b]
+module.s3_golden_dataset.aws_s3_bucket.golden_dataset: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Destroying... [id=vpce-653c16ecea99f1b7d]
+module.ecs_service.aws_lb_target_group.app: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Destroying... [id=vpce-048964fe7dfc6c0f2]
+module.ecs_service.aws_lb.alb: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:000000000000:loadbalancer/app/recsys-lab-alb/e15608a8d387431f]
+module.ecs_service.aws_lb.alb: Destruction complete after 0s
+module.ecs_service.aws_iam_role.ecs_execution_role: Destroying... [id=recsys-lab-ecs-exec-role]
+module.ecs_service.aws_iam_role.ecs_execution_role: Destruction complete after 0s
+module.dynamodb_table.aws_dynamodb_table.user_recommendations: Destroying... [id=recsys-lab-user_recommendations]
+module.dynamodb_table.aws_dynamodb_table.user_recommendations: Destruction complete after 0s
+module.ecs_service.aws_iam_role.ecs_task_role: Destroying... [id=recsys-lab-ecs-task-role]
+module.ecs_service.aws_iam_role.ecs_task_role: Destruction complete after 0s
+module.ecs_service.aws_cloudwatch_log_group.ecs: Destroying... [id=/ecs/recsys-lab]
+module.ecs_service.aws_cloudwatch_log_group.ecs: Destruction complete after 0s
+module.ecs_service.aws_ecr_repository.app: Destroying... [id=recsys-lab/recommendation-service]
+module.ecs_service.aws_ecr_repository.app: Destruction complete after 0s
+module.networking.aws_security_group.alb: Destroying... [id=sg-6876e4503ef02df56]
+module.networking.aws_security_group.alb: Destruction complete after 0s
+module.kms.aws_kms_key.platform: Destroying... [id=d431419d-3e09-4b25-b8fd-da8317571983]
+module.kms.aws_kms_key.platform: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Still destroying... [id=vpce-e875a71f16a12e228, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Still destroying... [id=vpce-4e3f8e8b1132a5675, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.interface[&quot;sagemaker.runtime&quot;]: Destruction complete after 10s
+module.networking.aws_vpc_endpoint.interface[&quot;monitoring&quot;]: Destruction complete after 10s
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Still destroying... [id=vpce-9e0a908cf3904b2b3, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.interface[&quot;logs&quot;]: Destruction complete after 11s
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Still destroying... [id=recsys-lab-cluster, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Still destroying... [id=vpce-5c7fd51c5a18ead82, 00m10s elapsed]
 module.networking.aws_vpc_endpoint.interface[&quot;ecr.api&quot;]: Destruction complete after 10s
-module.networking.aws_security_group.endpoints: Destroying... [id=sg-89192f4f028caf679]
-module.networking.aws_subnet.private[1]: Destroying... [id=subnet-19e6f959]
-module.networking.aws_subnet.private[0]: Destroying... [id=subnet-ed5fba51]
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Still destroying... [id=vpce-76ea884889fe21a4d, 00m10s elapsed]
+module.ecs_service.aws_ecs_cluster_capacity_providers.main: Destruction complete after 10s
+module.ecs_service.aws_ecs_cluster.main: Destroying... [id=arn:aws:ecs:us-east-1:000000000000:cluster/recsys-lab-cluster]
+module.ecs_service.aws_ecs_cluster.main: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Still destroying... [id=vpce-8385a752ae0021d97, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.interface[&quot;bedrock-runtime&quot;]: Destruction complete after 10s
+module.networking.aws_vpc_endpoint.interface[&quot;ecr.dkr&quot;]: Destruction complete after 10s
+module.networking.aws_subnet.private[0]: Destroying... [id=subnet-6aedbde5]
+module.networking.aws_subnet.private[1]: Destroying... [id=subnet-d675e4a0]
+module.networking.aws_security_group.endpoints: Destroying... [id=sg-babdca6f392dc3262]
 module.networking.aws_subnet.private[1]: Destruction complete after 0s
-module.networking.aws_security_group.endpoints: Destruction complete after 0s
 module.networking.aws_subnet.private[0]: Destruction complete after 0s
-module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Still destroying... [id=vpce-61bbebf238b79d9c2, 00m10s elapsed]
-module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Still destroying... [id=vpce-c8586cda1952b98fa, 00m10s elapsed]
+module.networking.aws_security_group.endpoints: Destruction complete after 0s
+module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Still destroying... [id=vpce-653c16ecea99f1b7d, 00m10s elapsed]
+module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Still destroying... [id=vpce-048964fe7dfc6c0f2, 00m10s elapsed]
 module.networking.aws_vpc_endpoint.gateway[&quot;s3&quot;]: Destruction complete after 10s
 module.networking.aws_vpc_endpoint.gateway[&quot;dynamodb&quot;]: Destruction complete after 10s
-module.networking.aws_route_table.private: Destroying... [id=rtb-f6f61626]
+module.networking.aws_route_table.private: Destroying... [id=rtb-c3f7f905]
 module.networking.aws_route_table.private: Destruction complete after 0s
-module.networking.aws_vpc.main: Destroying... [id=vpc-d84e5acd]
+module.networking.aws_vpc.main: Destroying... [id=vpc-bb48ba5b]
 module.networking.aws_vpc.main: Destruction complete after 0s
 
-Error: unable to revoke LakeFormation Permissions (input: &amp;{[DESCRIBE CREATE_TABLE ALTER] 0x1d55dc704f50 0x1d55dc62ea80 &lt;nil&gt; &lt;nil&gt; [] {}}): empty retryable error received. This is a bug with the Terraform AWS Provider and should be reported as a GitHub issue in the provider repository.
-
-
-Error: unable to revoke LakeFormation Permissions (input: &amp;{[DATA_LOCATION_ACCESS] 0x1d55db8b7880 0x1d55db8987e0 &lt;nil&gt; &lt;nil&gt; [] {}}): empty retryable error received. This is a bug with the Terraform AWS Provider and should be reported as a GitHub issue in the provider repository.</pre>
+Destroy complete! Resources: 83 destroyed.</pre>
         </details></td></tr>
         <tr>
-          <td class="num">31</td>
-          <td>Destroy sem sobras (tag project, exceto KMS em PendingDeletion)<div class="note"></div></td>
+          <td class="num">33</td>
+          <td>Destroy sem sobras (tag project; ignora KMS em PendingDeletion e serviço ECS inativo)<div class="note"></div></td>
           <td class="mono">R7</td>
-          <td><span class="badge falha">falhou</span></td>
+          <td><span class="badge ok">passou</span></td>
           <td class="mono">0 sobras</td>
-          <td class="mono">3 sobras</td>
-          <td class="num">1.18s</td>
+          <td class="mono">0 sobras</td>
+          <td class="num">1.25s</td>
         </tr>
         <tr class="detail"><td></td><td colspan="6"><details><summary>comando e saída</summary>
           <pre>$ (verificação em Python)
 
-[
- &quot;arn:aws:ecs:us-east-1:000000000000:service/recsys-lab-cluster/recsys-lab-service&quot;,
- &quot;arn:aws:glue:us-east-1:000000000000:database/ecommerce_golden_db&quot;,
- &quot;arn:aws:s3:::recsys-lab-golden-000000000000&quot;
-]</pre>
+[]</pre>
         </details></td></tr>
         <tr>
-          <td class="num">32</td>
+          <td class="num">34</td>
           <td>State remoto preservado e lock liberado após o destroy<div class="note"></div></td>
           <td class="mono">R8</td>
           <td><span class="badge ok">passou</span></td>
@@ -1905,9 +2063,9 @@ Error: unable to revoke LakeFormation Permissions (input: &amp;{[DATA_LOCATION_A
     &quot;Contents&quot;: [
         {
             &quot;Key&quot;: &quot;modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate&quot;,
-            &quot;LastModified&quot;: &quot;2026-11-19T03:24:01Z&quot;,
-            &quot;ETag&quot;: &quot;\&quot;9cbf6dcc52e328b205ddd0cd0b8b72b1\&quot;&quot;,
-            &quot;Size&quot;: 17311,
+            &quot;LastModified&quot;: &quot;2026-11-19T03:29:38Z&quot;,
+            &quot;ETag&quot;: &quot;\&quot;77642204b88665963d206298b95394d1\&quot;&quot;,
+            &quot;Size&quot;: 958,
             &quot;StorageClass&quot;: &quot;STANDARD&quot;
         }
     ],

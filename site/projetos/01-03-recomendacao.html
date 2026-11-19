@@ -68,8 +68,8 @@
   <div class="callout">A explicação fica fora do SLO de 60 ms de propósito. Em produção, ela seria gerada em lote junto com as recomendações, e a chamada online ficaria só para itens da sessão.</div>
 
   <h2>Testes</h2>
-  <p>As regras do repositório viraram 19 blocos de <code>terraform test</code> com mock provider antes do código, mais checkov (0 falhas, exceções justificadas no recurso), tflint, 39 testes do serviço (13 do componente com Claude) e 14 do lote. A integração aplica o stack no emulador Floci com o state remoto e o lock no próprio emulador, verifica cada regra e destrói. Recursos que o emulador não cobre (MemoryDB, endpoint do SageMaker) ficam provados no plan, com a mensagem do emulador como evidência.</p>
-  <p id="relatorio" class="note">Último relatório de integração: ver o cartão abaixo.</p>
+  <p>As regras do repositório viraram 19 blocos de <code>terraform test</code> com mock provider antes do código, mais checkov (321 verificações, 0 falhas, 18 exceções justificadas no recurso), tflint, 39 testes do serviço (13 do componente com Claude) e 14 do lote. A integração aplica o stack no emulador Floci com o state remoto e o lock no próprio emulador, verifica cada regra e destrói. Recursos que o emulador não cobre (MemoryDB, endpoint do SageMaker, revogação de permissões do Lake Formation) ficam provados no plan, com a evidência no ADR. A integração também pegou um bug real: o Lake Formation recusa como principal o ARN de quem roda o Terraform.</p>
+  <p id="relatorio" class="note">Último relatório de integração (Floci 2.5, execução 20261119-032618): <b>aprovado com ressalvas</b>. 34 passos, 27 ok, 0 falhas, 7 lacunas do emulador cobertas no plan; apply em 73 s, destroy em 22 s sem sobras, lock do state liberado.</p>
 
   <h2>Custo estimado</h2>
   <p>~US$ 0,16/h com o stack de pé (endpoints, ALB, MemoryDB, 1 task Fargate, KMS); ~US$ 3,20 em 20 h de lab por mês; MWAA soma ~US$ 0,49/h se ligado; explicação com Claude ~US$ 0,00035 por requisição (tabela da API da Anthropic; o Bedrock tem tabela própria). Teto: US$ 10/mês. Preços públicos de 2026-11, aproximados.</p>
