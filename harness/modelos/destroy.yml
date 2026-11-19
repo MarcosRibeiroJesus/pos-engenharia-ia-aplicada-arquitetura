@@ -27,7 +27,9 @@ env:
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    environment: aws-lab
+    # D-024: ambiente próprio do destroy, sem aprovação e restrito ao main, para o destroy automático
+    # não esperar ninguém. O apply continua no aws-lab, com aprovação.
+    environment: aws-lab-destroy
     defaults:
       run:
         working-directory: ${{ env.TF_DIR }}

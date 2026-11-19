@@ -247,7 +247,7 @@ class TestPrazoDaInfra(unittest.TestCase):
         self.assertEqual(reg["destroy_workflow"], self.p["destroy_workflow"])
 
     def test_prazo_fora_dos_limites_e_recusado(self):
-        for horas in (0, -1, 73):
+        for horas in (0, -1, 25):
             with self.subTest(horas=horas), self.assertRaises(ValueError):
                 infra.registrar({}, self.p, "x-lab", horas, AGORA)
 
@@ -272,11 +272,14 @@ class TestPrazoDaInfra(unittest.TestCase):
         self.assertEqual(len(infra.vencidos(ativos, AGORA + timedelta(hours=28))["destruir"]), 1)
 
     def test_estender_adia_e_respeita_o_maximo(self):
-        ativos = infra.estender(self.ativo(), "x", 2, AGORA + timedelta(hours=23))
-        self.assertEqual(datetime.fromisoformat(ativos["x"]["expira_em"]), AGORA + timedelta(hours=26))
+        ativos = infra.estender(self.ativo(12), "x", 2, AGORA + timedelta(hours=11))
+        self.assertEqual(datetime.fromisoformat(ativos["x"]["expira_em"]), AGORA + timedelta(hours=14))
         self.assertFalse(ativos["x"]["avisado"])
-        with self.assertRaises(ValueError):
-            infra.estender(ativos, "x", 50, AGORA + timedelta(hours=23))
+        with self.assertRaises(ValueError):  # D-024: nunca passa de 24 h desde o apply
+            infra.estender(ativos, "x", 11, AGORA + timedelta(hours=13))
+
+    def test_destroy_dos_modelos_roda_sem_aprovacao(self):
+        self.assertIn("environment: aws-lab-destroy", (AQUI / "modelos" / "destroy.yml").read_text())
 
     def test_registro_vai_para_o_branch_compartilhado(self):
         with tempfile.TemporaryDirectory() as t:

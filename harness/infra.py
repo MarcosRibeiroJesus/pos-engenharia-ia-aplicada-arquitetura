@@ -7,7 +7,7 @@ vence. O registro fica no branch `infra-no-ar` (arquivo ativos.json), visível a
 
   status                                         o que está no ar e quando expira
   registrar PROJETO --stack NOME [--horas 24] [--run URL]   chamado pelo apply
-  estender PROJETO --horas N                     adia o destroy automático (ex.: gravação atrasou)
+  estender PROJETO --horas N                     adia o destroy automático, sem passar de 24 h desde o apply
   remover PROJETO                                chamado pelo destroy, depois da verificação de sobras
   vencidos [--aviso-min 60]                      JSON com o que avisar e o que destruir (usado pelo agendador)
   marcar-avisado PROJETO                         evita aviso repetido
@@ -29,7 +29,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 RAMO = "infra-no-ar"
 ARQUIVO = "ativos.json"
 PRAZO_PADRAO_H = 24
-PRAZO_MAXIMO_H = 72  # um teto diário não sobrevive a uma semana esquecida
+PRAZO_MAXIMO_H = 24  # D-024: destroy automático em até 24 h do apply, sem aprovação; o teto é de um dia
 REDISPARO_H = 3  # destroy disparado e ainda registrado depois disso: falhou ou espera aprovação; tenta de novo
 
 

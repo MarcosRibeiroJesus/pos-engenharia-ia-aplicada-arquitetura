@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       prazo_horas:
-        description: "Horas até o destroy automático (padrão 24, máximo 72)"
+        description: "Horas até o destroy automático (padrão e máximo 24)"
         type: number
         default: 24
 

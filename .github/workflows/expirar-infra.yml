@@ -50,7 +50,7 @@ jobs:
             [ -z "$projeto" ] && continue
             gh issue create --title "Destroy automático de $projeto em até 1 hora" --body "O stack \`$stack\` expira em $expira (UTC). O destroy será disparado sozinho nesse horário, com a verificação de sobras.
 
-          Para adiar: \`python3 harness/infra.py estender $projeto --horas 2\` (prazo total máximo de 72 h desde o apply)."
+          Para adiar: \`python3 harness/infra.py estender $projeto --horas 2\` (prazo total máximo de 24 h desde o apply)."
             python3 harness/infra.py marcar-avisado "$projeto"
           done < avisos.tsv
       - name: Disparar o destroy dos vencidos

@@ -33,12 +33,12 @@ Nenhuma spec assume escopo, produto, orçamento, cloud comparativa, projeto de I
 - **Limite mensal da conta: US$ 20**, num AWS Budgets mensal que soma todas as demonstrações do mês. É a segunda camada, para o caso de um destroy esquecido.
 - **Workflow de destroy obrigatório** em todo projeto com infraestrutura real:
   - disparo manual ou pelo agendador de prazo;
-  - ambiente protegido;
+  - ambiente próprio do destroy (`aws-lab-destroy`), restrito ao `main` e sem aprovação, para o destroy automático não esperar ninguém (D-024);
   - confirmação pelo nome do stack no input `confirm_stack`;
   - OIDC, sem chave estática;
   - verificação final de sobras pela tag `project`;
   - no fim, remove o registro de prazo (`harness/infra.py remover`).
-- **Prazo de vida:** o apply registra o prazo (`harness/infra.py registrar`, padrão de 24 horas, máximo de 72). O workflow `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
+- **Prazo de vida:** o apply registra o prazo (`harness/infra.py registrar`, padrão e máximo de 24 horas). O workflow `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
 - `destroy` sem sobras.
 
 ## Artigo VI · Operável e replicável
