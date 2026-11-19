@@ -6,6 +6,26 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-026 · Agentes especialistas e skills de mercado · fonte: delegada
+- **Um especialista por tarefa fim** (18), definidos em `harness/especialistas.json` e gerados para o Claude Code (`.claude/agents/`) e o Copilot (`.github/agents/`).
+  - Cada um recebe só as skills da tarefa, pré-carregadas pelo campo `skills`. Isso mantém poucas ferramentas e pouco contexto por agente (2.3, 5.1).
+  - O modelo é o do nível da tarefa, e o relatório tem formato fixo (`regras-do-especialista`), com erros e pendências explícitos (5.3).
+- **Subagente não cria subagente:** `disallowedTools: Agent` em todo especialista, mais `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`. A regra do `CLAUDE.md` vira gate (1.2, 1.4).
+- **Skills de mercado por plugin do próprio publicador,** sem copiar para o repositório:
+  - Anthropic, HashiCorp, Trail of Bits, promptfoo, Google; AWS e Microsoft vêm pelo marketplace oficial da Anthropic.
+  - Assim seguem a licença e as atualizações de cada um; as document-skills da Anthropic têm licença restrita.
+  - Só 5 ficam ligados no projeto (terraform, mcp-server-dev, security-guidance, pr-review-toolkit, promptfoo); os demais se instalam sob demanda, para não encher o contexto de toda sessão (5.1).
+- **Fora do padrão:** superpowers e feature-dev, porque impõem um fluxo próprio que compete com o SDD.
+- **Revisão independente:** `analista-sdd`, `revisor-independente` e `avaliador-llm` não corrigem o que revisam (4.6).
+
+### 2026-11-19 · D-025 · Decisão do dono vira regra ou skill · fonte: Marcos
+Toda decisão que só o Marcos pode tomar gera, no mesmo turno, regras ou skills novas com relação direta.
+**Aplicado em:** `CLAUDE.md` (Decisões do dono), `AGENTS.md` (seção 8), skill `decisao-do-dono`, `harness/memoria.py auditar` no workflow `harness.yml`.
+
+### 2026-11-19 · D-024 · Destroy automático em até 24 h, sem aprovação · fonte: Marcos
+O destroy roda sozinho em até 24 horas do apply, sem esperar aprovação. Isso responde à pergunta H-P1 com a opção recomendada: um ambiente próprio do destroy, sem aprovação e restrito ao `main`.
+**Aplicado em:** constituição (Art. V), `CLAUDE.md`, `AGENTS.md` (seção 7), `harness/infra.py` (prazo máximo de 24 h, também ao estender), `harness/modelos/destroy.yml` (ambiente `aws-lab-destroy`), skill `ciclo-demonstracao`.
+
 ### 2026-11-19 · D-023 · Mecânica do teto diário e do prazo de vida · fonte: delegada
 - **Gate de FinOps:** compara o custo de 24 horas com o teto do projeto. Custo de um dia = custo mensal do Infracost × 24/730.
   - Com o custo mensal, a D01 com MWAA seria barrada mesmo custando poucos dólares no dia da demonstração.
@@ -18,11 +38,13 @@ Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 ### 2026-11-19 · D-022 · Limite mensal da conta e destroy automático · fonte: Marcos
 - **Limite mensal:** o US$ 20 da D-020 passa a ser o limite mensal da conta, num AWS Budgets mensal que soma todas as demonstrações. O gate do PR usa o teto diário de cada projeto.
 - **Destroy automático:** destroy automático com prazo. O apply informa o prazo (padrão 24 horas, dá para estender); um workflow agendado avisa uma hora antes e roda o mesmo destroy, com verificação de sobras.
+**Aplicado em:** constituição (Art. V), `CLAUDE.md`, `infra/conta` (Budgets mensal, PR #9), `seguranca.yml` (`CUSTO_MAX_MENSAL_USD`), `harness/infra.py`, `expirar-infra.yml`, `harness/modelos/`, skills `custo-diario` e `ciclo-demonstracao`.
 
 ### 2026-11-19 · D-021 · Teto de um dia e destroy obrigatório · fonte: Marcos
 - **Uso da infraestrutura real:** subir a arquitetura, ver em ação, gravar um vídeo curto e destruir tudo.
 - **Teto de cada projeto:** o valor estimado de cobrança de um dia de execução. Substitui os tetos mensais por disciplina (D03 tinha US$ 10/mês).
 - **Workflow de destroy:** obrigatório em todo projeto de infraestrutura real.
+**Aplicado em:** constituição (Art. V), `CLAUDE.md` (Engenharia), `harness/estado.json` (`infra_real`, `teto_diario_usd`, `destroy_workflow`), `harness/estado.py validar`, templates de spec, plano e tarefas, skills `sdd-planejar`, `sdd-analisar`, `custo-diario` e `ciclo-demonstracao`, `gate_custo.py` (PR #9).
 
 ### 2026-11-19 · D-020 · Teto do gate de FinOps · fonte: Marcos
 O teto padrão do gate de custo por PR cai de US$ 50 para US$ 20 por mês. O significado mudou na D-022: o valor passou a ser o limite mensal da conta. O pedido veio em comentário no card do Monday: remover o teto de US$ 50 imediatamente e definir US$ 20. Os tetos de lab por disciplina são outra decisão e continuam como estavam: a D03 em US$ 10, e a D01 e a D02 pendentes.

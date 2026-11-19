@@ -18,6 +18,8 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - Cota esgotada: `python3 harness/agente.py marcar <agente> --ate ...`.
   - Quem assume e com qual modelo: `python3 harness/agente.py proximo --tarefa <tipo>`.
   - Registre o agente em `harness/progresso.md`.
+- **Decisão do Marcos vira regra ou skill no mesmo turno** (D-025). A entrada no histórico lista `**Aplicado em:**`, e o `harness/memoria.py auditar` confere no CI. Na orquestração, use a skill `decisao-do-dono`.
+- **Agentes especialistas por tarefa fim** (D-026). Delegue a tarefa ao especialista dela (`harness/AGENTES.md`; `harness/agente.py proximo --tarefa <tipo>`). Especialista não cria subagente. Arquivos de agente são gerados: mude `harness/especialistas.json` e rode `harness/sincronizar_agentes.py`.
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).
 - **Testes do componente Claude só com respostas gravadas**, sem chamadas ao Claude real (D-006).
@@ -28,8 +30,8 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Infraestrutura real é demonstração de um dia: subir, gravar um vídeo curto, destruir** (D-021, D-022, D-023).
   - **Teto de cada projeto:** o custo estimado de um dia de execução, calculado no plano. Ele fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets **diário**. O gate do PR compara o custo de 24 horas com esse teto.
   - **Limite mensal da conta:** US$ 20 (`vars.CUSTO_MAX_MENSAL_USD`, padrão `'20'`), num AWS Budgets mensal em `infra/conta`, somando todas as demonstrações do mês.
-  - **Workflow de destroy obrigatório em todo projeto com infraestrutura real:** disparo manual ou pelo agendador, ambiente protegido, input `confirm_stack`, OIDC, verificação de sobras pela tag `project` e `harness/infra.py remover` no fim.
-  - **O apply tem input `prazo_horas`** (padrão 24, máximo 72) e registra o prazo com `harness/infra.py registrar`. O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence. Para adiar: `harness/infra.py estender`.
+  - **Workflow de destroy obrigatório em todo projeto com infraestrutura real:** disparo manual ou pelo agendador, ambiente `aws-lab-destroy` (sem aprovação), input `confirm_stack`, OIDC, verificação de sobras pela tag `project` e `harness/infra.py remover` no fim. O apply fica no `aws-lab`, com aprovação.
+  - **O apply tem input `prazo_horas`** (padrão e máximo 24, D-024) e registra o prazo com `harness/infra.py registrar`. O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence, **sem aprovação**, no ambiente `aws-lab-destroy` restrito ao `main`. Para adiar: `harness/infra.py estender`, sem passar de 24 horas desde o apply.
   - **Ponto de partida:** os modelos em `harness/modelos/`. O `estado.py validar` reprova sem teto a partir de `tarefas` e sem apply ou destroy completos a partir de `verificar`.
   - **D02:** o AWS Budgets do módulo de monitoramento passa de mensal para diário, com o teto calculado.
 - **Modelos:** Opus para arquitetura, código e segurança; Sonnet para pesquisa, posts e site; Haiku para tarefas mecânicas (D-002).
@@ -37,8 +39,10 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
 - D02: avaliações e observabilidade (gate no CI, Langfuse só local ou Langfuse na AWS), mais a 2ª pergunta aberta na sessão D02.
-- Ambiente do GitHub para o destroy automático: hoje o destroy usa o ambiente `aws-lab`. Se esse ambiente exigir aprovação, o destroy automático vai ficar esperando alguém aprovar.
+- Configuração da conta do Marcos para o destroy automático (D-024):
+  - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
+  - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
 - Projetos de IA aplicada da D02 e da D03.
 - Revisores de IA na esteira (custo de tokens) e conta AWS com OIDC para o `terraform plan` nos PRs.
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges dos PRs #9 (esteira, gate diário e limite da conta), #10, #11, #12 e #16 (harness com SDD, troca de agentes, teto diário, destroy e prazo).
+- Merges dos PRs #9 (esteira, gate diário e limite da conta), #10, #11, #12 e #16 (harness com SDD, troca de agentes, teto diário, destroy e prazo) e #17 (especialistas e skills, empilhado sobre o #16).
