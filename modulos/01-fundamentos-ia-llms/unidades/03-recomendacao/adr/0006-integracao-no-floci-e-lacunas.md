@@ -52,7 +52,7 @@ A verificação de sobras ignora chaves KMS em `PendingDeletion` e serviços ECS
 ## Trade-offs
 
 - Os overrides do harness usam o mecanismo de override do Terraform; se um módulo renomear um recurso, o override quebra e o harness falha alto (o que é desejável).
-- O texto da explicação com Claude não é testado contra um modelo real: o `bedrock-runtime` do emulador devolve uma resposta que não chama a tool, e o teste verifica que o serviço devolve um estado explícito (`unavailable / validation`) em vez de lançar. Qualidade do texto fica para um eval com o modelo real.
+- Por decisão do dono (D-006), nenhum teste chama o Claude real: o comportamento real do modelo fica sem validação. O texto da explicação com Claude não é testado contra um modelo real: o `bedrock-runtime` do emulador devolve uma resposta que não chama a tool, e o teste verifica que o serviço devolve um estado explícito (`unavailable / validation`) em vez de lançar. Qualidade do texto fica para um eval com o modelo real.
 
 ## Custo
 

@@ -1,6 +1,6 @@
 ---
 title: "Recomendação do lote ao tempo real na AWS, com um LLM que explica sem inventar"
-unidade: "01.03 · Sistemas de recomendação"
+tema: "Sistemas de recomendação"
 data: 2026-11-19
 status: rascunho para revisão
 ---

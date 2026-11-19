@@ -582,7 +582,7 @@ def write_report():
 </style></head>
 <body><main>
   <div class="verdict {vcls}">{verdict}</div>
-  <h1>Integração da unidade 01.03 · recomendação</h1>
+  <h1>Integração · plataforma de recomendação</h1>
   <div class="sub">Execução {RUN_ID} · stack <code>{PROJECT}-{ENVIRONMENT}</code> · emulador {html.escape(EMULATOR)} · endpoint <code>{html.escape(ENDPOINT)}</code></div>
   <div class="cards">
     <div class="card">Passos<b>{total}</b></div>
@@ -596,7 +596,7 @@ def write_report():
     <thead><tr><th>#</th><th>Passo</th><th>Regra</th><th>Status</th><th>Esperado</th><th>Obtido</th><th>Tempo</th></tr></thead>
     <tbody>{''.join(rows)}</tbody>
   </table></div>
-  <footer>Lacuna do emulador só com evidência (código ou documentação do emulador), registrada no ADR-0006 da unidade. Código correto não é alterado para agradar o emulador.</footer>
+  <footer>Lacuna do emulador só com evidência (código ou documentação do emulador), registrada no ADR-0006 do projeto. Código correto não é alterado para agradar o emulador.</footer>
 </main></body></html>"""
     (OUT / "relatorio.html").write_text(page, encoding="utf-8")
     (REPORTS / "latest.html").write_text(page, encoding="utf-8")

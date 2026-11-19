@@ -57,7 +57,7 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 
 - Terraform >= 1.10 (testado com 1.13.4), Node.js 20, Python 3.11+, Docker.
 - Para a AWS: conta de lab dedicada, acesso ao modelo Claude Haiku 5.5 habilitado no Bedrock na região, e permissão para criar o bucket de state.
-- Para testar sem AWS: o emulador [Floci](https://floci.io) (`docker run -d -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock floci/floci:latest`; o socket é necessário para o ECR do emulador).
+- Para testar sem AWS: o emulador [Floci](https://floci.io) (`docker run -d -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock "${FLOCI_IMAGE:-floci/floci:latest}"`, com `FLOCI_IMAGE=floci/floci:2.5.0`, a versão testada; o socket é necessário para o ECR do emulador).
 
 ## Como subir (5 passos)
 

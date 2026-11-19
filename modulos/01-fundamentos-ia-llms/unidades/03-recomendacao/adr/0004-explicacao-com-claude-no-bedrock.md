@@ -48,6 +48,8 @@ Por requisição com `explain=true`: ~1,5 mil tokens de entrada e ~400 de saída
 
 ## Risco
 
+- **Comportamento real do modelo sem validação (decisão D-006 do dono).** Todos os testes do componente usam respostas sintéticas, com custo de modelo zero; nenhum teste chama o Claude de verdade. A forma da saída está garantida pelo schema estrito e pela validação, mas a qualidade do texto, a taxa de acerto na primeira tentativa e a latência real não foram medidas.
+
 - O Haiku 5.5 precisa estar habilitado na conta e na região (acesso ao modelo no console do Bedrock). Sem isso, a chamada falha com 403/404 e o serviço segue sem explicação.
 - O id exato do modelo ou do perfil de inferência no Bedrock pode diferir do padrão; é uma variável do Terraform, e a política de IAM aceita o modelo direto e o perfil `us.` com o mesmo id.
 - Texto gerado por modelo exibido a cliente: as regras de validação reduzem, mas não eliminam, frases ruins. Ver abaixo a revisão por amostragem.

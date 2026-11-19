@@ -1,6 +1,6 @@
 ---
 title: "A mesma recomendação híbrida no Google Cloud: o que muda e por quê"
-unidade: "01.03 · Sistemas de recomendação"
+tema: "Sistemas de recomendação"
 data: 2026-11-19
 status: rascunho para revisão (design doc; não implementado)
 ---

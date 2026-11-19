@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       floci:
-        image: floci/floci:latest
+        image: ${{ vars.FLOCI_IMAGE || 'floci/floci:latest' }}  # D-013: tag de versão via variável
         ports: ["4566:4566"]
         # O ECR do Floci sobe um registry de verdade pelo Docker; sem o socket, DeleteRepository falha (ADR-0006).
         volumes:
