@@ -12,6 +12,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **SDD obrigatório** (D-016, D-017). Todo código nasce de spec → plano → tarefas → análise aprovada, em `specs/<chave>/`; o gate nega código antes da fase implementar. Projetos em andamento fazem primeiro a spec retroativa. Comece toda sessão pela skill `retomar`.
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).
 - **Testes do componente Claude só com respostas gravadas**, sem chamadas ao Claude real (D-006).
@@ -33,4 +34,4 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - Dependency graph;
   - ruleset do `main`;
   - ruleset que protege o branch `memoria-compartilhada`.
-- Merges dos PRs #9, #10, #11, #12 e #15 (este já inclui o #14).
+- Merges dos PRs #9, #10, #11, #12 e #16 (harness com SDD).

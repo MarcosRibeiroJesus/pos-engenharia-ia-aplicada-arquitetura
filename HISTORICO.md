@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-017 · Harness fase 1 · fonte: delegada
+- **Continuidade em arquivos** (estado.json, progresso.md, init.sh e ritual `retomar`), não em chat. É o padrão de harness para agentes de longa duração da Anthropic (1.7, 5.1).
+- **Gate de SDD por hook:** uma instrução pode ser ignorada; o gate garante o Artigo I (1.4, 1.5).
+- **Análise feita por subagente independente,** porque quem escreveu a spec não enxerga as próprias lacunas (4.6).
+- **Uma tarefa por sessão,** para o trabalho caber no contexto e cada passo ser verificável (1.6).
+- **Uso de tokens num arquivo por sessão,** para que sessões em paralelo não gerem conflito.
+- **Spec Kit:** a mesma estrutura de arquivos, implementada no próprio harness; o CLI pode ser adotado depois sem migração.
+
+### 2026-11-19 · D-016 · SDD obrigatório em todos os projetos · fonte: Marcos
+Todo projeto passa por especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar. Os projetos em andamento (D01, D02, D03) fazem a spec retroativa antes de novas mudanças. O harness com SDD deve ser reutilizável em outros projetos.
+
 ### 2026-11-19 · D-015 · Gate de entrega, retomada e perguntas no PR · fonte: delegada
 - **Gate de entrega:** um hook `PreToolUse` nega push e PR enquanto a sessão não recebeu a memória mais recente. Uma instrução no prompt pode ser ignorada; o hook garante que nenhuma entrega sai com decisão velha (tarefas 1.4 e 1.5).
 - **Proteção da fonte:** só a orquestração escreve no branch de memória (1.2).
