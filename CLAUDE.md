@@ -41,6 +41,12 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - o erro comum que ela evita.
   
   Os ids das tarefas ficam só nos ADRs e na memória, ao lado do nome, para rastreio.
+- **Códigos sempre com nome** (D-050): ao citar um código para mim, escreva junto um nome curto do que ele é. Exemplos:
+  - "D01 (recomendação)" ou "D03 (MCP do CDB)";
+  - "P00-P3 (primeiro consumidor da plataforma)";
+  - "T041 (prazo no infra.py)".
+  
+  Isso vale para disciplinas, projetos, perguntas, tarefas e decisões.
 - Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
 
 ## Retomada de sessão
@@ -82,6 +88,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - **Cada especialista tem** o modelo do nível da tarefa, só as skills dela (pré-carregadas) e nenhuma ferramenta para criar subagentes. O `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` reforça isso.
   - **Nunca edite os arquivos gerados:** mude o JSON e rode `python3 harness/sincronizar_agentes.py`. O CI confere.
 - **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
+  - Os marketplaces de terceiros (HashiCorp, Trail of Bits, promptfoo e Google) foram confirmados por mim (D-049).
+  - Marketplace novo só entra com a minha confirmação. Um teste reprova marketplace fora da lista.
 - **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
 
 ## Estrutura
