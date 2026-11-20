@@ -3,7 +3,7 @@
 
 O dono aprova o plano SDD (`plan.md`) de um projeto; depois disso a orquestração delega as tarefas
 das fases tarefas, analisar, implementar e verificar sem pedir aprovação a cada disparo. Fora disso
-(sem plano aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar), o
+(sem plano aprovado ou plano alterado nas fases tarefas a verificar, e a fase publicar; especificar, esclarecer e planejar são livres pela D-055), o
 disparo precisa da aprovação do dono para ele, registrada no briefing numa linha
 `Aprovação do dono: <palavras dele e quando>`.
 

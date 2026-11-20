@@ -29,6 +29,9 @@ EXIGE = {"esclarecer": "spec.md", "planejar": "spec.md", "tarefas": "plan.md", "
 # D-033: com o plano aprovado pelo dono, os disparos destas fases saem sem aprovação a cada um.
 # Especificar e planejar vêm antes do plano; publicar e merge são sempre do dono.
 FASES_DELEGAVEIS = ("tarefas", "analisar", "implementar", "verificar")
+# D-055: antes do plano, especificar e planejar também saem sem aprovação por disparo. O plano
+# continua precisando da aprovação do dono, que libera as fases de FASES_DELEGAVEIS.
+FASES_ANTES_DO_PLANO = ("especificar", "esclarecer", "planejar")
 CAMPOS_APROVACAO = {"data", "fonte", "sha256"}
 
 
@@ -103,10 +106,12 @@ def aprovar_plano(estado: dict, chave: str, fonte: str, data: str, raiz: Path = 
 
 
 def pode_delegar(estado: dict, chave: str, raiz: Path = RAIZ) -> tuple[bool, str]:
-    """D-033: delegação sem aprovar cada disparo, só dentro do plano que o dono aprovou."""
+    """D-033 e D-055: delegação sem aprovar cada disparo antes do plano e dentro do plano aprovado."""
     p = next((x for x in estado["projetos"] if x["chave"] == chave), None)
     if not p:
         return False, f"projeto {chave} não existe em harness/estado.json"
+    if p["fase"] in FASES_ANTES_DO_PLANO:
+        return True, ""
     aprov = p.get("plano_aprovado")
     if not aprov:
         return False, (f"o plano de {chave} não foi aprovado pelo dono. Peça a aprovação do plan.md e registre com "

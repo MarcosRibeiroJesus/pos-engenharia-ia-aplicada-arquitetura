@@ -193,7 +193,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Delegação dentro do plano aprovado** (D-033):
   - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
   - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
-  - fora disso (plano não aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
+  - os disparos das fases especificar, esclarecer e planejar também saem sem me perguntar (D-055). O plano escrito volta para eu aprovar;
+  - fora disso (plano não aprovado ou alterado depois da aprovação nas fases seguintes, fase publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
   - o briefing traz `Projeto: <chave>` e, quando eu aprovar um disparo avulso, `Aprovação do dono: <minhas palavras e quando>`. O hook `.claude/hooks/gate_delegacao.py` nega o disparo que não cumprir isso;
   - o gate `sdd-analisar`, o merge e a publicação continuam comigo.
 

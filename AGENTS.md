@@ -72,6 +72,7 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   - **Interrupção:** só pelos critérios da skill.
   - **Nunca:** push com força, push no `main`, merge, nem apply ou destroy fora do Floci.
 - **Delegação dentro do plano aprovado** (D-033): com o `plan.md` aprovado pelo dono, a orquestração delega as tarefas das fases tarefas, analisar, implementar e verificar sem aprovar cada disparo.
+  - Nas fases especificar, esclarecer e planejar, o disparo também é livre (D-055). O plano resultante vai para a aprovação do dono.
   - Antes de delegar ou de assumir o papel de um especialista, rode `python3 harness/estado.py pode-delegar <chave>`. Se der `NÃO`, peça a aprovação do dono para aquele disparo.
   - O briefing começa com `Projeto: <chave>`. Um disparo avulso aprovado pelo dono leva `Aprovação do dono: <palavras dele e quando>`.
   - A aprovação do plano só é registrada depois que o dono aprova: `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`. Plano alterado depois disso exige nova aprovação.
