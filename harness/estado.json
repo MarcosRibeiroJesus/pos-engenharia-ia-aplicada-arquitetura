@@ -136,13 +136,19 @@
         "D-029",
         "D-030",
         "D-033",
-        "D-034"
+        "D-034",
+        "D-035"
       ],
       "nota": "Primeiro projeto criado pelo caminho padrão. Plataforma compartilhada consumida pelos produtos; sobe e desce com as demonstrações.",
       "infra_real": true,
       "apply_workflow": ".github/workflows/00-plataforma-agentes-apply.yml",
       "destroy_workflow": ".github/workflows/00-plataforma-agentes-destroy.yml",
-      "teto_diario_usd": 1.2
+      "teto_diario_usd": 1.2,
+      "plano_aprovado": {
+        "data": "2026-11-19",
+        "fonte": "Marcos no chat em 2026-11-19 23:55 (BRT): \"Pode aprovar o plano\" (P00-P6, PR #24)",
+        "sha256": "ce8a58af156e202b4d88057ba59f6c215178f16dc5a363482fd33d1fe862ed45"
+      }
     }
   ]
 }
