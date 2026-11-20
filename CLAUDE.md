@@ -191,6 +191,7 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - O registro físico é `docs/uso/uso-tokens.csv`, com uma linha por sessão e modelo. Toda sessão registra o próprio uso ao terminar uma entrega, com `scripts/uso/uso.py registrar` (lê o transcript do Claude Code) ou `manual` quando só houver a medição da conversa, e roda `uso.py painel`.
 - O painel fica em `site/uso.html`, e cada página de projeto tem o widget `<!-- uso:projeto=CHAVE --><!-- /uso -->`. A chave do projeto é `NN.UU-slug` (ex.: `01.03-recomendacao`), ou `plataforma` para orquestração, esteira e site.
 - Trecho sem medição entra como `nao-medido`; nunca estime números.
+- Acompanhamento ao vivo e histórico até o fim da pós: o app `apps/painel-ia` (npm ou Docker) lê os transcripts, guarda tudo em SQLite e exporta o relatório final (ADR 0002).
 
 ## Privacidade
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
