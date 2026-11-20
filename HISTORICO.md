@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-037 · Plataforma com página e post próprios · fonte: Marcos
+O Marcos respondeu à P00-P7: a `00-plataforma-agentes` ganha página e post próprios, como os projetos das disciplinas. A recomendação era só uma seção na página da D03.
+Na mesma rodada, ele autorizou a emenda 1 do plano ("Corrigir agora"). A nova aprovação do plano continua pendente.
+
+**Aplicado em:**
+- skill `site-projeto` (página em Arquiteturas AWS, post em `plataforma/agentes/posts/aws.md`, links cruzados com os produtos);
+- `CLAUDE.md` (seção Site);
+- teste `TestPublicacaoDaPlataforma`;
+- T089 e a spec da plataforma, pela emenda 1;
+- Monday: o card P00-P7 foi fechado.
+
 ### 2026-11-19 · D-036 · Explicar decisões pelo nome da boa prática e pelo erro comum · fonte: Marcos
 O Marcos pediu que, em vez de falar os códigos dos pontos da prova, a explicação diga o nome da boa prática, o que o arquiteto decide seguindo-a e os erros comuns que as pessoas cometem.
 - **Alcance:** as explicações ao dono (conversa, PRs e relatórios dos especialistas).
