@@ -168,7 +168,7 @@ Na verificação: **VT** = Vitest do serviço; **PY** = unittest do lote; **TT**
   - post da arquitetura AWS e post comparativo em GCP (D-007), ambos "rascunho para revisão";
   - página no site com status "Em revisão".
 
-  A publicação depende do dono: [PENDENTE: P01-P4, publicação da página e dos posts].
+  A publicação depende do dono: respondido pelo dono (D-054): publicar a página do projeto e o post AWS, com o relatório de teste; o post GCP não é publicado (o design doc da GCP continua no repositório).
   - **Código:** `U/README.md`, `U/adr/`, `U/posts/aws.md`, `U/posts/gcp.md`, `U/docs/matriz-cobertura.md`, `site/projetos/01-03-recomendacao.html`, `site/posts/modulo-01-recomendacao.html`, `site/index.html`, `docs/curso/PROGRESSO.md`.
 
 ## Requisitos não funcionais (comportamento atual)
@@ -265,11 +265,11 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   Os workflows de apply e destroy DEVEM nascer de `harness/modelos/apply.yml` e `harness/modelos/destroy.yml`, preenchidos para a chave `01-recomendacao`, com os nomes `01-recomendacao-apply.yml` e `01-recomendacao-destroy.yml`. O que entra:
   - **no apply:** input `prazo_horas` (padrão e máximo 24); registro do prazo com `harness/infra.py registrar`; conferência da tag de custo `project` com `list-cost-allocation-tags`;
   - **no destroy:** ambiente `aws-lab-destroy`, restrito ao `main` e sem aprovação; input `confirm_stack`; OIDC; verificação de sobras pela tag `project=01-recomendacao`, ignorando só a chave KMS em `PendingDeletion` e o serviço ECS que não está `ACTIVE` nem `DRAINING` (regra do ADR-0006); `harness/infra.py remover` no fim;
-  - **os inputs próprios do stack:** `enable_mwaa` ([PENDENTE: P01-P2, MWAA no dia da demonstração]), `enable_serverless_inference` e `explanations_enabled`, mais o state remoto da chave atual;
+  - **os inputs próprios do stack:** `enable_mwaa` (D-052: ligado só numa janela curta da demonstração, com `prazo_horas` curto), `enable_serverless_inference` e `explanations_enabled`, mais o state remoto da chave atual;
   - **o `harness/estado.json`:** `apply_workflow` e `destroy_workflow` passam a apontar para os arquivos novos, e os `recsys-01-03-apply.yml` e `recsys-01-03-destroy.yml` saem.
   - **Aceite:** o `estado.py validar` aprova o projeto em `verificar`, e a regra estática da unidade e os testes do harness reconhecem os arquivos novos. (CI do harness, ST)
 - **RNF-102: teto diário.** Lacuna (retroativo) e **[DIVERGÊNCIA]**: hoje o stack tem Budgets mensal de US$ 10, e a D-021 trocou os tetos mensais por disciplina pelo teto de um dia. O que DEVE existir:
-  - o `teto_diario_usd` do projeto, hoje `null`, calculado no plano como o custo de 24 horas do stack na postura da demonstração. A postura depende de [PENDENTE: P01-P2, MWAA no dia da demonstração];
+  - o `teto_diario_usd` do projeto, hoje `null`, calculado no plano como o custo de 24 horas do stack na postura da demonstração. A postura depende de D-052 (MWAA ligado só numa janela curta, com `prazo_horas` curto; o teto soma 24 h do resto do stack e só a janela do MWAA);
   - o valor gravado em `harness/estado.json`, no README e num AWS Budgets com período **diário** no stack, no lugar do mensal;
   - o limite mensal da conta só no `infra/conta` (D-022), sem um segundo Budgets mensal no stack.
   - **Aceite:** TT do Budgets com `time_unit = "DAILY"` e `limit_amount` igual ao teto; o `estado.py validar` aprova a partir de `tarefas`; o gate de FinOps da esteira compara o custo de 24 horas com o teto. (TT, CI do harness, esteira)
@@ -313,7 +313,7 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   - **Aceite:** com o `buildDefaultUseCase`, um item comprado há 10 dias não aparece; com a fonte fora do ar, a resposta é 200 com `degradedMode: true`. (VT)
 - **RF-105: busca vetorial pelo contexto da sessão.** Lacuna (retroativo). Hoje a consulta usa um vetor de zeros. Com `sessionItemIds`, a consulta DEVE usar um vetor derivado dos itens da sessão, já gravados no MemoryDB (RF-012). Sem itens de sessão, a busca vetorial não roda, e os candidatos vêm só do lote, sem ligar `degradedMode`, porque não é falha. O cálculo do vetor fica no plano.
   - **Aceite:** com dois itens de sessão, o repositório recebe um vetor diferente de zero, derivado dos dois; sem sessão, o repositório não é chamado. (VT)
-- **RF-107: lote coerente com o stack.** Lacuna (retroativo): os scripts do lote usam nomes fixos que não batem com os do Terraform, e o DAG chama dois jobs do Glue que o stack não cria. O tamanho da correção depende de [PENDENTE: P01-P1, escopo do lote]. Em qualquer opção, DEVE valer o mínimo: nenhum nome fixo nos scripts (todos vêm de argumentos do job ou do DAG), e todo job chamado pelo DAG existe no stack.
+- **RF-107: lote coerente com o stack.** Lacuna (retroativo): os scripts do lote usam nomes fixos que não batem com os do Terraform, e o DAG chama dois jobs do Glue que o stack não cria. O tamanho da correção depende de D-051 (lab sintético fechado: criar os dois jobs do Glue que faltam e treinar um XGBoost pequeno sobre os dados sintéticos). Em qualquer opção, DEVE valer o mínimo: nenhum nome fixo nos scripts (todos vêm de argumentos do job ou do DAG), e todo job chamado pelo DAG existe no stack.
   - **Aceite:** um teste reprova o script com nome de recurso fixo, e um teste confere que cada `job_name` do DAG tem um `aws_glue_job` no plan. (PY, TT)
 - **RF-108: roteiro de demonstração.** Lacuna (retroativo). O projeto DEVE ter um roteiro versionado, com dados sintéticos, que rode no stack real e gere evidência:
   1. uma recomendação híbrida;
@@ -325,7 +325,7 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   - **Aceite:** o relatório da fase verificar tem os quatro passos, com o `requestId` de cada um. (DM)
 - **RF-109: re-ranker que o serviço consegue subir.** Lacuna (retroativo), com risco.
   - **Situação:** o endpoint usa a imagem do XGBoost sem artefato de modelo (`model_data_url` nulo) e com `enable_network_isolation = true` em Serverless Inference. A documentação da AWS lista o isolamento de rede entre os recursos que o Serverless Inference não suporta (fonte na "Proveniência"). O emulador não chega a subir o endpoint (ADR-0006), então nada disso foi provado.
-  - **Requisito:** a configuração do endpoint DEVE ser uma que a AWS aceita, e o endpoint DEVE ter um modelo que responda ao contrato do RF-005. O conteúdo do modelo depende de [PENDENTE: P01-P1, escopo do lote]. A troca do isolamento de rede por outra proteção é decidida no plano, com ADR.
+  - **Requisito:** a configuração do endpoint DEVE ser uma que a AWS aceita, e o endpoint DEVE ter um modelo que responda ao contrato do RF-005. O conteúdo do modelo depende de D-051 (lab sintético fechado: criar os dois jobs do Glue que faltam e treinar um XGBoost pequeno sobre os dados sintéticos). A troca do isolamento de rede por outra proteção é decidida no plano, com ADR.
   - **Aceite:** TT reprova a combinação de Serverless com isolamento de rede; na demonstração, o endpoint chega a `InService` e responde ao contrato. (TT, DM)
 
 ### Componente Claude na plataforma compartilhada (Art. VII; D-030)
@@ -337,7 +337,7 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   - **fallback:** uma intervenção do guardrail vira a categoria `guardrail` no explicador, não retentável, com o fallback do RF-007;
   - **gateway MCP:** a D01 não registra alvo no gateway, porque não tem tool de ação (E1).
 
-  Os tópicos negados do guardrail da D01 (recomendação) ficam [PENDENTE: P01-P3, tópicos negados do guardrail]. O mecanismo para aplicar o guardrail no caminho InvokeModel do `AnthropicBedrock` fica no plano (incerto, E9).
+  Os tópicos negados do guardrail da D01 (recomendação) ficam definidos pela D-053: nenhum tópico extra, porque o código já barra preço, desconto e frete; o guardrail fica com a defesa de injeção e dados sensíveis da plataforma. O mecanismo para aplicar o guardrail no caminho InvokeModel do `AnthropicBedrock` fica no plano (incerto, E9).
   - **Aceite:**
     - TT: a task role só tem `bedrock:InvokeModel` no ARN do perfil vindo do contrato;
     - VT: com uma resposta gravada de intervenção do guardrail, o explicador devolve `unavailable` com a categoria `guardrail`, sem retentar;
@@ -466,7 +466,13 @@ Todo componente de `U/` e os arquivos do PR #1 fora da unidade aparecem em pelo 
 ## Perguntas ao dono
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
-| P01-P1 | **Escopo do lote:** hoje os jobs do lote geram dados sintéticos sem aprendizado, o DAG chama dois jobs do Glue que o stack não cria e o re-ranker do SageMaker não tem modelo. Até onde o lote vai nesta disciplina? | o plano: tarefas do lote, o modelo do re-ranker (RF-107, RF-109) e parte do teto | (a) **Lab sintético fechado:** mantém os geradores sintéticos, cria os dois jobs de publicação que faltam e treina um re-ranker XGBoost pequeno com dados sintéticos, cujo artefato o endpoint usa. Mostra o fluxo inteiro, com pouco código novo e custo de minutos de Glue e de treino. (b) **Pipeline de verdade:** features e treino reais, por exemplo ALS ou duas torres, sobre um dataset sintético gerado. Mais fiel à referência, mas várias tarefas a mais e mais minutos de Glue e de SageMaker. (c) **Só o serviço:** o lote sai da demonstração; o DynamoDB e o MemoryDB são semeados por script, o endpoint do SageMaker sai e o re-ranking fica na heurística. É o mais barato, mas perde metade da arquitetura | (a): **fechar o fluxo antes de sofisticar o modelo.** O valor da arquitetura está no circuito lote → serviço → explicação funcionando de ponta a ponta. O erro comum é investir no modelo enquanto o DAG chama jobs que não existem |
-| P01-P2 | **MWAA no dia da demonstração:** o MWAA é o maior custo fixo do stack (cerca de US$ 0,49 por hora pelo ADR-0002, a reconferir), e o teto é o custo de 24 horas. Ele entra na demonstração? | o plano: a postura de custo e o `teto_diario_usd` (RNF-102) | (a) **Desligado:** o DAG é validado pelos testes, e os jobs do lote são disparados por um passo do roteiro de demonstração. O teto fica perto do custo do stack sem MWAA, e a orquestração não aparece no vídeo. (b) **Ligado só numa janela curta:** apply com `enable_mwaa = true` e `prazo_horas` curto, o suficiente para uma rodada do DAG (o ambiente leva dezenas de minutos para subir). A orquestração aparece no vídeo; o teto é calculado sobre 24 horas com MWAA, mas o custo real fica proporcional à janela. (c) **Ligado o dia inteiro:** o mais simples de operar, mas o teto passaria de metade do limite mensal da conta (US$ 20) | (a): **custo fixo só quando ele é o que se demonstra.** O padrão ensinado aqui é a recomendação híbrida, não o Airflow. O erro comum é ligar o serviço mais caro para mostrar um agendamento que um teste já prova |
-| P01-P3 | **Tópicos negados do guardrail da D01 (recomendação):** a plataforma deixa os tópicos negados para cada produto (E3 da spec da plataforma). Quais a recomendação nega? | a tarefa de registro da D01 no catálogo da plataforma (RF-110), não o plano inteiro | (a) **Nenhum:** a validação por código já barra preço, desconto, frete e números, e a base do guardrail cobre conteúdo nocivo, ataque de prompt e dados sensíveis. Custo menor, e defesa só por código no tema comercial. (b) **Promessas comerciais** (preço, desconto, frete, prazo): defesa em camadas no tema que mais preocupa, com cobrança por texto avaliado e risco de bloquear frase legítima. (c) **Outra lista sua** | (a): **um controle por risco, no lugar mais barato que o garante.** A regra comercial já é verificada por código, de forma determinística e testada. O erro comum é duplicar no guardrail uma regra que o código garante, pagar por isso e ganhar falso positivo |
-| P01-P4 | **Publicação:** a página do projeto, o post AWS e o post GCP estão como "Em revisão" ou rascunho. Depois das correções e da demonstração, publicar no site? | só a fase publicar; não bloqueia o plano | (a) **Publicar** a página, os dois posts e o relatório depois da fase verificar aprovada. (b) **Publicar só a página e o post AWS**, deixando o GCP para quando houver validação barata. (c) **Não publicar** nesta disciplina | (a): **publicar com a evidência junto.** O relatório da demonstração sustenta o que os posts dizem. O erro comum é publicar o post antes da evidência e corrigir depois em público |
+
+Nenhuma pergunta aberta.
+
+## Perguntas respondidas
+| id | resposta do dono (2026-11-20) |
+|---|---|
+| P01-P1 | D-051: lab sintético fechado |
+| P01-P2 | D-052: MWAA ligado numa janela curta |
+| P01-P3 | D-053: nenhum tópico extra |
+| P01-P4 | D-054: só a página e o post AWS |

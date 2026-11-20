@@ -22,7 +22,7 @@
         "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"
       ],
       "specs": "specs/01-recomendacao/",
-      "fase": "esclarecer",
+      "fase": "planejar",
       "retroativo": true,
       "pr": 1,
       "cloud": "gcp",
@@ -30,7 +30,17 @@
         "D-007",
         "D-008",
         "D-021",
-        "D-022"
+        "D-022",
+        "D-033",
+        "D-036",
+        "D-041",
+        "D-042",
+        "D-047",
+        "D-050",
+        "D-051",
+        "D-052",
+        "D-053",
+        "D-054"
       ],
       "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
       "infra_real": true,
