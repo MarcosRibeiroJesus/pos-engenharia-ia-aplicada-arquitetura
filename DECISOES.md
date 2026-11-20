@@ -23,6 +23,12 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Harness:** versão 0.5.0, pré-estável. O pacote npx só sai depois dos critérios de `harness/VERSAO.md` e com a aprovação do Marcos (D-027).
 - **Modelos (D-028):** agentes de código na assinatura Pro do Claude Code; na troca, Antigravity com Gemini e Copilot com OpenAI. Na AWS, só a plataforma e os agentes dos produtos, durante as demonstrações.
 - **Conta AWS única com isolamento por tag e prefixo, com ABAC** (D-029).
+- **Tags com valor validado** (D-031). A política do Infracost bloqueia o PR fora deste padrão:
+  - `project` = chave do projeto (`NN-nome-em-kebab`);
+  - `module` em kebab;
+  - `managed-by` = `terraform`.
+
+  Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
 - **Projeto novo só pelo caminho padrão:** `python3 harness/novo_projeto.py` (D-030). A plataforma compartilhada é o projeto `00-plataforma-agentes`; o produto consome gateway, política, guardrail, perfil de inferência e observabilidade da plataforma (skill `plataforma-agentes`).
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).

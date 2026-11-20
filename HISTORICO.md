@@ -6,6 +6,20 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-031 · Padrão de tags na política do Infracost · fonte: Marcos
+O Marcos adotou a recomendação de trocar a política de tags de exemplo do Infracost Cloud (`Service` e `Environment`) pelo padrão do repositório, com regras bloqueantes no PR:
+- `project`: regex `^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$`, a chave do projeto;
+- `module`: regex `^[a-z0-9]+(-[a-z0-9]+)*$`;
+- `managed-by`: lista com `terraform`.
+
+Recursos fora do padrão são corrigidos: o `infra/conta` passa a `00-conta`, e a D01 troca `recsys` por `01-recomendacao` na spec retroativa.
+**Aplicado em:**
+- constituição (Art. VI) e `CLAUDE.md` (isolamento por tag);
+- skill `terraform-tdd`;
+- `harness/modelos/tags.tftest.hcl` e template de tarefas (T001);
+- teste de consistência do regex com o caminho padrão (`test_harness.py`);
+- `infra/conta` no PR #9: tags, nome com prefixo e testes dos valores.
+
 ### 2026-11-19 · D-030 · Plataforma de agentes compartilhada e caminho padrão · fonte: delegada (o Marcos delegou a escolha dos componentes)
 - **Na plataforma** (projeto `00-plataforma-agentes`), escolhidos por caberem no modelo de uso e no limite de US$ 20:
   - gateway MCP (AgentCore Gateway) com política Cedar e Identity: um ponto de controle de tools, nega por padrão (1.4, 2.1, 2.4);
