@@ -84,7 +84,14 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
-- Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
+- **Orquestrador e subagentes** (padrão orquestrador-trabalhador da Anthropic): a orquestração coordena, grava a memória compartilhada e delega cada tarefa a um especialista (subagente). A orquestração não escreve código de projeto. Subagentes não criam outros.
+- **Sessões independentes por projeto:** cada projeto pode ter a sua sessão de implementação, em paralelo com as outras, desde que:
+  - cada sessão esteja no seu próprio worktree (`git worktree add`), no branch `modulo/NN-slug/<projeto>` ou `plataforma/<projeto>-impl`, com PR para `main`;
+  - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
+  - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
+  - o merge depende da minha aprovação.
+  - Um projeto com Terraform roda só na minha máquina (D-042); projeto sem Terraform pode rodar em sessão de nuvem, sem Bedrock.
+  - Cada sessão paralela consome o limite de uso da conta; o custo estimado de tokens é de 4 a 15 vezes uma sessão de chat (medição da própria Anthropic), então eu limito a quantidade de sessões ativas ao que eu consigo acompanhar.
 - **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
   - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
   - O `pre-push` bloqueia commit novo em branch já mergeado.
@@ -175,7 +182,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Cursos oficiais de preparação (Skilljar): Building with the Claude API, Claude Code in Action, Introduction to Model Context Protocol, Claude with Amazon Bedrock, Claude on Google Cloud, Claude 101 e AI Fluency. Cite o curso relacionado no ADR.
 - Este repositório também é prática do domínio 3: mantenha CLAUDE.md, regras por caminho, skills e o uso de Claude Code em CI coerentes com o guia.
 - Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
-- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros.
+- Ao orquestrar subagentes ou sessões: um especialista por tarefa, e uma sessão por projeto em paralelo, cada uma no seu worktree e branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros.
 - **Delegação dentro do plano aprovado** (D-033):
   - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
   - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
