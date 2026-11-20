@@ -55,6 +55,10 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
 - Projetos de IA aplicada da D02 e da D03.
+- Plataforma (`00-plataforma-agentes`), só para a demonstração real, sem bloquear o plano:
+  - P00-P3: qual produto consome a plataforma primeiro (D02 ou D03);
+  - P00-P4: como aplicar as configurações da conta (tag de custo, Transaction Search, caso de uso da Anthropic);
+  - P00-P5: quem recebe os alarmes.
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
 - Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. O #21 (actions dos modelos) também foi mergeado. Falta o PR da D-033 (delegação dentro do plano aprovado). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.
