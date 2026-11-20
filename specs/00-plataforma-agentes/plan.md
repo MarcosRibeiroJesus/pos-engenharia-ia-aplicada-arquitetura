@@ -1,6 +1,6 @@
 # Plano: Plataforma de agentes compartilhada na AWS
 
-- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** aprovado pelo dono em 2026-11-19 (D-035). A emenda 1 (2026-11-20, seção no fim) muda o plano, então a aprovação anterior caiu: a **nova aprovação está pendente** com o dono (D-033, `estado.py aprovar-plano`)
+- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** aprovado pelo dono em 2026-11-19 (D-035). Emenda 1 (2026-11-20, seção no fim) aprovada pelo dono em 2026-11-20 (D-038), com o hash registrado em `harness/estado.json` (D-033)
 - **Data:** 2026-11-19; emenda 1 em 2026-11-20 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS
 - **Decisões do dono aplicadas:** D-021, D-022, D-024, D-028, D-029, D-031, D-033, D-034 (respostas às P00-P3, P00-P4 e P00-P5, repassadas pela orquestração em 2026-11-19 às 23:27 BRT) e D-035 (aprovação da versão anterior)
 - **ADRs:** `specs/00-plataforma-agentes/adr/`. O gate SDD (`harness/estado.py checar-arquivos`, hook e `pre-commit`) bloqueia `plataforma/agentes/adr/` antes da fase implementar, então os ADRs nascem junto da spec. A tarefa T000 de implementar os move para `plataforma/agentes/adr/` (seção "Trabalho que o plano cria").
@@ -18,7 +18,7 @@
   - `permit` de tool `sensivel` para a role do agente;
   - alvo com prefixo de outro produto.
 - **Ordem de destroy pelo harness** (ADR-0007): o prazo do produto fica pelo menos 1 hora antes do da plataforma, e a plataforma espera os consumidores.
-- **Teto diário:** US$ 1,20, sobre uma estimativa de US$ 1,08 (emenda 1), com as fontes de preço abaixo. A avaliação sob demanda é 69% do valor. Manter US$ 1,20 ou baixar para US$ 1,10 é a P00-P8, pendente com o dono.
+- **Teto diário:** US$ 1,20, sobre uma estimativa de US$ 1,08 (emenda 1), com as fontes de preço abaixo. A avaliação sob demanda é 69% do valor. O dono manteve US$ 1,20 (P00-P8, D-038).
 
 ## Verificação da constituição
 | Artigo | Como o plano cumpre | Risco |
@@ -421,11 +421,11 @@ Região `us-east-1`. Preços consultados em 2026-11-19; a emenda 1 refez a conta
 | Budgets diário (sem ações) | **0,000** | [Budgets](https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/) |
 | **Total estimado** | **1,082** (emenda 1; a soma original das linhas dava 1,097, e não 1,103 como estava escrito) | |
 
-- **Teto diário: US$ 1,20, aprovado na D-035 e mantido pela emenda 1 até a resposta à P00-P8.**
+- **Teto diário: US$ 1,20, aprovado na D-035 e mantido pelo dono na emenda 1 (P00-P8, D-038).**
   - A estimativa caiu para US$ 1,082. Com US$ 1,20, a margem passa de 8% para 11%.
   - A regra original (o total arredondado para cima até a dezena de centavo seguinte) daria US$ 1,10 sobre a nova estimativa, com margem de 2%.
   - A recomendação é manter US$ 1,20: os volumes são premissas, e uma margem de 2% faria o Budgets diário avisar por ruído.
-  - Manter ou baixar é decisão de orçamento do dono (P00-P8). O `teto_diario_usd` do `harness/estado.json` continua em 1,2 até a resposta.
+  - Manter ou baixar era decisão de orçamento do dono: ele manteve 1,2 (P00-P8, D-038).
   - O valor entra no README e no Budgets diário na implementação, e só vale com a nova aprovação deste plano.
 - **Fora do teto da plataforma (vai no teto do produto):** o que o módulo cria no state do produto e as chamadas do agente do produto:
   - inferência do Claude no perfil do produto;
@@ -487,7 +487,7 @@ P00-P3, P00-P4 e P00-P5 estão respondidas (D-034) e aplicadas acima. A nova apr
 
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
-| P00-P8 | Com a emenda 1, a estimativa do dia caiu de US$ 1,10 para US$ 1,08. O teto diário fica em US$ 1,20 ou baixa para US$ 1,10? | o valor de `teto_diario_usd`, do Budgets diário e do README (T012, T072, T073 e T087); nada mais | (a) manter US$ 1,20 (margem de 11%); (b) baixar para US$ 1,10 (margem de 2%, pela regra de arredondamento original) | (a): os volumes do dia são premissas, e com 2% de margem o Budgets diário avisaria por ruído |
+| P00-P8 | ~~O teto fica em US$ 1,20 ou baixa para US$ 1,10?~~ **Respondida (D-038):** manter US$ 1,20. | — | — | — |
 
 ## Fontes (consulta em 2026-11-19)
 Além das fontes da spec (seção "Proveniência"):
@@ -516,7 +516,7 @@ Além das fontes da spec (seção "Proveniência"):
 | O sob demanda lê os spans de `aws/spans` com o Logs Insights (`StartQuery`, `GetQueryResults`) antes de chamar o `Evaluate` | [On-demand evaluation](https://docs.amazonaws.cn/bedrock-agentcore/latest/devguide/getting-started-on-demand.html) | sem data; consulta em 2026-11-20 | confirmado |
 
 ## Emenda 1 (2026-11-20)
-Autorizada pelo dono no chat em 2026-11-20 00:38 BRT ("Corrigir agora"). Ela fecha só os furos F1 a F5 do `tasks.md`. A aprovação anterior (D-035) caiu, e a nova está pendente com o dono. Cada linha diz o que mudou, a boa prática que guia a mudança, o que o arquiteto faz e o erro comum que ela evita (D-036).
+Autorizada pelo dono no chat em 2026-11-20 00:38 BRT ("Corrigir agora"). Ela fecha só os furos F1 a F5 do `tasks.md`. A aprovação anterior (D-035) caiu; a nova foi dada pelo dono em 2026-11-20 (D-038). Cada linha diz o que mudou, a boa prática que guia a mudança, o que o arquiteto faz e o erro comum que ela evita (D-036).
 
 | Furo | O que mudou | Por quê |
 |---|---|---|
