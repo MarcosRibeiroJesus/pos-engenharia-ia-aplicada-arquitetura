@@ -427,6 +427,13 @@ class TestCaminhoPadrao(unittest.TestCase):
                 with self.subTest(**kw), self.assertRaises(novo_projeto.ErroProjeto):
                     self.novo(r, **kw)
 
+    def test_regex_de_project_do_modelo_de_tags_e_o_da_chave_do_projeto(self):
+        # D-031: a política do Infracost, o modelo de teste e o caminho padrão usam o mesmo padrão.
+        modelo = (AQUI / "modelos" / "tags.tftest.hcl").read_text()
+        self.assertIn(novo_projeto.CHAVE_VALIDA.pattern, modelo)
+        for p in estado.carregar()["projetos"]:
+            self.assertRegex(p["chave"], novo_projeto.CHAVE_VALIDA)
+
     def test_nao_cria_codigo_na_pasta_do_projeto(self):
         with tempfile.TemporaryDirectory() as t:
             r = self.raiz(t)
