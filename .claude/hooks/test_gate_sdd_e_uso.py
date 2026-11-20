@@ -50,6 +50,8 @@ def test_avancar_exige_artefatos(tmp_path):
     pasta.mkdir(parents=True)
     for arq in ("spec.md", "plan.md", "tasks.md", "analise.md"):
         (pasta / arq).write_text("x")
+    assert any("teto_diario_usd" in x for x in est.problemas(e, tmp_path))  # D-021: teto calculado no plano
+    p["teto_diario_usd"] = 1.5
     assert [x for x in est.problemas(e, tmp_path) if "03-mcp" in x] == []
 
 

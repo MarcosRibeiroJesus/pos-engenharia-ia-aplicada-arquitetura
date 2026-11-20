@@ -1,0 +1,66 @@
+name: "TROCAR-CHAVE · apply (ambiente protegido)"
+
+# Modelo (harness/modelos). Apply só por disparo manual, em ambiente protegido, com prazo de vida (D-022).
+on:
+  workflow_dispatch:
+    inputs:
+      prazo_horas:
+        description: "Horas até o destroy automático (padrão e máximo 24)"
+        type: number
+        default: 24
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: TROCAR-CHAVE-state   # apply e destroy nunca rodam juntos
+  cancel-in-progress: false
+
+env:
+  CHAVE: TROCAR-CHAVE                 # chave em harness/estado.json
+  STACK_NAME: TROCAR-STACK            # o nome digitado para confirmar o destroy
+  TF_DIR: TROCAR/infra/terraform
+  STATE_KEY: TROCAR/lab.tfstate
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: aws-lab
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" -backend-config="key=$STATE_KEY" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+      - name: Apply
+        run: terraform apply -input=false -auto-approve -lock-timeout=120s
+
+  prazo:
+    # Job separado: só ele escreve no repositório, e só no branch infra-no-ar.
+    needs: apply
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Registrar o prazo de vida
+        env:
+          HORAS: ${{ inputs.prazo_horas }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 harness/infra.py registrar "$CHAVE" --stack "$STACK_NAME" --horas "$HORAS" --run "$RUN"

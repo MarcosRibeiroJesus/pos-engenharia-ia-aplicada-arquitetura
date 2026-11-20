@@ -1,0 +1,68 @@
+name: Prazo da infraestrutura de demonstração
+
+# D-022: a infraestrutura de demonstração tem prazo de vida registrado pelo apply
+# (harness/infra.py, branch infra-no-ar). A cada hora, este workflow:
+# - avisa numa issue uma hora antes do prazo;
+# - quando o prazo vence, dispara o workflow de destroy do projeto (o mesmo da execução manual, com
+#   confirm_stack e verificação de sobras). Um evento workflow_dispatch disparado pelo GITHUB_TOKEN
+#   inicia o workflow de destroy, apesar de outros eventos do GITHUB_TOKEN não iniciarem workflows.
+# Para adiar: python3 harness/infra.py estender <projeto> --horas N
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # só o branch infra-no-ar (registro de aviso e disparo)
+  actions: write    # disparar o workflow de destroy do projeto
+  issues: write     # aviso antes do destroy
+
+concurrency:
+  group: expirar-infra
+  cancel-in-progress: false
+
+jobs:
+  prazo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Identidade do git para o registro
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Ler prazos
+        id: prazos
+        run: |
+          python3 harness/infra.py status
+          python3 harness/infra.py vencidos --aviso-min 60 > vencidos.json
+          cat vencidos.json
+      - name: Avisar uma hora antes
+        run: |
+          python3 - <<'PY' > avisos.tsv
+          import json
+          for i in json.load(open("vencidos.json"))["avisar"]:
+              print(f"{i['projeto']}\t{i['stack']}\t{i['expira_em']}")
+          PY
+          while IFS=$'\t' read -r projeto stack expira; do
+            [ -z "$projeto" ] && continue
+            gh issue create --title "Destroy automático de $projeto em até 1 hora" --body "O stack \`$stack\` expira em $expira (UTC). O destroy será disparado sozinho nesse horário, com a verificação de sobras.
+
+          Para adiar: \`python3 harness/infra.py estender $projeto --horas 2\` (prazo total máximo de 24 h desde o apply)."
+            python3 harness/infra.py marcar-avisado "$projeto"
+          done < avisos.tsv
+      - name: Disparar o destroy dos vencidos
+        run: |
+          python3 - <<'PY' > destruir.tsv
+          import json
+          for i in json.load(open("vencidos.json"))["destruir"]:
+              print(f"{i['projeto']}\t{i['stack']}\t{i['destroy_workflow']}")
+          PY
+          while IFS=$'\t' read -r projeto stack workflow; do
+            [ -z "$projeto" ] && continue
+            echo "Prazo vencido: $projeto ($stack). Disparando $workflow."
+            gh workflow run "$(basename "$workflow")" --ref "${{ github.event.repository.default_branch }}" -f confirm_stack="$stack"
+            python3 harness/infra.py marcar-disparado "$projeto"
+          done < destruir.tsv

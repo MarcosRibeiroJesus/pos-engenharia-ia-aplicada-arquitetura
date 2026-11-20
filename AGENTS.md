@@ -40,7 +40,8 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - **Para saber quem assume e com qual modelo:**
   `python3 harness/agente.py proximo --tarefa <arquitetura|codigo|seguranca|analise-sdd|especificacao|pesquisa|post|teste|mecanica> --projeto <chave>`
   Ele imprime o agente, o modelo de qualidade equivalente para o nível da tarefa, como iniciar e o prompt de passagem.
-- **Equivalência de modelos** (`harness/agentes.json`): por nível (máximo, equilibrado, rápido) e por família. Prefira modelos Claude também no Antigravity e no Copilot, para as skills se comportarem igual; Gemini e GPT são reserva.
+- **Equivalência de modelos** (`harness/agentes.json`, D-028): por nível (máximo, equilibrado, rápido) e por família. O principal é o Claude Code, com a assinatura Pro do dono; na troca, o Antigravity usa Gemini e o Copilot usa modelos da OpenAI.
+- **Escreva skills e prompts sem depender de recurso exclusivo do Claude,** para funcionarem igual nas três famílias.
 - O agente que assume começa pelo ritual da seção 1. Nada do agente anterior é necessário além do que está commitado.
 
 ## 6. Modelos por tipo de trabalho
@@ -48,3 +49,19 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - **Equilibrado:** pesquisa, posts, testes a partir de regras escritas e site.
 - **Rápido:** tarefas mecânicas.
 - Revisão independente roda em outra instância (ou outro agente), nunca na que escreveu.
+
+## 7. Infraestrutura real: subir, demonstrar, destruir
+- O uso é demonstração de um dia. O teto do projeto é `teto_diario_usd` no `harness/estado.json`, e o limite mensal da conta é US$ 20.
+- Todo projeto com `infra_real: true` tem workflow de apply com `prazo_horas` e workflow de destroy com `confirm_stack`. O ponto de partida está em `harness/modelos/`.
+- `python3 harness/infra.py status` mostra o que está no ar e quando expira.
+- `python3 harness/infra.py estender <chave> --horas N` adia o destroy automático, sem passar de 24 horas desde o apply. O destroy roda sem aprovação no ambiente `aws-lab-destroy`.
+- Nunca rode apply numa conta real por conta própria: o apply é disparado pelo dono, no ambiente protegido.
+
+## 8. Especialistas por tarefa fim
+- Cada tipo de tarefa tem um especialista em `harness/especialistas.json`; o catálogo legível está em `harness/AGENTES.md`.
+  - **Claude Code:** subagentes em `.claude/agents/`.
+  - **Copilot:** agentes customizados em `.github/agents/`.
+  - **Antigravity:** assuma o papel do arquivo do especialista e use as skills listadas em `.agents/skills/`.
+- `python3 harness/agente.py proximo --tarefa <tipo>` diz o agente de código, o modelo e o especialista.
+- O especialista faz uma tarefa e devolve o relatório da skill `regras-do-especialista`. Ele não cria subagentes.
+- **Decisão do dono vira regra ou skill no mesmo turno** (D-025). Use a skill `decisao-do-dono`.

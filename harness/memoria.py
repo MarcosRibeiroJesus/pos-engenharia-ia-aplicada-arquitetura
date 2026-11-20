@@ -3,12 +3,14 @@
 
   ler        mostra DECISOES.md e registra, neste clone, que a versão atual foi lida
   verificar  exit 1 se a memória mudou desde a última leitura (usado no pre-push)
+  auditar    exit 1 se uma decisão do dono (a partir da D-021) não diz onde foi aplicada (D-025)
 
 No Claude Code os hooks fazem isso sozinhos; nos outros agentes o AGENTS.md manda rodar `ler`
 no início, e o pre-push do git (.githooks) bloqueia o envio se houver decisão nova não lida.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -23,6 +25,19 @@ def marca(raiz: Path) -> Path:
     return Path(ramo.git(raiz, "rev-parse", "--absolute-git-dir").strip()) / "harness-memoria-lida"
 
 
+PRIMEIRA_AUDITADA = 21  # D-025 vale para as decisões do dono a partir da D-021
+
+
+def sem_aplicacao(historico: str) -> list[str]:
+    """Decisões do dono (fonte: Marcos) sem a linha **Aplicado em:** (D-025)."""
+    faltam = []
+    for bloco in re.split(r"^(?=### )", historico, flags=re.M):
+        cab = re.match(r"### .*?· (D-(\d+)) · .*fonte: Marcos", bloco)
+        if cab and int(cab.group(2)) >= PRIMEIRA_AUDITADA and "**Aplicado em:**" not in bloco:
+            faltam.append(cab.group(1))
+    return faltam
+
+
 def main(argv: list[str], raiz: Path = RAIZ) -> int:
     cmd = argv[0] if argv else "ler"
     sha = ramo.buscar(raiz, RAMO)
@@ -33,6 +48,12 @@ def main(argv: list[str], raiz: Path = RAIZ) -> int:
         print(ramo.git(raiz, "show", f"{sha}:DECISOES.md"))
         marca(raiz).write_text(sha)
         return 0
+    if cmd == "auditar":
+        faltam = sem_aplicacao(ramo.git(raiz, "show", f"{sha}:HISTORICO.md"))
+        for d in faltam:
+            print(f"{d}: decisão do dono sem '**Aplicado em:**' (regra ou skill que a aplica)")
+        print("ok" if not faltam else f"{len(faltam)} decisão(ões) sem aplicação registrada")
+        return 1 if faltam else 0
     if cmd == "verificar":
         try:
             lido = marca(raiz).read_text().strip()

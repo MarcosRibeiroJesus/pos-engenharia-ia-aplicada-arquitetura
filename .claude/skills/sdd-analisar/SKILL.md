@@ -17,6 +17,7 @@ O subagente devolve `specs/<chave>/analise.md`, com estes critérios explícitos
 | Pendências | um `[PENDENTE]` bloqueia uma tarefa que vai ser implementada agora |
 | Consistência | spec, plano e tarefas se contradizem (nomes, serviços, números) |
 | Testabilidade | uma tarefa não começa por teste |
+| Operação e custo | um projeto com infraestrutura real não tem tarefa de workflow de destroy, ou não tem teto diário calculado no plano |
 
 O arquivo termina com **APROVADO** ou **REPROVADO** e a lista de achados (severidade, local, correção).
 

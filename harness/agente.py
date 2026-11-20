@@ -60,9 +60,26 @@ def escolher(cfg: dict, disp: dict, tarefa: str, momento: datetime) -> tuple[str
     return None
 
 
+def especialista(tarefa: str, catalogo: dict | None = None) -> str | None:
+    """Especialista de harness/especialistas.json responsável pela tarefa fim."""
+    if catalogo is None:
+        catalogo = json.loads((RAIZ / "harness" / "especialistas.json").read_text(encoding="utf-8"))
+    return next((n for n, e in catalogo["especialistas"].items() if tarefa in e["tarefas"]), None)
+
+
+def instrucao_do_papel(agente: str, nome: str) -> str:
+    if agente == "claude-code":
+        return f"Delegue ao subagente `{nome}` (.claude/agents/{nome}.md) ou assuma esse papel."
+    if agente == "copilot":
+        return f"Use o agente customizado `{nome}` (.github/agents/{nome}.agent.md)."
+    return f"Assuma o papel descrito em .claude/agents/{nome}.md e siga as skills listadas nele (.agents/skills/)."
+
+
 def prompt_de_passagem(agente: str, tarefa: str, projeto: str | None) -> str:
     alvo = f"o projeto `{projeto}`" if projeto else "o projeto indicado em harness/estado.json pelo branch atual"
-    return (f"Você é o agente de código deste repositório. Leia AGENTS.md e siga-o à risca. "
+    nome = especialista(tarefa)
+    papel = (instrucao_do_papel(agente, nome) + " ") if nome else ""
+    return (f"Você é o agente de código deste repositório. Leia AGENTS.md e siga-o à risca. {papel}"
             f"Antes de qualquer coisa rode `bash harness/init.sh` e `python3 harness/memoria.py ler`. "
             f"Trabalhe em {alvo}: continue da fase SDD e da próxima tarefa mostradas pelo init.sh, "
             f"uma tarefa por vez, com teste antes do código. Tipo de trabalho: {tarefa}. "
@@ -118,6 +135,9 @@ def main(argv: list[str]) -> int:
     agente, nivel, modelo = escolha
     info = cfg["agentes"][agente]
     print(f"Agente: {info['nome']} ({agente})\nModelo: {modelo} [nível {nivel}]\nComo iniciar: {info['como_iniciar']}")
+    nome = especialista(a.tarefa)
+    if nome:
+        print(f"Especialista: {nome} · {instrucao_do_papel(agente, nome)}")
     if info.get("assincrono"):
         print(f"Assíncrono: {info['assincrono']}")
     print("\nPrompt de passagem:\n" + prompt_de_passagem(agente, a.tarefa, a.projeto))
