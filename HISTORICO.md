@@ -6,6 +6,20 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-038 · Emenda 1 do plano da plataforma aprovada; teto mantido · fonte: Marcos
+O Marcos aprovou o plano com a emenda 1, que fecha as lacunas F1 a F5:
+- o teste de fumaça só do gateway;
+- o ensaio de um dia só da plataforma;
+- valores sintéticos do motor de política no Floci;
+- a role e o workflow de evidências.
+
+Ele também manteve o teto diário em US$ 1,20 (P00-P8), sobre uma estimativa de US$ 1,08.
+
+**Aplicado em:**
+- `harness/estado.json`: `plano_aprovado` com o novo hash, `teto_diario_usd` igual a 1.2 e as decisões D-036 a D-038 no projeto;
+- `plan.md`: status no cabeçalho e P00-P8 respondida, a única edição depois da aprovação, registrada na fonte;
+- análise independente (`sdd-analisar`) disparada em seguida.
+
 ### 2026-11-20 · D-037 · Plataforma com página e post próprios · fonte: Marcos
 O Marcos respondeu à P00-P7: a `00-plataforma-agentes` ganha página e post próprios, como os projetos das disciplinas. A recomendação era só uma seção na página da D03.
 Na mesma rodada, ele autorizou a emenda 1 do plano ("Corrigir agora"). A nova aprovação do plano continua pendente.
