@@ -1,4 +1,4 @@
-// Interface do painel. Todo texto vindo dos dados entra por textContent (nunca innerHTML).
+// Interface do painel. Cada texto vindo dos dados entra por textContent (nunca innerHTML).
 'use strict';
 
 const $ = (id) => document.getElementById(id);
