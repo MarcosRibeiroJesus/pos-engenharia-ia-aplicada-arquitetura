@@ -29,6 +29,12 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Plataforma: consumidor, conta e alarmes** (D-034).
+  - O primeiro consumidor da `00-plataforma-agentes` é a D03.
+  - A tag `project` como tag de alocação de custo e o Transaction Search vão por Terraform no `infra/conta`, aplicado pelo Marcos. A tag precisa estar ativa pelo menos 48 h antes da demonstração.
+  - O caso de uso da Anthropic é enviado à mão por ele, só se o modelo for anterior ao Opus 4.7.
+  - Os alarmes da plataforma vão para os e-mails de `emails_alerta` do `infra/conta`.
+  - Todo apply confere a tag e o Transaction Search, só com aviso.
 - **Delegação dentro do plano aprovado** (D-033). Com o `plan.md` aprovado pelo Marcos e registrado (`estado.py aprovar-plano`), os disparos de especialistas nas fases tarefas, analisar, implementar e verificar saem sem aprovação a cada um. Fora disso, cada disparo pede o ok dele (`Aprovação do dono:` no briefing). Plano alterado exige nova aprovação. O gate `sdd-analisar`, o merge e a publicação continuam com ele.
 - **Branch já mergeado não recebe commit novo** (D-032). Mudança depois de PR pronto vai em PR novo a partir do `main`; o `pre-push` bloqueia.
 - **Projeto novo só pelo caminho padrão:** `python3 harness/novo_projeto.py` (D-030). A plataforma compartilhada é o projeto `00-plataforma-agentes`; o produto consome gateway, política, guardrail, perfil de inferência e observabilidade da plataforma (skill `plataforma-agentes`).
@@ -55,10 +61,6 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
 - Projetos de IA aplicada da D02 e da D03.
-- Plataforma (`00-plataforma-agentes`), só para a demonstração real, sem bloquear o plano:
-  - P00-P3: qual produto consome a plataforma primeiro (D02 ou D03);
-  - P00-P4: como aplicar as configurações da conta (tag de custo, Transaction Search, caso de uso da Anthropic);
-  - P00-P5: quem recebe os alarmes.
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
 - Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. O #21 (actions dos modelos) também foi mergeado. Falta o PR da D-033 (delegação dentro do plano aprovado). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.

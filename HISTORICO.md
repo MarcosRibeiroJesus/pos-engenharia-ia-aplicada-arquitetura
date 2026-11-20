@@ -6,6 +6,21 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-034 · Plataforma: primeiro consumidor, configurações da conta e alarmes · fonte: Marcos
+O Marcos respondeu às P00-P3, P00-P4 e P00-P5 com as recomendações ("responda tudo com o recomendado").
+- **P00-P3:** o primeiro consumidor é a D03 (MCP de regras do CDB). Ela exercita o gateway e a política Cedar de ponta a ponta (2.1, 2.4, 1.4). O risco é a versão de MCP aceita pelo gateway diante da lane de compatibilidade da D03.
+- **P00-P4:** caminho misto.
+  - A tag `project` como tag de alocação de custo e o Transaction Search do CloudWatch vão por Terraform no `infra/conta`, aplicado por ele. A tag fica ativa pelo menos 48 h antes da demonstração.
+  - O caso de uso da Anthropic vai à mão, por ele, porque é um termo aceito em seu nome, e só se o modelo for anterior ao Claude Opus 4.7.
+- **P00-P5:** os alarmes da plataforma vão para os mesmos e-mails de `emails_alerta` do `infra/conta`, sem variável nova.
+
+**Aplicado em:**
+- gate em `harness/estado.py` (`checar_apply` exige a conferência da tag de custo em todo apply) e o passo "Pré-requisitos da conta" em `harness/modelos/apply.yml` e no apply da plataforma, que só avisa;
+- skills `ciclo-demonstracao` (o que fazer antes da primeira demonstração com Claude) e `plataforma-agentes` (primeiro consumidor e alarmes);
+- testes em `harness/test_harness.py` (`TestPreRequisitosDaConta`);
+- spec e plano da `00-plataforma-agentes`, pelo arquiteto-aws, no branch `plataforma/00-plataforma-agentes-plano`;
+- Monday: P00-P3 a P00-P5 fechados e um card para o envio manual do caso de uso.
+
 ### 2026-11-19 · D-033 · Delegação aos especialistas dentro do plano aprovado · fonte: Marcos
 O Marcos respondeu a P00-P1: dentro de um plano SDD aprovado por ele, os especialistas podem ser disparados sem aprovar cada disparo.
 - **Alcance:** vale para as fases tarefas, analisar, implementar e verificar de um projeto cujo `plan.md` ele aprovou. Ficam de fora:
