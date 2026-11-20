@@ -31,7 +31,13 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
 
 ## Boas práticas da certificação (decisões delegadas)
-- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Explique sempre o porquê, com os ids das tarefas, e registre a decisão na memória compartilhada (fonte: "delegada").
+- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Registre a decisão na memória compartilhada (fonte: "delegada").
+- **Como explicar uma decisão para mim** (D-036): em vez dos códigos da prova, diga
+  - o nome da boa prática;
+  - em uma ou duas frases, o que um arquiteto faz seguindo essa prática;
+  - o erro comum que ela evita.
+  
+  Os ids das tarefas ficam só nos ADRs e na memória, ao lado do nome, para rastreio.
 - Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
 
 ## Retomada de sessão

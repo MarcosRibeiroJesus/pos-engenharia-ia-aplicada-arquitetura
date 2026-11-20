@@ -547,6 +547,17 @@ class TestPreRequisitosDaConta(unittest.TestCase):
             self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
 
+class TestComoExplicarDecisoes(unittest.TestCase):
+    """D-036: explicação ao dono pelo nome da boa prática e o erro comum, não só pelos códigos da prova."""
+
+    def test_regra_nos_manuais_e_no_contrato_do_especialista(self):
+        raiz = AQUI.parent
+        for arq in ("CLAUDE.md", "AGENTS.md", ".claude/skills/regras-do-especialista/SKILL.md"):
+            texto = (raiz / arq).read_text(encoding="utf-8")
+            self.assertIn("D-036", texto, arq)
+            self.assertIn("erro comum", texto, arq)
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])
