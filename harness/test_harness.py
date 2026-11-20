@@ -547,6 +547,16 @@ class TestPreRequisitosDaConta(unittest.TestCase):
             self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
 
+class TestPublicacaoDaPlataforma(unittest.TestCase):
+    """D-037: a plataforma de agentes tem página e post próprios no site."""
+
+    def test_skill_do_site_e_claude_md_trazem_a_regra(self):
+        for arq in (".claude/skills/site-projeto/SKILL.md", "CLAUDE.md"):
+            texto = (AQUI.parent / arq).read_text(encoding="utf-8")
+            self.assertIn("D-037", texto, arq)
+            self.assertIn("00-plataforma-agentes", texto, arq)
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])

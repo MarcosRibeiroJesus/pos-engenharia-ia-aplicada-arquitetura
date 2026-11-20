@@ -134,7 +134,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas. A plataforma de agentes (`00-plataforma-agentes`) tem página própria em Arquiteturas AWS e post próprio (D-037).
 - O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
 - O site não explica como o conteúdo é produzido (curso, módulos, unidades, aulas, a estratégia de dois projetos) nem traz detalhes do curso ou do meu progresso. Ele apresenta só os projetos, as arquiteturas e os posts.
