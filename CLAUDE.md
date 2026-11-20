@@ -39,7 +39,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
 
 ## Perguntas ao dono
-- Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
+- **Eu respondo só no chat** (D-041):
+  - toda pergunta para mim é feita na conversa, em múltipla escolha (`AskUserQuestion`);
+  - o enunciado explica o porquê pelo nome da boa prática, ou seja, como o exame trata o assunto, e o erro comum que ela evita (D-036);
+  - cada opção diz o seu tradeoff.
+  
+  O hook `.claude/hooks/gate_pergunta.py` nega a pergunta fora desse formato.
+- **A seção `## Perguntas ao dono` de PRs e specs é só registro, não é onde eu respondo.**
+  - Quem escreve nela: as sessões sem mim (nuvem, Antigravity, Copilot), com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`).
+  - A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py`, leva ao Monday e me pergunta no chat.
+  - Respondida, a linha vira "Respondida (D-xxx)" no PR.
 
 ## Harness e SDD (spec-driven development)
 @AGENTS.md

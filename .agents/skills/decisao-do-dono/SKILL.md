@@ -7,6 +7,15 @@ description: Registrar uma decisão que só o Marcos pode tomar e aplicá-la com
 
 Quando o Marcos decide algo que só ele pode decidir (escopo, produto, orçamento, cloud, IA aplicada, publicação, merge, regra do projeto), a decisão não fica só na conversa.
 
+## Como perguntar (D-041)
+- O dono responde só no chat: use o `AskUserQuestion`, com múltipla escolha.
+- No enunciado:
+  - o contexto em uma frase;
+  - `Boa prática:` com o nome da prática, o que o arquiteto faz e o erro comum que ela evita (D-036).
+- Em cada opção, o tradeoff.
+- O hook `gate_pergunta.py` nega a pergunta fora desse formato.
+- A seção `## Perguntas ao dono` do PR é só registro. Quando o dono responder, marque a linha como "Respondida (D-xxx)".
+
 ## No mesmo turno
 1. **Memória compartilhada:** entrada `D-xxx · fonte: Marcos` no `HISTORICO.md` e a regra ativa no `DECISOES.md`. Saia das pendências o que foi resolvido.
 2. **Aplicação com relação direta.** Escolha o lugar mais forte que couber, nesta ordem:

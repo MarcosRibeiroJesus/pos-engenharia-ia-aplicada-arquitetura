@@ -547,6 +547,38 @@ class TestPreRequisitosDaConta(unittest.TestCase):
             self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
 
+sys.path.insert(0, str(AQUI.parent / ".claude" / "hooks"))
+import gate_pergunta  # noqa: E402
+
+
+class TestPerguntaAoDono(unittest.TestCase):
+    """D-041: pergunta só no chat, com a boa prática no enunciado e o tradeoff de cada opção."""
+
+    def _evento(self, enunciado: str, descricoes: tuple[str, str]) -> dict:
+        return {"tool_input": {"questions": [{"header": "X", "question": enunciado, "options": [
+            {"label": "A", "description": descricoes[0]}, {"label": "B", "description": descricoes[1]}]}]}}
+
+    def test_sem_boa_pratica_nega(self):
+        erros = gate_pergunta.problemas(self._evento("Qual opção?", ("ganha x", "perde y")))
+        self.assertTrue(any("boa prática" in e for e in erros))
+
+    def test_opcao_sem_tradeoff_nega(self):
+        erros = gate_pergunta.problemas(self._evento("Contexto. Boa prática: gate programático.", ("ganha x", " ")))
+        self.assertTrue(any("tradeoff" in e and "B" in e for e in erros))
+
+    def test_formato_completo_passa(self):
+        self.assertEqual(gate_pergunta.problemas(self._evento("Contexto. Boa prática: gate programático; "
+                                                               "erro comum: instrução no prompt.",
+                                                               ("ganha x", "perde y"))), [])
+
+    def test_hook_registrado_e_regra_nos_manuais(self):
+        cfg = json.loads((AQUI.parent / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        self.assertTrue(any("gate_pergunta.py" in h["command"] and m["matcher"] == "AskUserQuestion"
+                            for m in cfg["hooks"]["PreToolUse"] for h in m["hooks"]))
+        for arq in ("CLAUDE.md", "AGENTS.md", ".claude/skills/decisao-do-dono/SKILL.md"):
+            self.assertIn("D-041", (AQUI.parent / arq).read_text(encoding="utf-8"), arq)
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])
