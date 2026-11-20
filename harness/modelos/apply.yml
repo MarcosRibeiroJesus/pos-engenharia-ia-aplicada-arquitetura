@@ -45,6 +45,18 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - name: Pré-requisitos da conta (D-034)
+        # Só avisa: a tag de custo e o Transaction Search são do infra/conta, aplicado pelo dono.
+        run: |
+          ativa=$(aws ce list-cost-allocation-tags --tag-keys project --status Active \
+            --query 'length(CostAllocationTags)' --output text 2>/dev/null || echo "?")
+          if [ "$ativa" != "1" ]; then
+            echo "::warning::A tag project não está ativa como tag de alocação de custo (ou não foi possível ler). O custo por projeto não aparece no Cost Explorer. Aplique o infra/conta pelo menos 48 h antes da demonstração."
+          fi
+          destino=$(aws xray get-trace-segment-destination --query Destination --output text 2>/dev/null || echo "?")
+          if [ "$destino" != "CloudWatchLogs" ]; then
+            echo "::warning::O Transaction Search do CloudWatch não está ligado (ou não foi possível ler). Os traces dos agentes não aparecem. Aplique o infra/conta."
+          fi
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_wrapper: false

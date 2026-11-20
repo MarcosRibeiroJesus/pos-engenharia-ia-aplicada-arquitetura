@@ -23,6 +23,13 @@ description: Ciclo de vida da infraestrutura real de demonstração (D-021, D-02
   - `harness/infra.py remover` no fim.
 - Os caminhos ficam em `apply_workflow` e `destroy_workflow` no `harness/estado.json`. O `estado.py validar` confere os dois a partir da fase `verificar`.
 
+## Antes da primeira demonstração com Claude (D-034)
+- **Configurações da conta, pelo `infra/conta`, aplicado pelo dono:**
+  - a tag `project` ativa como tag de alocação de custo, pelo menos 48 horas antes, para o custo por projeto aparecer;
+  - o Transaction Search do CloudWatch ligado, para os traces dos agentes.
+- **Caso de uso da Anthropic no Bedrock:** o dono envia à mão no console, porque é um termo aceito em nome dele, e só quando o modelo do produto for anterior ao Claude Opus 4.7. A orquestração lembra no Monday; nunca envia.
+- O apply confere a tag e o Transaction Search e só avisa se faltarem (`estado.py validar` exige a conferência em todo apply).
+
 ## Operação
 - `python3 harness/infra.py status` mostra o que está no ar.
 - `python3 harness/infra.py estender <chave> --horas N` adia, sem passar de 24 horas desde o apply.

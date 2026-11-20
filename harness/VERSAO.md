@@ -11,7 +11,7 @@
 | 4 | Ciclo de demonstração exercitado | apply → aviso → destroy automático → verificação sem sobras, no Floci e numa conta real | pendente |
 | 5 | Caminho padrão exercitado | um projeto novo criado por `harness/novo_projeto.py` chegando a `implementar` | em andamento (`00-plataforma-agentes`) |
 | 6 | Núcleo separado da pós | lista dos arquivos do núcleo sem nenhuma referência à pós; o resto é configuração do projeto | pendente |
-| 7 | Testes | todo comando dos scripts do harness com teste; estado compartilhado testado em repositório temporário | em andamento (73 testes) |
+| 7 | Testes | todo comando dos scripts do harness com teste; estado compartilhado testado em repositório temporário | em andamento (76 testes) |
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico
