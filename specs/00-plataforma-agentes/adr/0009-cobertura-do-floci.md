@@ -1,7 +1,7 @@
 # ADR 0009 · Cobertura do Floci e lacunas
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
-- **Data:** 2026-11-19
+- **Status:** proposto (aprovação junto com o plano, D-033); emenda 1 com nova aprovação pendente
+- **Data:** 2026-11-19; emenda 1 em 2026-11-20
 - **Requisitos:** RNF-007, Art. III; CLAUDE.md, seção "TDD e regras de implementação"
 
 ## Contexto
@@ -26,6 +26,13 @@ A integração roda no Floci (`floci/floci:2.5.0`, D-013) e marca uma lacuna só
   - um produto sintético usa só a parte do `registro-produto` que o Floci emula: alvos, roles e o parâmetro do produto, por variável do próprio módulo que separa a parte não emulada (guardrail, perfil e políticas Cedar);
   - o produto sintético lê o contrato do SSM do Floci;
   - o módulo `gateway` recebe o ARN do motor de política como entrada de composição. O root real sempre o passa, e o TT-P01 afirma `policy_engine_configuration` presente e em `ENFORCE`; o root do Floci compõe sem o motor.
+- **Campos do motor no root do Floci (emenda 1 do plano, 2026-11-20):**
+  - os módulos `observabilidade` e `contrato` também recebem o id e o ARN do motor como entradas de composição obrigatórias;
+  - no root real, os valores vêm do módulo `politica`, e o TT-P01 confere;
+  - no root do Floci, vêm de valores sintéticos fixos declarados no próprio root de teste, no formato do mock do TT-P01;
+  - o `v1.schema.json` continua exigindo `motor_politica_id` e `motor_politica_arn`;
+  - os dois alarmes do motor nascem com a dimensão sintética, e o FL-01 afirma só a configuração deles;
+  - o relatório marca os dois campos como sintéticos, com o link desta tabela.
 - **Asserts no Floci:**
   - FL-01: alarmes;
   - FL-02: alvo registrado;
@@ -41,6 +48,7 @@ A integração roda no Floci (`floci/floci:2.5.0`, D-013) e marca uma lacuna só
 
 ## Alternativas rejeitadas
 - **Variável `floci = true` que desliga recursos:** mudaria o código para agradar o emulador (proibido pelo CLAUDE.md).
+- **Campos do motor opcionais no schema** (emenda 1): enfraqueceria o contrato real que os produtos consomem só para o root do Floci passar, e a lacuna ficaria escondida.
 - **LocalStack ou outro emulador para as lacunas:** a cobertura do AgentCore Policy e do Guardrails é a mesma incerteza; troca de ferramenta sem evidência de ganho.
 - **Pular a integração:** contra o Art. III.
 

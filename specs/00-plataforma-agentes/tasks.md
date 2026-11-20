@@ -1,8 +1,8 @@
 # Tarefas: Plataforma de agentes compartilhada na AWS
 
-- **Projeto:** `00-plataforma-agentes` · **Plano:** `plan.md`, aprovado pelo dono em 2026-11-19 (D-035, hash registrado em `harness/estado.json`, campo `plano_aprovado`)
+- **Projeto:** `00-plataforma-agentes` · **Plano:** `plan.md`, aprovado pelo dono em 2026-11-19 (D-035, hash registrado em `harness/estado.json`, campo `plano_aprovado`); a emenda 1 (2026-11-20) mudou o plano, e a **nova aprovação está pendente** com o dono
 - **Data:** 2026-11-20 · **Autor:** arquiteto-aws (Claude Opus 5.5) · **Matriz requisito → tarefa → teste:** `matriz.md`
-- **Decisões aplicadas:** D-006, D-013, D-021, D-022, D-024, D-028, D-029, D-031, D-032, D-033, D-034 e D-035
+- **Decisões aplicadas:** D-006, D-013, D-021, D-022, D-024, D-028, D-029, D-031, D-032, D-033, D-034, D-035, D-036 e D-037
 
 Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - `[P]` marca tarefas que podem rodar em paralelo, depois das dependências delas.
@@ -11,7 +11,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - Entre colchetes, depois do id, fica o especialista dono (`harness/especialistas.json`). `[DONO]` é tarefa do Marcos: nenhum agente a executa.
 - **Ids de teste:** TT = `terraform test` com mock provider; TS = schema do contrato; RG = respostas gravadas; TH = harness; FL = Floci; DM = demonstração real; ES = esteira `seguranca.yml`.
 - **Regra de teste vermelho para verificadores:** quando o teste é uma regra transversal (por exemplo, "nenhuma ação `*` em recurso `*`"), o vermelho é uma fixture que viola a regra e precisa reprovar. Uma regra que passa sem nada para checar não conta como teste.
-- **Furos do plano:** onde uma tarefa toca um furo apontado na fase tarefas (F1 a F5, no fim deste arquivo), a parte afetada fica marcada `[BLOQUEADO: Fn]`. O resto da tarefa segue.
+- **Furos do plano:** os furos F1 a F5 apontados na fase tarefas (no fim deste arquivo) foram resolvidos pela emenda 1 do plano (2026-11-20), e os `[BLOQUEADO: Fn]` saíram. As partes afetadas citam "emenda 1".
 
 ## Fase 0 · Preparação
 - [ ] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
@@ -60,7 +60,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T014 [P] [engenheiro-terraform] Role de fumaça · RF-002, RNF-001, RNF-002 · TT-R09
   - **Teste vermelho:** `modules/gateway/tests/fumaca.tftest.hcl` afirma a role `00-plataforma-agentes-fumaca`, confiada só pela role de deploy (variável), com uma única declaração `bedrock-agentcore:InvokeGateway` no ARN do gateway.
   - **Arquivos:** `modules/gateway/fumaca.tf`, `modules/gateway/tests/fumaca.tftest.hcl`.
-  - **Aceite:** nenhum `permit` no Cedar cita esta role (conferido de novo no T036). `[BLOQUEADO: F1]` qualquer permissão de `bedrock:ApplyGuardrail` para a fumaça.
+  - **Aceite:** nenhum `permit` no Cedar cita esta role (conferido de novo no T036). A role não tem `bedrock:ApplyGuardrail`, e o TT-R09 falha se ela ganhar uma segunda declaração (emenda 1, F1).
   - **Depende de:** T013.
 - [ ] T015 [engenheiro-terraform] Módulo `politica`: motor em `ENFORCE` · RF-002, Art. IV · TT-P01, TT-P02, TT-S02 (motor)
   - **Teste vermelho:** `modules/politica/tests/politica.tftest.hcl` com `expect_failures` para `modo_politica = "LOG_ONLY"` sem `calibracao = true`; asserts do nome `p00_plataforma_agentes` (regex `^[A-Za-z][A-Za-z0-9_]*$`) e de `encryption_key_arn` da chave da plataforma; `tests/composicao.tftest.hcl` no root afirma `policy_engine_configuration` presente no gateway, com `mode = "ENFORCE"` por padrão.
@@ -75,12 +75,12 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T017 [engenheiro-terraform] Módulo `observabilidade`: cinco alarmes da plataforma · RNF-003, Art. VI · TT-O03
   - **Teste vermelho:** `modules/observabilidade/tests/alarmes.tftest.hcl` afirma os cinco alarmes do RNF-003 (`SystemErrors` ≥ 1, `Throttles` ≥ 1 e `UserErrors` ≥ 3 do gateway; `SystemErrors` do motor ≥ 1; `DenyDecisions` ≥ 5 com a dimensão `Mode = ENFORCE`), todos com `period = 300`, `evaluation_periods = 1`, `statistic = "Sum"`, `treat_missing_data = "notBreaching"` e ação no tópico do T011.
   - **Arquivos:** `modules/observabilidade/alarmes.tf`, `modules/observabilidade/tests/alarmes.tftest.hcl`.
-  - **Aceite:** nomes com o prefixo `00-plataforma-agentes-`; o alarme de negações não dispara num apply de calibração (ADR-0005). `[BLOQUEADO: F3]` o comportamento dos dois alarmes do motor quando o root de integração compõe sem o motor.
+  - **Aceite:** nomes com o prefixo `00-plataforma-agentes-`; o alarme de negações não dispara num apply de calibração (ADR-0005). O id do motor é entrada de composição obrigatória do módulo: no root real vem do módulo `politica`, e no root do Floci, de um valor sintético fixo (emenda 1, F3; ADR-0009).
   - **Depende de:** T011, T015, T016.
 - [ ] T018 [engenheiro-terraform] Módulo `contrato`: parâmetro `comum`, schema e output `contrato_v1` · RF-007, RF-011 · TS-01, TT-C01
   - **Teste vermelho:** `plataforma/agentes/tests/contrato/test_contrato.py` valida o output `contrato_v1` do plan com mock contra `plataforma/agentes/contrato/v1.schema.json` e falha com uma fixture sem `mapa_erros`; `modules/contrato/tests/contrato.tftest.hcl` afirma `/00-plataforma-agentes/contrato/v1/comum` com `type = "String"`, `tier = "Standard"` e valor de até 4 KB.
   - **Arquivos:** `plataforma/agentes/contrato/v1.schema.json`, `plataforma/agentes/infra/terraform/modules/contrato/`, `plataforma/agentes/tests/contrato/`.
-  - **Aceite:** campos do `comum` iguais aos da tabela "Contrato v1" do plano, com `versao_contrato = "1.0.0"`; `mapa_erros` com as oito categorias do RF-011 e o retentável de cada uma; o schema também cobre o parâmetro `produtos/<chave>`. `[BLOQUEADO: F3]` a obrigatoriedade de `motor_politica_id` e `motor_politica_arn` no root de integração sem motor.
+  - **Aceite:** campos do `comum` iguais aos da tabela "Contrato v1" do plano, com `versao_contrato = "1.0.0"`; `mapa_erros` com as oito categorias do RF-011 e o retentável de cada uma; o schema também cobre o parâmetro `produtos/<chave>`. `motor_politica_id` e `motor_politica_arn` são obrigatórios no schema e entram no módulo como entradas de composição; no root do Floci, com valores sintéticos fixos (emenda 1, F3; ADR-0009).
   - **Depende de:** T013, T015, T016, T011.
 - [ ] T019 [P] [engenheiro-seguranca] Contrato sem segredo · RF-003, RF-007, Art. IV · TS-02, ES (gitleaks)
   - **Teste vermelho:** fixtures de contrato com um campo `token` e com um valor no formato de chave de acesso da AWS precisam reprovar no `test_contrato.py`.
@@ -90,7 +90,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T020 [engenheiro-terraform] Root da plataforma: composição, prefixos e tags em todo recurso · RF-001, Art. VI, RNF-003 · TT-T01, TT-T02
   - **Teste vermelho:** `tests/prefixo.tftest.hcl` afirma que todo nome começa por `00-plataforma-agentes` ou, onde a API exige letra inicial, por `p00_` (exceções do ADR-0006); o `tags.tftest.hcl` do T001 passa a iterar sobre todos os recursos tagueáveis do root.
   - **Arquivos:** `plataforma/agentes/infra/terraform/main.tf`, `outputs.tf`, `terraform.tfvars.example`, `tests/prefixo.tftest.hcl`.
-  - **Aceite:** `terraform test` do root e dos módulos, `fmt`, `validate`, `tflint` e `checkov` limpos; os testes do T003 verdes sobre o root completo.
+  - **Aceite:** `terraform test` do root e dos módulos, `fmt`, `validate`, `tflint` e `checkov` limpos; os testes do T003 verdes sobre o root completo; o `composicao.tftest.hcl` (TT-P01) também afirma que o id e o ARN do motor no `contrato` e no `observabilidade` vêm do módulo `politica` (emenda 1, F3).
   - **Depende de:** T010 a T019.
 
 ## Fase 3 · Núcleo: módulo `registro-produto` (no state do produto)
@@ -228,13 +228,19 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T066 [engenheiro-claude] Script de fumaça sem Claude · RF-002, RNF-002 · DM-01 (fumaça), DM-03, TH-11
   - **Teste vermelho:** `plataforma/agentes/tests/test_fumaca.py` com respostas gravadas: com a role de fumaça, `tools/list` vem vazio e um `tools/call` é negado; o script não importa nem chama `Converse`.
   - **Arquivos:** `plataforma/agentes/scripts/fumaca.py`, `plataforma/agentes/tests/test_fumaca.py`.
-  - **Aceite:** o script lê o contrato do SSM; a saída traz o resultado e o horário para conferir `DenyDecisions` ≥ 1. `[BLOQUEADO: F1]` a parte de `ApplyGuardrail` do teste de fumaça.
+  - **Aceite:** o script lê o contrato do SSM; a saída traz o resultado e o horário para conferir `DenyDecisions` ≥ 1. O script não chama `ApplyGuardrail` (o teste também reprova essa chamada); a chamada direta ao guardrail sem o Claude é o DM-05, feito pelo agente do produto (emenda 1, F1).
   - **Depende de:** T063.
 - [ ] T067 [avaliador-llm] Coleta de evidências e avaliação sob demanda · RF-006 · DM-04, DM-08
   - **Teste vermelho:** `plataforma/agentes/tests/test_evidencias.py` com respostas gravadas do CloudWatch e do Evaluations: o relatório tem, por produto, `AllowDecisions`, `DenyDecisions` (por `Mode`), `InvocationsIntervened`, pelo menos um id de trace e a nota de `Builtin.Helpfulness`, `Builtin.GoalSuccessRate` e `Builtin.ToolSelectionAccuracy`; falta de um campo reprova em vez de sair vazio.
   - **Arquivos:** `plataforma/agentes/scripts/evidencias.py`, `plataforma/agentes/tests/test_evidencias.py`, `plataforma/agentes/docs/relatorio-demonstracao.md` (modelo).
-  - **Aceite:** o relatório marca cada número com a fonte e a hora da leitura (5.6). `[BLOQUEADO: F4]` a role e as permissões com que o script roda na AWS.
+  - **Aceite:** o relatório marca cada número com a fonte e a hora da leitura (5.6). O script roda na AWS com a role de evidências, pelo workflow de evidências (T068; emenda 1, F4).
   - **Depende de:** T060.
+
+- [ ] T068 [engenheiro-terraform] Role e workflow de evidências (emenda 1, F4) · RF-006, RNF-001, RNF-005 · TT-O05, TH-13, TH-11 (extensão)
+  - **Teste vermelho:** `modules/observabilidade/tests/evidencias.tftest.hcl` afirma a role `00-plataforma-agentes-evidencias`, confiada só pela role de deploy, com exatamente as ações `cloudwatch:GetMetricData`, `logs:StartQuery` (nos grupos `aws/spans` e de logs do gateway), `logs:GetQueryResults`, `ssm:GetParameter` (no `comum` e em `produtos/*`) e `bedrock-agentcore:Evaluate`, sem `bedrock:InvokeModel` e sem `iam:PassRole`. TH-13 em `harness/test_harness.py` reprova se `.github/workflows/00-plataforma-agentes-evidencias.yml` não tem só `workflow_dispatch` com o input `produto`, o ambiente `aws-lab`, OIDC, `permissions` com `id-token: write` e `contents: read`, e upload do relatório com `retention-days: 1`. O TH-11 do T047 passa a aceitar esse workflow como de operação e continua reprovando um workflow sintético com gatilho `pull_request` que cite `bedrock`.
+  - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/evidencias.tf`, `modules/observabilidade/tests/evidencias.tftest.hcl`, `.github/workflows/00-plataforma-agentes-evidencias.yml`, `harness/test_harness.py`.
+  - **Aceite:** actions fixadas por SHA (`TestVersoesDasActions`); nenhuma declaração com ação `*` e recurso `*` (T003 verde); onde a referência de autorização só aceitar `*`, exceção do checkov com ADR de implementação (R9); o relatório nunca entra em commit pelo workflow.
+  - **Depende de:** T016, T047, T067.
 
 ## Fase 7 · Operação, custo e revisão
 - [x] T070 [engenheiro-terraform] Workflows de apply e destroy da plataforma (existem e estão testados) · RF-008, Art. V · TH existente
@@ -249,19 +255,19 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T073 [finops-demonstracao] Custo do PR contra o teto e custo fixo ocioso · Art. V, RNF-002 · ES (Infracost), TT-K02
   - **Teste vermelho:** o `gate_custo.py` roda sobre a saída do Infracost do branch; uma fixture com recurso de custo fixo (por exemplo, endpoint de interface) precisa reprovar.
   - **Arquivos:** nenhum de código; comentário de revisão no PR com o custo de 24 h por diretório e a comparação com a tabela "Custo do lab" do plano.
-  - **Aceite:** custo de 24 h do root ≤ US$ 1,20; nenhum recurso fora do destroy; diferenças contra a estimativa do plano explicadas. `[BLOQUEADO: F1]` a linha de `ApplyGuardrail` do teste de fumaça.
+  - **Aceite:** custo de 24 h do root ≤ US$ 1,20; nenhum recurso fora do destroy; diferenças contra a estimativa do plano explicadas. A linha de `ApplyGuardrail` da fumaça é US$ 0 na plataforma, e a reserva da coleta de evidências (US$ 0,010) é conferida pelo Infracost (emenda 1, F1 e F4).
   - **Depende de:** T020.
 - [ ] T074 [engenheiro-seguranca] Modelo de ameaças contra os testes e esteira limpa · Art. IV, RNF-001 · ES
   - **Teste vermelho:** para cada linha do STRIDE do plano, o teste citado precisa existir e estar verde; uma linha sem teste reprova a revisão.
   - **Arquivos:** comentário de revisão no PR; exceções só com justificativa versionada (`.checkov.yaml`, `.trivyignore`, `.semgrepignore`) e ADR em `plataforma/agentes/adr/`.
   - **Aceite:** gitleaks, Semgrep, CodeQL, zizmor, Trivy, checkov e tflint sem achado alto ou crítico; R4 resolvido com o recurso mais estreito ou exceção com ADR.
-  - **Depende de:** T020, T038, T045, T067.
+  - **Depende de:** T020, T038, T045, T067, T068.
 
 ## Fase 8 · Verificação
 - [ ] T080 [testador-integracao] Integração no Floci e relatório · RF-001, RF-007, RNF-003, RNF-007, Art. III, Art. V · FL-01, FL-02, FL-03, FL-04
   - **Teste vermelho:** asserts escritos antes do apply: FL-01 cinco alarmes com os parâmetros do RNF-003; FL-02 alvo do produto sintético registrado no gateway; FL-03 produto sintético monta a chamada só pelo SSM do Floci; FL-04 nenhum recurso com `project=00-plataforma-agentes` e nada sob `/00-plataforma-agentes/` depois do destroy.
   - **Arquivos:** `plataforma/agentes/tests/floci/` (root que compõe `nucleo`, `gateway`, `observabilidade`, `contrato` e o produto sintético com a variável do T038), job do Floci como container de serviço no `00-plataforma-agentes-ci.yml` (disparo manual), relatório em `testing/reports/` e `testing/reports/latest.html`.
-  - **Aceite:** só com as Fases 2 a 6 concluídas; imagem `${FLOCI_IMAGE:-floci/floci:latest}` (D-013); o relatório separa falha real de lacuna, cada lacuna com o link de evidência do ADR-0009; nenhum código correto alterado para agradar o emulador. `[BLOQUEADO: F3]` o contrato e os alarmes do motor no root sem motor.
+  - **Aceite:** só com as Fases 2 a 6 concluídas; imagem `${FLOCI_IMAGE:-floci/floci:latest}` (D-013); o relatório separa falha real de lacuna, cada lacuna com o link de evidência do ADR-0009; nenhum código correto alterado para agradar o emulador. O root do Floci passa id e ARN sintéticos fixos do motor ao `observabilidade` e ao `contrato`, e o relatório os marca como sintéticos com o link do ADR-0009 (emenda 1, F3).
   - **Depende de:** T020, T038, T047, T067.
 - [ ] T081 [revisor-independente] Revisão independente da entrega · Art. III, Art. VII
   - **Teste vermelho:** a revisão parte da matriz: cada linha precisa de tarefa `[x]` e teste verde; linha sem prova reprova.
@@ -269,21 +275,21 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Aceite:** instância diferente de quem escreveu (4.6); achados com severidade, local e correção sugerida.
   - **Depende de:** T074, T080.
 - [ ] T082 [pesquisador] Disponibilidade regional e versão do provider antes do primeiro apply real · RNF-006
-  - **Teste vermelho:** tabela de achados com uma linha por peça (Gateway, Policy, Guardrails no Policy, Evaluations, guardrail `STANDARD`, perfil de aplicação) em `us-east-1`; peça sem fonte oficial datada reprova.
+  - **Teste vermelho:** tabela de achados com uma linha por peça (Gateway, Policy, Guardrails no Policy, Evaluations, guardrail `STANDARD`, perfil de aplicação) em `us-east-1`, mais as permissões do `Evaluate` sob demanda na referência de autorização (R9, emenda 1); peça sem fonte oficial datada reprova.
   - **Arquivos:** relatório para a orquestração; se algo mudou, ADR em `plataforma/agentes/adr/` (nunca edição do plano sem nova aprovação).
   - **Aceite:** fonte, data da fonte, data da consulta e certeza em cada linha (5.6).
 - [ ] T083 [DONO] Conta e ambientes para o apply real · RNF-004, D-024, P00-P2
   - Criar a conta com OIDC quando o primeiro produto estiver pronto (P00-P2); criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`; incluir o subject desse ambiente na confiança OIDC da role de deploy (pendência já registrada na memória compartilhada).
   - **Aceite:** um destroy manual de teste roda no `aws-lab-destroy` sem pedir aprovação e assume a role por OIDC.
 - [ ] T084 [DONO] Ensaio da plataforma pelo menos 48 h antes da demonstração · RF-002, RF-003, RF-008, R2, R8 · DM-01 (fumaça), DM-03
-  - Disparar o apply da plataforma; rodar `scripts/fumaca.py` (T066) com a role de fumaça e uma chamada com role sem `InvokeGateway` (DM-03); conferir o destroy automático. `[BLOQUEADO: F2]` o ensaio com produto sintético na AWS real.
+  - Disparar o apply da plataforma; rodar `scripts/fumaca.py` (T066) com a role de fumaça e uma chamada com role sem `InvokeGateway` (DM-03); conferir o destroy automático. O ensaio é só da plataforma, sem produto sintético na AWS real (emenda 1, F2; cerca de US$ 0,09 no dia). Opcional, decidido pelo dono no dia: aplicar também a D03, se ela já estiver em `verificar`, para antecipar o R8; o custo vai no teto da D03.
   - **Depende de:** T080, T081, T082, T083.
 - [ ] T085 [DONO] Caso de uso da Anthropic no Bedrock, só se o modelo da D03 for anterior ao Claude Opus 4.7 · D-034
   - Envio à mão no console; a orquestração só lembra no board.
   - **Aceite:** o modelo da D03 responde no console do Bedrock antes da demonstração, ou o plano da D03 registra que o modelo não exige o envio.
 - [ ] T086 [DONO] Demonstração com a D03 · RF-002, RF-004, RF-006, RF-008, RF-010, Art. V · DM-01 a DM-06, DM-08
-  - Ordem: apply da plataforma, apply da D03 (registra alvos e políticas pelo módulo), roteiro de quatro passos, DM-05 (injeção indireta sintética), `scripts/evidencias.py` antes de qualquer destroy, destroy da D03, destroy da plataforma, verificação de sobras (DM-06).
-  - **Depende de:** T053 (tag ativa há 48 h), T084, T085 se aplicável, e a D03 em `verificar` (hoje em `especificar`).
+  - Ordem: apply da plataforma, apply da D03 (registra alvos e políticas pelo módulo), roteiro de quatro passos, DM-05 (injeção indireta sintética), workflow de evidências (`scripts/evidencias.py`, T068) antes de qualquer destroy, destroy da D03, destroy da plataforma, verificação de sobras (DM-06).
+  - **Depende de:** T053 (tag ativa há 48 h), T068 (workflow de evidências), T084, T085 se aplicável, e a D03 em `verificar` (hoje em `especificar`).
 - [ ] T087 [finops-demonstracao] Custo real do dia contra o teto · RF-005, critério de sucesso 2 · DM-07
   - **Teste vermelho:** a comparação reprova se o custo real da plataforma passa de US$ 1,20, se o da D03 passa do teto dela ou se um item cobrado não tem linha correspondente na tabela "Custo do lab" do plano.
   - **Arquivos:** comentário no PR de verificação; nenhum número estimado no lugar de medido (marcar `nao-medido` quando faltar).
@@ -292,22 +298,33 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - [ ] T088 [DONO] Revisão humana do relatório da demonstração · RF-006, RNF-008, Art. VIII
   - Confirmar que só há dados sintéticos e que os números têm fonte; decidir o que vai para fora do repositório (5.5).
   - **Depende de:** T086, T087.
-- [ ] T089 [DONO] Publicação da plataforma `[PENDENTE: P00-P7]` · Art. II
-  - A spec não pede post nem página do site para a plataforma, e publicação é decisão do dono. Fica fora da implementação até a resposta.
+- [ ] T089 [redator-tecnico] Post da plataforma (D-037) · Art. VIII, D-037
+  - **Teste vermelho:** teste do harness reprova se `plataforma/agentes/posts/aws.md` não existe, se não traz link para a página do produto que consome a plataforma (a D03 primeiro), se cita número de custo ou de demonstração sem fonte, ou se fala do curso (regras do site).
+  - **Arquivos:** `plataforma/agentes/posts/aws.md`, `harness/test_harness.py`.
+  - **Aceite:** tom técnico para engenheiros seniores; o que ainda não foi medido aparece como pendente; sem post de cloud comparativa, porque a plataforma não tem cloud comparativa (skill `site-projeto`).
+  - **Depende de:** T087, T088.
+- [ ] T090 [desenvolvedor-site] Página da plataforma na trilha Arquiteturas AWS (D-037) · D-037
+  - **Teste vermelho:** teste do harness reprova se `site/index.html` não tem um item `type: "arquitetura"` da `00-plataforma-agentes`, ou se a página não tem diagrama, ADRs, custo de um dia, último relatório de teste, link para o código e link para a página da D03, com o link de volta na página da D03.
+  - **Arquivos:** `site/index.html` (`ITEMS`), a página do projeto em `site/`, `harness/test_harness.py`.
+  - **Aceite:** segue a skill `site-projeto`; HTML e CSS estáticos; o post do T089 aparece em Posts; publicar no GitHub Pages (merge) continua com o dono.
+  - **Depende de:** T089.
 
 ## Furos do plano encontrados na fase tarefas
-Não corrigidos aqui, porque mudar o `plan.md` derruba a aprovação (D-033). As partes afetadas estão marcadas `[BLOQUEADO: Fn]`; o resto de cada tarefa segue.
+F1 a F5 foram resolvidos pela emenda 1 do plano (2026-11-20, seção "Emenda 1" do `plan.md`), autorizada pelo dono, com nova aprovação pendente. O F6 já estava resolvido pela T002, sem mudar o plano.
 
-| id | Furo | Onde | Efeito |
-|---|---|---|---|
-| F1 | O teste de fumaça da plataforma chama `ApplyGuardrail` (RNF-002 da spec; linha de US$ 0,025 no custo do lab), mas o stack da plataforma não tem guardrail (todo guardrail nasce no módulo, no state do produto) e a role de fumaça só tem `InvokeGateway` | plano, "Role de fumaça" e "Custo do lab" | T014, T066 e T073 não sabem contra qual guardrail testar nem se a linha de custo é da plataforma |
-| F2 | O ensaio de 48 h antes (R2, R8) prevê "um produto sintético" na AWS real, mas o plano só define o produto sintético do Floci: não há root, chave em `estado.json`, workflow nem custo para ele | plano, R2 e R8 | T084 cobre só a plataforma e a fumaça; a falha assíncrona `CREATE_FAILED` das políticas (R8) só aparece na demonstração com a D03 |
-| F3 | O root de integração compõe sem o motor de política (ADR-0009), mas o contrato `comum` publica `motor_politica_id` e `motor_politica_arn`, e dois alarmes usam a dimensão do motor | plano, "Contrato v1", "Estratégia de testes" e ADR-0009 | T017, T018 e T080 não sabem se esses campos são opcionais no schema ou se o root do Floci recebe valores sintéticos |
-| F4 | A avaliação sob demanda e a coleta de métricas antes do destroy (DM-04, DM-08) não têm executor nem role definidos: nenhuma role do plano tem permissão de Evaluations, `GetMetricData` ou leitura de `aws/spans` | plano, "Estratégia de testes" (DM) e RF-006 | T067 escreve o script, mas não a role nem o passo que o roda |
-| F5 | O cabeçalho do plano ainda diz "rascunho; aguarda a aprovação do dono", embora esteja aprovado (D-035); depois do T000, os links `adr/...` do plano apontam para redirecionamentos | plano, cabeçalho e "Decisões técnicas" | cosmético; não bloqueia tarefa |
-| F6 | A seção "Trabalho que o plano cria" não lista um workflow de CI que rode o `terraform test` da plataforma e os testes Python (TS, RG); hoje só o `infra-conta.yml` roda `terraform test`, e só para o `infra/conta` | plano, "Trabalho que o plano cria" e "Estratégia de testes" | resolvido sem mudar o plano pela T002, que só acrescenta execução; o id TH-12 é desta fase e não está na matriz do plano |
+| id | Furo | Onde | Efeito | Situação |
+|---|---|---|---|---|
+| F1 | O teste de fumaça da plataforma chama `ApplyGuardrail` (RNF-002 da spec; linha de US$ 0,025 no custo do lab), mas o stack da plataforma não tem guardrail (todo guardrail nasce no módulo, no state do produto) e a role de fumaça só tem `InvokeGateway` | plano, "Role de fumaça" e "Custo do lab" | T014, T066 e T073 não sabem contra qual guardrail testar nem se a linha de custo é da plataforma | resolvido (emenda 1): a fumaça ficou só com o gateway; o guardrail direto é o DM-05, no produto; a linha de custo saiu da plataforma (T014, T066, T073) |
+| F2 | O ensaio de 48 h antes (R2, R8) prevê "um produto sintético" na AWS real, mas o plano só define o produto sintético do Floci: não há root, chave em `estado.json`, workflow nem custo para ele | plano, R2 e R8 | T084 cobre só a plataforma e a fumaça; a falha assíncrona `CREATE_FAILED` das políticas (R8) só aparece na demonstração com a D03 | resolvido (emenda 1): o ensaio é só da plataforma; o R8 é provado no primeiro apply da D03 (T084) |
+| F3 | O root de integração compõe sem o motor de política (ADR-0009), mas o contrato `comum` publica `motor_politica_id` e `motor_politica_arn`, e dois alarmes usam a dimensão do motor | plano, "Contrato v1", "Estratégia de testes" e ADR-0009 | T017, T018 e T080 não sabem se esses campos são opcionais no schema ou se o root do Floci recebe valores sintéticos | resolvido (emenda 1): id e ARN do motor como entradas de composição, com valores sintéticos fixos no root do Floci; o schema segue exigindo os campos (T017, T018, T080; ADR-0009) |
+| F4 | A avaliação sob demanda e a coleta de métricas antes do destroy (DM-04, DM-08) não têm executor nem role definidos: nenhuma role do plano tem permissão de Evaluations, `GetMetricData` ou leitura de `aws/spans` | plano, "Estratégia de testes" (DM) e RF-006 | T067 escreve o script, mas não a role nem o passo que o roda | resolvido (emenda 1): role de evidências e workflow manual no `aws-lab` (T067, T068) |
+| F5 | O cabeçalho do plano ainda diz "rascunho; aguarda a aprovação do dono", embora esteja aprovado (D-035); depois do T000, os links `adr/...` do plano apontam para redirecionamentos | plano, cabeçalho e "Decisões técnicas" | cosmético; não bloqueia tarefa | resolvido (emenda 1): cabeçalho com o status real e nota sobre os links depois do T000 |
+| F6 | A seção "Trabalho que o plano cria" não lista um workflow de CI que rode o `terraform test` da plataforma e os testes Python (TS, RG); hoje só o `infra-conta.yml` roda `terraform test`, e só para o `infra/conta` | plano, "Trabalho que o plano cria" e "Estratégia de testes" | resolvido sem mudar o plano pela T002, que só acrescenta execução; o id TH-12 é desta fase e não está na matriz do plano | resolvido pela T002, sem mudar o plano |
 
 ## Perguntas ao dono
-| id | pergunta | bloqueia | opções | recomendação |
-|---|---|---|---|---|
-| P00-P7 | A plataforma ganha página no site e post, como os projetos das disciplinas? | só a T089 (publicar) | (a) página e post próprios; (b) só uma seção na página da D03, primeiro consumidor; (c) não publicar | (b): a plataforma se explica melhor pelo produto que a consome, e evita uma página sem demonstração própria |
+Nenhuma aberta neste arquivo. A P00-P8 (teto diário depois da emenda 1) está no `plan.md`, seção "Perguntas ao dono".
+
+## Perguntas respondidas
+| id | pergunta | resposta |
+|---|---|---|
+| P00-P7 | A plataforma ganha página no site e post, como os projetos das disciplinas? | **Respondida, D-037 (dono, 2026-11-20):** (a) página e post próprios, na trilha Arquiteturas AWS. A recomendação era (b). Aplicada nas T089 e T090 |

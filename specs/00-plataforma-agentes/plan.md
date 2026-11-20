@@ -1,8 +1,8 @@
 # Plano: Plataforma de agentes compartilhada na AWS
 
-- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** rascunho; aguarda a aprovação do dono (D-033, `estado.py aprovar-plano`)
-- **Data:** 2026-11-19 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS
-- **Decisões do dono aplicadas:** D-021, D-022, D-024, D-028, D-029, D-031, D-033 e D-034 (respostas às P00-P3, P00-P4 e P00-P5, repassadas pela orquestração em 2026-11-19 às 23:27 BRT)
+- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** aprovado pelo dono em 2026-11-19 (D-035). A emenda 1 (2026-11-20, seção no fim) muda o plano, então a aprovação anterior caiu: a **nova aprovação está pendente** com o dono (D-033, `estado.py aprovar-plano`)
+- **Data:** 2026-11-19; emenda 1 em 2026-11-20 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS
+- **Decisões do dono aplicadas:** D-021, D-022, D-024, D-028, D-029, D-031, D-033, D-034 (respostas às P00-P3, P00-P4 e P00-P5, repassadas pela orquestração em 2026-11-19 às 23:27 BRT) e D-035 (aprovação da versão anterior)
 - **ADRs:** `specs/00-plataforma-agentes/adr/`. O gate SDD (`harness/estado.py checar-arquivos`, hook e `pre-commit`) bloqueia `plataforma/agentes/adr/` antes da fase implementar, então os ADRs nascem junto da spec. A tarefa T000 de implementar os move para `plataforma/agentes/adr/` (seção "Trabalho que o plano cria").
 
 ## Resumo
@@ -18,7 +18,7 @@
   - `permit` de tool `sensivel` para a role do agente;
   - alvo com prefixo de outro produto.
 - **Ordem de destroy pelo harness** (ADR-0007): o prazo do produto fica pelo menos 1 hora antes do da plataforma, e a plataforma espera os consumidores.
-- **Teto diário:** US$ 1,20, sobre uma estimativa de US$ 1,10, com as fontes de preço abaixo. A avaliação sob demanda é 68% do valor.
+- **Teto diário:** US$ 1,20, sobre uma estimativa de US$ 1,08 (emenda 1), com as fontes de preço abaixo. A avaliação sob demanda é 69% do valor. Manter US$ 1,20 ou baixar para US$ 1,10 é a P00-P8, pendente com o dono.
 
 ## Verificação da constituição
 | Artigo | Como o plano cumpre | Risco |
@@ -79,7 +79,8 @@ Fontes consultadas em 2026-11-19. Floci: documentação de [Bedrock AgentCore](h
 **Provider Terraform:** `hashicorp/aws` com `aws_bedrockagentcore_gateway` (tem `authorizer_type`, `kms_key_arn`, `policy_engine_configuration { arn, mode }` e `protocol_configuration { mcp { supported_versions } }`), `aws_bedrockagentcore_policy` (`definition { cedar { statement } }`, `validation_mode`), `aws_bedrockagentcore_policy_engine` e `aws_bedrock_guardrail` (`tier_config`, `cross_region_config`). Fontes: [doc do gateway](https://github.com/hashicorp/terraform-provider-aws/blob/main/website/docs/r/bedrockagentcore_gateway.html.markdown), [doc da política](https://github.com/hashicorp/terraform-provider-aws/blob/main/website/docs/r/bedrockagentcore_policy.html.markdown), [doc do guardrail](https://github.com/hashicorp/terraform-provider-aws/blob/main/website/docs/r/bedrock_guardrail.html.markdown) e a [issue 48501](https://github.com/hashicorp/terraform-provider-aws/issues/48501), que cita a v6.51 com "a maior parte" dos recursos do AgentCore. A versão mínima é fixada em `versions.tf` na primeira tarefa de implementar, depois de `terraform init` confirmar os recursos.
 
 ### Stack da plataforma (`plataforma/agentes/infra/terraform/`)
-Módulos internos: `nucleo` (KMS, SNS e Budgets), `gateway` (gateway, role de execução e role de fumaça), `politica` (motor), `observabilidade` (entrega de logs e traces, alarmes) e `contrato` (parâmetro `comum` e output `contrato_v1`).
+Módulos internos: `nucleo` (KMS, SNS e Budgets), `gateway` (gateway, role de execução e role de fumaça), `politica` (motor), `observabilidade` (entrega de logs e traces, alarmes e role de evidências) e `contrato` (parâmetro `comum` e output `contrato_v1`).
+- **Id e ARN do motor de política:** entram nos módulos `gateway`, `observabilidade` e `contrato` como entradas de composição obrigatórias. No root real, vêm sempre das saídas do módulo `politica` (TT-P01). No root do Floci, que não tem o motor, vêm de valores sintéticos fixos (Estratégia de testes, emenda 1).
 - **Gateway:**
   - `protocol_type = "MCP"` e `authorizer_type = "AWS_IAM"`;
   - `kms_key_arn` da chave da plataforma;
@@ -92,7 +93,25 @@ Módulos internos: `nucleo` (KMS, SNS e Budgets), `gateway` (gateway, role de ex
 - **Role de fumaça** `00-plataforma-agentes-fumaca`:
   - confiada pela role de deploy;
   - só tem `bedrock-agentcore:InvokeGateway` no ARN do gateway;
-  - não tem nenhum `permit` no Cedar, então o teste de fumaça prova duas coisas sem chamar o Claude (RNF-002): o `tools/list` vem vazio e um `tools/call` é negado (`DenyDecisions` ≥ 1).
+  - não tem nenhum `permit` no Cedar, então o teste de fumaça prova duas coisas sem chamar o Claude (RNF-002): o `tools/list` vem vazio e um `tools/call` é negado (`DenyDecisions` ≥ 1);
+  - não tem `bedrock:ApplyGuardrail`, e o teste de fumaça não chama o guardrail (emenda 1). A plataforma não tem guardrail próprio, porque o RF-004 cria um por produto. Na demonstração, a chamada direta ao guardrail sem o Claude, que o RNF-002 pede, é o DM-05: o agente do produto chama `ApplyGuardrail` no guardrail do produto, com a role dele (que já tem a permissão, T032). O custo vai no teto do produto.
+- **Role de evidências** `00-plataforma-agentes-evidencias` (módulo `observabilidade`, emenda 1):
+  - confiada só pela role de deploy, como a de fumaça;
+  - só leitura e avaliação:
+    - `cloudwatch:GetMetricData`;
+    - `logs:StartQuery` nos grupos `aws/spans` e de logs do gateway;
+    - `logs:GetQueryResults`;
+    - `ssm:GetParameter` no `comum` e em `produtos/*`;
+    - `bedrock-agentcore:Evaluate`;
+  - recurso por ARN onde a referência de autorização aceitar; onde só aceitar `*` (`GetMetricData`, `GetQueryResults` e, pela página de pré-requisitos, `Evaluate`), a ação continua nomeada, nunca `*` com `*` (TT-S03), e a exceção do checkov vai com ADR de implementação (R9);
+  - sem `bedrock:InvokeModel` e sem `iam:PassRole`: a página de pré-requisitos só exige invocação de modelo para avaliador personalizado, e o `Evaluate` recebe os spans no corpo, sem role de serviço (R9).
+- **Workflow de evidências** `.github/workflows/00-plataforma-agentes-evidencias.yml` (emenda 1):
+  - só `workflow_dispatch`, com o input `produto`;
+  - ambiente `aws-lab`, que já existe e tem aprovação, então nenhum ambiente novo;
+  - OIDC na role de deploy, que assume a role de evidências;
+  - roda `scripts/evidencias.py --produto <chave>` (T067) antes do destroy do produto;
+  - o relatório sai como artefato do workflow com retenção de 1 dia, nunca em commit, porque ele passa pela revisão humana (T088) antes de entrar no repositório;
+  - é workflow de operação, como o apply e o destroy, e por isso fica fora da regra do RNF-005, que vale para o CI de código (TH-11 estendido, TH-13).
 - **Contrato `comum`:** detalhe abaixo.
 - **Observabilidade:**
   - entrega dos logs de aplicação do gateway para `/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/{gateway_id}`, com retenção de 7 dias e KMS;
@@ -215,6 +234,8 @@ Os produtos copiam o padrão; a plataforma não publica biblioteca no v1.
 - [ADR-0009](adr/0009-cobertura-do-floci.md): cobertura do Floci e lacunas (3.6, 5.6)
 - [ADR-0010](adr/0010-versoes-mcp-do-gateway.md): versões de MCP do gateway e a lane da D03 (2.4, 5.6)
 
+Depois do T000, o conteúdo dos ADRs fica em `plataforma/agentes/adr/`. Os links acima continuam valendo pelos arquivos de redirecionamento em `specs/00-plataforma-agentes/adr/` (emenda 1).
+
 ## Modelo de ameaças
 
 ### Fluxo de dados e fronteiras
@@ -242,6 +263,7 @@ Os produtos copiam o padrão; a plataforma não publica biblioteca no v1.
 | D: loop do agente consome custo | F2, F5 | limite de 10 turnos; alarmes de `Throttles` e `DenyDecisions`; Budgets diário; prazo de 24 h | RG-01; TT-O03; TT-K01; TH-01 |
 | E: injeção leva a ação sensível | F2, F7 | tool `sensivel` negada ao agente; só a role de aprovação tem `permit`; campo de aprovação no argumento não vale | TT-R07; RG-06 |
 | E: role de produto com privilégio amplo | F2 | nenhuma ação `*` em recurso `*`; recursos por ARN; condições de perfil e de guardrail | TT-S03; checkov |
+| I: role de evidências lê spans e métricas de todos os produtos (emenda 1) | F6 | só leitura e `Evaluate`; assumida só pela role de deploy no ambiente `aws-lab`, com aprovação; relatório como artefato de 1 dia, revisado antes de publicar; dados sintéticos | TT-O05; TH-13; revisão do relatório (5.5) |
 | E: role de deploy única altera qualquer produto | F1 | risco residual da conta única (D-029); ambientes protegidos, apply com aprovação, gate do harness | aceito com ADR-0006; em produção, contas por produto |
 
 ### Fronteiras específicas de LLM
@@ -288,9 +310,15 @@ A regra está no módulo, então vale para todo produto:
   - um root de teste em `plataforma/agentes/tests/floci/` aplica os módulos `nucleo`, `gateway`, `observabilidade` e `contrato`, mais um produto sintético que lê o contrato do SSM;
   - ficam fora, com evidência (ADR-0009): o módulo `politica` e a parte não emulada do `registro-produto` (guardrail, perfil e políticas Cedar);
   - o gateway recebe o motor como entrada de composição, e o TT-P01 garante que o root real sempre o passa;
+  - **campos do motor no root do Floci (emenda 1):**
+    - o root de teste passa ao `observabilidade` e ao `contrato` um id e um ARN sintéticos fixos do motor, no formato que o mock do TT-P01 usa, declarados no próprio root de teste;
+    - o gateway continua composto sem o motor;
+    - o `v1.schema.json` continua exigindo `motor_politica_id` e `motor_politica_arn`;
+    - os dois alarmes do motor nascem com a dimensão sintética, e o FL-01 afirma só a configuração deles;
+    - o FL-03 lê os dois campos do SSM, e o relatório os marca como sintéticos, com o link da lacuna (ADR-0009);
   - relatório em `testing/reports/`.
 - **Demonstração (DM):**
-  - evidência da AWS real, tirada antes do destroy;
+  - evidência da AWS real, tirada antes do destroy pelo workflow de evidências (emenda 1);
   - vai no relatório da fase verificar, revisado pelo dono (5.5).
 
 ### Matriz regra → teste
@@ -303,7 +331,7 @@ Ids de teste: TT-* (`terraform test`), TS-* (schema), RG-* (gravadas), TH-* (har
 | Art. IV · nada público | TT-G01, TT-S01 | `authorizer_type == "AWS_IAM"`; nenhuma política de recurso com `Principal "*"` sem condição de conta |
 | Art. IV · criptografia em repouso | TT-S02 | KMS em log groups, tópico SNS, gateway (`kms_key_arn`) e motor (`encryption_key_arn`); chave com rotação |
 | Art. IV · criptografia em trânsito | TT-S04 | política do tópico nega `aws:SecureTransport = false` |
-| Art. IV · menor privilégio | TT-S03, TT-R09 | nenhuma declaração com ação `*` e recurso `*`; role de fumaça só com `InvokeGateway` no ARN do gateway |
+| Art. IV · menor privilégio | TT-S03, TT-R09, TT-O05 | nenhuma declaração com ação `*` e recurso `*`; role de fumaça só com `InvokeGateway` no ARN do gateway; role de evidências só com as ações de leitura e `Evaluate` listadas, confiada só pela role de deploy |
 | Art. IV · segredos fora | TS-02, ES (gitleaks) | contrato sem campo ou valor de segredo |
 | Art. IV · achado alto bloqueia | ES | checkov, tflint, Trivy e Semgrep sem alto ou crítico |
 | Art. V · sem custo fixo ocioso | TT-K02 | plan sem `aws_nat_gateway`, `aws_vpc_endpoint` de interface, cluster ou instância |
@@ -334,7 +362,9 @@ Ids de teste: TT-* (`terraform test`), TS-* (schema), RG-* (gravadas), TH-* (har
 | RF-005 · custo por tag | DM-07 | Cost Explorer agrupado por `project` no dia seguinte (depende da tag ativa, D-034) |
 | RF-006 · logs e traces com retenção | TT-O01, TT-O02 | entregas de logs e traces no plan; retenção de 7 dias; KMS |
 | RF-006 · relatório por produto | DM-04, DM-08 | `AllowDecisions`, `DenyDecisions`, intervenções, id de trace e notas dos 3 avaliadores, tirados antes do destroy |
+| RF-006 · executor da coleta e da avaliação (emenda 1) | TT-O05, TH-13 | role de evidências no plan; workflow de evidências só com `workflow_dispatch`, ambiente `aws-lab`, OIDC, `permissions` mínimas e relatório como artefato de 1 dia |
 | RF-007 · contrato válido | TS-01, TS-02, TT-C01 | `contrato_v1` passa no schema; cada parâmetro ≤ 4 KB; tipo `String` |
+| RF-007 · motor no contrato e nos alarmes (emenda 1) | TT-P01, FL-01, FL-03 | no root real, id e ARN do motor vêm do módulo `politica`; no Floci, os valores sintéticos fixos passam no schema e aparecem no relatório como sintéticos |
 | RF-007 · consumo sem valor à mão | FL-03; TH-10 | produto sintético monta a chamada só pelo SSM do Floci; busca por `arn:aws:bedrock` fora de testes gravados devolve zero |
 | RF-008 · workflows | TH (existente), `estado.py validar` | apply e destroy iguais aos modelos |
 | RF-008 · prazo e ordem | TH-01, TH-02, TH-03 | prazo do consumidor ≤ plataforma − 1 h; plataforma aguarda consumidor; `dependentes` falha com consumidor no ar |
@@ -347,11 +377,11 @@ Ids de teste: TT-* (`terraform test`), TS-* (schema), RG-* (gravadas), TH-* (har
 | RF-011 · trace sem máscara fora do log | RG-07 | o agente não grava o trace do guardrail |
 | RF-012 · `sensivel` negada ao agente | TT-R07; RG-06 | nenhum `permit` de tool `sensivel` para role de agente; o agente para e devolve `requer_aprovacao_humana` |
 | RNF-001 | TT-S01 a TT-S05; ES | itens do Art. IV acima |
-| RNF-002 | TT-K01, TT-K02; ES; TH-11 | Budgets diário; nada fixo; nenhum teste de fumaça chama `Converse` |
+| RNF-002 | TT-K01, TT-K02; ES; TH-11 | Budgets diário; nada fixo; nenhum teste de fumaça chama `Converse` nem `ApplyGuardrail` (emenda 1; a chamada direta ao guardrail é o DM-05, no produto) |
 | RNF-003 · tags, state, README | TT-T01, TH-08, TH-09 | acima |
 | RNF-003 · seis alarmes | TT-O03 (5 na plataforma), TT-O04 (1 no módulo); FL-01 | período 300 s, 1 avaliação, `Sum`, `notBreaching`, limiares da spec |
 | RNF-004 · sem Organizations | TT-K03 | nenhum `aws_organizations_*` ou `aws_controltower_*` |
-| RNF-005 · CI de código sem Bedrock | TH-11 | nenhum workflow fora dos de apply e destroy referencia `bedrock` ou `Converse` |
+| RNF-005 · CI de código sem Bedrock | TH-11 | nenhum workflow fora dos de operação (apply, destroy e, pela emenda 1, evidências, todos sem gatilho `pull_request` ou `push`) referencia `bedrock` ou `Converse` |
 | RNF-006 · região | TT-T03 | `var.regiao` com padrão `us-east-1`; disponibilidade regional rechecada antes do primeiro apply real (tarefa de verificação) |
 | RNF-007 · lacunas com evidência | FL (relatório) | cada lacuna com link da documentação do Floci |
 | RNF-008 · dados sintéticos | RG-09; revisão | acima |
@@ -363,11 +393,12 @@ Não se aplica a esta spec. O tipo do projeto é `plataforma`, com `cloud: null`
 Premissas do dia de demonstração:
 - até 1.000 chamadas ao gateway (o roteiro tem cerca de 10; o resto é margem para ensaios, e um loop dispara alarme antes disso);
 - até 100 tools indexadas;
-- até 100 chamadas de `ApplyGuardrail` no teste de fumaça;
+- nenhuma chamada de `ApplyGuardrail` da plataforma (emenda 1: o teste de fumaça não chama o guardrail; o DM-05 é do produto);
 - até 10 MB de logs e 10 MB de spans;
-- avaliação sob demanda com 3 avaliadores sobre 10 traces, 2 sessões e 10 chamadas de tool, rodada até duas vezes.
+- avaliação sob demanda com 3 avaliadores sobre 10 traces, 2 sessões e 10 chamadas de tool, rodada até duas vezes;
+- coleta de evidências (emenda 1): até duas execuções do workflow, cada uma com algumas dezenas de métricas lidas e consultas do Logs Insights sobre menos de 20 MB.
 
-Região `us-east-1`. Preços consultados em 2026-11-19.
+Região `us-east-1`. Preços consultados em 2026-11-19; a emenda 1 refez a conta em 2026-11-20 com as mesmas fontes.
 
 | Componente | Custo de 24 h (US$) | Fonte da estimativa |
 |---|---|---|
@@ -379,29 +410,36 @@ Região `us-east-1`. Preços consultados em 2026-11-19.
 | Policy: autorizações | 1.000 × 0,000025 = **0,025** | mesma página |
 | Guardrails no Policy: ataque de prompt | 1.000 × 1 unidade de texto × 0,08/1.000 = **0,080** | [Bedrock](https://aws.amazon.com/bedrock/pricing/), tabela `InvokeGuardrailChecks` |
 | Guardrails no Policy: informação sensível | 1.000 × 1 × 0,10/1.000 = **0,100** (pior caso: toda chamada em `canal_saida`) | mesma tabela |
-| Teste de fumaça: `ApplyGuardrail` | 100 × 1 × (0,15 + 0,10)/1.000 = **0,025** | [Bedrock](https://aws.amazon.com/bedrock/pricing/): filtro de conteúdo US$ 0,15 e PII US$ 0,10 por 1.000 unidades; regex gratuita |
+| Teste de fumaça: `ApplyGuardrail` | **0,000** (emenda 1: a linha de US$ 0,025 saiu; o `ApplyGuardrail` do DM-05 vai no teto do produto) | [Bedrock](https://aws.amazon.com/bedrock/pricing/): filtro de conteúdo US$ 0,15 e PII US$ 0,10 por 1.000 unidades; regex gratuita |
 | Logs do gateway (entregues) | 0,01 GB × 0,50 = **0,005** | [CloudWatch](https://aws.amazon.com/cloudwatch/pricing/): logs entregues, US$ 0,50/GB na primeira faixa |
 | Spans (Transaction Search) | 0,01 GB × 0,35 = **0,004** | mesma página: US$ 0,35/GB; 1% indexado incluso |
 | SNS: até 50 publicações e entregas por e-mail | **0,010** (reserva) | [SNS](https://aws.amazon.com/sns/pricing/): cobra por requisição e entrega; a página não mostrou o valor unitário, e o Infracost confirma no PR |
+| Coleta de evidências: `GetMetricData` e Logs Insights (emenda 1) | **0,010** (reserva) | [CloudWatch](https://aws.amazon.com/cloudwatch/pricing/): a página diz que `GetMetricData` é sempre cobrado e que o Logs Insights cobra por dado lido, mas a leitura de 2026-11-20 não mostrou os valores unitários. O T073 confirma pelo Infracost, e o T087 pelo custo real |
 | Evaluations sob demanda | entrada (10 × 4k + 2 × 20k + 10 × 4k = 120k tokens) × 0,0024/1k = 0,288; saída (7k tokens) × 0,012/1k = 0,084; × 2 rodadas = **0,744** | [AgentCore](https://aws.amazon.com/bedrock/agentcore/pricing/): avaliadores nativos por token |
 | Identity via Gateway | **0,000** | mesma página: sem custo quando usado pelo Gateway |
 | SSM (camada padrão) | **0,000** | [SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-advanced-parameters.html) |
 | Budgets diário (sem ações) | **0,000** | [Budgets](https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/) |
-| **Total estimado** | **1,103** | |
+| **Total estimado** | **1,082** (emenda 1; a soma original das linhas dava 1,097, e não 1,103 como estava escrito) | |
 
-- **Teto diário proposto: US$ 1,20.**
-  - É o total arredondado para cima até a dezena de centavo seguinte (margem de 8%), porque os volumes são premissas.
-  - O valor está gravado em `teto_diario_usd` no `harness/estado.json` e entra no README e no Budgets diário na implementação.
-  - Ele só vale com a aprovação deste plano pelo dono.
+- **Teto diário: US$ 1,20, aprovado na D-035 e mantido pela emenda 1 até a resposta à P00-P8.**
+  - A estimativa caiu para US$ 1,082. Com US$ 1,20, a margem passa de 8% para 11%.
+  - A regra original (o total arredondado para cima até a dezena de centavo seguinte) daria US$ 1,10 sobre a nova estimativa, com margem de 2%.
+  - A recomendação é manter US$ 1,20: os volumes são premissas, e uma margem de 2% faria o Budgets diário avisar por ruído.
+  - Manter ou baixar é decisão de orçamento do dono (P00-P8). O `teto_diario_usd` do `harness/estado.json` continua em 1,2 até a resposta.
+  - O valor entra no README e no Budgets diário na implementação, e só vale com a nova aprovação deste plano.
 - **Fora do teto da plataforma (vai no teto do produto):** o que o módulo cria no state do produto e as chamadas do agente do produto:
   - inferência do Claude no perfil do produto;
   - guardrail no `Converse`;
+  - `ApplyGuardrail` no guardrail do produto, incluindo o DM-05 (emenda 1);
   - o 6º alarme;
   - o servidor MCP.
+- **Dia do ensaio da plataforma (emenda 1):** cerca de US$ 0,09, num dia separado e abaixo do teto diário.
+  - Itens: chave KMS (0,033), requisições do KMS (até 0,030), 5 alarmes (0,016), reserva do SNS (0,010), e chamadas de fumaça e logs abaixo de 0,002.
+  - Não há indexação, porque nenhum produto se registra no ensaio. Também não há avaliação.
 - **Efeito da indexação mensal:** ela é a única cobrança com unidade mensal sem rateio documentado.
   - O dia a conta como mês cheio.
   - Se cada apply reindexar, o pior caso é US$ 0,02 por 100 tools por demonstração. Com 10 demonstrações no mês, isso dá US$ 0,20, ou 1% do limite mensal da conta.
-- **Peso no mês:** uma demonstração consome 6% do limite mensal de US$ 20 (D-022), sem contar o produto.
+- **Peso no mês:** uma demonstração com o ensaio consome cerca de 6% do limite mensal de US$ 20 (D-022), sem contar o produto.
 - **O que fica cobrando depois do destroy:**
   - chave KMS em exclusão: US$ 0, porque a página do KMS diz que não há cobrança por chave agendada para exclusão;
   - log groups criados pela plataforma: são removidos no destroy;
@@ -415,13 +453,14 @@ Região `us-east-1`. Preços consultados em 2026-11-19.
 | id | Risco | Probabilidade e impacto | O que fazer |
 |---|---|---|---|
 | R1 | Versão de MCP do gateway diferente da lane de compatibilidade da D03 (D-034) | média; o cliente da D03 recebe `-32022`, ou elicitation e sampling falham na tradução | `versoes_mcp` é variável e campo do contrato. A spec da D03 declara as versões do servidor e do cliente, e o plano da D03 confere com este contrato. Se a lane for 2025-06-18, ela entra na lista (versão menor). A D03 não usa elicitation nem sampling pelo gateway (ADR-0010) |
-| R2 | Ativação da tag `project` atrasada | média; o custo por produto não aparece (H3) | Ensaio da plataforma pelo menos 48 h antes; a tarefa de `infra/conta` roda depois do ensaio. Se `aws_ce_cost_allocation_tag` falhar porque a chave não apareceu, roda de novo no dia seguinte |
+| R2 | Ativação da tag `project` atrasada | média; o custo por produto não aparece (H3) | Ensaio da plataforma pelo menos 48 h antes; a tarefa de `infra/conta` roda depois do ensaio. Se `aws_ce_cost_allocation_tag` falhar porque a chave não apareceu, roda de novo no dia seguinte. **Emenda 1:** o ensaio é só da plataforma (apply, fumaça, DM-03 e destroy automático), sem produto sintético na AWS real. Isso basta para o R2, porque a chave KMS já é recurso cobrado com a tag `project` |
 | R3 | `PromptAttack` não detecta injeção indireta em resultado de tool | média; a detecção falha | A contenção é estrutural (tríade letal e RF-012); o DM-05 mede e o resultado vai ao ADR-0004 |
 | R4 | `bedrock:InvokeGuardrailChecks` exige recurso amplo | baixa; o privilégio da role do gateway fica maior | Usar o ARN mais estreito que a documentação mostrar; se exigir `*`, usar a condição `aws:SourceAccount` e uma exceção do checkov com ADR |
 | R5 | Provider sem `mcpToolSchema` estático para alvo servidor MCP | média | O fallback é a sincronização da descoberta, com o DM-05 comparando `tools/list` com o catálogo. Tool fora do catálogo continua negada por padrão |
 | R6 | `InvocationsIntervened` não conta o guardrail usado pelo `Converse` | baixa | O DM-04 confere; se não contar, a alternativa é um filtro de métrica do log do agente (incertezas) |
 | R7 | Role de deploy única na conta (D-029) | baixa no lab; alta em produção | Ambientes protegidos, apply com aprovação, gate do harness e revisão no PR. Em produção: conta ou role de deploy por produto e SCP |
-| R8 | Política em `CREATE_FAILED` (validação assíncrona) | média na primeira demonstração | O módulo cria a política depois do alvo; o recurso do provider espera o estado final. O ensaio da plataforma com um produto sintético antecipa o erro |
+| R8 | Política em `CREATE_FAILED` (validação assíncrona) | média na primeira demonstração | O módulo cria a política depois do alvo; o recurso do provider espera o estado final, então o apply do produto falha cedo, antes da gravação. **Emenda 1:** o produto sintético na AWS real saiu do plano, porque não tinha root, chave, workflow nem custo. A primeira prova real é o apply da D03: no dia do ensaio, se a D03 já estiver em `verificar` (opção de operação do dono na T084, com custo no teto da D03), ou no dia da demonstração, antes do roteiro. O TT-R10 e o `validation_mode = "FAIL_ON_ANY_FINDINGS"` reduzem a chance antes disso |
+| R9 | Permissões do `Evaluate` sob demanda (emenda 1) | baixa; a coleta falha com `AccessDenied` na primeira demonstração | A página de pré-requisitos lista `bedrock-agentcore:Evaluate` com recurso `*` e só exige invocação de modelo para avaliador personalizado. A ausência de role de serviço no sob demanda é **inferida**, porque o `Evaluate` recebe os spans no corpo e não tem campo de role. O T082 confirma na referência de autorização; se faltar permissão, ela entra na role de evidências com ADR de implementação, sem mudar o restante |
 
 **Lacunas do Floci (ADR-0009), com evidência na documentação consultada em 2026-11-19:**
 - **Invocação MCP do gateway:** a página do AgentCore lista só o plano de controle do Gateway e diz que não há execução real de tool. A prova fica em RG e DM.
@@ -441,9 +480,14 @@ Região `us-east-1`. Preços consultados em 2026-11-19.
   - testes TH-01 a TH-11.
 - **`infra/conta` (aplicado pelo dono, D-034):** tag de alocação de custo, Transaction Search e parâmetro `/00-conta/alertas/emails`.
 - **Plataforma:** stack, módulos, contrato com schema, agente de exemplo e gravações, integração no Floci, README e relatório da demonstração.
+- **Emenda 1:** role de evidências (módulo `observabilidade`), workflow manual de evidências e TH-13.
 
 ## Perguntas ao dono
-Nenhuma aberta. P00-P3, P00-P4 e P00-P5 estão respondidas (D-034) e aplicadas acima. A aprovação deste plano (D-033) é pedida pela orquestração.
+P00-P3, P00-P4 e P00-P5 estão respondidas (D-034) e aplicadas acima. A nova aprovação deste plano, depois da emenda 1 (D-033), é pedida pela orquestração.
+
+| id | pergunta | bloqueia | opções | recomendação |
+|---|---|---|---|---|
+| P00-P8 | Com a emenda 1, a estimativa do dia caiu de US$ 1,10 para US$ 1,08. O teto diário fica em US$ 1,20 ou baixa para US$ 1,10? | o valor de `teto_diario_usd`, do Budgets diário e do README (T012, T072, T073 e T087); nada mais | (a) manter US$ 1,20 (margem de 11%); (b) baixar para US$ 1,10 (margem de 2%, pela regra de arredondamento original) | (a): os volumes do dia são premissas, e com 2% de margem o Budgets diário avisaria por ruído |
 
 ## Fontes (consulta em 2026-11-19)
 Além das fontes da spec (seção "Proveniência"):
@@ -467,3 +511,20 @@ Além das fontes da spec (seção "Proveniência"):
 | Avaliadores nativos citados; leitura de `aws/spans` | [On-demand evaluation](https://docs.amazonaws.cn/bedrock-agentcore/latest/devguide/getting-started-on-demand.html) | sem data | confirmado para os quatro citados |
 | Motor de política: nome `^[A-Za-z][A-Za-z0-9_]*$`, chave KMS opcional | [Pulumi (ponte do provider Terraform)](https://www.pulumi.com/registry/packages/aws/api-docs/bedrock/agentcorepolicyengine/); [doc da política](https://github.com/hashicorp/terraform-provider-aws/blob/main/website/docs/r/bedrockagentcore_policy.html.markdown) | sem data | confirmado |
 | Floci: cobertura por serviço | [Floci services](https://floci.io/floci/services/) e páginas citadas | sem data | confirmado; avaliação de IAM para `bedrock-agentcore` não citada |
+| Permissões de quem chama o Evaluations, incluindo `bedrock-agentcore:Evaluate` com recurso `*`; invocação de modelo só para avaliador personalizado; role de serviço descrita para avaliadores e avaliação online | [Evaluations prerequisites](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/evaluations-prerequisites.html) | sem data; consulta em 2026-11-20 | confirmado; ausência de role no sob demanda inferida (R9) |
+| `Evaluate` recebe os spans no corpo (`evaluationInput`), sem campo de role | [Evaluate (API)](https://docs.aws.amazon.com/bedrock-agentcore/latest/APIReference/API_Evaluate.html) | sem data; consulta em 2026-11-20 | confirmado |
+| O sob demanda lê os spans de `aws/spans` com o Logs Insights (`StartQuery`, `GetQueryResults`) antes de chamar o `Evaluate` | [On-demand evaluation](https://docs.amazonaws.cn/bedrock-agentcore/latest/devguide/getting-started-on-demand.html) | sem data; consulta em 2026-11-20 | confirmado |
+
+## Emenda 1 (2026-11-20)
+Autorizada pelo dono no chat em 2026-11-20 00:38 BRT ("Corrigir agora"). Ela fecha só os furos F1 a F5 do `tasks.md`. A aprovação anterior (D-035) caiu, e a nova está pendente com o dono. Cada linha diz o que mudou, a boa prática que guia a mudança, o que o arquiteto faz e o erro comum que ela evita (D-036).
+
+| Furo | O que mudou | Por quê |
+|---|---|---|
+| F1 · fumaça com `ApplyGuardrail` sem guardrail nem permissão | O teste de fumaça da plataforma ficou só com o gateway: `tools/list` vazio e `tools/call` negado. A chamada direta ao guardrail sem o Claude, que o RNF-002 pede na demonstração, é o DM-05, feito pelo agente do produto no guardrail dele. A linha de US$ 0,025 saiu da tabela de custo e foi para o teto do produto | **Teste só do que o stack possui.** O arquiteto testa em cada stack o que esse stack cria e destrói. O erro comum é dar à plataforma um guardrail só para a fumaça, ou permissão sobre o guardrail de um produto, o que quebra o isolamento entre states e cria um recurso sem função no produto (1.4, 2.3) |
+| F2 · ensaio com produto sintético sem root, chave, workflow nem custo | O ensaio de 48 h antes ficou só com a plataforma: apply, fumaça, DM-03 e destroy automático, com cerca de US$ 0,09 num dia separado. Isso basta para o R2. O R8 passa a ser provado no primeiro apply da D03: no ensaio, se ela já estiver pronta (opção de operação do dono na T084), ou no dia, antes do roteiro, com o apply falhando cedo | **Não planejar trabalho sem dono.** O arquiteto só põe no plano o que tem artefato, executor e custo, e usa a falha cedo do apply como gate antes do passo caro, que é a gravação. O erro comum é prometer um ensaio que ninguém consegue rodar e descobrir o problema no dia (1.4, 1.6) |
+| F3 · root do Floci sem motor, mas contrato e alarmes dependem dele | O id e o ARN do motor viraram entradas de composição do `observabilidade` e do `contrato`. No root real, vêm do módulo `politica` (TT-P01). No root do Floci, vêm de valores sintéticos fixos, marcados como sintéticos no relatório. O schema continua exigindo os dois campos. O ADR-0009 ganhou essa regra | **Injetar a dependência na composição, sem mexer em código correto.** O arquiteto deixa o teste fornecer o que o emulador não tem e registra a lacuna com evidência. O erro comum é tornar campos do contrato opcionais ou criar um "modo emulador", o que enfraquece o contrato que os produtos usam e esconde a lacuna (2.1, 3.6, 5.6) |
+| F4 · avaliação e coleta sem executor nem role | Entraram a role `00-plataforma-agentes-evidencias` (só leitura e `Evaluate`, confiada só pela role de deploy) e um workflow manual no ambiente `aws-lab`, que já existe. O relatório sai como artefato de 1 dia e passa pela revisão humana antes de entrar no repositório. Também entraram a linha de STRIDE, os testes TT-O05 e TH-13, o R9 e uma reserva de US$ 0,010 no custo | **Uma role por função, executor explícito e revisão humana antes de publicar.** O arquiteto separa quem implanta de quem lê e avalia e mantém a avaliação fora do destroy. O erro comum é rodar a avaliação com a role de deploy, ampla demais, ou como passo do destroy, que passaria a depender dela (1.4, 4.6, 5.5) |
+| F5 · cabeçalho dizia "rascunho" | O cabeçalho diz "aprovado (D-035), emenda 1 com nova aprovação pendente". A seção de ADRs explica que, depois do T000, os links chegam aos ADRs pelos redirecionamentos | **Estado do documento igual ao registro.** O arquiteto mantém o status do plano igual ao do `estado.json`. O erro comum é o leitor não saber qual versão vale e trabalhar sobre a errada (5.1) |
+| Custo refeito | Total de US$ 1,082. A soma original das linhas dava 1,097, e não 1,103 como estava escrito: um erro de soma de US$ 0,006, corrigido aqui. O teto fica em US$ 1,20 até a resposta à P00-P8 | **Calcular não é decidir.** O arquiteto refaz a conta com as mesmas fontes e leva a mudança de teto ao dono. O erro comum é ajustar o teto sozinho, para cima ou para baixo (Art. V; 5.6) |
+
+Fora da emenda, nada mudou: arquitetura, ADRs 0001 a 0008 e 0010, matriz dos demais requisitos e demais riscos. A D-037 (página e post da plataforma) muda só a T089 do `tasks.md`, não este plano.
