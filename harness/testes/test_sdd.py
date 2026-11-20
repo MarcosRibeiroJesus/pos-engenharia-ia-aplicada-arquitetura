@@ -63,6 +63,16 @@ class TestDelegacaoNoPlanoAprovado(unittest.TestCase):
             self.assertFalse(ok)
             self.assertIn("mudou", motivo)
 
+    def test_fim_de_linha_do_windows_nao_muda_o_hash_do_plano(self):
+        # Checkout com autocrlf no Windows grava o plano com CRLF; o conteúdo é o mesmo que foi aprovado.
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            plano = raiz / "specs" / "p" / "plan.md"
+            plano.write_bytes(b"# Plano\nlinha\n")
+            estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
+            plano.write_bytes(b"# Plano\r\nlinha\r\n")
+            self.assertEqual(estado.pode_delegar(est, "p", raiz), (True, ""))
+
     def test_aprovar_exige_plano_escrito_e_fonte(self):
         with tempfile.TemporaryDirectory() as t:
             raiz, est = repo_com_plano(Path(t))

@@ -82,7 +82,10 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
 
 def hash_do_plano(raiz: Path, p: dict) -> str | None:
     plano = raiz / p["specs"] / "plan.md"
-    return hashlib.sha256(plano.read_bytes()).hexdigest() if plano.exists() else None
+    if not plano.exists():
+        return None
+    # Fim de linha não é conteúdo: o autocrlf do Windows grava CRLF no checkout, e o hash aprovado usa LF.
+    return hashlib.sha256(plano.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def aprovar_plano(estado: dict, chave: str, fonte: str, data: str, raiz: Path = RAIZ) -> str:

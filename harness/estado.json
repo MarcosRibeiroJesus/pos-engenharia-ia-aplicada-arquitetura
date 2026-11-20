@@ -118,7 +118,7 @@
       "disciplina": "00",
       "tipo": "plataforma",
       "titulo": "Plataforma de agentes compartilhada na AWS",
-      "branch": "plataforma/00-plataforma-agentes-plano",
+      "branch": "plataforma/00-plataforma-agentes-impl",
       "pastas": [
         "plataforma/agentes/"
       ],
@@ -151,8 +151,8 @@
       "teto_diario_usd": 1.2,
       "plano_aprovado": {
         "data": "2026-11-20",
-        "fonte": "Marcos no chat em 2026-11-20 (BRT): \"Se for só isso pode mudar e já aprovo o plano\" (emenda 2: só alinhamento de texto à D-039 e ao ADR-0011)",
-        "sha256": "381c89746b167a9ada794935027d29c4bb20c1fae68c8beea52ef97fbc3f613a"
+        "fonte": "Marcos no chat em 2026-11-20, em resposta à pergunta sobre o endurecimento da policy (TT-S01): \"2 aprovo\" (sem Principal curinga e sem curinga em condição de conta; ADR-0014)",
+        "sha256": "6fc3b049aa7fb6ea9a3300b6ba38448a1ca50bef5ee6b95819aa7c5d944cb411"
       }
     }
   ]

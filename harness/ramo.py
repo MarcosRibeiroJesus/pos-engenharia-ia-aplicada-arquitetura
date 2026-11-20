@@ -10,7 +10,9 @@ from pathlib import Path
 
 
 def git(raiz: Path, *args: str, entrada: str | None = None, timeout: int = 30) -> str:
-    r = subprocess.run(["git", "-C", str(raiz), *args], input=entrada, capture_output=True, text=True, timeout=timeout)
+    # encoding explícito: o git fala UTF-8 em qualquer SO; no Windows o padrão seria cp1252 e quebraria caminhos com acento
+    r = subprocess.run(["git", "-C", str(raiz), *args], input=entrada, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=timeout)
     if r.returncode != 0:
         raise RuntimeError(r.stderr.strip() or f"git {' '.join(args)} falhou")
     return r.stdout

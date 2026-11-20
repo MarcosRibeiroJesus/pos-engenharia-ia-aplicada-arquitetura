@@ -1,0 +1,89 @@
+{
+ "_descricao": "Viola TT-S01: StringLike com aws:SourceAccount igual a \"*\". Gerada do plan com mock de um root sintético (T003, endurecimento de TT-S01, ADR-0014).",
+ "_regra": "TT-S01",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_sns_topic.alarmes",
+    "mode": "managed",
+    "type": "aws_sns_topic",
+    "name": "alarmes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "before": null,
+     "after": {
+      "application_failure_feedback_role_arn": null,
+      "application_success_feedback_role_arn": null,
+      "application_success_feedback_sample_rate": null,
+      "archive_policy": null,
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "beginning_archive_time": "ebrvj49j",
+      "content_based_deduplication": null,
+      "delivery_policy": null,
+      "display_name": null,
+      "fifo_throughput_scope": "ccw9yw3i",
+      "fifo_topic": null,
+      "firehose_failure_feedback_role_arn": null,
+      "firehose_success_feedback_role_arn": null,
+      "firehose_success_feedback_sample_rate": null,
+      "http_failure_feedback_role_arn": null,
+      "http_success_feedback_role_arn": null,
+      "http_success_feedback_sample_rate": null,
+      "id": "t3mftuv9",
+      "kms_master_key_id": null,
+      "lambda_failure_feedback_role_arn": null,
+      "lambda_success_feedback_role_arn": null,
+      "lambda_success_feedback_sample_rate": null,
+      "maximum_message_size": 0,
+      "name": "00-plataforma-agentes-alarmes",
+      "name_prefix": "84awstd4",
+      "owner": "w5y2jfik",
+      "policy": "mm7fp8r2",
+      "region": "8ugst5m7",
+      "signature_version": 0,
+      "sqs_failure_feedback_role_arn": null,
+      "sqs_success_feedback_role_arn": null,
+      "sqs_success_feedback_sample_rate": null,
+      "tags": null,
+      "tags_all": {},
+      "tracing_config": "tptr9kz8"
+     },
+     "after_unknown": {},
+     "before_sensitive": false,
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   },
+   {
+    "address": "aws_sns_topic_policy.conta_curinga",
+    "mode": "managed",
+    "type": "aws_sns_topic_policy",
+    "name": "conta_curinga",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "before": null,
+     "after": {
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "policy": "{\"Statement\":[{\"Action\":\"sns:Publish\",\"Condition\":{\"StringLike\":{\"aws:SourceAccount\":\"*\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudwatch.amazonaws.com\"},\"Resource\":\"arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes\"}],\"Version\":\"2012-10-17\"}"
+     },
+     "after_unknown": {
+      "id": true,
+      "owner": true,
+      "region": true
+     },
+     "before_sensitive": false,
+     "after_sensitive": {}
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}
