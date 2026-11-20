@@ -6,6 +6,18 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-039 · Ativação única da tag de custo, assim que possível · fonte: Marcos
+O Marcos respondeu à P00-P9 depois de entender que a ativação da chave `project` como tag de alocação de custo vale para a conta inteira: ela é feita uma única vez, assim que a chave aparecer no Billing.
+- **Por que muda a D-034:** o "pelo menos 48 h antes" só vale na primeira vez. Depois disso, nenhuma demonstração espera.
+- **Fonte:** AWS Billing, *Activating user-defined cost allocation tags*. A chave leva até 24 h para aparecer e mais até 24 h para ativar, e a ativação vale para todos os valores da chave.
+
+**Aplicado em:**
+- skill `ciclo-demonstracao`;
+- aviso do passo "Pré-requisitos da conta" em `harness/modelos/apply.yml` e no apply da plataforma;
+- teste `test_ativacao_da_tag_de_custo_e_unica_na_conta`;
+- T053, T084 e T086 da plataforma, nas correções da análise 1;
+- Monday: o card do envio manual foi atualizado.
+
 ### 2026-11-20 · D-038 · Emenda 1 do plano da plataforma aprovada; teto mantido · fonte: Marcos
 O Marcos aprovou o plano com a emenda 1, que fecha as lacunas F1 a F5:
 - o teste de fumaça só do gateway;

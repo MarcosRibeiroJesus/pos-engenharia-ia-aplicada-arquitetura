@@ -29,6 +29,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Tag de custo `project`** (D-039): a ativação é única na conta e vale para todos os projetos. O Marcos a faz assim que a chave aparecer no Billing, e nenhuma demonstração espera 48 h. Substitui o "48 h antes da demonstração" da D-034.
 - **Plataforma no site** (D-037): página própria em Arquiteturas AWS e post próprio, com link para o produto que a consome (D03 primeiro).
 - **Emenda 1 do plano da plataforma aprovada** (D-038), com o teto diário mantido em US$ 1,20 (P00-P8).
 - **Como explicar decisões ao Marcos** (D-036): pelo nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só os códigos da prova. Os ids ficam nos ADRs e aqui, ao lado do nome.
