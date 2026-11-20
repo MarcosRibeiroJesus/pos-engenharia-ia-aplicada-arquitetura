@@ -16,19 +16,19 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 
 ## Fase 0 · Preparação
 - [ ] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
-  - **Teste vermelho:** um teste em `harness/test_harness.py` afirma que `plataforma/agentes/adr/0001-*.md` a `0013-*.md` existem (os ADRs 0011 a 0013 vêm das correções da análise 1) e que todo link `adr/...` do `spec.md` e do `plan.md` resolve para um arquivo.
+  - **Teste vermelho:** um teste em `harness/testes/test_<assunto>.py` afirma que `plataforma/agentes/adr/0001-*.md` a `0013-*.md` existem (os ADRs 0011 a 0013 vêm das correções da análise 1) e que todo link `adr/...` do `spec.md` e do `plan.md` resolve para um arquivo.
   - **Arquivos:** `git mv specs/00-plataforma-agentes/adr/*.md plataforma/agentes/adr/`; um arquivo de redirecionamento por ADR em `specs/00-plataforma-agentes/adr/` (mesmo nome, só o título e o link para o novo local).
   - **Aceite:** o conteúdo dos ADRs fica só em `plataforma/agentes/adr/`; os links do `plan.md` continuam resolvendo, pelos redirecionamentos, sem editar o `plan.md` (mudar o plano derruba a aprovação, D-033); o hash do `plan.md` segue igual ao de `plano_aprovado`.
   - **Depende de:** fase `implementar`.
 
 ## Fase 1 · Regras da constituição como testes
 - [ ] T001 [engenheiro-terraform] Esqueleto do stack com tags, região e state remoto · Art. VI, RNF-003, RNF-006 · TT-T01, TT-T03, TH-08
-  - **Teste vermelho:** `tests/tags.tftest.hcl` copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "00-plataforma-agentes"` e o assert iterando sobre o output `tags_dos_recursos`; `tests/regiao.tftest.hcl` com `var.regiao` padrão `us-east-1`; TH-08 em `harness/test_harness.py` lê `versions.tf` e exige `backend "s3" {}` parcial e `use_lockfile`.
+  - **Teste vermelho:** `tests/tags.tftest.hcl` copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "00-plataforma-agentes"` e o assert iterando sobre o output `tags_dos_recursos`; `tests/regiao.tftest.hcl` com `var.regiao` padrão `us-east-1`; TH-08 em `harness/testes/test_<assunto>.py` lê `versions.tf` e exige `backend "s3" {}` parcial e `use_lockfile`.
   - **Arquivos:** `plataforma/agentes/infra/terraform/{versions.tf,providers.tf,variables.tf,outputs.tf,terraform.tfvars.example}`, `tests/tags.tftest.hcl`, `tests/regiao.tftest.hcl`.
   - **Aceite:** `default_tags` com `project = "00-plataforma-agentes"` e `managed-by = "terraform"`; `module` vem do `local.tags` de cada módulo (D-031); versão mínima do `hashicorp/aws` fixada depois de `terraform init` confirmar `aws_bedrockagentcore_gateway`, `_gateway_target`, `_policy`, `_policy_engine` e `aws_bedrock_guardrail` com `tier_config` (plano, seção Provider); `fmt`, `validate`, `tflint` e `checkov` limpos.
 - [ ] T002 [engenheiro-terraform] Workflow de CI do projeto · Art. III, RNF-005, RNF-007 · TH-12 (novo, desta fase)
   - **Teste vermelho:** teste do harness reprova se `.github/workflows/00-plataforma-agentes-ci.yml` não existe ou não roda `terraform fmt -check`, `terraform validate` e `terraform test` no root e em cada módulo com `tests/`, e `python3 -m unittest discover -s plataforma/agentes/tests`.
-  - **Arquivos:** `.github/workflows/00-plataforma-agentes-ci.yml`, `harness/test_harness.py`.
+  - **Arquivos:** `.github/workflows/00-plataforma-agentes-ci.yml`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** gatilho em `pull_request` com filtro de caminho `plataforma/agentes/**`, `infra/conta/**` e `harness/**`; `permissions: contents: read`; actions fixadas por SHA (`TestVersoesDasActions`); sem OIDC e sem credencial da AWS; o texto do workflow não cita `bedrock` nem `Converse` (TH-11). O job do Floci entra no T080.
   - **Depende de:** T001.
 
@@ -54,9 +54,9 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - Nenhum output expõe os endereços. O repositório e os logs do Actions são públicos (Art. VIII).
   - **Depende de:** T010.
 - [ ] T012 [P] [engenheiro-terraform] Módulo `nucleo`: AWS Budgets diário com o teto · Art. V, RNF-002 · TT-K01, TH-06
-  - **Teste vermelho:** `modules/nucleo/tests/budgets.tftest.hcl` afirma `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd` e filtro `user:project$00-plataforma-agentes`; TH-06 em `harness/test_harness.py` lê o padrão de `teto_diario_usd` em `variables.tf` do root e compara com `teto_diario_usd` do `harness/estado.json` (1,2).
+  - **Teste vermelho:** `modules/nucleo/tests/budgets.tftest.hcl` afirma `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd` e filtro `user:project$00-plataforma-agentes`; TH-06 em `harness/testes/test_<assunto>.py` lê o padrão de `teto_diario_usd` em `variables.tf` do root e compara com `teto_diario_usd` do `harness/estado.json` (1,2).
   - **TT-S06 (análise 1, A06):** o `test_dados_pessoais.py` do T011 também reprova se `subscriber_email_addresses` das notificações do `aws_budgets_budget` não for sensível no plan.
-  - **Arquivos:** `modules/nucleo/budgets.tf`, `modules/nucleo/tests/budgets.tftest.hcl`, `variables.tf` do root, `harness/test_harness.py`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`.
+  - **Arquivos:** `modules/nucleo/budgets.tf`, `modules/nucleo/tests/budgets.tftest.hcl`, `variables.tf` do root, `harness/testes/test_<assunto>.py`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`.
   - **Aceite:**
     - Os alertas do orçamento vão para os mesmos e-mails do parâmetro `/00-conta/alertas/emails`, lidos do atributo sensível. Mudar o teto num lugar só reprova o TH-06.
     - **O filtro `user:project$00-plataforma-agentes` só enxerga custo depois que a tag `project` estiver ativa como tag de alocação de custo** (D-039, T053). Antes disso, o orçamento diário não vê nada, e sobra só o mensal. O README (T072) e o roteiro do ensaio (T084) dizem isso (análise 1, A17).
@@ -177,8 +177,8 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - **Nas T041 a T044 e na T048,** o especialista segue as regras da skill `evolucao-do-harness`, mesmo sem tê-la pré-carregada: teste primeiro, só a biblioteca padrão do Python e o registro em `harness/VERSAO.md`.
 
 - [ ] T040 [operador-harness] Campo `consome` no `estado.json` · RF-008, ADR-0007 · TH-01 (pré-requisito)
-  - **Teste vermelho:** testes em `harness/test_harness.py`: `estado.py validar` reprova `consome` que cita chave inexistente, o próprio projeto ou projeto que não é do tipo `plataforma`.
-  - **Arquivos:** `harness/estado.py`, `harness/estado.json` (`"consome": ["00-plataforma-agentes"]` no `03-mcp-regras-cdb`, D-034), `harness/test_harness.py`.
+  - **Teste vermelho:** testes em `harness/testes/test_<assunto>.py`: `estado.py validar` reprova `consome` que cita chave inexistente, o próprio projeto ou projeto que não é do tipo `plataforma`.
+  - **Arquivos:** `harness/estado.py`, `harness/estado.json` (`"consome": ["00-plataforma-agentes"]` no `03-mcp-regras-cdb`, D-034), `harness/testes/test_<assunto>.py`.
   - **Aceite:** `validar` ok; 64 testes atuais e os novos verdes.
 - [ ] T041 [engenheiro-terraform] `infra.py registrar` e `estender` com o limite do consumidor · RF-008, ADR-0007 · TH-01
   - **Teste vermelho:** `TestPrazoDaInfra` ganha casos:
@@ -187,12 +187,12 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - `estender` do consumidor tem o mesmo limite;
     - a plataforma continua limitada a 24 h desde o próprio apply (D-024);
     - **análise 1, A10:** registrar consumidor quando faltam menos de 2 h para a plataforma vencer falha. São 1 h de margem (ADR-0007) mais 1 h de prazo útil mínimo, porque o agendador roda de hora em hora.
-  - **Arquivos:** `harness/infra.py`, `harness/test_harness.py`.
+  - **Arquivos:** `harness/infra.py`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** mensagens de erro dizem o limite e o motivo (o que falhou e se é retentável, 5.3). No caso de pouco tempo, a mensagem diz quanto falta e que a plataforma pode ser estendida com `infra.py estender`, até 24 h desde o apply dela.
   - **Depende de:** T040.
 - [ ] T042 [engenheiro-terraform] `vencidos` com espera da plataforma e destroy dos consumidores primeiro · RF-008, ADR-0007 · TH-02
   - **Teste vermelho:** casos em `TestPrazoDaInfra`: plataforma vencida com consumidor registrado vai para `aguardando`; quando a plataforma vence, todo consumidor registrado vai para `destruir`, mesmo antes do próprio prazo; o redisparo de 3 horas continua valendo.
-  - **Arquivos:** `harness/infra.py`, `harness/test_harness.py`; `.github/workflows/expirar-infra.yml` só se o tratamento de `aguardando` precisar de passo novo.
+  - **Arquivos:** `harness/infra.py`, `harness/testes/test_<assunto>.py`; `.github/workflows/expirar-infra.yml` só se o tratamento de `aguardando` precisar de passo novo.
   - **Aceite:** o agendador nunca dispara o destroy da plataforma com consumidor registrado.
   - **Depende de:** T041.
 - [ ] T043 [engenheiro-terraform] Comandos `dependentes` e `requisitos` nos modelos de apply e destroy · RF-008, ADR-0007 · TH-03
@@ -201,7 +201,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - `requisitos 03-mcp-regras-cdb` sai com 1 sem a plataforma no ar e, pela análise 1 (A10), também quando faltam menos de 2 h para a plataforma vencer (mesma regra do T041);
     - `estado.checar_destroy` e `estado.checar_apply` reprovam workflow sem o passo;
     - **análise 1, A10:** o `estado.checar_apply` também reprova um modelo de apply em que o registro do prazo roda depois do `terraform apply`. A fixture é o modelo de hoje, com o job `prazo` em `needs: apply`.
-  - **Arquivos:** `harness/infra.py`, `harness/estado.py`, `harness/modelos/apply.yml`, `harness/modelos/destroy.yml` (passo `dependentes` antes do `terraform destroy`), `.github/workflows/00-plataforma-agentes-{apply,destroy}.yml` regenerados do modelo, `harness/test_harness.py`.
+  - **Arquivos:** `harness/infra.py`, `harness/estado.py`, `harness/modelos/apply.yml`, `harness/modelos/destroy.yml` (passo `dependentes` antes do `terraform destroy`), `.github/workflows/00-plataforma-agentes-{apply,destroy}.yml` regenerados do modelo, `harness/testes/test_<assunto>.py`.
     - **No `apply.yml`, o `requisitos` e o registro do prazo rodam antes do `terraform apply`.** O `requisitos` é o primeiro passo do job `prazo`, e o job `apply` passa a ter `needs: prazo`. Assim, o prazo é registrado antes de criar custo (ADR-0007, correção da análise 1). Se o apply falhar no meio, o registro fica, e o agendador destrói o que foi criado no prazo.
   - **Aceite:** `test_workflows_da_plataforma_iguais_ao_modelo` verde; o mesmo modelo serve plataforma e produtos; actions continuam fixadas por SHA.
     - **D-039:** o aviso do passo "Pré-requisitos da conta" deixa de pedir o `infra/conta` "pelo menos 48 h antes da demonstração". Ele passa a dizer que a tag `project` é ativada uma vez na conta, assim que a chave aparecer no Billing (T053).
@@ -210,26 +210,26 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** T041.
 - [ ] T044 [engenheiro-terraform] Apply recusa `LOG_ONLY` antes do Terraform · RF-002, ADR-0005 · TH-05
   - **Teste vermelho:** teste do harness: um apply com `TF_VAR_modo_politica=LOG_ONLY` no ambiente do passo, ou `modo_politica` igual a `LOG_ONLY` num `.tfvars` do stack, faz o passo sair com 1; `estado.checar_apply` reprova workflow sem o passo.
-  - **Arquivos:** `harness/modelos/apply.yml`, `.github/workflows/00-plataforma-agentes-apply.yml` regenerado, `harness/estado.py`, `harness/test_harness.py`.
+  - **Arquivos:** `harness/modelos/apply.yml`, `.github/workflows/00-plataforma-agentes-apply.yml` regenerado, `harness/estado.py`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** o passo vai no modelo, porque o teste de igualdade exige workflow da plataforma idêntico ao modelo; para projetos sem a variável, ele não tem efeito. A calibração roda fora do workflow de demonstração (ADR-0005).
   - **Depende de:** T043.
 - [ ] T045 [P] [engenheiro-seguranca] Gate de recursos brutos do AgentCore fora da plataforma · RF-001, RNF-001 · TH-04
   - **Teste vermelho:** teste do harness com um `.tf` sintético em `modulos/` que declara `aws_bedrockagentcore_gateway_target`; o gate precisa reprovar. Os quatro tipos proibidos: `aws_bedrockagentcore_gateway`, `_gateway_target`, `_policy` e `_policy_engine`.
-  - **Arquivos:** `harness/estado.py` (subcomando `checar-recursos`, que lê os `.tf` alterados), `.githooks/pre-commit`, `.github/workflows/harness.yml`, `harness/test_harness.py`.
+  - **Arquivos:** `harness/estado.py` (subcomando `checar-recursos`, que lê os `.tf` alterados), `.githooks/pre-commit`, `.github/workflows/harness.yml`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** arquivos sob `plataforma/agentes/infra/terraform/` (inclui `modules/registro-produto`) passam; qualquer outro caminho reprova no `pre-commit` e no CI.
 - [ ] T046 [P] [operador-harness] Cobertura da matriz · Art. III, RNF-007 · TH-07
   - **Teste vermelho:** teste do harness que extrai todo `RF-0NN` e `RNF-0NN` do `spec.md` e reprova se algum não aparece em `matriz.md` com pelo menos uma tarefa e um teste; fixture de matriz sem o RF-009 reprova.
-  - **Arquivos:** `harness/test_harness.py`.
+  - **Arquivos:** `harness/testes/test_<assunto>.py`.
   - **Aceite:** verde com o `matriz.md` desta fase.
 - [ ] T047 [P] [operador-harness] Nenhum valor da plataforma à mão e CI de código sem Bedrock · RF-007, RNF-002, RNF-005 · TH-10, TH-11
   - **Teste vermelho:** teste do harness: uma ocorrência sintética de `arn:aws:bedrock` em `plataforma/agentes/src/` reprova (fora de `tests/gravacoes/`); um workflow sintético com `bedrock-runtime` ou `Converse` fora dos de apply e destroy reprova.
-  - **Arquivos:** `harness/test_harness.py`.
+  - **Arquivos:** `harness/testes/test_<assunto>.py`.
   - **Aceite:** o repositório atual passa; a busca vale também para `modulos/03-mcp/` quando a D03 tiver código (critério de sucesso 1).
     - **Análise 1, A12:** o critério 1 cita "o código **e o Terraform** do produto". Então a busca do TH-10 inclui de forma explícita os `.tf` e `.tfvars` de `modulos/03-mcp/arquitetura/`, além do código.
     - Uma fixture sintética de `.tf` com `arn:aws:bedrock-agentcore` precisa reprovar. As gravações em `tests/gravacoes/` continuam fora da busca.
 
 - [ ] T048 [engenheiro-terraform] Verificação de sobras no modelo de destroy: chave KMS em exclusão e caminho do SSM (análise 1, A01 e A12) · Art. V, RF-008, critério de sucesso 3 · TH-14 (novo, da análise 1)
-  - **Teste vermelho:** `TestVerificacaoDeSobras` em `harness/test_harness.py`. Ele usa uma saída sintética da Tagging API e estados sintéticos do `kms describe-key`, sem chamar a AWS:
+  - **Teste vermelho:** `TestVerificacaoDeSobras` em `harness/testes/test_<assunto>.py`. Ele usa uma saída sintética da Tagging API e estados sintéticos do `kms describe-key`, sem chamar a AWS:
     - só uma chave KMS em `PendingDeletion`: passa;
     - essa chave mais qualquer outro ARN: reprova e lista o outro ARN;
     - uma chave KMS `Enabled`: reprova;
@@ -238,7 +238,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - o `estado.checar_destroy` reprova um workflow de destroy sem o passo de caminho ou sem o filtro.
   - **Arquivos:**
     - `harness/infra.py`: a lógica, numa função pura testável, que recebe os ARNs, os estados das chaves e os nomes de parâmetro e devolve as sobras;
-    - `harness/estado.py`, `harness/test_harness.py`;
+    - `harness/estado.py`, `harness/testes/test_<assunto>.py`;
     - `harness/modelos/destroy.yml`, no passo "Verificar sobras pela tag do projeto". Ele chama `aws kms describe-key` para cada ARN `arn:aws:kms:` e `aws ssm get-parameters-by-path --path "/$CHAVE/" --recursive`, e entrega as saídas à função;
     - `.github/workflows/00-plataforma-agentes-destroy.yml`, regenerado do modelo.
   - **Aceite:**
@@ -338,8 +338,8 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** T060.
 
 - [ ] T068 [engenheiro-terraform] Role e workflow de evidências (emenda 1, F4) · RF-006, RNF-001, RNF-005 · TT-O05, TH-13, TH-11 (extensão)
-  - **Teste vermelho:** `modules/observabilidade/tests/evidencias.tftest.hcl` afirma a role `00-plataforma-agentes-evidencias`, confiada só pela role de deploy, com exatamente as ações `cloudwatch:GetMetricData`, `logs:StartQuery` (nos grupos `aws/spans` e de logs do gateway), `logs:GetQueryResults`, `ssm:GetParameter` (no `comum` e em `produtos/*`) e `bedrock-agentcore:Evaluate`, sem `bedrock:InvokeModel` e sem `iam:PassRole`. TH-13 em `harness/test_harness.py` reprova se `.github/workflows/00-plataforma-agentes-evidencias.yml` não tem só `workflow_dispatch` com o input `produto`, o ambiente `aws-lab`, OIDC, `permissions` com `id-token: write` e `contents: read`, e upload do relatório com `retention-days: 1`. O TH-11 do T047 passa a aceitar esse workflow como de operação e continua reprovando um workflow sintético com gatilho `pull_request` que cite `bedrock`.
-  - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/evidencias.tf`, `modules/observabilidade/tests/evidencias.tftest.hcl`, `.github/workflows/00-plataforma-agentes-evidencias.yml`, `harness/test_harness.py`.
+  - **Teste vermelho:** `modules/observabilidade/tests/evidencias.tftest.hcl` afirma a role `00-plataforma-agentes-evidencias`, confiada só pela role de deploy, com exatamente as ações `cloudwatch:GetMetricData`, `logs:StartQuery` (nos grupos `aws/spans` e de logs do gateway), `logs:GetQueryResults`, `ssm:GetParameter` (no `comum` e em `produtos/*`) e `bedrock-agentcore:Evaluate`, sem `bedrock:InvokeModel` e sem `iam:PassRole`. TH-13 em `harness/testes/test_<assunto>.py` reprova se `.github/workflows/00-plataforma-agentes-evidencias.yml` não tem só `workflow_dispatch` com o input `produto`, o ambiente `aws-lab`, OIDC, `permissions` com `id-token: write` e `contents: read`, e upload do relatório com `retention-days: 1`. O TH-11 do T047 passa a aceitar esse workflow como de operação e continua reprovando um workflow sintético com gatilho `pull_request` que cite `bedrock`.
+  - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/evidencias.tf`, `modules/observabilidade/tests/evidencias.tftest.hcl`, `.github/workflows/00-plataforma-agentes-evidencias.yml`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** actions fixadas por SHA (`TestVersoesDasActions`); nenhuma declaração com ação `*` e recurso `*` (T003 verde); onde a referência de autorização só aceitar `*`, exceção do checkov com ADR de implementação (R9); o relatório nunca entra em commit pelo workflow.
   - **Depende de:** T016, T047, T067.
 
@@ -352,7 +352,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - não enviar o relatório como artefato com `retention-days: 1`.
 
     O TH-11 continua reprovando um workflow sintético com gatilho `pull_request` que cite `bedrock`.
-  - **Arquivos:** `.github/workflows/00-plataforma-agentes-evidencias.yml`, `harness/test_harness.py`.
+  - **Arquivos:** `.github/workflows/00-plataforma-agentes-evidencias.yml`, `harness/testes/test_<assunto>.py`.
   - **Aceite:**
     - **Execução:** o job roda `scripts/fumaca.py --negacoes 5` (T066). Assim, o dono só dispara o job, sem credencial local para encadear roles, porque a role de fumaça é confiada só pela role de deploy.
     - **Leituras com a credencial de quem chama** (a role de deploy, só leitura): o contrato, o estado dos alarmes (`describe-alarms`) e o `list-metrics` do namespace `AWS/Bedrock-AgentCore`.
@@ -368,7 +368,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - `gate_sdd.py`, `pre-commit` e `estado.py checar-arquivos` bloqueiam `plataforma/agentes/` antes de implementar (`TestGateSddPorArquivo`); o projeto nasceu por `novo_projeto.py` (`TestCaminhoPadrao`).
 - [ ] T072 [engenheiro-terraform] README com até 5 passos e o teto · Art. V, Art. VI, RNF-003 · TH-09
   - **Teste vermelho:** teste do harness reprova `plataforma/agentes/README.md` com mais de 5 passos numerados ou sem o teto `US$ 1,20`.
-  - **Arquivos:** `plataforma/agentes/README.md`, `harness/test_harness.py`.
+  - **Arquivos:** `plataforma/agentes/README.md`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** o README traz:
     - **pré-requisitos:** conta com OIDC, `infra/conta` aplicado e tag `project` ativa como tag de alocação de custo, que é ativada uma vez na conta assim que a chave aparece (D-039, T053);
     - **ordem do dia:** plataforma, produto, roteiro, evidências, destroy do produto e destroy da plataforma;
@@ -378,12 +378,12 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** T020, T038, T043.
 - [ ] T073 [finops-demonstracao] Custo do PR contra o teto e custo fixo ocioso · Art. V, RNF-002 · ES (Infracost), TT-K02
   - **Teste vermelho:** o `gate_custo.py` roda sobre a saída do Infracost do branch, e uma fixture com recurso de custo fixo (por exemplo, endpoint de interface) precisa reprovar.
-    - **TH-15 (novo, análise 1, A09):** um teste em `harness/test_harness.py` reprova se `plataforma/agentes/infra/terraform/infracost-usage.yml` não existir. Também reprova se o arquivo não tiver as premissas da tabela "Custo do lab" para os recursos cobrados por uso: 1.000 chamadas, 100 tools, 10 MB de logs, as publicações do SNS e as requisições do KMS.
+    - **TH-15 (novo, análise 1, A09):** um teste em `harness/testes/test_<assunto>.py` reprova se `plataforma/agentes/infra/terraform/infracost-usage.yml` não existir. Também reprova se o arquivo não tiver as premissas da tabela "Custo do lab" para os recursos cobrados por uso: 1.000 chamadas, 100 tools, 10 MB de logs, as publicações do SNS e as requisições do KMS.
     - Também reprova se a geração do `infracost.yml` no `seguranca.yml` não passar `usage_file` quando o diretório tiver esse arquivo.
   - **Arquivos:**
     - `plataforma/agentes/infra/terraform/infracost-usage.yml`;
     - o passo que gera o `infracost.yml` no `.github/workflows/seguranca.yml`, que acrescenta `usage_file` por diretório quando o arquivo existe, sem mudar nada para os outros projetos;
-    - `harness/test_harness.py`;
+    - `harness/testes/test_<assunto>.py`;
     - o comentário de revisão no PR.
   - **Aceite:** custo de 24 h do root ≤ US$ 1,20; nenhum recurso fora do destroy; diferenças contra a estimativa do plano explicadas.
     - **O comentário lista, linha a linha da tabela "Custo do lab", o que o Infracost cobriu e o que ficou "não coberto",** com o valor do plano ao lado. O AgentCore e o `InvokeGuardrailChecks` provavelmente não são cobertos (inferido).
@@ -470,12 +470,12 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** T086, T087.
 - [ ] T089 [redator-tecnico] Post da plataforma (D-037) · Art. VIII, D-037
   - **Teste vermelho:** teste do harness reprova se `plataforma/agentes/posts/aws.md` não existe, se não traz link para a página do produto que consome a plataforma (a D03 primeiro), se cita número de custo ou de demonstração sem fonte, ou se fala do curso (regras do site).
-  - **Arquivos:** `plataforma/agentes/posts/aws.md`, `harness/test_harness.py`.
+  - **Arquivos:** `plataforma/agentes/posts/aws.md`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** tom técnico para engenheiros seniores; o que ainda não foi medido aparece como pendente; sem post de cloud comparativa, porque a plataforma não tem cloud comparativa (skill `site-projeto`).
   - **Depende de:** T087, T088.
 - [ ] T090 [desenvolvedor-site] Página da plataforma na trilha Arquiteturas AWS (D-037) · D-037
   - **Teste vermelho:** teste do harness reprova se `site/index.html` não tem um item `type: "arquitetura"` da `00-plataforma-agentes`, ou se a página não tem diagrama, ADRs, custo de um dia, último relatório de teste, link para o código e link para a página da D03, com o link de volta na página da D03.
-  - **Arquivos:** `site/index.html` (`ITEMS`), a página do projeto em `site/`, `harness/test_harness.py`.
+  - **Arquivos:** `site/index.html` (`ITEMS`), a página do projeto em `site/`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** segue a skill `site-projeto`; HTML e CSS estáticos; o post do T089 aparece em Posts; publicar no GitHub Pages (merge) continua com o dono.
   - **Depende de:** T089.
 
