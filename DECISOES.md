@@ -57,4 +57,4 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
 - P00-P1: dentro de um plano SDD aprovado, a orquestração pode delegar aos especialistas sem aprovar cada disparo?
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges: #16, #17, #18, #9, #10 e #11 já mergeados. Faltam o #19 (padrão de tags D-031 e trava D-032) e o #12 (painel). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.
+- Merges: #16, #17, #18, #9, #10 e #11 já mergeados. Faltam o #20 (padrão de tags D-031 e trava D-032) e o #12 (painel). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.
