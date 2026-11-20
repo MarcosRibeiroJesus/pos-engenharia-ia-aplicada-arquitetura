@@ -25,7 +25,13 @@ Leitura aplicada:
 - hook `.claude/hooks/gate_execucao.py`, que nega push com força, push no `main`, merge e apply ou destroy fora do Floci;
 - `.github/ia/provedor.sh` e `seguranca.yml`: o token da assinatura primeiro, com a chave da API vazia quando há token;
 - `CLAUDE.md` e `AGENTS.md`;
-- teste `harness/testes/test_execucao_autonoma.py`.
+- teste `harness/testes/test_execucao_autonoma.py`;
+- correções da revisão automática do próprio PR #34, a primeira com o token da assinatura:
+  - a lista de comandos ficou mais estreita: sem interpretador genérico, sem `gh api` livre, sem Docker livre e sem WebFetch;
+  - o `gate_execucao.py` passou a analisar o comando com shlex;
+  - entrou a trava no git, `harness/push_seguro.py` no `pre-push`;
+  - na esteira, o token só no passo, os scripts e agentes vindos da base, `--setting-sources user` e `git add -u`;
+  - o Dependabot ganhou cooldown de 7 dias.
 
 ### 2026-11-20 · D-046 · Quem grava a memória compartilhada e como · fonte: delegada
 - **Contexto:** a sessão local gravou a D-044 e a D-045, mas a regra dizia que só a conversa de orquestração escrevia no branch. No meio disso houve um incidente de nomes corrompidos, já restaurado e com o teste `test_git_utf8.py`.
