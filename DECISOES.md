@@ -31,6 +31,11 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **D01 (recomendação), respostas da spec retroativa:**
+  - lote como lab sintético fechado: os dois jobs do Glue que faltam e um XGBoost pequeno (D-051);
+  - MWAA ligado só numa janela curta da demonstração, com `prazo_horas` curto (D-052);
+  - guardrail sem tópicos extras, porque o código já barra preço, desconto e frete (D-053);
+  - publicação só da página e do post AWS, com o relatório de teste (D-054).
 - **D02 (assistente de agendamento): avaliação e traces** (D-048):
   - gate no CI com respostas gravadas;
   - traces no Langfuse Cloud, plano Hobby gratuito, só com dados sintéticos;

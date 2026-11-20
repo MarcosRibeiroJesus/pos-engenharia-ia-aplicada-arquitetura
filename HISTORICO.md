@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-051 a D-054 · D01 (recomendação): respostas da spec retroativa · fonte: Marcos
+Respostas às perguntas P01-P1 a P01-P4 da spec retroativa:
+- **D-051, escopo do lote:** lab sintético fechado. Entram os dois jobs do Glue que faltam e um XGBoost pequeno sobre dados sintéticos (recomendação aceita).
+- **D-052, MWAA na demonstração:** ligado numa janela curta, com `prazo_horas` curto. A recomendação era desligado. O teto soma 24 h do resto do stack e só a janela do MWAA.
+- **D-053, guardrail:** nenhum tópico extra, porque o código já barra preço, desconto e frete (recomendação aceita).
+- **D-054, publicação:** só a página do projeto e o post AWS, com o relatório de teste. O post GCP não é publicado, e o design doc da GCP fica no repositório. A recomendação era publicar tudo.
+
+**Aplicado em:**
+- `specs/01-recomendacao/spec.md` (RF-107, RF-109, RF-110, RNF-102, publicação e perguntas respondidas);
+- `harness/estado.json` (decisões do projeto, fase `planejar`).
+
 ### 2026-11-20 · D-050 · Códigos sempre com nome · fonte: Marcos
 O Marcos pediu: "quando for falar desses códigos, coloque um nome resumido do que é para ficar claro para mim". Exemplo: D01 (recomendação), P00-P3 (primeiro consumidor da plataforma).
 
