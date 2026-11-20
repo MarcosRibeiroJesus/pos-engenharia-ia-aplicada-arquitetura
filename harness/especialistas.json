@@ -96,7 +96,8 @@
         "terraform-tdd",
         "sdd-implementar",
         "ciclo-demonstracao",
-        "custo-diario"
+        "custo-diario",
+        "evolucao-do-harness"
       ],
       "plugins": [
         "terraform@hashicorp"
