@@ -1,6 +1,6 @@
 # Versão do harness
 
-**Versão atual: 0.5.0** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
+**Versão atual: 0.5.1** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
 
 ## Critérios para a 1.0 (estável e testada)
 | # | Critério | Como se prova | Situação |
@@ -15,6 +15,11 @@
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico
+- **0.5.1:**
+  - padrão de tags (D-031);
+  - trava de branch mergeado (D-032);
+  - correções da esteira nos workflows (ADR 0002 e 0003);
+  - actions com um único SHA em workflows e modelos, com teste.
 - **0.5.0:**
   - caminho padrão (`novo_projeto.py`);
   - plataforma de agentes compartilhada como projeto SDD;
