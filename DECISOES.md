@@ -12,6 +12,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **Sem `Principal "*"` na policy da plataforma** (D-044): nem com condição; valores de condição de conta sem curinga (`*` ou `?`). ADR-0014.
 - **SDD obrigatório** (D-016, D-017). Todo código nasce de spec → plano → tarefas → análise aprovada, em `specs/<chave>/`; o gate nega código antes da fase implementar. Projetos em andamento fazem primeiro a spec retroativa. Comece toda sessão pela skill `retomar`.
 - **Qualquer agente (Claude Code, Antigravity, Copilot) segue o `AGENTS.md`** (D-018, D-019).
   - Comece com `bash harness/init.sh` e `python3 harness/memoria.py ler`.
