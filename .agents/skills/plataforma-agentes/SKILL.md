@@ -22,6 +22,11 @@ Os produtos não repetem governança: a plataforma concentra o que uma empresa c
 | Identidade | o agente se autentica no gateway; segredo nunca entra no prompt | 2.2 |
 | Observabilidade e evals | spans e métricas por produto; o gate de CI segue com respostas gravadas | 4.6, 5.5 |
 
+## Primeiro consumidor e alarmes (D-034)
+- **O primeiro produto a consumir a plataforma é a D03** (`03-mcp-regras-cdb`, servidor MCP como alvo do gateway). Confira a versão de MCP que o gateway aceita contra a lane de compatibilidade da D03.
+- **Os alarmes da plataforma vão para os mesmos e-mails de `emails_alerta` do `infra/conta`,** sem variável nova.
+- **As configurações da conta** (tag de custo e Transaction Search) seguem a skill `ciclo-demonstracao`.
+
 ## Tríade letal
 O mesmo agente não pode ter, ao mesmo tempo, dado privado, conteúdo não confiável e um canal de saída. Se o produto precisa das três, divida em agentes com a política separando os papéis, e documente no modelo de ameaças.
 
