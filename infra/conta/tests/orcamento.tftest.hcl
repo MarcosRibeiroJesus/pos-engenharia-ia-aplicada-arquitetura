@@ -35,6 +35,27 @@ run "tags_obrigatorias" {
     condition     = alltrue([for k in ["project", "module", "managed-by"] : contains(keys(aws_budgets_budget.mensal.tags), k)])
     error_message = "Tags project, module e managed-by em todos os recursos (Art. VI)."
   }
+  # Os mesmos padrões da política de tags do Infracost (D-031).
+  assert {
+    condition     = can(regex("^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$", aws_budgets_budget.mensal.tags["project"]))
+    error_message = "project é a chave do projeto (NN-nome-em-kebab)."
+  }
+  assert {
+    condition     = can(regex("^[a-z0-9]+(-[a-z0-9]+)*$", aws_budgets_budget.mensal.tags["module"]))
+    error_message = "module em minúsculas e hífen."
+  }
+  assert {
+    condition     = aws_budgets_budget.mensal.tags["managed-by"] == "terraform"
+    error_message = "managed-by é sempre terraform: recurso manual escapa do destroy (D-021)."
+  }
+}
+
+run "nome_com_prefixo_do_projeto" {
+  command = plan
+  assert {
+    condition     = startswith(aws_budgets_budget.mensal.name, "00-conta-")
+    error_message = "Nome com o prefixo da chave do projeto (D-029)."
+  }
 }
 
 run "sem_email_falha" {

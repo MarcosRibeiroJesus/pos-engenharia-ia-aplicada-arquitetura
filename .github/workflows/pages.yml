@@ -6,10 +6,9 @@ on:
     paths: ["site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
+# Permissões mínimas no topo; o job de publicação recebe só o que precisa (ADR 0002).
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -18,6 +17,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

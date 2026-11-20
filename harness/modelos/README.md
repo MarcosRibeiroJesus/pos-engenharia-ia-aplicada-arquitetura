@@ -1,6 +1,6 @@
 # Modelos de workflow para infraestrutura real
 
-Ponto de partida para o apply e o destroy de cada projeto com `infra_real: true` (Artigo V, D-021 e D-022). Copie para `.github/workflows/<chave>-apply.yml` e `.github/workflows/<chave>-destroy.yml` e troque os valores marcados com `TROCAR`. O `harness/estado.py validar` confere os requisitos a partir da fase `verificar`.
+Ponto de partida para o apply, o destroy e o teste de tags (`tags.tftest.hcl`, D-031) de cada projeto com `infra_real: true` (Artigo V, D-021 e D-022). Copie para `.github/workflows/<chave>-apply.yml` e `.github/workflows/<chave>-destroy.yml` e troque os valores marcados com `TROCAR`. O `harness/estado.py validar` confere os requisitos a partir da fase `verificar`.
 
 ## Ciclo da demonstração
 1. **Apply:** disparo manual com `prazo_horas` (padrão e máximo 24, D-024). O workflow registra o prazo no branch `infra-no-ar`.

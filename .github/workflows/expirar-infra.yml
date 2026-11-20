@@ -54,6 +54,8 @@ jobs:
             python3 harness/infra.py marcar-avisado "$projeto"
           done < avisos.tsv
       - name: Disparar o destroy dos vencidos
+        env:
+          RAMO_PADRAO: ${{ github.event.repository.default_branch }}
         run: |
           python3 - <<'PY' > destruir.tsv
           import json
@@ -63,6 +65,6 @@ jobs:
           while IFS=$'\t' read -r projeto stack workflow; do
             [ -z "$projeto" ] && continue
             echo "Prazo vencido: $projeto ($stack). Disparando $workflow."
-            gh workflow run "$(basename "$workflow")" --ref "${{ github.event.repository.default_branch }}" -f confirm_stack="$stack"
+            gh workflow run "$(basename "$workflow")" --ref "$RAMO_PADRAO" -f confirm_stack="$stack"
             python3 harness/infra.py marcar-disparado "$projeto"
           done < destruir.tsv

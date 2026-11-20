@@ -1,4 +1,5 @@
 name: "00-plataforma-agentes · destroy (ambiente protegido)"
+# checkov:skip=CKV_GHA_7: workflow de implantação, não de build; confirm_stack é comparado ao nome do stack antes de qualquer ação. ADR docs/adr/0002
 
 # Modelo (harness/modelos). Disparo manual ou pelo expirar-infra.yml quando o prazo vence (D-022).
 on:
@@ -9,9 +10,9 @@ on:
         required: true
         type: string
 
+# Permissões mínimas: o token OIDC só no job que acessa a AWS (zizmor excessive-permissions).
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: 00-plataforma-agentes-state
@@ -27,9 +28,15 @@ env:
 jobs:
   destroy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     # D-024: ambiente próprio do destroy, sem aprovação e restrito ao main, para o destroy automático
     # não esperar ninguém. O apply continua no aws-lab, com aprovação.
     environment: aws-lab-destroy
+    env:
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      REGIAO: ${{ vars.AWS_REGION || 'us-east-1' }}
     defaults:
       run:
         working-directory: ${{ env.TF_DIR }}
@@ -42,6 +49,8 @@ jobs:
             echo "::error::Confirmação '$CONFIRM' não confere com '$STACK_NAME'. Nada foi destruído."; exit 1
           fi
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
@@ -52,8 +61,8 @@ jobs:
       - name: Init com state remoto
         run: |
           terraform init -input=false \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" -backend-config="key=$STATE_KEY" \
-            -backend-config="region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="key=$STATE_KEY" \
+            -backend-config="region=$REGIAO" \
             -backend-config="encrypt=true" -backend-config="use_lockfile=true"
       - name: Destroy
         run: terraform destroy -input=false -auto-approve -lock-timeout=120s

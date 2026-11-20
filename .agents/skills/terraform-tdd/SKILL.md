@@ -16,7 +16,7 @@ description: "Terraform com TDD neste repositório. Use para escrever ou mudar i
 | Nada público | bucket com `block_public_*` em true; sem `0.0.0.0/0` em ingress, exceto com ADR |
 | Criptografia | KMS ou SSE em repouso; TLS obrigatório (policy `aws:SecureTransport`) |
 | Menor privilégio | sem `"*"` em `Action` e `Resource` juntos; condições por recurso |
-| Tags | `project`, `module` e `managed-by` via `default_tags`, conferidas no recurso |
+| Tags (D-031) | `project` = chave (regex `^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$`) e `managed-by` = `terraform` via `default_tags`; `module` em kebab via `local.tags` do módulo. Comece por `harness/modelos/tags.tftest.hcl`: são os mesmos padrões da política de tags do Infracost, que bloqueia o PR |
 | Isolamento (D-029) | nome com o prefixo da chave; policy das roles do projeto com `aws:ResourceTag/project` ou `aws:RequestTag/project` igual à chave |
 | Custo | nada fixo ocioso (NAT, endpoint de interface, cluster) sem ADR; AWS Budgets diário com `teto_diario_usd` |
 | Operação | log group com retenção, alarme nos componentes críticos |
