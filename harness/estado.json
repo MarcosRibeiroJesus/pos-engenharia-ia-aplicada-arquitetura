@@ -118,12 +118,12 @@
       "disciplina": "00",
       "tipo": "plataforma",
       "titulo": "Plataforma de agentes compartilhada na AWS",
-      "branch": "plataforma/caminho-padrao",
+      "branch": "plataforma/00-plataforma-agentes-plano",
       "pastas": [
         "plataforma/agentes/"
       ],
       "specs": "specs/00-plataforma-agentes/",
-      "fase": "especificar",
+      "fase": "planejar",
       "retroativo": false,
       "pr": null,
       "cloud": null,
