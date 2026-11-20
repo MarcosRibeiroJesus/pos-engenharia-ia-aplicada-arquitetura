@@ -6,6 +6,18 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-041 · Perguntas ao dono só no chat, com a boa prática e os tradeoffs · fonte: Marcos
+O Marcos não entendia se devia responder às perguntas da seção `## Perguntas ao dono` dos PRs. Ele pediu: "Me pergunte sempre por aqui com múltipla escolha e sempre com explicação do porque como isso é tratado no exame de certificação e os tradeoffs".
+- **No chat:** toda pergunta usa o `AskUserQuestion`. O enunciado traz `Boa prática:` (o nome da prática, o que o arquiteto faz e o erro comum que ela evita, como na D-036), e cada opção traz o seu tradeoff.
+- **No PR:** a seção vira só registro. As sessões sem o dono a usam; a orquestração coleta, leva ao Monday e pergunta no chat.
+
+**Aplicado em:**
+- hook `.claude/hooks/gate_pergunta.py` (PreToolUse em AskUserQuestion), que nega a pergunta fora do formato, registrado em `.claude/settings.json`;
+- `CLAUDE.md` (Perguntas ao dono) e `AGENTS.md` (regras inegociáveis);
+- skill `decisao-do-dono`;
+- teste `TestPerguntaAoDono`;
+- PR #22: a pergunta D00-P3, já respondida no chat, foi marcada como respondida.
+
 ### 2026-11-20 · D-040 · Emenda 2 do plano da plataforma aprovada · fonte: Marcos
 O Marcos aprovou a emenda 2 com a condição de que ela fosse só o alinhamento de texto: "Se for só isso pode mudar e já aprovo o plano". O diff confirmou três trechos, o cabeçalho e a seção da emenda:
 - a entrada do motor anulável no gateway (ADR-0011);
