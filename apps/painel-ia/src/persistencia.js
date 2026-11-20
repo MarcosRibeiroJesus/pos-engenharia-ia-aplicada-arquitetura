@@ -29,7 +29,14 @@ INSERT OR IGNORE INTO meta VALUES ('versao_esquema', '1');
 export class Persistencia {
   constructor(caminho) {
     if (caminho !== ':memory:') mkdirSync(dirname(caminho), { recursive: true });
-    this.db = new DatabaseSync(caminho);
+    try {
+      this.db = new DatabaseSync(caminho);
+    } catch (erro) {
+      // Erro com causa e correção, não só o código do SQLite (o contêiner caiu assim no DAST).
+      throw new Error(`não foi possível abrir o banco em ${caminho}: a pasta ${dirname(caminho)} precisa existir e ter `
+        + `escrita para o usuário do processo (uid ${process.getuid?.() ?? '?'}). No Docker, use o volume nomeado do `
+        + `compose.yml ou um tmpfs com uid=1000. Causa: ${erro.message}`, { cause: erro });
+    }
     this.db.exec(ESQUEMA);
     this.sql = {
       sessao: this.db.prepare(`INSERT INTO sessoes (id, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?)

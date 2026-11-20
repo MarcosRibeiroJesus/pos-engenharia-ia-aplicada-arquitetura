@@ -94,3 +94,9 @@ test('relatório final em Markdown e CSV a partir do banco', async () => {
   assert.ok(linhas.some((l) => l.includes(',03.05-legado,03,05,') && l.includes('claude-sonnet-5-5') && l.endsWith(',transcript,')));
   p.fechar();
 });
+
+test('banco que não abre explica a causa e a correção', async () => {
+  const pasta = await mkdtemp(join(tmpdir(), 'painel-db-'));
+  // o caminho do banco é uma pasta: o SQLite não consegue abrir, nem como root
+  assert.throws(() => new Persistencia(pasta), /precisa existir e ter escrita.*uid=1000/s);
+});

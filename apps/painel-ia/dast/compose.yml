@@ -5,9 +5,10 @@ services:
     ports:
       - "127.0.0.1:4317:4317"
     read_only: true
+    # tmpfs nasce do root; o painel roda como o usuário node (uid 1000), que precisa escrever o banco.
     tmpfs:
-      - /tmp
-      - /dados
+      - /tmp:mode=1777
+      - /dados:uid=1000,gid=1000,mode=0700
     cap_drop:
       - ALL
     security_opt:
