@@ -14,7 +14,7 @@ Vale igualmente para Claude Code, Google Antigravity e GitHub Copilot. Os agente
 ## 2. Regras inegociáveis
 - **Constituição** (`.specify/memory/constitution.md`): SDD, testes primeiro, segurança por padrão, custo consciente, privacidade.
 - **Decisões do dono:** escopo, produto, orçamento, cloud comparativa, projeto de IA aplicada, merge, publicação e valores de variáveis ou secrets são dele. Nunca assuma: pergunte no PR, na seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. Silêncio não é resposta.
-- **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations e explique o porquê.
+- **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations. Ao explicar uma decisão ao dono, diga o nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só códigos da prova (D-036). Os ids ficam nos ADRs, ao lado do nome.
 - **Privacidade:** nada do curso, do aluno ou das empresas em que o dono trabalha. Só fontes públicas e dados sintéticos. Segredos nunca entram no repositório.
 
 ## 3. SDD: como todo projeto é construído
