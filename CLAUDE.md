@@ -14,6 +14,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
 - A exceção são as decisões delegadas da seção "Boas práticas da certificação".
 - Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
+- **Toda decisão que só eu posso tomar vira regra ou skill com relação direta, no mesmo turno** (D-025, skill `decisao-do-dono`).
+  - O lugar preferido é um gate programático; depois a constituição, o `CLAUDE.md` ou o `AGENTS.md`; depois uma skill nova ou atualizada; por fim um template.
+  - A entrada da decisão no `HISTORICO.md` lista onde ela foi aplicada (`**Aplicado em:**`).
+  - O `python3 harness/memoria.py auditar` reprova decisão minha sem essa linha.
 
 - Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
 
@@ -51,6 +55,11 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
 - **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
 - **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
+- **Agentes especialistas:** um por tarefa fim, definidos em `harness/especialistas.json` e gerados em `.claude/agents/` e `.github/agents/` (catálogo em `harness/AGENTES.md`).
+  - **Delegue cada tarefa ao especialista dela,** com briefing completo: objetivo, arquivos, critério de aceite e restrições de custo e segurança.
+  - **Cada especialista tem** o modelo do nível da tarefa, só as skills dela (pré-carregadas) e nenhuma ferramenta para criar subagentes. O `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` reforça isso.
+  - **Nunca edite os arquivos gerados:** mude o JSON e rode `python3 harness/sincronizar_agentes.py`. O CI confere.
+- **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
 - **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
 
 ## Estrutura
@@ -104,8 +113,19 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Engenharia
 - Terraform: módulos reutilizáveis, state remoto com lock, `terraform.tfvars.example`.
 - GitHub Actions com OIDC na AWS, sem chaves estáticas. Pipeline: fmt, validate, tflint, checkov, `terraform test`, integração com o Floci como container de serviço, plan comentado no PR, apply só em ambiente protegido com aprovação.
-- Workflow de destroy: disparo manual, ambiente protegido, confirmação digitando o nome do stack, verificação final de recursos com a tag do projeto.
-- FinOps: versão "lab" na menor escala que demonstre o padrão; Infracost no PR; alerta no AWS Budgets; teto mensal no README.
+- Workflow de destroy **obrigatório em todo projeto com infraestrutura real** (Artigo V, D-021 e D-022):
+  - disparo manual ou pelo agendador de prazo;
+  - ambiente próprio do destroy (`aws-lab-destroy`), restrito ao `main` e sem aprovação (D-024);
+  - confirmação pelo nome do stack no input `confirm_stack`;
+  - OIDC;
+  - verificação final de recursos com a tag do projeto;
+  - remoção do registro de prazo.
+- **Prazo do apply:** o workflow de apply registra o prazo de vida com `harness/infra.py registrar` (padrão e máximo de 24 h desde o apply, D-024; `harness/infra.py estender` adia dentro desse limite). O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
+- **Onde fica e quem valida:** os caminhos ficam em `apply_workflow` e `destroy_workflow` no `harness/estado.json`. O `estado.py validar` reprova o projeto na fase `verificar` se um dos dois faltar ou estiver incompleto.
+- FinOps: versão "lab" na menor escala que demonstre o padrão. O uso é demonstração (subir, gravar um vídeo curto, destruir no mesmo dia), então o teto de cada projeto é o custo estimado de um dia de execução:
+  - fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets com período diário;
+  - o Infracost do PR compara o custo de 24 horas com esse teto;
+  - acima de todos os projetos, o limite mensal da conta é US$ 20 (`vars.CUSTO_MAX_MENSAL_USD`), num AWS Budgets mensal (D-022).
 - Replicável: README de cada módulo com pré-requisitos e no máximo 5 passos para subir.
 
 ## Site (GitHub Pages)
@@ -139,8 +159,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep e CodeQL), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov, Trivy config e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.
 - Achado de severidade alta ou crítica bloqueia o merge. Exceção só com justificativa versionada (`.checkov.yaml`, `.trivyignore`, `.semgrepignore`) e ADR.
 - Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
+- **Conta AWS única, com isolamento por tag e prefixo** (D-029):
+  - todo recurso leva a tag `project` e o prefixo da chave do projeto no nome;
+  - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
+- **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
+  - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.
+  - Projeto novo entra pelo caminho padrão: `python3 harness/novo_projeto.py`.
 - Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
-- Acesso dos agentes ao Claude: Amazon Bedrock via OIDC (sem chave estática), com a chave da API da Anthropic como alternativa em secret do repositório.
+- **Acesso aos modelos (modelo híbrido, D-028):**
+  - **Agentes de código e revisores na esteira:** usam a assinatura Pro do dono (Claude Code e `claude-code-action` com o token da assinatura em secret). Na troca, o Antigravity usa Gemini e o Copilot usa OpenAI.
+  - **Na AWS:** rodam só a plataforma compartilhada e os agentes dos produtos durante as demonstrações. O Claude é acessado pelo Bedrock via OIDC, sem chave estática, com um perfil de inferência por produto para atribuir custo.
 
 ## Privacidade
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.

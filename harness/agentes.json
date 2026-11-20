@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "nota": "Modelos por família e nível, não por versão: em cada agente, use a versão mais recente da família no seletor. Preferir modelos Claude também no Antigravity e no Copilot mantém o comportamento das skills e prompts (paridade); Gemini e GPT entram como reserva.",
+  "nota": "D-028: o agente principal é o Claude Code com a assinatura Pro do dono (Opus é o padrão do Pro desde 2026-09). Quando a cota acaba, assumem o Antigravity com Gemini e o Copilot com modelos da OpenAI. Modelos por família e nível, não por versão: use a versão mais recente da família no seletor. Como as famílias diferem, skills e prompts não dependem de recurso exclusivo do Claude, e a revisão independente pode rodar em outra família de modelo (4.6).",
   "niveis": {
     "maximo": "raciocínio profundo: arquitetura, código de produção, segurança, análise SDD",
     "equilibrado": "pesquisa, posts, testes a partir de regras escritas, site",
@@ -15,37 +15,80 @@
     "pesquisa": "equilibrado",
     "post": "equilibrado",
     "teste": "equilibrado",
-    "mecanica": "rapido"
+    "mecanica": "rapido",
+    "infra": "maximo",
+    "componente-claude": "maximo",
+    "mcp": "maximo",
+    "ml": "maximo",
+    "visao-web": "maximo",
+    "avaliacao": "maximo",
+    "revisao": "maximo",
+    "finops": "equilibrado",
+    "cloud-comparativa": "equilibrado",
+    "site": "equilibrado"
   },
   "agentes": {
     "claude-code": {
       "nome": "Claude Code",
-      "instrucoes": ["AGENTS.md", "CLAUDE.md"],
+      "instrucoes": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
       "como_iniciar": "Sessão nova em claude.ai/code (ambiente pos-engenharia-ia-aplicada-arquitetura) ou `claude` no terminal",
       "assincrono": "GitHub Action claude-code-action (fase 4 do harness)",
-      "cota": "limite de uso da assinatura em janela de 5 horas",
-      "modelos": {"maximo": "Claude Opus", "equilibrado": "Claude Sonnet", "rapido": "Claude Haiku"}
+      "cota": "assinatura Pro: janela de 5 horas e limite semanal; Opus consome a cota mais rápido que Sonnet",
+      "modelos": {
+        "maximo": "Claude Opus",
+        "equilibrado": "Claude Sonnet",
+        "rapido": "Claude Haiku"
+      }
     },
     "antigravity": {
       "nome": "Google Antigravity",
-      "instrucoes": ["AGENTS.md", ".agents/skills/"],
+      "instrucoes": [
+        "AGENTS.md",
+        ".agents/skills/"
+      ],
       "como_iniciar": "Abrir a pasta do repositório no Antigravity (IDE ou CLI `agy`), modo Planning para tarefas de nível máximo",
       "assincrono": null,
       "cota": "cota da conta Google no Antigravity",
-      "modelos": {"maximo": "Claude Opus (se disponível no seletor) ou Gemini Pro", "equilibrado": "Gemini Pro", "rapido": "Gemini Flash"}
+      "modelos": {
+        "maximo": "Gemini Pro (mais recente, raciocínio alto)",
+        "equilibrado": "Gemini Pro",
+        "rapido": "Gemini Flash"
+      }
     },
     "copilot": {
       "nome": "GitHub Copilot",
-      "instrucoes": ["AGENTS.md", "CLAUDE.md"],
+      "instrucoes": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
       "como_iniciar": "Atribuir a issue ao Copilot (cloud agent, assíncrono) ou modo Agent no VS Code",
       "assincrono": "Copilot cloud agent atribuído à issue",
       "cota": "premium requests mensais (cada ação do agente consome conforme o multiplicador do modelo)",
-      "modelos": {"maximo": "Claude Opus", "equilibrado": "Claude Sonnet", "rapido": "Auto ou Claude Haiku"}
+      "modelos": {
+        "maximo": "GPT de raciocínio mais capaz no seletor",
+        "equilibrado": "GPT padrão do seletor",
+        "rapido": "GPT mini"
+      }
     }
   },
   "ordem": {
-    "maximo": ["claude-code", "antigravity", "copilot"],
-    "equilibrado": ["claude-code", "copilot", "antigravity"],
-    "rapido": ["copilot", "antigravity", "claude-code"]
+    "maximo": [
+      "claude-code",
+      "antigravity",
+      "copilot"
+    ],
+    "equilibrado": [
+      "claude-code",
+      "copilot",
+      "antigravity"
+    ],
+    "rapido": [
+      "copilot",
+      "antigravity",
+      "claude-code"
+    ]
   }
 }

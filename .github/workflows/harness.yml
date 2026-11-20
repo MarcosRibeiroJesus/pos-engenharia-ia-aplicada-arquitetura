@@ -2,7 +2,7 @@ name: harness
 
 # Gates do harness que valem para qualquer agente (Claude Code, Antigravity, Copilot):
 # estado SDD válido, nenhum código de projeto antes da fase implementar (Artigo I)
-# e skills do Antigravity iguais às do Claude Code.
+# skills e especialistas gerados em dia e decisão do dono aplicada em regra ou skill (D-025).
 on:
   pull_request:
 
@@ -25,5 +25,7 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: git diff --name-only --diff-filter=ACMR "$BASE"...HEAD | python3 harness/estado.py checar-arquivos
-      - name: Skills sincronizadas para o Antigravity
+      - name: Skills e especialistas sincronizados (Claude Code, Copilot, Antigravity)
         run: python3 harness/sincronizar_agentes.py --verificar
+      - name: Decisões do dono aplicadas em regra ou skill (D-025)
+        run: python3 harness/memoria.py auditar
