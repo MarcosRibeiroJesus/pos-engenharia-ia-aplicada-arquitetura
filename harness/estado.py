@@ -91,10 +91,11 @@ def problemas_infra(estado: dict, p: dict, raiz: Path = RAIZ) -> list[str]:
 
 
 def checar_apply(texto: str) -> list[str]:
-    """O apply registra o prazo de vida da demonstração (D-022)."""
+    """O apply registra o prazo de vida (D-022) e confere a tag de custo `project` na conta (D-034)."""
     exigencias = {
         "input prazo_horas": r"^\s*prazo_horas\s*:",
         "registro do prazo (harness/infra.py registrar)": r"harness/infra\.py\s+registrar",
+        "conferência da tag de custo project (D-034)": r"list-cost-allocation-tags",
     }
     return [f"workflow de apply sem {nome}" for nome, rx in exigencias.items() if not re.search(rx, texto, re.M)]
 

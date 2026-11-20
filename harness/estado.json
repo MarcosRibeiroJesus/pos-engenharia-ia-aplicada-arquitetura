@@ -134,7 +134,9 @@
         "D-027",
         "D-028",
         "D-029",
-        "D-030"
+        "D-030",
+        "D-033",
+        "D-034"
       ],
       "nota": "Primeiro projeto criado pelo caminho padrão. Plataforma compartilhada consumida pelos produtos; sobe e desce com as demonstrações.",
       "infra_real": true,
