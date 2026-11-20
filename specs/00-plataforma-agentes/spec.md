@@ -81,7 +81,7 @@ A plataforma não tem agente próprio; ela é a camada de governança dos agente
 ## Perguntas ao dono
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
-| P00-P1 | Dentro de um plano SDD que você já aprovou, a orquestração pode delegar cada tarefa ao especialista sem pedir aprovação a cada disparo? O `CLAUDE.md` hoje pede aprovação antes de disparar subagentes. | automação das fases planejar, tarefas, analisar e implementar | aprovar cada disparo; aprovar o plano e liberar os disparos dentro dele; aprovar só a análise (fase analisar) | aprovar o plano e liberar os disparos: o gate `sdd-analisar` e o merge continuam com você |
+| P00-P1 | ~~Dentro de um plano SDD aprovado, a orquestração pode delegar sem aprovar cada disparo?~~ **Respondida (D-033):** sim, dentro do plano aprovado. O próprio disparo do plano (fase planejar) continua pedindo a aprovação dele. | — | — | — |
 | P00-P2 | Conta AWS com OIDC para o primeiro deploy real da plataforma (o card opcional já existente). | só a demonstração real; o desenvolvimento e o Floci seguem sem conta | criar agora; criar quando o primeiro produto estiver pronto | criar quando o primeiro produto estiver pronto |
 
 ## Decisões do dono que esta spec usa

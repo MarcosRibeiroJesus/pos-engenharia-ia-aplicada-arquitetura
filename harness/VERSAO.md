@@ -1,6 +1,6 @@
 # Versão do harness
 
-**Versão atual: 0.5.1** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
+**Versão atual: 0.6.0** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
 
 ## Critérios para a 1.0 (estável e testada)
 | # | Critério | Como se prova | Situação |
@@ -11,7 +11,7 @@
 | 4 | Ciclo de demonstração exercitado | apply → aviso → destroy automático → verificação sem sobras, no Floci e numa conta real | pendente |
 | 5 | Caminho padrão exercitado | um projeto novo criado por `harness/novo_projeto.py` chegando a `implementar` | em andamento (`00-plataforma-agentes`) |
 | 6 | Núcleo separado da pós | lista dos arquivos do núcleo sem nenhuma referência à pós; o resto é configuração do projeto | pendente |
-| 7 | Testes | todo comando dos scripts do harness com teste; estado compartilhado testado em repositório temporário | em andamento (53 testes) |
+| 7 | Testes | todo comando dos scripts do harness com teste; estado compartilhado testado em repositório temporário | em andamento (73 testes) |
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico

@@ -157,7 +157,13 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Cursos oficiais de preparação (Skilljar): Building with the Claude API, Claude Code in Action, Introduction to Model Context Protocol, Claude with Amazon Bedrock, Claude on Google Cloud, Claude 101 e AI Fluency. Cite o curso relacionado no ADR.
 - Este repositório também é prática do domínio 3: mantenha CLAUDE.md, regras por caminho, skills e o uso de Claude Code em CI coerentes com o guia.
 - Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
-- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
+- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros.
+- **Delegação dentro do plano aprovado** (D-033):
+  - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
+  - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
+  - fora disso (plano não aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
+  - o briefing traz `Projeto: <chave>` e, quando eu aprovar um disparo avulso, `Aprovação do dono: <minhas palavras e quando>`. O hook `.claude/hooks/gate_delegacao.py` nega o disparo que não cumprir isso;
+  - o gate `sdd-analisar`, o merge e a publicação continuam comigo.
 
 ## Segurança e FinOps na esteira (obrigatório)
 - Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep, CodeQL e zizmor para os workflows), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.

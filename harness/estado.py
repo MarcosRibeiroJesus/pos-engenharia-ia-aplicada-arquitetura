@@ -7,9 +7,12 @@ Fonte de verdade de "onde cada projeto está" no fluxo SDD. Comandos:
   projeto-de PATH   diz a qual projeto um caminho pertence (usado pelo gate SDD)
   avancar CHAVE FASE  muda a fase, só se os artefatos exigidos pela nova fase existirem
   checar-arquivos [ARQ...]  exit 1 se algum arquivo é código de projeto antes da fase implementar (git hook e CI)
+  aprovar-plano CHAVE --fonte TEXTO  registra que o DONO aprovou o plan.md (só depois da aprovação dele, D-033)
+  pode-delegar CHAVE  exit 0 se a orquestração pode delegar aos especialistas sem aprovar cada disparo (D-033)
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -21,6 +24,12 @@ CAMPOS = {"chave", "disciplina", "tipo", "titulo", "branch", "pastas", "specs", 
 # Artefato exigido para estar NA fase indicada (ou depois dela).
 EXIGE = {"esclarecer": "spec.md", "planejar": "spec.md", "tarefas": "plan.md", "analisar": "tasks.md",
          "implementar": "analise.md", "verificar": "tasks.md", "publicar": "tasks.md", "concluido": "tasks.md"}
+
+
+# D-033: com o plano aprovado pelo dono, os disparos destas fases saem sem aprovação a cada um.
+# Especificar e planejar vêm antes do plano; publicar e merge são sempre do dono.
+FASES_DELEGAVEIS = ("tarefas", "analisar", "implementar", "verificar")
+CAMPOS_APROVACAO = {"data", "fonte", "sha256"}
 
 
 def carregar(arquivo: Path = ARQUIVO) -> dict:
@@ -64,7 +73,48 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
             if not (raiz / p["specs"] / arq).exists():
                 erros.append(f"{p['chave']}: fase '{p['fase']}' exige {p['specs']}{arq}")
         erros += problemas_infra(estado, p, raiz)
+        aprov = p.get("plano_aprovado")
+        if aprov is not None and (not isinstance(aprov, dict) or CAMPOS_APROVACAO - aprov.keys()):
+            erros.append(f"{p['chave']}: plano_aprovado precisa de {sorted(CAMPOS_APROVACAO)} "
+                         "(registre com `estado.py aprovar-plano`)")
     return erros
+
+
+def hash_do_plano(raiz: Path, p: dict) -> str | None:
+    plano = raiz / p["specs"] / "plan.md"
+    return hashlib.sha256(plano.read_bytes()).hexdigest() if plano.exists() else None
+
+
+def aprovar_plano(estado: dict, chave: str, fonte: str, data: str, raiz: Path = RAIZ) -> str:
+    """Registra a aprovação do plano pelo dono. Devolve "" ou o motivo de não registrar."""
+    p = next((x for x in estado["projetos"] if x["chave"] == chave), None)
+    if not p:
+        return f"projeto {chave} não existe"
+    if not fonte.strip():
+        return "informe a fonte da aprovação (as palavras do dono e onde ele disse)"
+    sha = hash_do_plano(raiz, p)
+    if not sha:
+        return f"não há {p['specs']}plan.md para aprovar"
+    p["plano_aprovado"] = {"data": data, "fonte": fonte.strip(), "sha256": sha}
+    return ""
+
+
+def pode_delegar(estado: dict, chave: str, raiz: Path = RAIZ) -> tuple[bool, str]:
+    """D-033: delegação sem aprovar cada disparo, só dentro do plano que o dono aprovou."""
+    p = next((x for x in estado["projetos"] if x["chave"] == chave), None)
+    if not p:
+        return False, f"projeto {chave} não existe em harness/estado.json"
+    aprov = p.get("plano_aprovado")
+    if not aprov:
+        return False, (f"o plano de {chave} não foi aprovado pelo dono. Peça a aprovação do plan.md e registre com "
+                       f"`python3 harness/estado.py aprovar-plano {chave} --fonte \"...\"`, ou peça a aprovação deste disparo")
+    if aprov.get("sha256") != hash_do_plano(raiz, p):
+        return False, (f"o plan.md de {chave} mudou depois da aprovação de {aprov.get('data')}. "
+                       "Mostre a mudança ao dono e registre a nova aprovação")
+    if p["fase"] not in FASES_DELEGAVEIS:
+        return False, (f"{chave} está na fase '{p['fase']}', fora do plano aprovado "
+                       f"(delegação livre só em {', '.join(FASES_DELEGAVEIS)}). Peça a aprovação deste disparo")
+    return True, ""
 
 
 def problemas_infra(estado: dict, p: dict, raiz: Path = RAIZ) -> list[str]:
@@ -169,6 +219,19 @@ def main(argv: list[str]) -> int:
         ARQUIVO.write_text(json.dumps(estado, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"{chave} → {fase}")
         return 0
+    if cmd == "aprovar-plano" and len(argv) > 3 and argv[2] == "--fonte":
+        from datetime import date
+        erro = aprovar_plano(estado, argv[1], " ".join(argv[3:]), date.today().isoformat())
+        if erro:
+            print(f"não registrado: {erro}")
+            return 1
+        ARQUIVO.write_text(json.dumps(estado, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"{argv[1]}: plano aprovado pelo dono registrado; delegação liberada em {', '.join(FASES_DELEGAVEIS)}")
+        return 0
+    if cmd == "pode-delegar" and len(argv) > 1:
+        ok, motivo = pode_delegar(estado, argv[1])
+        print("ok" if ok else f"NÃO: {motivo}")
+        return 0 if ok else 1
     print(__doc__)
     return 2
 
