@@ -22,7 +22,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** fase `implementar`.
 
 ## Fase 1 · Regras da constituição como testes
-- [ ] T001 [engenheiro-terraform] Esqueleto do stack com tags, região e state remoto · Art. VI, RNF-003, RNF-006 · TT-T01, TT-T03, TH-08
+- [x] T001 [engenheiro-terraform] Esqueleto do stack com tags, região e state remoto · Art. VI, RNF-003, RNF-006 · TT-T01, TT-T03, TH-08
   - **Teste vermelho:** `tests/tags.tftest.hcl` copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "00-plataforma-agentes"` e o assert iterando sobre o output `tags_dos_recursos`; `tests/regiao.tftest.hcl` com `var.regiao` padrão `us-east-1`; TH-08 em `harness/testes/test_<assunto>.py` lê `versions.tf` e exige `backend "s3" {}` parcial e `use_lockfile`.
   - **Arquivos:** `plataforma/agentes/infra/terraform/{versions.tf,providers.tf,variables.tf,outputs.tf,terraform.tfvars.example}`, `tests/tags.tftest.hcl`, `tests/regiao.tftest.hcl`.
   - **Aceite:** `default_tags` com `project = "00-plataforma-agentes"` e `managed-by = "terraform"`; `module` vem do `local.tags` de cada módulo (D-031); versão mínima do `hashicorp/aws` fixada depois de `terraform init` confirmar `aws_bedrockagentcore_gateway`, `_gateway_target`, `_policy`, `_policy_engine` e `aws_bedrock_guardrail` com `tier_config` (plano, seção Provider); `fmt`, `validate`, `tflint` e `checkov` limpos.
