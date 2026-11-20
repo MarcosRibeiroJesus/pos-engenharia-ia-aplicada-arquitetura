@@ -528,6 +528,113 @@ class TestVersoesDasActions(unittest.TestCase):
             self.assertEqual(atual, esperado, qual)
 
 
+sys.path.insert(0, str(AQUI.parent / ".claude" / "hooks"))
+import gate_delegacao  # noqa: E402
+
+
+def repo_com_plano(tmp: Path, fase: str = "tarefas", plano: str = "# Plano\n") -> tuple[Path, dict]:
+    (tmp / "harness").mkdir()
+    (tmp / "specs" / "p").mkdir(parents=True)
+    for arq in ("spec.md", "plan.md", "tasks.md", "analise.md"):
+        (tmp / "specs" / "p" / arq).write_text(plano if arq == "plan.md" else "x\n", encoding="utf-8")
+    est = {"fases": estado.carregar()["fases"],
+           "projetos": [{"chave": "p", "fase": fase, "pastas": ["modulos/p/"], "specs": "specs/p/"}]}
+    (tmp / "harness" / "estado.json").write_text(json.dumps(est), encoding="utf-8")
+    import shutil
+    shutil.copy(AQUI / "especialistas.json", tmp / "harness" / "especialistas.json")
+    return tmp, est
+
+
+class TestDelegacaoNoPlanoAprovado(unittest.TestCase):
+    """D-033: dentro de um plano SDD aprovado pelo dono, a orquestração delega sem aprovar cada disparo."""
+
+    def test_sem_aprovacao_do_plano_nao_delega(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            ok, motivo = estado.pode_delegar(est, "p", raiz)
+            self.assertFalse(ok)
+            self.assertIn("aprovar-plano", motivo)
+
+    def test_plano_aprovado_libera_as_fases_dentro_dele(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            self.assertEqual(estado.aprovar_plano(est, "p", "Marcos no chat: aprovo o plano", "2026-11-20", raiz), "")
+            for fase in ("tarefas", "analisar", "implementar", "verificar"):
+                est["projetos"][0]["fase"] = fase
+                self.assertEqual(estado.pode_delegar(est, "p", raiz), (True, ""), fase)
+
+    def test_fora_do_plano_continua_com_o_dono(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
+            for fase in ("especificar", "planejar", "publicar"):
+                est["projetos"][0]["fase"] = fase
+                ok, motivo = estado.pode_delegar(est, "p", raiz)
+                self.assertFalse(ok, fase)
+                self.assertIn(fase, motivo)
+
+    def test_plano_alterado_depois_da_aprovacao_exige_nova_aprovacao(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
+            (raiz / "specs" / "p" / "plan.md").write_text("# Plano com escopo novo\n", encoding="utf-8")
+            ok, motivo = estado.pode_delegar(est, "p", raiz)
+            self.assertFalse(ok)
+            self.assertIn("mudou", motivo)
+
+    def test_aprovar_exige_plano_escrito_e_fonte(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            self.assertIn("fonte", estado.aprovar_plano(est, "p", "  ", "2026-11-20", raiz))
+            (raiz / "specs" / "p" / "plan.md").unlink()
+            self.assertIn("plan.md", estado.aprovar_plano(est, "p", "Marcos", "2026-11-20", raiz))
+
+    def test_validar_confere_o_registro_da_aprovacao(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            est["projetos"][0].update({"disciplina": "00", "tipo": "x", "titulo": "x", "branch": "b"})
+            est["projetos"][0]["plano_aprovado"] = {"data": "2026-11-20"}
+            self.assertTrue(any("plano_aprovado" in e for e in estado.problemas(est, raiz)))
+
+    def _evento(self, tipo: str, prompt: str) -> dict:
+        return {"tool_name": "Agent", "tool_input": {"subagent_type": tipo, "prompt": prompt}}
+
+    def test_hook_nega_especialista_sem_plano_aprovado(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, _ = repo_com_plano(Path(t))
+            motivo = gate_delegacao.decidir(self._evento("arquiteto-aws", "Projeto: p\nObjetivo: tarefas"), raiz)
+            self.assertIn("D-033", motivo)
+
+    def test_hook_libera_dentro_do_plano_aprovado(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
+            (raiz / "harness" / "estado.json").write_text(json.dumps(est), encoding="utf-8")
+            self.assertIsNone(gate_delegacao.decidir(self._evento("arquiteto-aws", "Projeto: p\nObjetivo: tarefas"), raiz))
+
+    def test_hook_exige_projeto_no_briefing(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, _ = repo_com_plano(Path(t))
+            self.assertIn("Projeto:", gate_delegacao.decidir(self._evento("pesquisador", "pesquise X"), raiz))
+
+    def test_hook_aceita_aprovacao_do_dono_para_este_disparo(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, _ = repo_com_plano(Path(t), fase="planejar")
+            prompt = "Projeto: p\nAprovação do dono: Marcos no chat em 2026-11-20, disparo do plano\n"
+            self.assertIsNone(gate_delegacao.decidir(self._evento("arquiteto-aws", prompt), raiz))
+
+    def test_hook_ignora_agentes_que_nao_sao_especialistas(self):
+        with tempfile.TemporaryDirectory() as t:
+            raiz, _ = repo_com_plano(Path(t))
+            self.assertIsNone(gate_delegacao.decidir(self._evento("Explore", "ache X"), raiz))
+
+    def test_hook_registrado_no_settings(self):
+        cfg = json.loads((AQUI.parent / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        pre = cfg["hooks"]["PreToolUse"]
+        self.assertTrue(any("gate_delegacao.py" in h["command"] and "Agent" in m["matcher"]
+                            for m in pre for h in m["hooks"]))
+
+
 class TestPreRequisitosDaConta(unittest.TestCase):
     """D-034: tag de custo e Transaction Search por Terraform no infra/conta; o apply confere antes de subir."""
 
@@ -553,6 +660,27 @@ class TestPreRequisitosDaConta(unittest.TestCase):
         modelo = (AQUI / "modelos" / "apply.yml").read_text(encoding="utf-8")
         self.assertIn("D-039", modelo)
         self.assertNotIn("48 h antes da demonstração", modelo)
+
+
+class TestPublicacaoDaPlataforma(unittest.TestCase):
+    """D-037: a plataforma de agentes tem página e post próprios no site."""
+
+    def test_skill_do_site_e_claude_md_trazem_a_regra(self):
+        for arq in (".claude/skills/site-projeto/SKILL.md", "CLAUDE.md"):
+            texto = (AQUI.parent / arq).read_text(encoding="utf-8")
+            self.assertIn("D-037", texto, arq)
+            self.assertIn("00-plataforma-agentes", texto, arq)
+
+
+class TestComoExplicarDecisoes(unittest.TestCase):
+    """D-036: explicação ao dono pelo nome da boa prática e o erro comum, não só pelos códigos da prova."""
+
+    def test_regra_nos_manuais_e_no_contrato_do_especialista(self):
+        raiz = AQUI.parent
+        for arq in ("CLAUDE.md", "AGENTS.md", ".claude/skills/regras-do-especialista/SKILL.md"):
+            texto = (raiz / arq).read_text(encoding="utf-8")
+            self.assertIn("D-036", texto, arq)
+            self.assertIn("erro comum", texto, arq)
 
 
 class TestSincronizarSkills(unittest.TestCase):

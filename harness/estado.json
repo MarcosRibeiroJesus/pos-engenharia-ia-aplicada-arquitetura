@@ -118,12 +118,12 @@
       "disciplina": "00",
       "tipo": "plataforma",
       "titulo": "Plataforma de agentes compartilhada na AWS",
-      "branch": "plataforma/caminho-padrao",
+      "branch": "plataforma/00-plataforma-agentes-plano",
       "pastas": [
         "plataforma/agentes/"
       ],
       "specs": "specs/00-plataforma-agentes/",
-      "fase": "especificar",
+      "fase": "implementar",
       "retroativo": false,
       "pr": null,
       "cloud": null,
@@ -134,13 +134,26 @@
         "D-027",
         "D-028",
         "D-029",
-        "D-030"
+        "D-030",
+        "D-033",
+        "D-034",
+        "D-035",
+        "D-036",
+        "D-037",
+        "D-038",
+        "D-039",
+        "D-040"
       ],
       "nota": "Primeiro projeto criado pelo caminho padrão. Plataforma compartilhada consumida pelos produtos; sobe e desce com as demonstrações.",
       "infra_real": true,
       "apply_workflow": ".github/workflows/00-plataforma-agentes-apply.yml",
       "destroy_workflow": ".github/workflows/00-plataforma-agentes-destroy.yml",
-      "teto_diario_usd": null
+      "teto_diario_usd": 1.2,
+      "plano_aprovado": {
+        "data": "2026-11-20",
+        "fonte": "Marcos no chat em 2026-11-20 (BRT): \"Se for só isso pode mudar e já aprovo o plano\" (emenda 2: só alinhamento de texto à D-039 e ao ADR-0011)",
+        "sha256": "381c89746b167a9ada794935027d29c4bb20c1fae68c8beea52ef97fbc3f613a"
+      }
     }
   ]
 }
