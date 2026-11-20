@@ -52,7 +52,9 @@ test('API de estado e healthcheck', async (t) => {
 
 test('nada fora da lista de arquivos públicos é servido', async (t) => {
   const { porta } = await subir(t);
-  for (const caminho of ['/../package.json', '/%2e%2e/package.json', '/src/servidor.js', '/package.json']) {
+  // inclui nomes herdados de Object.prototype: não podem virar chamada nem arquivo (CodeQL)
+  for (const caminho of ['/../package.json', '/%2e%2e/package.json', '/src/servidor.js', '/package.json',
+    '/constructor', '/__proto__', '/toString', '/hasOwnProperty']) {
     const { res } = await pedir(porta, caminho);
     assert.equal(res.statusCode, 404, caminho);
   }

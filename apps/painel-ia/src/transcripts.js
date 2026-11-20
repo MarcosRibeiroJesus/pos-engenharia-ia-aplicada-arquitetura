@@ -2,7 +2,7 @@
 // Usa varredura periódica (stat + leitura do trecho novo) em vez de inotify: funciona em
 // bind mounts do Docker Desktop no Windows e no macOS, onde eventos de arquivo não chegam.
 
-import { readdir, stat, open } from 'node:fs/promises';
+import { readdir, open } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export class LeitorTranscripts {
@@ -38,14 +38,15 @@ export class LeitorTranscripts {
   }
 
   async #lerNovo(caminho) {
-    let info;
-    try { info = await stat(caminho); } catch { return 0; }
-    let st = this.estado.get(caminho) || { posicao: 0, resto: '' };
-    if (info.size < st.posicao) st = { posicao: 0, resto: '' }; // truncado ou reescrito
-    if (info.size === st.posicao) { this.estado.set(caminho, st); return 0; }
-
-    const fh = await open(caminho, 'r');
+    // Abre primeiro e mede pelo próprio descritor: o tamanho lido é o do arquivo aberto, sem corrida
+    // entre a checagem e o uso (CodeQL js/file-system-race).
+    let fh;
+    try { fh = await open(caminho, 'r'); } catch { return 0; }
     try {
+      const info = await fh.stat();
+      let st = this.estado.get(caminho) || { posicao: 0, resto: '' };
+      if (info.size < st.posicao) st = { posicao: 0, resto: '' }; // truncado ou reescrito
+      if (info.size === st.posicao) { this.estado.set(caminho, st); return 0; }
       const tamanho = info.size - st.posicao;
       const buf = Buffer.alloc(tamanho);
       await fh.read(buf, 0, tamanho, st.posicao);

@@ -60,12 +60,13 @@ export function criarServidor({ estado, hostsPermitidos = [], extras = {} }) {
       req.on('close', () => clientes.delete(res));
       return undefined;
     }
-    if (extras[rota]) {
+    // Só rotas próprias do objeto: '/constructor' ou '/__proto__' não podem virar chamada (CodeQL js/unvalidated-dynamic-method-call).
+    if (Object.hasOwn(extras, rota) && typeof extras[rota] === 'function') {
       const [corpo, tipo, nome] = extras[rota]();
       if (nome) res.setHeader('Content-Disposition', `attachment; filename="${nome}"`);
       return enviar(res, corpo, tipo);
     }
-    const arq = CACHE[rota];
+    const arq = Object.hasOwn(CACHE, rota) ? CACHE[rota] : undefined;
     if (!arq) return enviar(res, 'Não encontrado', 'text/plain; charset=utf-8', 404);
     return enviar(res, req.method === 'HEAD' ? '' : arq.corpo, arq.tipo);
   });
