@@ -6,6 +6,19 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-042 · Terraform roda na máquina do dono · fonte: Marcos
+A sessão de nuvem não baixa o Terraform nem os providers. O Marcos escolheu rodar as tarefas de Terraform numa sessão do Claude Code no computador dele, com ciclo de teste em segundos e o Floci local.
+- **Recusadas:**
+  - o híbrido, com o Terraform validado só pelo CI;
+  - tudo pelo CI.
+- **Decisão delegada que vem junto: um escritor por branch.** A sessão local implementa a plataforma inteira, na ordem do `tasks.md`, porque as tarefas têm dependências entre si. A orquestração na nuvem não comita no mesmo branch. Isso evita conflitos e trabalho perdido, a mesma lição da D-032.
+
+**Aplicado em:**
+- skill `terraform-tdd` (onde rodar e um escritor por branch);
+- `CLAUDE.md` (Sessões);
+- teste `TestOndeRodaOTerraform`;
+- Monday: card com o prompt da sessão local.
+
 ### 2026-11-20 · D-041 · Perguntas ao dono só no chat, com a boa prática e os tradeoffs · fonte: Marcos
 O Marcos não entendia se devia responder às perguntas da seção `## Perguntas ao dono` dos PRs. Ele pediu: "Me pergunte sempre por aqui com múltipla escolha e sempre com explicação do porque como isso é tratado no exame de certificação e os tradeoffs".
 - **No chat:** toda pergunta usa o `AskUserQuestion`. O enunciado traz `Boa prática:` (o nome da prática, o que o arquiteto faz e o erro comum que ela evita, como na D-036), e cada opção traz o seu tradeoff.

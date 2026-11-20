@@ -29,6 +29,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Terraform na máquina do Marcos** (D-042): a implementação de projeto com Terraform roda numa sessão do Claude Code no computador dele. Essa sessão é a única que comita no branch de implementação; a orquestração na nuvem só coordena.
 - **Perguntas ao Marcos só no chat** (D-041): em múltipla escolha, com a boa prática no enunciado (como o exame trata e o erro comum que ela evita) e o tradeoff de cada opção. A seção `## Perguntas ao dono` dos PRs é só registro; ele não responde lá.
 - **Emenda 2 do plano da plataforma aprovada** (D-040): só alinha o texto à D-039 e ao ADR-0011.
 - **Tag de custo `project`** (D-039): a ativação é única na conta e vale para todos os projetos. O Marcos a faz assim que a chave aparecer no Billing, e nenhuma demonstração espera 48 h. Substitui o "48 h antes da demonstração" da D-034.
