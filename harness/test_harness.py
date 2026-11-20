@@ -547,6 +547,17 @@ class TestPreRequisitosDaConta(unittest.TestCase):
             self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
 
+class TestOndeRodaOTerraform(unittest.TestCase):
+    """D-042: Terraform na máquina do dono; um escritor por branch."""
+
+    def test_regra_na_skill_e_no_claude_md(self):
+        for arq, frase in ((".claude/skills/terraform-tdd/SKILL.md", "Um escritor por branch"),
+                           ("CLAUDE.md", "única que comita")):
+            texto = (AQUI.parent / arq).read_text(encoding="utf-8")
+            self.assertIn("D-042", texto, arq)
+            self.assertIn(frase, texto, arq)
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])

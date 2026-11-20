@@ -75,6 +75,9 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - O `pre-push` bloqueia commit novo em branch já mergeado.
   - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
+- **Terraform roda na minha máquina** (D-042). A implementação de projeto com Terraform é feita numa sessão do Claude Code no meu computador, com ciclo de teste em segundos.
+  - Essa sessão é a única que comita no branch de implementação.
+  - A orquestração na nuvem coordena, mas não escreve nesse branch.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
