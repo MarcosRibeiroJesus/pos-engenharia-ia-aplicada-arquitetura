@@ -31,6 +31,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Disparos antes do plano são livres** (D-055): especificar, esclarecer e planejar saem sem perguntar ao Marcos. O plano escrito continua indo para a aprovação dele, e a fase publicar continua dele.
 - **D01 (recomendação), respostas da spec retroativa:**
   - lote como lab sintético fechado: os dois jobs do Glue que faltam e um XGBoost pequeno (D-051);
   - MWAA ligado só numa janela curta da demonstração, com `prazo_horas` curto (D-052);

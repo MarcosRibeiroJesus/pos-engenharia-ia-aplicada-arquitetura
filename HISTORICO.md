@@ -6,6 +6,16 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-055 · Não perguntar mais sobre disparos de especificação e planejamento · fonte: Marcos
+Ao ser perguntado se o arquiteto-aws podia escrever o plano da D01 (recomendação), o Marcos respondeu "pode disparar e não me pergunte mais sobre isso".
+- **Alcance aplicado:** os disparos de especialistas nas fases especificar, esclarecer e planejar não pedem mais aprovação.
+- **Continuam com ele:** a aprovação do plano escrito, que libera as fases seguintes (D-033), a fase publicar, o merge e as decisões de escopo, produto e custo.
+
+**Aplicado em:**
+- `harness/estado.py` (`pode_delegar` com `FASES_ANTES_DO_PLANO`), que o hook `gate_delegacao.py` usa;
+- `CLAUDE.md` e `AGENTS.md`;
+- teste `test_especificar_e_planejar_saem_sem_aprovacao_por_disparo`.
+
 ### 2026-11-20 · D-051 a D-054 · D01 (recomendação): respostas da spec retroativa · fonte: Marcos
 Respostas às perguntas P01-P1 a P01-P4 da spec retroativa:
 - **D-051, escopo do lote:** lab sintético fechado. Entram os dois jobs do Glue que faltam e um XGBoost pequeno sobre dados sintéticos (recomendação aceita).
