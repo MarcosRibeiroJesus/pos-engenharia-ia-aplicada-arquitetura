@@ -6,6 +6,27 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-047 · Execução autônoma das tarefas com revisão por outro agente · fonte: Marcos
+O Marcos quer que o harness execute as tarefas sozinho e que outros agentes revisem pelas regras, sem ele vigiar cada passo. As palavras dele:
+1. "Crie um executor que pegue as próximas tarefas, delegue ao especialista, mande revisar, comite e siga até o PR."
+2. "Crie o revisor diferente de quem criou, por tarefa, para confirmar que está condizente com a task."
+3. "Libere os comandos necessários, todos eles."
+4. "Já coloquei o token do Claude."
+5. "Avise quando travar: escalonar só com critério explícito, ou seja, decisão que é sua, ação irreversível ou falha que se repete, levando o contexto pronto."
+
+Leitura aplicada:
+- o executor é um loop numa sessão que roda até o PR da fase e para. Não houve escolha por tarefa agendada;
+- "todos os necessários" não inclui o que é irreversível, pelo próprio critério 5.
+
+**Aplicado em:**
+- skill `executar-tarefas`, nova, com o ciclo, os critérios de interrupção e os canais de aviso;
+- skill `sdd-implementar`, que aponta para o executor;
+- `.claude/settings.json`: `permissions.allow` com os comandos do projeto e `deny` para força e merge;
+- hook `.claude/hooks/gate_execucao.py`, que nega push com força, push no `main`, merge e apply ou destroy fora do Floci;
+- `.github/ia/provedor.sh` e `seguranca.yml`: o token da assinatura primeiro, com a chave da API vazia quando há token;
+- `CLAUDE.md` e `AGENTS.md`;
+- teste `harness/testes/test_execucao_autonoma.py`.
+
 ### 2026-11-20 · D-046 · Quem grava a memória compartilhada e como · fonte: delegada
 - **Contexto:** a sessão local gravou a D-044 e a D-045, mas a regra dizia que só a conversa de orquestração escrevia no branch. No meio disso houve um incidente de nomes corrompidos, já restaurado e com o teste `test_git_utf8.py`.
 - **Decisão:** a decisão do Marcos é gravada pela sessão em que ele decidiu, porque repassar a decisão para outra sessão perde contexto. A escrita é otimista e segura:

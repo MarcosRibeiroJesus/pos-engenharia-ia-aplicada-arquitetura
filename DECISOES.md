@@ -31,6 +31,11 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
+  - **Ciclo de cada tarefa:** especialista → revisor independente (nunca quem implementou, no máximo 2 rodadas) → commit só do que foi aprovado.
+  - **Comandos:** os necessários ficam liberados; push com força, push no `main`, merge e apply ou destroy fora do Floci são negados pelo hook `gate_execucao.py`.
+  - **Interrupções:** só pelos critérios (tarefa `[DONO]`, mudança de plano, falha repetida, ação irreversível), com o contexto pronto, pelo Monday, notificação e `## Bloqueios` do PR.
+  - **Revisores da esteira:** usam o `CLAUDE_CODE_OAUTH_TOKEN` (D-028).
 - **Quem grava a memória** (D-046, delegada): a decisão do Marcos é gravada pela sessão em que ele decidiu, seja a orquestração na nuvem ou a sessão local, sempre com o fluxo de escrita segura: `git fetch` → edição sobre o topo atual → commit → push sem `--force`. Se o push for recusado, a sessão busca de novo e refaz a edição sobre o novo topo, nunca reenvia o arquivo inteiro antigo. A orquestração na nuvem audita (`memoria.py auditar`) e mantém o Monday.
 - **Testes do harness por assunto** (D-043): um arquivo `harness/testes/test_<assunto>.py` por assunto, com o que é comum em `comum.py`. O `harness/test_harness.py` só reúne os arquivos e não recebe testes; um teste reprova se receber.
 - **Terraform na máquina do Marcos** (D-042): a implementação de projeto com Terraform roda numa sessão do Claude Code no computador dele. Essa sessão é a única que comita no branch de implementação; a orquestração na nuvem só coordena.
