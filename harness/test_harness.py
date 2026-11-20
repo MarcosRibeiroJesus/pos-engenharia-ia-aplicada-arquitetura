@@ -100,6 +100,8 @@ class TestRamoCompartilhado(unittest.TestCase):
             a = repo_com_remoto(Path(t))
             b = Path(t) / "b"
             sh(Path(t), "git", "clone", "-q", str(Path(t) / "remoto.git"), str(b))
+            for k, v in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false")):
+                sh(b, "git", "config", k, v)  # o runner do CI não tem identidade global do git
             ramo.gravar(a, "agentes-status", "d.json", "1\n", "a")
             ramo.gravar(b, "agentes-status", "d.json", "2\n", "b")
             self.assertEqual(ramo.ler(a, "agentes-status", "d.json"), "2\n")
