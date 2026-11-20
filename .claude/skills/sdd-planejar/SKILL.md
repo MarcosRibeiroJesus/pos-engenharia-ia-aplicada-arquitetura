@@ -21,3 +21,6 @@ Trabalhe em **plan mode** (tarefa 3.4): leia e pesquise, sem editar código.
    - Grave o valor em `teto_diario_usd` no `harness/estado.json`.
    - Calcular não é decidir: se a estimativa depender de uma escolha do dono (escala, região, serviço pago), marque `[PENDENTE]`.
 7. `python3 harness/estado.py avancar <chave> tarefas` e commit `plan(<chave>): ...`.
+8. **Aprovação do plano pelo dono** (D-033). Leve o `plan.md` ao Marcos, com um resumo e o teto diário, e pergunte se aprova (também em `## Perguntas ao dono` no PR).
+   - Só depois do sim dele: `python3 harness/estado.py aprovar-plano <chave> --fonte "<palavras dele e quando>"`. Isso libera a delegação das fases seguintes sem aprovar cada disparo.
+   - Silêncio não aprova. Sem aprovação, cada disparo de especialista continua pedindo o ok dele.

@@ -21,5 +21,5 @@ O subagente devolve `specs/<chave>/analise.md`, com estes critérios explícitos
 
 O arquivo termina com **APROVADO** ou **REPROVADO** e a lista de achados (severidade, local, correção).
 
-- **REPROVADO:** corrija a fase de origem e analise de novo, no máximo 2 rodadas. Se persistir, leve ao dono em `## Perguntas ao dono` (tarefa 5.2).
+- **REPROVADO:** corrija a fase de origem e analise de novo, no máximo 2 rodadas. Se a correção mudar o `plan.md`, a aprovação do dono cai (D-033): mostre a mudança a ele e registre a nova aprovação com `estado.py aprovar-plano` antes de delegar de novo. Se persistir, leve ao dono em `## Perguntas ao dono` (tarefa 5.2).
 - **APROVADO:** `python3 harness/estado.py avancar <chave> implementar` e commit `analise(<chave>): aprovado`.

@@ -9,7 +9,7 @@ Cada tarefa fim tem um especialista com o modelo do nível da tarefa, só as ski
 | `especificador` | especificacao | opus | `regras-do-especialista`, `sdd-especificar`, `pesquisa-fontes`, `novo-projeto` | — |
 | `arquiteto-aws` | arquitetura | opus | `regras-do-especialista`, `sdd-planejar`, `sdd-tarefas`, `plataforma-agentes`, `custo-diario`, `ciclo-demonstracao`, `modelo-de-ameacas`, `pesquisa-fontes` | `aws-core@claude-plugins-official` |
 | `analista-sdd` | analise-sdd | opus | `regras-do-especialista`, `sdd-analisar` | `spec-to-code-compliance@trailofbits` |
-| `engenheiro-terraform` | codigo, infra | opus | `regras-do-especialista`, `terraform-tdd`, `sdd-implementar`, `ciclo-demonstracao`, `custo-diario` | `terraform@hashicorp` (ligado) |
+| `engenheiro-terraform` | codigo, infra | opus | `regras-do-especialista`, `terraform-tdd`, `sdd-implementar`, `ciclo-demonstracao`, `custo-diario`, `evolucao-do-harness` | `terraform@hashicorp` (ligado) |
 | `engenheiro-claude` | componente-claude | opus | `regras-do-especialista`, `componente-claude`, `sdd-implementar`, `avaliacao-llm`, `plataforma-agentes` | `claude-api@anthropic-agent-skills` |
 | `engenheiro-mcp` | mcp | opus | `regras-do-especialista`, `servidor-mcp`, `sdd-implementar`, `componente-claude`, `plataforma-agentes` | `mcp-server-dev@claude-plugins-official` (ligado), `example-skills@anthropic-agent-skills` |
 | `engenheiro-ml` | ml | opus | `regras-do-especialista`, `sdd-implementar`, `terraform-tdd`, `custo-diario` | `aws-core@claude-plugins-official` |
