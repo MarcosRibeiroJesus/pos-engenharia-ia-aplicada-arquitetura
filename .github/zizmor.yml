@@ -5,3 +5,11 @@ rules:
       # Temporária: imagem do Floci configurável por FLOCI_IMAGE até fixarmos uma tag de release.
       # ADR: docs/adr/0001-imagem-do-floci-no-ci.md
       - smoke-floci.yml:17
+  artipacked:
+    ignore:
+      # Jobs que precisam do token do git para gravar o estado compartilhado (infra-no-ar, memória);
+      # nenhum deles envia artefatos. ADR: docs/adr/0002-workflows-de-implantacao.md
+      - 00-plataforma-agentes-apply.yml
+      - 00-plataforma-agentes-destroy.yml
+      - expirar-infra.yml
+      - harness.yml

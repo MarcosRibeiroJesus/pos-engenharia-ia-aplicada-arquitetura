@@ -3,7 +3,7 @@
 # (harness/infra.py e .github/workflows/expirar-infra.yml).
 locals {
   tags = {
-    project      = "conta"
+    project      = "00-conta" # chave no formato da política de tags do Infracost (D-031)
     module       = "finops"
     "managed-by" = "terraform"
   }
@@ -15,7 +15,7 @@ locals {
 }
 
 resource "aws_budgets_budget" "mensal" {
-  name         = "conta-limite-mensal"
+  name         = "00-conta-limite-mensal" # prefixo da chave do projeto (D-029)
   budget_type  = "COST"
   limit_amount = tostring(var.limite_mensal_usd)
   limit_unit   = "USD"

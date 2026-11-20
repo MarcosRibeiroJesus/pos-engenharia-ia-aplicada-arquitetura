@@ -14,6 +14,7 @@ AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI))
 import agente  # noqa: E402
 import estado  # noqa: E402
+import branch_mergeado  # noqa: E402
 import memoria  # noqa: E402
 import novo_projeto  # noqa: E402
 import infra  # noqa: E402
@@ -427,11 +428,77 @@ class TestCaminhoPadrao(unittest.TestCase):
                 with self.subTest(**kw), self.assertRaises(novo_projeto.ErroProjeto):
                     self.novo(r, **kw)
 
+    def test_regex_de_project_do_modelo_de_tags_e_o_da_chave_do_projeto(self):
+        # D-031: a política do Infracost, o modelo de teste e o caminho padrão usam o mesmo padrão.
+        modelo = (AQUI / "modelos" / "tags.tftest.hcl").read_text()
+        self.assertIn(novo_projeto.CHAVE_VALIDA.pattern, modelo)
+        for p in estado.carregar()["projetos"]:
+            self.assertRegex(p["chave"], novo_projeto.CHAVE_VALIDA)
+
     def test_nao_cria_codigo_na_pasta_do_projeto(self):
         with tempfile.TemporaryDirectory() as t:
             r = self.raiz(t)
             self.novo(r)
             self.assertFalse((r / "modulos/09-teste").exists())
+
+
+class TestBranchMergeado(unittest.TestCase):
+    """D-032: commit novo em branch já mergeado é barrado no pre-push."""
+
+    def cenario(self, t):
+        clone = repo_com_remoto(Path(t))
+        sh(clone, "git", "commit", "-q", "--allow-empty", "-m", "base")
+        sh(clone, "git", "push", "-q", "origin", "HEAD:refs/heads/main")
+        sh(clone, "git", "switch", "-q", "-c", "recurso")
+        sh(clone, "git", "commit", "-q", "--allow-empty", "-m", "recurso 1")
+        sh(clone, "git", "push", "-q", "origin", "recurso")
+        return clone, sh(clone, "git", "rev-parse", "HEAD").strip()
+
+    def linha(self, clone, remoto):
+        local = sh(clone, "git", "rev-parse", "HEAD").strip()
+        return [f"refs/heads/recurso {local} refs/heads/recurso {remoto}"]
+
+    def test_branch_ainda_aberto_passa(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone, topo = self.cenario(t)
+            sh(clone, "git", "commit", "-q", "--allow-empty", "-m", "recurso 2")
+            self.assertEqual(branch_mergeado.mergeados(clone, self.linha(clone, topo)), [])
+
+    def test_branch_mergeado_e_barrado(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone, topo = self.cenario(t)
+            # o dono mergeia pelo botão do GitHub: commit de merge no main
+            sh(clone, "git", "switch", "-q", "main")
+            sh(clone, "git", "merge", "-q", "--no-ff", "-m", "Merge pull request #1", "recurso")
+            sh(clone, "git", "push", "-q", "origin", "main")
+            sh(clone, "git", "switch", "-q", "recurso")
+            sh(clone, "git", "commit", "-q", "--allow-empty", "-m", "recurso 2 depois do merge")
+            self.assertEqual(branch_mergeado.mergeados(clone, self.linha(clone, topo)), ["recurso"])
+
+    def test_branch_novo_e_ramos_de_estado_passam(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone, topo = self.cenario(t)
+            zero = "0" * 40
+            linhas = [f"refs/heads/x {topo} refs/heads/novo {zero}",
+                      f"refs/heads/y {topo} refs/heads/memoria-compartilhada {topo}"]
+            self.assertEqual(branch_mergeado.mergeados(clone, linhas), [])
+
+
+class TestWorkflowsDeImplantacao(unittest.TestCase):
+    """ADR 0002: a exceção ao CKV_GHA_7 só vale para apply e destroy registrados."""
+
+    def test_excecao_ckv_gha_7_so_em_apply_e_destroy_registrados(self):
+        registrados = set()
+        for p in estado.carregar()["projetos"]:
+            registrados |= {p.get("apply_workflow"), p.get("destroy_workflow")}
+        for wf in (AQUI.parent / ".github" / "workflows").glob("*.yml"):
+            if "checkov:skip=CKV_GHA_7" in wf.read_text():
+                self.assertIn(f".github/workflows/{wf.name}", registrados, wf.name)
+
+    def test_token_oidc_nunca_no_nivel_do_workflow(self):
+        for wf in list((AQUI.parent / ".github" / "workflows").glob("*.yml")) + list((AQUI / "modelos").glob("*.yml")):
+            topo = wf.read_text().split("\njobs:", 1)[0]
+            self.assertNotRegex(topo, r"id-token\s*:\s*write", wf.name)
 
 
 class TestSincronizarSkills(unittest.TestCase):

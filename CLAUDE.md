@@ -70,6 +70,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
 - Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
+- **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
+  - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
+  - O `pre-push` bloqueia commit novo em branch já mergeado.
+  - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
@@ -161,6 +165,11 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
 - **Conta AWS única, com isolamento por tag e prefixo** (D-029):
   - todo recurso leva a tag `project` e o prefixo da chave do projeto no nome;
+  - **política de tags no Infracost Cloud, bloqueante no PR** (D-031), com o mesmo padrão da constituição:
+    - `project` por regex da chave;
+    - `module` em kebab;
+    - `managed-by` só `terraform`.
+  - **Como aplicar:** `project` e `managed-by` pelo `default_tags` do provider; `module` pelo `local.tags` de cada módulo. O `terraform test` confere antes, a partir do modelo `harness/modelos/tags.tftest.hcl`;
   - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
 - **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
   - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.

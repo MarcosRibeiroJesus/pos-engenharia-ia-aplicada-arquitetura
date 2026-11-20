@@ -42,7 +42,10 @@ Nenhuma spec assume escopo, produto, orçamento, cloud comparativa, projeto de I
 - `destroy` sem sobras.
 
 ## Artigo VI · Operável e replicável
-- Tags `project`, `module` e `managed-by` em todos os recursos.
+- Tags `project`, `module` e `managed-by` em todos os recursos, com os valores que a política de tags do Infracost exige no PR (D-031):
+  - `project`: a chave do projeto em `harness/estado.json`, no formato `NN-nome-em-kebab`;
+  - `module`: o componente, em minúsculas e hífen;
+  - `managed-by`: sempre `terraform`.
 - **Conta única, isolamento por tag** (D-029):
   - nome com o prefixo da chave do projeto;
   - roles por projeto com condição na tag `project` (ABAC);
