@@ -118,7 +118,7 @@
       "disciplina": "00",
       "tipo": "plataforma",
       "titulo": "Plataforma de agentes compartilhada na AWS",
-      "branch": "plataforma/00-plataforma-agentes-plano",
+      "branch": "plataforma/00-plataforma-agentes-impl",
       "pastas": [
         "plataforma/agentes/"
       ],
