@@ -7,7 +7,7 @@ if [ -z "$mudados" ]; then
 else
   git config user.name "corretor-seguranca[bot]"
   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-  git add -A
+  git add -u   # só arquivos já versionados; o checkout da base em .base/ fica de fora
   git commit -q -m "fix(seguranca): correções do agente corretor" -m "Arquivos: $(printf '%s ' $mudados)"
   git push -q "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:${BRANCH}"
   gh api -X POST "repos/$REPO/issues/$PR/comments" \

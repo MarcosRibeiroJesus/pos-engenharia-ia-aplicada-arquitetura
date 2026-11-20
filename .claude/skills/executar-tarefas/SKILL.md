@@ -71,4 +71,8 @@ Na conversa, a pergunta ao dono segue a D-041: múltipla escolha, com a boa prá
 ## Nunca
 - Implementar a tarefa você mesmo, ou deixar o especialista revisar o próprio trabalho.
 - Comitar uma tarefa reprovada ou com teste vermelho.
-- Push com `--force`, push no `main`, merge de PR, apply ou destroy fora do Floci. O hook `gate_execucao.py` nega esses comandos.
+- Push com `--force`, push no `main`, merge de PR, apply ou destroy fora do Floci. Há três travas para isso:
+  - o hook `gate_execucao.py`, que analisa o comando com shlex;
+  - o `.githooks/pre-push` (`harness/push_seguro.py`), que recusa main, força e apagar branch, qualquer que seja o caminho do comando;
+  - a proteção do `main` no GitHub.
+- Código inline em interpretador (`python -c`, `bash -c`): use scripts versionados.

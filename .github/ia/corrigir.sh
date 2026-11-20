@@ -2,11 +2,14 @@
 # Agente corretor: edita o código para corrigir achados. Roda sem token do GitHub.
 # Nunca toca em workflows, agentes, segredos ou state; commit e push ficam no passo seguinte.
 set -euo pipefail
+IA="$(cd "$(dirname "$0")" && pwd)"
+AGENTES="$IA/../../.claude/agents"
 npm install -g --silent @anthropic-ai/claude-code
-python3 .github/ia/resumir_sarif.py achados > /tmp/achados.md
+python3 "$IA"/resumir_sarif.py achados > /tmp/achados.md
 
-claude -p "Você é o agente definido em .claude/agents/corretor-seguranca.md; siga essas instruções. Achados a corrigir: /tmp/achados.md." \
+claude -p "Você é o agente definido em $AGENTES/corretor-seguranca.md; siga essas instruções. Achados a corrigir: /tmp/achados.md." \
   --allowedTools "Read,Edit,Grep,Glob,Bash(terraform fmt:*),Bash(terraform validate:*),Bash(terraform init -backend=false:*)" \
+  --setting-sources user --disallowedTools "WebFetch,WebSearch,Write" \
   --model opus --max-turns 40 --output-format json > /tmp/correcao.json || { echo "::error::agente corretor falhou"; exit 1; }
 
 mudados=$(git diff --name-only)
