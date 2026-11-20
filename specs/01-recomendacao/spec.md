@@ -1,7 +1,7 @@
 # Spec: Recomendação de e-commerce (plataforma híbrida de recomendação com explicação)
 
 - **Projeto:** `01-recomendacao` · **Disciplina:** 01 (fundamentos de IA e LLMs) · **Tipo:** arquitetura
-- **Status:** rascunho retroativo, em esclarecimento (2026-11-20). As ambiguidades técnicas estão decididas (seção "Esclarecimentos"). Ficam abertas quatro perguntas do dono; duas delas (P01-P1, escopo do lote, e P01-P2, MWAA no dia da demonstração) bloqueiam o plano.
+- **Status:** esclarecida (2026-11-20). As perguntas P01-P1 a P01-P4 foram respondidas (D-051 a D-054) e o plano foi aprovado (D-056); o projeto está na fase analisar.
 - **Artigos da constituição que se aplicam:** I, II, III, IV, V, VI, VII, VIII
 - **Spec retroativa.** O código foi escrito antes do harness. As histórias, os RF de 001 a 017 e os RNF de 001 a 008 descrevem o que o código faz **hoje**, cada um com o arquivo que o comprova. O que o código não faz e a constituição exige está em "Requisitos de conformidade", com a marca **lacuna (retroativo)**. Quando o código faz o que a constituição proíbe, a marca é **[DIVERGÊNCIA]**. Esta spec não muda código: cada lacuna vira tarefa na fase `tarefas`.
 

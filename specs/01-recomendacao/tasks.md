@@ -490,7 +490,7 @@ Nenhum furo muda o desenho aprovado. F1 e F7 pedem uma emenda só de texto do `p
 | F7 | O plano diz em dois lugares que o teto "é proposta e depende da resposta à P01-P5" e "só vale com a aprovação do plano" (Resumo e Custo do lab), e os ADRs 0007 a 0016 dizem "proposto, aguardando a aprovação", embora a D-056 tenha aprovado os dois | plano, "Resumo" e "Custo do lab"; cabeçalho dos ADRs | cosmético; o leitor pode tomar o teto como pendente | ADRs corrigidos na T000 (não entram no hash do plano). **Exige emenda de texto** do plano |
 | F8 | A spec define `proveniencia` como `sintetica` ou `documentacao`, mas o RF-111 pede a troca por captura real sem dar o valor | spec, RF-111 | o VT-13 não saberia aceitar a captura | resolvido na T080 com o valor `captura` |
 
-**Divergência entre spec e plano, para o especificador:** o RNF-101 da spec cita o input `enable_mwaa` no apply da base, e o plano trocou esse input pela janela em stack próprio (ADR-0007, D-052). As tarefas seguem o plano aprovado; o texto da spec precisa ser alinhado.
+**Divergência entre spec e plano (resolvida em `d846805`: o RNF-101 da spec agora descreve a janela do MWAA em stack próprio):** o RNF-101 da spec cita o input `enable_mwaa` no apply da base, e o plano trocou esse input pela janela em stack próprio (ADR-0007, D-052). As tarefas seguem o plano aprovado; o texto da spec precisa ser alinhado.
 
 ## Perguntas ao dono
 Nenhuma aberta. As emendas de texto de F1 e F7 vão à orquestração, que decide quando levar ao dono, junto com outra emenda ou sozinhas.
