@@ -27,6 +27,9 @@ Quando o Marcos decide algo que só ele pode decidir (escopo, produto, orçament
 4. **Monday:** atualize o card, ou feche se a decisão resolveu a pendência.
 5. **Sessões em andamento** recebem a mudança pela memória. Se a decisão contradiz um branch, o PR registra o ajuste.
 
+## Aprovação de plano SDD
+Quando o dono aprova o `plan.md` de um projeto, registre com `python3 harness/estado.py aprovar-plano <chave> --fonte "<palavras dele e quando>"` (D-033). O registro guarda o hash do plano; plano alterado depois exige nova aprovação. Nunca registre a aprovação de um plano que ele não viu.
+
 ## Não é decisão do dono
 O que está delegado (D-014) é decidido pela orquestração e registrado com `fonte: delegada`. Isso não dispensa a explicação nem os ids da prova.
 

@@ -31,7 +31,13 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
 
 ## Boas práticas da certificação (decisões delegadas)
-- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Explique sempre o porquê, com os ids das tarefas, e registre a decisão na memória compartilhada (fonte: "delegada").
+- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Registre a decisão na memória compartilhada (fonte: "delegada").
+- **Como explicar uma decisão para mim** (D-036): em vez dos códigos da prova, diga
+  - o nome da boa prática;
+  - em uma ou duas frases, o que um arquiteto faz seguindo essa prática;
+  - o erro comum que ela evita.
+  
+  Os ids das tarefas ficam só nos ADRs e na memória, ao lado do nome, para rastreio.
 - Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
 
 ## Retomada de sessão
@@ -143,7 +149,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas. A plataforma de agentes (`00-plataforma-agentes`) tem página própria em Arquiteturas AWS e post próprio (D-037).
 - O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
 - O site não explica como o conteúdo é produzido (curso, módulos, unidades, aulas, a estratégia de dois projetos) nem traz detalhes do curso ou do meu progresso. Ele apresenta só os projetos, as arquiteturas e os posts.
@@ -166,7 +172,13 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Cursos oficiais de preparação (Skilljar): Building with the Claude API, Claude Code in Action, Introduction to Model Context Protocol, Claude with Amazon Bedrock, Claude on Google Cloud, Claude 101 e AI Fluency. Cite o curso relacionado no ADR.
 - Este repositório também é prática do domínio 3: mantenha CLAUDE.md, regras por caminho, skills e o uso de Claude Code em CI coerentes com o guia.
 - Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
-- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
+- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros.
+- **Delegação dentro do plano aprovado** (D-033):
+  - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
+  - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
+  - fora disso (plano não aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
+  - o briefing traz `Projeto: <chave>` e, quando eu aprovar um disparo avulso, `Aprovação do dono: <minhas palavras e quando>`. O hook `.claude/hooks/gate_delegacao.py` nega o disparo que não cumprir isso;
+  - o gate `sdd-analisar`, o merge e a publicação continuam comigo.
 
 ## Segurança e FinOps na esteira (obrigatório)
 - Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep, CodeQL e zizmor para os workflows), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.

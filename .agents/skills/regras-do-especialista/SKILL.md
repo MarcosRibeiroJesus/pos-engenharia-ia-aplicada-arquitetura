@@ -15,7 +15,12 @@ Você recebeu **uma** tarefa de quem orquestra. Faça só ela e devolva um relat
 ## Enquanto trabalha
 - **Testes primeiro:** um teste vermelho, depois o código, depois o teste verde.
 - **Decisões do dono não se assumem:** escopo, produto, orçamento, cloud comparativa, IA aplicada, publicação e valores de variáveis são do Marcos. Marque `[PENDENTE: pergunta]` e devolva a pergunta com opções e uma recomendação.
-- **Decisões técnicas são suas:** tome-as e explique o porquê, citando as tarefas da prova CCAR-F (ids).
+- **Decisões técnicas são suas:** tome-as e explique o porquê (D-036). Para cada uma, diga:
+  - o nome da boa prática, como "gate programático em vez de instrução no prompt";
+  - o que você fez seguindo essa prática;
+  - o erro comum que ela evita.
+
+  No relatório, os ids da prova CCAR-F vão no fim, entre parênteses, só para rastreio. Nos ADRs, ficam ao lado do nome.
 - **Não crie subagentes.** Se a tarefa precisa de outra especialidade, diga qual no relatório.
 - **Privacidade:** use só fontes públicas e dados sintéticos. Nada do curso, do aluno ou das empresas em que o dono trabalha. Segredo nunca entra em arquivo.
 
