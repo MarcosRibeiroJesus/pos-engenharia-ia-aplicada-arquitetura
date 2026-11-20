@@ -13,8 +13,11 @@ Vale igualmente para Claude Code, Google Antigravity e GitHub Copilot. Os agente
 
 ## 2. Regras inegociáveis
 - **Constituição** (`.specify/memory/constitution.md`): SDD, testes primeiro, segurança por padrão, custo consciente, privacidade.
-- **Decisões do dono:** escopo, produto, orçamento, cloud comparativa, projeto de IA aplicada, merge, publicação e valores de variáveis ou secrets são dele. Nunca assuma: pergunte no PR, na seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. Silêncio não é resposta.
+- **Decisões do dono:** escopo, produto, orçamento, cloud comparativa, projeto de IA aplicada, merge, publicação e valores de variáveis ou secrets são dele. Nunca assuma. Silêncio não é resposta.
+  - **Onde perguntar:** registre a pergunta no PR, na seção `## Perguntas ao dono`, com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. A orquestração leva a pergunta ao dono no chat, onde ele responde por múltipla escolha, com a boa prática e o tradeoff de cada opção (D-041). O dono não responde no PR.
 - **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations e explique o porquê.
+- **Decisões do dono:** escopo, produto, orçamento, cloud comparativa, projeto de IA aplicada, merge, publicação e valores de variáveis ou secrets são dele. Nunca assuma: pergunte no PR, na seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. Silêncio não é resposta.
+- **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations. Ao explicar uma decisão ao dono, diga o nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só códigos da prova (D-036). Os ids ficam nos ADRs, ao lado do nome.
 - **Privacidade:** nada do curso, do aluno ou das empresas em que o dono trabalha. Só fontes públicas e dados sintéticos. Segredos nunca entram no repositório.
 
 ## 3. SDD: como todo projeto é construído
@@ -65,4 +68,9 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   - **Antigravity:** assuma o papel do arquivo do especialista e use as skills listadas em `.agents/skills/`.
 - `python3 harness/agente.py proximo --tarefa <tipo>` diz o agente de código, o modelo e o especialista.
 - O especialista faz uma tarefa e devolve o relatório da skill `regras-do-especialista`. Ele não cria subagentes.
+- **Delegação dentro do plano aprovado** (D-033): com o `plan.md` aprovado pelo dono, a orquestração delega as tarefas das fases tarefas, analisar, implementar e verificar sem aprovar cada disparo.
+  - Antes de delegar ou de assumir o papel de um especialista, rode `python3 harness/estado.py pode-delegar <chave>`. Se der `NÃO`, peça a aprovação do dono para aquele disparo.
+  - O briefing começa com `Projeto: <chave>`. Um disparo avulso aprovado pelo dono leva `Aprovação do dono: <palavras dele e quando>`.
+  - A aprovação do plano só é registrada depois que o dono aprova: `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`. Plano alterado depois disso exige nova aprovação.
+  - No Claude Code, o hook `gate_delegacao.py` aplica a regra.
 - **Decisão do dono vira regra ou skill no mesmo turno** (D-025). Use a skill `decisao-do-dono`.

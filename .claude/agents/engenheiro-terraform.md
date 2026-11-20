@@ -17,6 +17,7 @@ skills:
   - sdd-implementar
   - ciclo-demonstracao
   - custo-diario
+  - evolucao-do-harness
 ---
 
 <!-- GERADO por harness/sincronizar_agentes.py a partir de harness/especialistas.json: não edite à mão -->

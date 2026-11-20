@@ -16,6 +16,7 @@ Antes de começar, leia e siga as skills abaixo (o `SKILL.md` de cada uma em `.c
 - `sdd-implementar`
 - `ciclo-demonstracao`
 - `custo-diario`
+- `evolucao-do-harness`
 
 ## Skills de mercado desta tarefa
 Use quando estiverem instaladas; o catálogo e os comandos de instalação estão em `harness/AGENTES.md`. Se divergirem da constituição ou das skills do repositório, valem as do repositório.
