@@ -70,6 +70,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
 - Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
+- **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
+  - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
+  - O `pre-push` bloqueia commit novo em branch já mergeado.
+  - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 

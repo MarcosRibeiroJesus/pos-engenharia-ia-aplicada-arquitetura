@@ -33,6 +33,7 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - Faça commit do que estiver verde. Nunca deixe trabalho só na memória da conversa.
 - Acrescente uma linha em `harness/progresso.md`: `- data · projeto · agente (modelo) · feito · testes · próxima tarefa`.
 - O push só sai se a memória compartilhada lida for a mais recente (`pre-push`). Se for bloqueado, leia a novidade, ajuste e repita.
+- **Branch já mergeado não recebe commit novo** (D-032). O `pre-push` bloqueia o envio. Crie um branch novo a partir do `main`, traga os commits com cherry-pick e abra um PR novo.
 
 ## 5. Troca de agente quando a cota acaba
 - **Quem perceber o esgotamento** (você mesmo, se ainda puder agir, o dono ou a orquestração) registra:
