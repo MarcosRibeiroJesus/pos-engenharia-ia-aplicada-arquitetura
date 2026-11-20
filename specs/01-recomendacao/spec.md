@@ -198,7 +198,7 @@ Na verificação: **VT** = Vitest do serviço; **PY** = unittest do lote; **TT**
 - **RNF-002** (custo, Art. V). Hoje:
   - sem NAT Gateway; endpoints de interface em 1 AZ; MemoryDB `db.t4g.small` com 1 shard e 0 réplica; 1 task Fargate (base on-demand, o resto em Spot);
   - SageMaker Serverless sem concorrência provisionada;
-  - MWAA desligado por padrão (`enable_mwaa = false`);
+  - MWAA desligado por padrão (`enable_mwaa = false`), como `count` dentro do stack base. A janela do MWAA em stack próprio substitui esse input (RNF-101, ADR-0007);
   - inventário do custo fixo no ADR-0002 (cerca de US$ 0,16 por hora com o padrão do lab, valor do próprio ADR, a recalcular no plano);
   - AWS Budgets **mensal** de US$ 10 no stack, com alertas em 80% (real) e 100% (previsto).
   - **Aceite:** ST (todo recurso de custo por hora citado em ADR; nenhum NAT); TT `rede_endpoints_de_interface_no_lab`, `memorydb_tls`, `mwaa_desligado_por_padrao`, `monitoramento_e_orcamento`.
@@ -265,11 +265,19 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   Os workflows de apply e destroy DEVEM nascer de `harness/modelos/apply.yml` e `harness/modelos/destroy.yml`, preenchidos para a chave `01-recomendacao`, com os nomes `01-recomendacao-apply.yml` e `01-recomendacao-destroy.yml`. O que entra:
   - **no apply:** input `prazo_horas` (padrão e máximo 24); registro do prazo com `harness/infra.py registrar`; conferência da tag de custo `project` com `list-cost-allocation-tags`;
   - **no destroy:** ambiente `aws-lab-destroy`, restrito ao `main` e sem aprovação; input `confirm_stack`; OIDC; verificação de sobras pela tag `project=01-recomendacao`, ignorando só a chave KMS em `PendingDeletion` e o serviço ECS que não está `ACTIVE` nem `DRAINING` (regra do ADR-0006); `harness/infra.py remover` no fim;
-  - **os inputs próprios do stack:** `enable_mwaa` (D-052: ligado só numa janela curta da demonstração, com `prazo_horas` curto), `enable_serverless_inference` e `explanations_enabled`, mais o state remoto da chave atual;
-  - **o `harness/estado.json`:** `apply_workflow` e `destroy_workflow` passam a apontar para os arquivos novos, e os `recsys-01-03-apply.yml` e `recsys-01-03-destroy.yml` saem.
-  - **Aceite:** o `estado.py validar` aprova o projeto em `verificar`, e a regra estática da unidade e os testes do harness reconhecem os arquivos novos. (CI do harness, ST)
+  - **os inputs próprios do stack base:** `enable_serverless_inference` e `explanations_enabled`, mais o state remoto da chave atual. O apply da base não tem input `enable_mwaa`, e o stack base não cria MWAA;
+  - **a janela do MWAA em stack próprio** (D-052, ADR-0007): o MWAA fica ligado só numa janela curta do dia da demonstração, numa raiz Terraform separada (`U/infra/janela-mwaa/`), com state próprio, que lê as entradas da base de um parâmetro SSM, e não do state dela. A janela DEVE ter:
+    - **prazo próprio:** o workflow `01-recomendacao-janela-mwaa-apply.yml`, com input `prazo_horas` de padrão 2 e máximo 3. Ele recusa o apply se a base não está no ar e registra o componente com `harness/infra.py registrar --componente janela-mwaa`. O prazo fica limitado ao menor de 3 h e do prazo da base menos 1 h;
+    - **destroy próprio:** o workflow `01-recomendacao-janela-mwaa-destroy.yml`, no ambiente `aws-lab-destroy`, sem aprovação, com `confirm_stack = 01-recomendacao-janela-mwaa`. A verificação de sobras filtra por `project=01-recomendacao` e `module=orquestracao-mwaa` juntos, porque a base continua no ar;
+    - **destroy em cascata:** o destroy da base roda primeiro o destroy da janela (com o state vazio, não faz nada), depois o da base, e remove os dois registros de prazo;
+  - **o `harness/estado.json`:** `apply_workflow` e `destroy_workflow` passam a apontar para os arquivos novos, e os `recsys-01-03-apply.yml` e `recsys-01-03-destroy.yml` saem. O projeto ganha o componente `janela-mwaa` em `componentes`, com o stack, os dois workflows e `prazo_maximo_horas: 3`.
+  - **Aceite:**
+    - o `estado.py validar` aprova o projeto em `verificar`, com os workflows da base e da janela, e a regra estática da unidade e os testes do harness reconhecem os arquivos novos (CI do harness, ST);
+    - nenhum workflow da D01 tem input `enable_mwaa`, e o plan do stack base não tem recurso `aws_mwaa_environment` (ST, TT);
+    - o registro da janela recusa prazo acima de 3 h ou acima do prazo da base menos 1 h, e recusa a janela sem a base no ar (TH);
+    - o destroy da base derruba a janela antes e remove os dois registros (TH).
 - **RNF-102: teto diário.** Lacuna (retroativo) e **[DIVERGÊNCIA]**: hoje o stack tem Budgets mensal de US$ 10, e a D-021 trocou os tetos mensais por disciplina pelo teto de um dia. O que DEVE existir:
-  - o `teto_diario_usd` do projeto, hoje `null`, calculado no plano como o custo de 24 horas do stack na postura da demonstração. A postura depende de D-052 (MWAA ligado só numa janela curta, com `prazo_horas` curto; o teto soma 24 h do resto do stack e só a janela do MWAA);
+  - o `teto_diario_usd` do projeto, hoje `null`, calculado no plano como o custo de 24 horas do stack na postura da demonstração. A postura segue a D-052 (MWAA ligado só numa janela curta): o teto soma 24 h do stack base e só a janela do MWAA, de até 3 h (RNF-101, ADR-0007);
   - o valor gravado em `harness/estado.json`, no README e num AWS Budgets com período **diário** no stack, no lugar do mensal;
   - o limite mensal da conta só no `infra/conta` (D-022), sem um segundo Budgets mensal no stack.
   - **Aceite:** TT do Budgets com `time_unit = "DAILY"` e `limit_amount` igual ao teto; o `estado.py validar` aprova a partir de `tarefas`; o gate de FinOps da esteira compara o custo de 24 horas com o teto. (TT, CI do harness, esteira)
@@ -462,6 +470,11 @@ Todo componente de `U/` e os arquivos do PR #1 fora da unidade aparecem em pelo 
 | `.github/workflows/recsys-01-03-{apply,destroy,ci}.yml` | RNF-006, RNF-101, RNF-103, RNF-106 |
 | `testing/scripts/integracao_01_03_recomendacao.py`, `testing/reports/latest.html` | RF-015, RNF-107 |
 | `site/projetos/01-03-recomendacao.html`, `site/posts/modulo-01-recomendacao.html`, `site/relatorios/01-03-recomendacao.html`, `site/index.html`, `site/assets/site.css`, `docs/curso/PROGRESSO.md` | RF-015, RF-017, RNF-111 |
+
+## Alinhamento com o plano aprovado
+Cada linha diz o que mudou na spec para seguir o `plan.md` aprovado, a boa prática que guia a mudança e o erro comum que ela evita (D-036). Os ids das tarefas da prova vêm no fim, entre parênteses.
+
+- **2026-11-20 · RNF-101, RNF-002 e RNF-102: janela do MWAA em stack próprio no lugar do input `enable_mwaa`** (D-052, ADR-0007). A spec citava um input `enable_mwaa` no apply da base; o plano pôs o MWAA numa raiz própria, com prazo de até 3 h, destroy sem aprovação e destroy em cascata a partir da base. **Boa prática: workflow com gate programático e ordem garantida pelo código.** O arquiteto põe o prazo, a ordem e o desligamento da parte cara em regras que o harness aplica sozinho, e a spec descreve o mesmo ciclo que o plano. **Erro comum:** desligar a parte cara por um novo apply com uma flag, que fica esperando aprovação, ou deixar a spec e o plano descreverem mecanismos diferentes, e a análise e os testes seguirem um texto que o código não implementa (1.4, 1.6, 5.3).
 
 ## Perguntas ao dono
 | id | pergunta | bloqueia | opções | recomendação |
