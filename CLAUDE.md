@@ -8,11 +8,74 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
-## Decisões do dono (regra sem exceção)
+## Decisões do dono
 - Nunca assuma uma escolha que cabe a mim: opção de arquitetura, projeto de IA aplicada, cloud comparativa, orçamento, produto, escopo, publicação, merge, aprovação de plano ou qualquer coisa que eu tenha sido perguntado. Silêncio, pergunta pulada ou "sem objeção" não são resposta.
 - Antes de agir sobre um conjunto de decisões, confira se falta alguma resposta minha. Se faltar, liste o que falta, diga em uma linha o que cada item bloqueia e peça a resposta. Siga só com o trabalho que não depende dela.
 - Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
+- A exceção são as decisões delegadas da seção "Boas práticas da certificação".
 - Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
+- **Toda decisão que só eu posso tomar vira regra ou skill com relação direta, no mesmo turno** (D-025, skill `decisao-do-dono`).
+  - O lugar preferido é um gate programático; depois a constituição, o `CLAUDE.md` ou o `AGENTS.md`; depois uma skill nova ou atualizada; por fim um template.
+  - A entrada da decisão no `HISTORICO.md` lista onde ela foi aplicada (`**Aplicado em:**`).
+  - O `python3 harness/memoria.py auditar` reprova decisão minha sem essa linha.
+
+- Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
+
+## Memória compartilhada (decisões macro)
+- As decisões macro que tomo na conversa de orquestração ficam no branch `memoria-compartilhada`, fora do fluxo de PR, para chegar às sessões na hora:
+  - `DECISOES.md`: estado atual, regras ativas e pendências. É curto e sempre entra no contexto.
+  - `HISTORICO.md`: registro completo, com data, id e fonte de cada decisão. Leia só quando precisar do porquê.
+  - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
+- O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
+- O gate `.claude/hooks/gate_entrega.py` nega push e abertura de PR enquanto a sessão não tiver recebido a versão mais recente da memória.
+- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
+
+## Boas práticas da certificação (decisões delegadas)
+- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Registre a decisão na memória compartilhada (fonte: "delegada").
+- **Como explicar uma decisão para mim** (D-036): em vez dos códigos da prova, diga
+  - o nome da boa prática;
+  - em uma ou duas frases, o que um arquiteto faz seguindo essa prática;
+  - o erro comum que ela evita.
+  
+  Os ids das tarefas ficam só nos ADRs e na memória, ao lado do nome, para rastreio.
+- Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
+
+## Retomada de sessão
+- Ao retomar uma sessão parada (limite de uso ou pausa), avalie se o contexto ainda vale. Se ela ficou parada mais de 8 horas, ou se a memória compartilhada mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado a continuar sobre resultados de ferramenta antigos (tarefas 1.7 e 5.1).
+- O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
+
+## Perguntas ao dono
+- **Eu respondo só no chat** (D-041):
+  - toda pergunta para mim é feita na conversa, em múltipla escolha (`AskUserQuestion`);
+  - o enunciado explica o porquê pelo nome da boa prática, ou seja, como o exame trata o assunto, e o erro comum que ela evita (D-036);
+  - cada opção diz o seu tradeoff.
+  
+  O hook `.claude/hooks/gate_pergunta.py` nega a pergunta fora desse formato.
+- **A seção `## Perguntas ao dono` de PRs e specs é só registro, não é onde eu respondo.**
+  - Quem escreve nela: as sessões sem mim (nuvem, Antigravity, Copilot), com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`).
+  - A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py`, leva ao Monday e me pergunta no chat.
+  - Respondida, a linha vira "Respondida (D-xxx)" no PR.
+
+## Harness e SDD (spec-driven development)
+@AGENTS.md
+@.specify/memory/constitution.md
+
+- O `AGENTS.md` é o manual comum a todos os agentes (Claude Code, Antigravity, Copilot), incluindo a troca de agente quando a cota acaba (`harness/agente.py`). Este CLAUDE.md acrescenta os hooks e as skills do Claude Code.
+
+- **Todo projeto passa pelo SDD**, no fluxo do Spec Kit, com os artefatos em `specs/<chave>/`:
+
+  especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar
+
+  O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
+- **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
+- **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
+- **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
+- **Agentes especialistas:** um por tarefa fim, definidos em `harness/especialistas.json` e gerados em `.claude/agents/` e `.github/agents/` (catálogo em `harness/AGENTES.md`).
+  - **Delegue cada tarefa ao especialista dela,** com briefing completo: objetivo, arquivos, critério de aceite e restrições de custo e segurança.
+  - **Cada especialista tem** o modelo do nível da tarefa, só as skills dela (pré-carregadas) e nenhuma ferramenta para criar subagentes. O `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` reforça isso.
+  - **Nunca edite os arquivos gerados:** mude o JSON e rode `python3 harness/sincronizar_agentes.py`. O CI confere.
+- **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
+- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
@@ -21,8 +84,22 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
-- Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
+- **Orquestrador e subagentes** (padrão orquestrador-trabalhador da Anthropic): a orquestração coordena, grava a memória compartilhada e delega cada tarefa a um especialista (subagente). A orquestração não escreve código de projeto. Subagentes não criam outros.
+- **Sessões independentes por projeto:** cada projeto pode ter a sua sessão de implementação, em paralelo com as outras, desde que:
+  - cada sessão esteja no seu próprio worktree (`git worktree add`), no branch `modulo/NN-slug/<projeto>` ou `plataforma/<projeto>-impl`, com PR para `main`;
+  - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
+  - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
+  - o merge depende da minha aprovação.
+  - Um projeto com Terraform roda só na minha máquina (D-042); projeto sem Terraform pode rodar em sessão de nuvem, sem Bedrock.
+  - Cada sessão paralela consome o limite de uso da conta; o custo estimado de tokens é de 4 a 15 vezes uma sessão de chat (medição da própria Anthropic), então eu limito a quantidade de sessões ativas ao que eu consigo acompanhar.
+- **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
+  - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
+  - O `pre-push` bloqueia commit novo em branch já mergeado.
+  - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
+- **Terraform roda na minha máquina** (D-042). A implementação de projeto com Terraform é feita numa sessão do Claude Code no meu computador, com ciclo de teste em segundos.
+  - Essa sessão é a única que comita no branch de implementação.
+  - A orquestração na nuvem coordena, mas não escreve nesse branch.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
@@ -65,13 +142,24 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 ## Engenharia
 - Terraform: módulos reutilizáveis, state remoto com lock, `terraform.tfvars.example`.
 - GitHub Actions com OIDC na AWS, sem chaves estáticas. Pipeline: fmt, validate, tflint, checkov, `terraform test`, integração com o Floci como container de serviço, plan comentado no PR, apply só em ambiente protegido com aprovação.
-- Workflow de destroy: disparo manual, ambiente protegido, confirmação digitando o nome do stack, verificação final de recursos com a tag do projeto.
-- FinOps: versão "lab" na menor escala que demonstre o padrão; Infracost no PR; alerta no AWS Budgets; teto mensal no README.
+- Workflow de destroy **obrigatório em todo projeto com infraestrutura real** (Artigo V, D-021 e D-022):
+  - disparo manual ou pelo agendador de prazo;
+  - ambiente próprio do destroy (`aws-lab-destroy`), restrito ao `main` e sem aprovação (D-024);
+  - confirmação pelo nome do stack no input `confirm_stack`;
+  - OIDC;
+  - verificação final de recursos com a tag do projeto;
+  - remoção do registro de prazo.
+- **Prazo do apply:** o workflow de apply registra o prazo de vida com `harness/infra.py registrar` (padrão e máximo de 24 h desde o apply, D-024; `harness/infra.py estender` adia dentro desse limite). O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
+- **Onde fica e quem valida:** os caminhos ficam em `apply_workflow` e `destroy_workflow` no `harness/estado.json`. O `estado.py validar` reprova o projeto na fase `verificar` se um dos dois faltar ou estiver incompleto.
+- FinOps: versão "lab" na menor escala que demonstre o padrão. O uso é demonstração (subir, gravar um vídeo curto, destruir no mesmo dia), então o teto de cada projeto é o custo estimado de um dia de execução:
+  - fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets com período diário;
+  - o Infracost do PR compara o custo de 24 horas com esse teto;
+  - acima de todos os projetos, o limite mensal da conta é US$ 20 (`vars.CUSTO_MAX_MENSAL_USD`), num AWS Budgets mensal (D-022).
 - Replicável: README de cada módulo com pré-requisitos e no máximo 5 passos para subir.
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas. A plataforma de agentes (`00-plataforma-agentes`) tem página própria em Arquiteturas AWS e post próprio (D-037).
 - O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
 - O site não explica como o conteúdo é produzido (curso, módulos, unidades, aulas, a estratégia de dois projetos) nem traz detalhes do curso ou do meu progresso. Ele apresenta só os projetos, as arquiteturas e os posts.
@@ -94,14 +182,47 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Cursos oficiais de preparação (Skilljar): Building with the Claude API, Claude Code in Action, Introduction to Model Context Protocol, Claude with Amazon Bedrock, Claude on Google Cloud, Claude 101 e AI Fluency. Cite o curso relacionado no ADR.
 - Este repositório também é prática do domínio 3: mantenha CLAUDE.md, regras por caminho, skills e o uso de Claude Code em CI coerentes com o guia.
 - Cada decisão relevante vira ADR em `modulos/NN-slug/unidades/UU-slug/adr/`: contexto, decisão, alternativas rejeitadas, trade-offs, custo, risco, tarefas da prova exercitadas (ids) e o que um arquiteto sênior faria em produção.
-- Ao orquestrar subagentes ou sessões: uma por unidade, em paralelo, cada uma no seu branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros. Mostre o plano e espere minha aprovação antes de disparar.
+- Ao orquestrar subagentes ou sessões: um especialista por tarefa, e uma sessão por projeto em paralelo, cada uma no seu worktree e branch, com briefing completo (objetivo, arquivos, critérios de aceite, restrições de custo e segurança). Subagentes não criam outros.
+- **Delegação dentro do plano aprovado** (D-033):
+  - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
+  - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
+  - fora disso (plano não aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
+  - o briefing traz `Projeto: <chave>` e, quando eu aprovar um disparo avulso, `Aprovação do dono: <minhas palavras e quando>`. O hook `.claude/hooks/gate_delegacao.py` nega o disparo que não cumprir isso;
+  - o gate `sdd-analisar`, o merge e a publicação continuam comigo.
 
 ## Segurança e FinOps na esteira (obrigatório)
-- Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep e CodeQL), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov, Trivy config e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.
+- Todo PR passa pelo workflow `.github/workflows/seguranca.yml`: segredos (gitleaks), SAST (Semgrep, CodeQL e zizmor para os workflows), SCA e licenças (dependency review e Trivy), SBOM, IaC (checkov e tflint), imagens de contêiner (Trivy), DAST (OWASP ZAP baseline) quando a unidade declara um alvo, e FinOps (Infracost) com teto de custo por PR. Os resultados vão em SARIF para a aba Security do GitHub.
 - Achado de severidade alta ou crítica bloqueia o merge. Exceção só com justificativa versionada (`.checkov.yaml`, `.trivyignore`, `.semgrepignore`) e ADR.
 - Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
+- **Conta AWS única, com isolamento por tag e prefixo** (D-029):
+  - todo recurso leva a tag `project` e o prefixo da chave do projeto no nome;
+  - **política de tags no Infracost Cloud, bloqueante no PR** (D-031), com o mesmo padrão da constituição:
+    - `project` por regex da chave;
+    - `module` em kebab;
+    - `managed-by` só `terraform`.
+  - **Como aplicar:** `project` e `managed-by` pelo `default_tags` do provider; `module` pelo `local.tags` de cada módulo. O `terraform test` confere antes, a partir do modelo `harness/modelos/tags.tftest.hcl`;
+  - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
+- **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
+  - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.
+  - Projeto novo entra pelo caminho padrão: `python3 harness/novo_projeto.py`.
 - Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
-- Acesso dos agentes ao Claude: Amazon Bedrock via OIDC (sem chave estática), com a chave da API da Anthropic como alternativa em secret do repositório.
+- **Acesso aos modelos (modelo híbrido, D-028):**
+  - **Agentes de código e revisores na esteira:** usam a assinatura Pro do dono (Claude Code e `claude-code-action` com o token da assinatura em secret). Na troca, o Antigravity usa Gemini e o Copilot usa OpenAI.
+  - **Na AWS:** rodam só a plataforma compartilhada e os agentes dos produtos durante as demonstrações. O Claude é acessado pelo Bedrock via OIDC, sem chave estática, com um perfil de inferência por produto para atribuir custo.
+
+## Modelo por tarefa
+Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao abrir sessão ou subagente, defina o modelo explicitamente e registre a escolha no briefing.
+- **Opus** (padrão das sessões de unidade): decisões de arquitetura e ADRs, Terraform e código de produção, modelagem de ameaças, revisor e corretor de segurança na esteira, diagnóstico de falhas difíceis.
+- **Sonnet**: pesquisa e síntese de fontes, rascunho de posts e do LinkedIn, páginas do site, testes a partir de regras já escritas, revisor FinOps.
+- **Haiku**: tarefas mecânicas e verificáveis, como formatação, renomeações, atualização de índices e do registro de uso, e checagens de links.
+- **Fable (camada Mythos)**: só com a minha aprovação, para uma segunda opinião em decisão cara de reverter.
+- Na dúvida entre dois modelos, use o mais capaz para decidir e o mais barato para executar o que já foi decidido.
+
+## Registro de uso de IA
+- O registro físico é `docs/uso/uso-tokens.csv`, com uma linha por sessão e modelo. Toda sessão registra o próprio uso ao terminar uma entrega, com `scripts/uso/uso.py registrar` (lê o transcript do Claude Code) ou `manual` quando só houver a medição da conversa, e roda `uso.py painel`.
+- O painel fica em `site/uso.html`, e cada página de projeto tem o widget `<!-- uso:projeto=CHAVE --><!-- /uso -->`. A chave do projeto é `NN.UU-slug` (ex.: `01.03-recomendacao`), ou `plataforma` para orquestração, esteira e site.
+- Trecho sem medição entra como `nao-medido`; nunca estime números.
+- Acompanhamento ao vivo e histórico até o fim da pós: o app `apps/painel-ia` (npm ou Docker) lê os transcripts, guarda tudo em SQLite e exporta o relatório final (ADR 0002).
 
 ## Privacidade
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.

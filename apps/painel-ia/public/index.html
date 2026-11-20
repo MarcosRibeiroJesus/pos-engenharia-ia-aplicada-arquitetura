@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de IA · uso em tempo real</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">Painel de IA</div>
+  <span id="conexao" class="conexao" role="status">conectando…</span>
+  <nav class="exportar" aria-label="Exportar">
+    <a href="/api/relatorio.md">Relatório (MD)</a>
+    <a href="/api/relatorio.csv">Registro (CSV)</a>
+  </nav>
+</header>
+
+<main>
+  <section class="tiles" id="tiles" aria-label="Indicadores"></section>
+
+  <section class="cartao">
+    <div class="cartao-topo"><h2>Últimos 60 minutos</h2><span class="dica">tokens equivalentes por minuto</span></div>
+    <div id="tempo" class="tempo" role="img" aria-label="Tokens equivalentes por minuto na última hora"></div>
+    <div class="eixo"><span>-60 min</span><span>-30 min</span><span>agora</span></div>
+  </section>
+
+  <div class="duas">
+    <section class="cartao"><h2>Por modelo</h2><div id="modelos"></div></section>
+    <section class="cartao"><h2>Por projeto</h2><div id="projetos"></div></section>
+  </div>
+
+  <section class="cartao">
+    <div class="cartao-topo">
+      <h2>Tarefas</h2>
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar tarefas">
+        <button data-f="todas" aria-pressed="true">Todas</button>
+        <button data-f="in_progress" aria-pressed="false">Em andamento</button>
+        <button data-f="pending" aria-pressed="false">Pendentes</button>
+        <button data-f="completed" aria-pressed="false">Concluídas</button>
+      </div>
+    </div>
+    <div class="rolagem"><table id="tarefas"><thead><tr>
+      <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Modelos</th><th class="num">Equivalentes</th>
+    </tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <div class="duas">
+    <section class="cartao"><h2>Sessões</h2><div id="sessoes"></div></section>
+    <section class="cartao"><h2>Atividade recente</h2><ol id="recentes" class="feed"></ol></section>
+  </div>
+
+  <div class="duas">
+    <section class="cartao"><h2>Aprovações pendentes</h2><div id="aprovacoes"></div></section>
+    <section class="cartao"><h2>Pull requests abertos</h2><div id="prs"></div></section>
+  </div>
+</main>
+
+<footer id="rodape" class="rodape"></footer>
+</body>
+</html>

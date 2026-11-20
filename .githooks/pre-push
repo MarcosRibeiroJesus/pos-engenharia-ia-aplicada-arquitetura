@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Gates de envio para qualquer agente:
+# - branch já mergeado não recebe commit novo (D-032);
+# - não envie trabalho baseado em decisão velha da memória compartilhada.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+PY=$(command -v python3 || command -v python) || exit 0
+LINHAS=$(cat)
+printf '%s\n' "$LINHAS" | "$PY" harness/branch_mergeado.py || exit 1
+while read -r _ _ remote_ref _; do
+  case "$remote_ref" in refs/heads/memoria-compartilhada|refs/heads/agentes-status|refs/heads/infra-no-ar) exit 0;; esac
+done <<< "$LINHAS"
+"$PY" harness/memoria.py verificar

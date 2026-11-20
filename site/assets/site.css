@@ -92,3 +92,20 @@ footer.site { border-top: 1px solid var(--line); padding: 28px 24px; text-align:
   .topbar nav { gap: 12px; font-size: 14px; }
   .topbar .btn.ghost { display: none; }
 }
+/* Painel de uso de IA: barras de uma série, cor única validada contra --paper. */
+.uso-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 8px 0 18px; }
+.uso-tile { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 14px; font: 13px var(--sans); color: var(--mute); }
+.uso-tile b { display: block; color: var(--ink); font: 700 24px/1.2 var(--sans); margin-top: 4px; }
+.uso-bloco { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin: 18px 0; }
+.article .uso-bloco h2 { font: 600 15px var(--sans); margin: 0 0 12px; }
+.uso-linha { display: grid; grid-template-columns: minmax(120px, 34%) 1fr 64px; gap: 12px; align-items: center; padding: 5px 0; font: 14px var(--sans); }
+.uso-nome { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uso-trilho { height: 12px; }
+.uso-barra { display: block; height: 12px; min-width: 2px; background: var(--accent); border-radius: 0 4px 4px 0; }
+.uso-linha:hover .uso-barra { filter: brightness(1.2); }
+.uso-valor { text-align: right; color: var(--mute); font: 13px var(--mono); }
+.uso-tabela { font: 14px var(--sans); margin: 18px 0; }
+.uso-tabela table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.uso-tabela th, .uso-tabela td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+.uso-widget { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin: 28px 0; font: 14px/1.5 var(--sans); }
+.uso-widget p { font: 14px/1.5 var(--sans) !important; margin: 6px 0 !important; color: var(--mute); }
