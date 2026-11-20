@@ -6,6 +6,20 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-043 · Testes do harness em um arquivo por assunto · fonte: Marcos
+Os PRs #22 a #29 entraram em conflito porque todos acrescentavam uma classe no mesmo ponto do `harness/test_harness.py`. O Marcos pediu a regra de testes do harness por assunto.
+- **Como ficou:**
+  - os 84 testes foram para 8 arquivos em `harness/testes/`: agentes, memória, SDD, infra, caminho padrão, git, workflows e regras do dono;
+  - o que mais de um assunto usa fica em `comum.py`;
+  - o `test_harness.py` só reúne os arquivos (`load_tests`), então os comandos de antes continuam funcionando.
+- **Por que:** PRs paralelos mexem em arquivos diferentes e não disputam o mesmo trecho. O conflito deixa de depender de alguém lembrar a regra.
+
+**Aplicado em:**
+- teste `test_organizacao_dos_testes.py`, que reprova teste no `test_harness.py`, arquivo fora do padrão ou sem docstring de assunto;
+- skill `evolucao-do-harness`;
+- referências do `tasks.md` e do ADR-0007 da plataforma;
+- o `plan.md` não foi tocado, então a aprovação continua valendo.
+
 ### 2026-11-20 · D-042 · Terraform roda na máquina do dono · fonte: Marcos
 A sessão de nuvem não baixa o Terraform nem os providers. O Marcos escolheu rodar as tarefas de Terraform numa sessão do Claude Code no computador dele, com ciclo de teste em segundos e o Floci local.
 - **Recusadas:**
