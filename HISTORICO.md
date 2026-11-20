@@ -6,6 +6,22 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-046 · Quem grava a memória compartilhada e como · fonte: delegada
+- **Contexto:** a sessão local gravou a D-044 e a D-045, mas a regra dizia que só a conversa de orquestração escrevia no branch. No meio disso houve um incidente de nomes corrompidos, já restaurado e com o teste `test_git_utf8.py`.
+- **Decisão:** a decisão do Marcos é gravada pela sessão em que ele decidiu, porque repassar a decisão para outra sessão perde contexto. A escrita é otimista e segura:
+  - buscar o topo;
+  - editar sobre ele;
+  - fazer push sem força;
+  - se o push for recusado, buscar e refazer a edição.
+  
+  A orquestração na nuvem continua auditando e cuidando do Monday.
+- **Boa prática:** estado compartilhado com controle de concorrência otimista, ou seja, compare-and-swap pelo push sem força. O erro comum é o "último que grava vence": reenviar o arquivo inteiro calculado sobre uma versão velha apaga a decisão que outra sessão gravou no meio do caminho (5.1, 5.3).
+- **Achado na verificação do PR #31:** o `harness/ramo.py gravar` tem exatamente esse defeito. Ele reenvia o mesmo conteúdo na nova tentativa, e por isso o `infra.py` e o `agente.py` podem perder um registro numa corrida. A correção vai na T041, que já mexe no `infra.py`.
+
+**Aplicado em:**
+- `CLAUDE.md` (Memória compartilhada), no PR da D-046;
+- prompt de correção para a sessão local (T041).
+
 ### 2026-11-20 · D-045 · Orquestrador com subagentes e sessões paralelas por projeto · fonte: Marcos
 O Marcos pediu que o harness siga o padrão orquestrador-trabalhador da Anthropic e permita trabalhar nos projetos em paralelo.
 - **Como fica:**
