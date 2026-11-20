@@ -6,6 +6,30 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-050 · Códigos sempre com nome · fonte: Marcos
+O Marcos pediu: "quando for falar desses códigos, coloque um nome resumido do que é para ficar claro para mim". Exemplo: D01 (recomendação), P00-P3 (primeiro consumidor da plataforma).
+
+**Aplicado em:**
+- `CLAUDE.md`;
+- skills `decisao-do-dono` e `regras-do-especialista`;
+- teste `test_respostas_do_dono_d048_d050.py`.
+
+### 2026-11-20 · D-049 · Marketplaces de skills de terceiros confirmados · fonte: Marcos
+Resposta à H-P2 (confirmar os marketplaces de terceiros): o Marcos confia nos quatro publicadores oficiais já declarados, HashiCorp, Trail of Bits, promptfoo e Google, além da Anthropic. Não entram skills novas.
+
+**Aplicado em:**
+- `CLAUDE.md` (Skills de mercado);
+- teste que reprova marketplace fora da lista confirmada.
+
+### 2026-11-20 · D-048 · D02 (assistente de agendamento): gate no CI e Langfuse Cloud gratuito · fonte: Marcos
+Entre as opções gate no CI com Langfuse local, gate no CI com Langfuse Cloud gratuito, Langfuse na AWS e só o gate no CI, o Marcos escolheu **gate no CI com Langfuse Cloud, plano Hobby**. O motivo do corte do Langfuse na AWS foi a estimativa de cerca de US$ 0,50 por hora, ou US$ 12 por dia de demonstração, para os mínimos de web, worker, Postgres, Redis e ClickHouse. Isso é mais da metade do limite mensal.
+
+**Aplicado em:**
+- skill `avaliacao-llm`, com só dados sintéticos e chaves com fallback;
+- `harness/estado.json`, com a D-048 no `02-assistente-agendamento`;
+- teste;
+- Monday: o card da D02 foi fechado, e entrou um card para o dono criar a conta e as chaves do Langfuse.
+
 ### 2026-11-20 · D-047 · Execução autônoma das tarefas com revisão por outro agente · fonte: Marcos
 O Marcos quer que o harness execute as tarefas sozinho e que outros agentes revisem pelas regras, sem ele vigiar cada passo. As palavras dele:
 1. "Crie um executor que pegue as próximas tarefas, delegue ao especialista, mande revisar, comite e siga até o PR."

@@ -31,6 +31,13 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **D02 (assistente de agendamento): avaliação e traces** (D-048):
+  - gate no CI com respostas gravadas;
+  - traces no Langfuse Cloud, plano Hobby gratuito, só com dados sintéticos;
+  - as chaves são criadas pelo Marcos; sem chave, o tracing fica desligado;
+  - Langfuse na AWS fica fora, por custo.
+- **Marketplaces de skills** (D-049): HashiCorp, Trail of Bits, promptfoo e Google confirmados, além da Anthropic. Marketplace novo só com confirmação do Marcos.
+- **Códigos sempre com nome** (D-050): ao citar D01, P00-P3, T041 ou D-033 para o Marcos, escreva junto um nome curto do que é.
 - **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
   - **Ciclo de cada tarefa:** especialista → revisor independente (nunca quem implementou, no máximo 2 rodadas) → commit só do que foi aprovado.
   - **Comandos:** os necessários ficam liberados; push com força, push no `main`, merge e apply ou destroy fora do Floci são negados pelo hook `gate_execucao.py`.
@@ -73,7 +80,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
-- D02: avaliações e observabilidade (gate no CI, Langfuse só local ou Langfuse na AWS), mais a 2ª pergunta aberta na sessão D02.
+- D02 (assistente de agendamento): a 2ª pergunta aberta na sessão D02. A 1ª foi respondida pela D-048.
 - Configuração da conta do Marcos para o destroy automático (D-024):
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
