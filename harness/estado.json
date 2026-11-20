@@ -22,7 +22,7 @@
         "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"
       ],
       "specs": "specs/01-recomendacao/",
-      "fase": "planejar",
+      "fase": "tarefas",
       "retroativo": true,
       "pr": 1,
       "cloud": "gcp",
@@ -45,7 +45,7 @@
       "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
       "infra_real": true,
       "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
-      "teto_diario_usd": null,
+      "teto_diario_usd": 7.1,
       "apply_workflow": ".github/workflows/recsys-01-03-apply.yml"
     },
     {
