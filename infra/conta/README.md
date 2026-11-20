@@ -5,6 +5,8 @@ Um AWS Budgets **mensal de US$ 20** soma todas as demonstrações do mês (D-022
 - **Segunda camada:** este limite, para o caso de um destroy esquecido.
 - **Proteção principal:** o prazo de vida com destroy automático (`harness/infra.py`). O alerta do Budgets chega com atraso, então não segura um esquecimento sozinho.
 
+**Tags e nome:** `project = 00-conta`, `module = finops` e `managed-by = terraform`, no padrão da política de tags do Infracost (D-031); o nome do orçamento leva o prefixo `00-conta-` (D-029).
+
 **Alertas:** 80% e 100% do gasto real e 100% do gasto previsto, por e-mail.
 
 ## Pré-requisitos
