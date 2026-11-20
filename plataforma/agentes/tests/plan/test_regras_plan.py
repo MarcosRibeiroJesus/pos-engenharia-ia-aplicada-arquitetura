@@ -1,6 +1,7 @@
 """Regras transversais de segurança e custo sobre o plan com mock (T003).
 
-TT-S01 · nada público: nenhuma política de recurso com Principal "*" sem condição de conta.
+TT-S01 · nada público: nenhum Principal "*", nem com condição; valores de condição de conta sem
+curinga (ADR-0014).
 TT-S03 · menor privilégio: nenhuma declaração com ação "*" e recurso "*".
 TT-S05 · sem credencial: nenhuma credencial em variável, output, tag ou parâmetro SSM.
 TT-K02 · sem custo fixo ocioso: nada de NAT Gateway, endpoint de interface, cluster ou instância.
@@ -35,6 +36,11 @@ VIOLADORAS = {
     "endpoint_interface": ("TT-K02", "aws_vpc_endpoint.bedrock"),
     "organizations_account": ("TT-K03", "aws_organizations_account.lab"),
     "politica_desconhecida": ("TT-S01", "aws_sns_topic_policy.sem_mock"),
+    # endurecimento de TT-S01 (ADR-0014): Principal "*" reprova mesmo com condição de conta, e
+    # valor de condição de conta com curinga reprova qualquer que seja o principal
+    "principal_publico_com_conta": ("TT-S01", "aws_sns_topic_policy.com_conta"),
+    "condicao_conta_curinga": ("TT-S01", "aws_sns_topic_policy.conta_curinga"),
+    "condicao_arn_curinga": ("TT-S01", "aws_sns_topic_policy.arn_curinga"),
 }
 
 # valores com formato de credencial montados em tempo de execução, para nenhum segredo de mentira
@@ -102,9 +108,73 @@ class TestDetalhesDasRegras(unittest.TestCase):
                                                {"principal": "*", "action": "lambda:InvokeFunction"})]))
         self.assertTrue([e for e in erros if "TT-S01" in e and "aws_lambda_permission.p" in e], erros)
 
-    def test_lambda_permission_com_conta_passa(self):
-        doc = _doc([_recurso("aws_lambda_permission.p", {"principal": "*", "source_account": "111111111111"})])
+    def test_lambda_permission_publica_com_conta_reprova(self):
+        # ADR-0014: principal "*" reprova mesmo com source_account ou source_arn concretos
+        for extra in ({"source_account": "111111111111"},
+                      {"source_arn": "arn:aws:sns:us-east-1:111111111111:t"}):
+            with self.subTest(extra=extra):
+                doc = _doc([_recurso("aws_lambda_permission.p", {"principal": "*", **extra})])
+                erros = plano.violacoes(doc)
+                self.assertTrue([e for e in erros if "TT-S01" in e and "aws_lambda_permission.p" in e], erros)
+
+    def test_lambda_permission_de_servico_com_curinga_reprova(self):
+        for extra in ({"source_account": "*"}, {"source_account": "11111111111?"},
+                      {"source_arn": "arn:aws:sns:us-east-1:*:t"}):
+            with self.subTest(extra=extra):
+                doc = _doc([_recurso("aws_lambda_permission.p",
+                                     {"principal": "sns.amazonaws.com", **extra})])
+                erros = plano.violacoes(doc)
+                self.assertTrue([e for e in erros if "TT-S01" in e and "aws_lambda_permission.p" in e], erros)
+
+    def test_lambda_permission_de_servico_com_conta_concreta_passa(self):
+        doc = _doc([_recurso("aws_lambda_permission.p",
+                             {"principal": "sns.amazonaws.com", "source_account": "111111111111",
+                              "source_arn": "arn:aws:sns:us-east-1:111111111111:t"})])
         self.assertEqual(plano.violacoes(doc), [])
+
+    def test_principal_publico_reprova_com_qualquer_condicao_de_conta(self):
+        for operador, chave, valor in (("StringEquals", "aws:PrincipalAccount", "111111111111"),
+                                       ("StringEquals", "aws:SourceAccount", "111111111111"),
+                                       ("ArnEquals", "aws:SourceArn", "arn:aws:sns:us-east-1:111111111111:t"),
+                                       ("StringEquals", "aws:ResourceAccount", "111111111111")):
+            with self.subTest(chave=chave):
+                pol = _politica({"Effect": "Allow", "Principal": "*", "Action": "sns:Publish",
+                                 "Resource": "arn:aws:sns:us-east-1:111111111111:t",
+                                 "Condition": {operador: {chave: valor}}})
+                erros = plano.violacoes(_doc([_recurso("aws_sns_topic_policy.t", {"policy": pol})]))
+                self.assertTrue([e for e in erros if "TT-S01" in e], erros)
+
+    def test_valor_de_conta_com_curinga_reprova(self):
+        casos = {
+            "interrogacao": {"StringLike": {"aws:SourceAccount": "11111111111?"}},
+            "lista": {"StringEquals": {"aws:SourceAccount": ["111111111111", "*"]}},
+            "chave_minuscula": {"StringLike": {"aws:sourceowner": "*"}},
+            "principal_arn": {"ArnLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/x"}},
+            "resource_account": {"StringLike": {"aws:ResourceAccount": "*"}},
+            "principal_account_ifexists": {"StringLikeIfExists": {"aws:PrincipalAccount": "*"}},
+        }
+        for nome, condicao in casos.items():
+            with self.subTest(caso=nome):
+                pol = _politica({"Effect": "Allow", "Principal": {"Service": "events.amazonaws.com"},
+                                 "Action": "sns:Publish", "Resource": "arn:aws:sns:us-east-1:111111111111:t",
+                                 "Condition": condicao})
+                erros = plano.violacoes(_doc([_recurso("aws_sns_topic_policy.t", {"policy": pol})]))
+                self.assertTrue([e for e in erros if "TT-S01" in e and "aws_sns_topic_policy.t" in e], erros)
+
+    def test_principal_explicito_com_conta_concreta_passa(self):
+        pol = _politica({"Effect": "Allow", "Principal": {"AWS": "arn:aws:iam::111111111111:root"},
+                         "Action": "sns:Publish", "Resource": "arn:aws:sns:us-east-1:111111111111:t",
+                         "Condition": {"StringEquals": {"aws:PrincipalAccount": ["111111111111"]},
+                                       "ArnEquals": {"aws:SourceArn": "arn:aws:cloudwatch:us-east-1:111111111111:alarm:a"}}})
+        self.assertEqual(plano.violacoes(_doc([_recurso("aws_sns_topic_policy.t", {"policy": pol})])), [])
+
+    def test_conforme_nao_tem_principal_curinga_em_allow(self):
+        doc = plano.documento_da_fixture(FIXTURES / "conforme.json")
+        for r in doc["plano"]["resource_changes"]:
+            for _, pol in plano._politicas(r["change"]["after"] or {}):
+                for d in plano._lista(pol.get("Statement")):
+                    if d.get("Effect") == "Allow":
+                        self.assertFalse(plano._principal_publico(d), (r["address"], d))
 
     def test_not_action_com_recurso_curinga_reprova(self):
         pol = _politica({"Effect": "Allow", "NotAction": "iam:*", "Resource": ["*"]})

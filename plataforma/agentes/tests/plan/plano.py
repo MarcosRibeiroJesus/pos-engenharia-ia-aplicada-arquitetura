@@ -125,11 +125,13 @@ def documento_da_fixture(arquivo: Path) -> dict:
 
 # ---------------------------------------------------------------- regras
 
-# Condições que prendem um Principal "*" à conta (TT-S01). Sem Organizations (RNF-004), então
-# aws:PrincipalOrgID não conta. Operadores *IfExists não contam: sem a chave, a condição passa.
+# TT-S01 (ADR-0014): Principal "*" reprova sempre, com ou sem condição de conta. As chaves abaixo
+# identificam a conta; o valor delas não pode ter curinga (`*` ou `?`) em nenhum operador, porque
+# com StringLike/ArnLike o curinga abre a condição para qualquer conta. A comparação da chave
+# ignora maiúsculas, como a da AWS.
 CHAVES_DE_CONTA = {"aws:sourceaccount", "aws:sourceowner", "aws:principalaccount",
                    "aws:resourceaccount", "aws:sourcearn", "aws:principalarn"}
-OPERADORES_DE_CONTA = re.compile(r"^(ForAnyValue:|ForAllValues:)?(StringEquals|StringLike|ArnEquals|ArnLike)$")
+CURINGA = re.compile(r"[*?]")
 
 # Recurso cuja razão de existir é a política: se ela está desconhecida no plan, a regra não a lê
 # e reprova (falha fechada). Fora destes, política desconhecida é atributo computado opcional.
@@ -200,13 +202,24 @@ def _principal_publico(declaracao: dict) -> bool:
     return False
 
 
-def _condicao_de_conta(declaracao: dict) -> bool:
-    for operador, chaves in (declaracao.get("Condition") or {}).items():
-        if not OPERADORES_DE_CONTA.match(operador) or not isinstance(chaves, dict):
+def _tem_curinga(valor) -> bool:
+    """Valor (ou algum item da lista) com `*` ou `?`."""
+    return any(CURINGA.search(str(v)) for v in _lista(valor))
+
+
+def _contas_com_curinga(declaracao: dict) -> list[str]:
+    """`operador/chave` de cada chave de conta cujo valor tem curinga."""
+    achados = []
+    condicao = declaracao.get("Condition")
+    if not isinstance(condicao, dict):
+        return achados
+    for operador, chaves in condicao.items():
+        if not isinstance(chaves, dict):
             continue
-        if any(k.lower() in CHAVES_DE_CONTA for k in chaves):
-            return True
-    return False
+        for chave, valor in chaves.items():
+            if chave.lower() in CHAVES_DE_CONTA and _tem_curinga(valor):
+                achados.append(f"{operador}/{chave}")
+    return achados
 
 
 def _regras_de_politica(endereco: str, caminho: str, doc: dict) -> list[str]:
@@ -215,9 +228,13 @@ def _regras_de_politica(endereco: str, caminho: str, doc: dict) -> list[str]:
         if not isinstance(d, dict) or d.get("Effect") != "Allow":
             continue
         sid = d.get("Sid") or f"#{i}"
-        if _principal_publico(d) and not _condicao_de_conta(d):
-            erros.append(f"TT-S01 {endereco} ({caminho}, declaração {sid}): Principal \"*\" sem "
-                         "condição de conta (aws:SourceAccount, aws:SourceArn ou aws:PrincipalAccount)")
+        if _principal_publico(d):
+            erros.append(f"TT-S01 {endereco} ({caminho}, declaração {sid}): Principal \"*\" (ou "
+                         "NotPrincipal) em Allow; nem condição de conta libera, use o principal "
+                         "explícito (ADR-0014)")
+        for achado in _contas_com_curinga(d):
+            erros.append(f"TT-S01 {endereco} ({caminho}, declaração {sid}): valor de {achado} "
+                         "com curinga (* ou ?); use a conta ou o ARN exatos (ADR-0014)")
         acao_larga = "NotAction" in d or any(a in ("*", "*:*") for a in _lista(d.get("Action")))
         recurso_largo = "NotResource" in d or "*" in _lista(d.get("Resource"))
         if acao_larga and recurso_largo:
@@ -251,9 +268,16 @@ def _regras_do_recurso(r: dict) -> list[str]:
                 erros.append(
                     f"TT-S01/TT-S03 {endereco}: {attr} desconhecido no plan, a regra não consegue "
                     "lê-lo; dê o arn ao mock (mock_resource) no tests/plan_json.tftest.hcl")
-    if tipo == "aws_lambda_permission" and after.get("principal") == "*" \
-            and not (after.get("source_account") or after.get("source_arn")):
-        erros.append(f"TT-S01 {endereco}: principal \"*\" sem source_account nem source_arn")
+    if tipo == "aws_lambda_permission":
+        # mesma regra da política (ADR-0014): source_account e source_arn viram aws:SourceAccount
+        # e aws:SourceArn na política da função
+        if _tem_curinga(after.get("principal")):
+            erros.append(f"TT-S01 {endereco}: principal \"*\"; nem source_account nem source_arn "
+                         "liberam, use o principal explícito (ADR-0014)")
+        for attr in ("source_account", "source_arn"):
+            if _tem_curinga(after.get(attr)):
+                erros.append(f"TT-S01 {endereco}: {attr} com curinga (* ou ?); use a conta ou o "
+                             "ARN exatos (ADR-0014)")
 
     for attr in ("tags", "tags_all"):
         tags = after.get(attr) or {}
