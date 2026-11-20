@@ -65,4 +65,9 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   - **Antigravity:** assuma o papel do arquivo do especialista e use as skills listadas em `.agents/skills/`.
 - `python3 harness/agente.py proximo --tarefa <tipo>` diz o agente de código, o modelo e o especialista.
 - O especialista faz uma tarefa e devolve o relatório da skill `regras-do-especialista`. Ele não cria subagentes.
+- **Delegação dentro do plano aprovado** (D-033): com o `plan.md` aprovado pelo dono, a orquestração delega as tarefas das fases tarefas, analisar, implementar e verificar sem aprovar cada disparo.
+  - Antes de delegar ou de assumir o papel de um especialista, rode `python3 harness/estado.py pode-delegar <chave>`. Se der `NÃO`, peça a aprovação do dono para aquele disparo.
+  - O briefing começa com `Projeto: <chave>`. Um disparo avulso aprovado pelo dono leva `Aprovação do dono: <palavras dele e quando>`.
+  - A aprovação do plano só é registrada depois que o dono aprova: `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`. Plano alterado depois disso exige nova aprovação.
+  - No Claude Code, o hook `gate_delegacao.py` aplica a regra.
 - **Decisão do dono vira regra ou skill no mesmo turno** (D-025). Use a skill `decisao-do-dono`.
