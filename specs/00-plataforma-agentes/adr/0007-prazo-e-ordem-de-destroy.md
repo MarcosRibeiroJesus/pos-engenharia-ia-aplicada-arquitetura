@@ -30,7 +30,7 @@ Os dois destroys disparados na mesma rodada do agendador rodariam em paralelo.
 - **Comando `requisitos <chave>`:**
   - confere se os provedores estão no ar;
   - o modelo de apply o chama antes do Terraform.
-- **Testes:** TH-01 a TH-03 no `harness/test_harness.py`.
+- **Testes:** TH-01 a TH-03 no `harness/testes/` (D-043).
 
 **Correção da análise 1 (A10, 2026-11-20).** Dois caminhos de erro deixavam stack no ar sem prazo:
 - **O prazo é registrado antes do `terraform apply`.** No modelo de apply, o job `prazo` roda antes do job `apply`, que passa a ter `needs: prazo`. Se o apply falhar no meio, o registro fica, e o agendador destrói o que foi criado no prazo. Destroy de um stack parcial ou vazio não custa nada.
