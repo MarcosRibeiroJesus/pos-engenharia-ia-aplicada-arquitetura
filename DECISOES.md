@@ -29,6 +29,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Delegação dentro do plano aprovado** (D-033). Com o `plan.md` aprovado pelo Marcos e registrado (`estado.py aprovar-plano`), os disparos de especialistas nas fases tarefas, analisar, implementar e verificar saem sem aprovação a cada um. Fora disso, cada disparo pede o ok dele (`Aprovação do dono:` no briefing). Plano alterado exige nova aprovação. O gate `sdd-analisar`, o merge e a publicação continuam com ele.
 - **Branch já mergeado não recebe commit novo** (D-032). Mudança depois de PR pronto vai em PR novo a partir do `main`; o `pre-push` bloqueia.
 - **Projeto novo só pelo caminho padrão:** `python3 harness/novo_projeto.py` (D-030). A plataforma compartilhada é o projeto `00-plataforma-agentes`; o produto consome gateway, política, guardrail, perfil de inferência e observabilidade da plataforma (skill `plataforma-agentes`).
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
@@ -55,6 +56,5 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
 - Projetos de IA aplicada da D02 e da D03.
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
-- P00-P1: dentro de um plano SDD aprovado, a orquestração pode delegar aos especialistas sem aprovar cada disparo?
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. Falta o #21: modelos com as actions atualizadas e teste de um SHA por action. O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.
+- Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. O #21 (actions dos modelos) também foi mergeado. Falta o PR da D-033 (delegação dentro do plano aprovado). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.

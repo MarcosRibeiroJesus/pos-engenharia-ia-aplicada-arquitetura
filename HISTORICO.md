@@ -6,6 +6,24 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-033 · Delegação aos especialistas dentro do plano aprovado · fonte: Marcos
+O Marcos respondeu a P00-P1: dentro de um plano SDD aprovado por ele, os especialistas podem ser disparados sem aprovar cada disparo.
+- **Alcance:** vale para as fases tarefas, analisar, implementar e verificar de um projeto cujo `plan.md` ele aprovou. Ficam de fora:
+  - plano não aprovado ou alterado depois da aprovação;
+  - fases especificar, planejar e publicar;
+  - tarefa fora de projeto.
+  
+  Nesses casos, cada disparo continua pedindo a aprovação dele. O gate `sdd-analisar`, o merge e a publicação seguem com ele.
+- **Por que assim:** a aprovação fica no artefato, não no disparo. O registro guarda o hash do `plan.md`, então um plano que mudou não herda a aprovação antiga. É um gate programático, não uma instrução que se esquece (1.4). Cada especialista continua com uma tarefa e um briefing completo, que declara o projeto (1.2, 1.3).
+
+**Aplicado em:**
+- `harness/estado.py`: `aprovar-plano`, `pode-delegar` e a validação do campo `plano_aprovado`;
+- hook `.claude/hooks/gate_delegacao.py` (PreToolUse em Agent e Task), registrado em `.claude/settings.json`;
+- `CLAUDE.md` (orquestração de subagentes) e `AGENTS.md` (seção 8, para Antigravity e Copilot);
+- skills `sdd-planejar` (passo 8, aprovação do plano), `sdd-analisar` (correção que muda o plano derruba a aprovação) e `decisao-do-dono`;
+- testes em `harness/test_harness.py` (`TestDelegacaoNoPlanoAprovado`);
+- spec `00-plataforma-agentes` (P00-P1 respondida).
+
 ### 2026-11-19 · D-032 · PR mergeado não recebe commit novo · fonte: delegada
 - **O que aconteceu:** os commits do D-031 ficaram fora do `main` porque o #17 e o #9 foram mergeados enquanto a orquestração ainda empurrava nos mesmos branches. Antes disso, o #16 já tinha sido mergeado sem os últimos commits.
 - **A regra:** mudança depois de um PR anunciado como pronto vai em PR novo, a partir do `main`, e só se empilham PRs com dependência real.
