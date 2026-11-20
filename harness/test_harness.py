@@ -484,6 +484,23 @@ class TestBranchMergeado(unittest.TestCase):
             self.assertEqual(branch_mergeado.mergeados(clone, linhas), [])
 
 
+class TestWorkflowsDeImplantacao(unittest.TestCase):
+    """ADR 0002: a exceção ao CKV_GHA_7 só vale para apply e destroy registrados."""
+
+    def test_excecao_ckv_gha_7_so_em_apply_e_destroy_registrados(self):
+        registrados = set()
+        for p in estado.carregar()["projetos"]:
+            registrados |= {p.get("apply_workflow"), p.get("destroy_workflow")}
+        for wf in (AQUI.parent / ".github" / "workflows").glob("*.yml"):
+            if "checkov:skip=CKV_GHA_7" in wf.read_text():
+                self.assertIn(f".github/workflows/{wf.name}", registrados, wf.name)
+
+    def test_token_oidc_nunca_no_nivel_do_workflow(self):
+        for wf in list((AQUI.parent / ".github" / "workflows").glob("*.yml")) + list((AQUI / "modelos").glob("*.yml")):
+            topo = wf.read_text().split("\njobs:", 1)[0]
+            self.assertNotRegex(topo, r"id-token\s*:\s*write", wf.name)
+
+
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
         self.assertEqual(sincronizar_agentes.diferencas(), [])
