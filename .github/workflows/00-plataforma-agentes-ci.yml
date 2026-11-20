@@ -29,7 +29,6 @@ jobs:
         working-directory: plataforma/agentes/infra/terraform
         run: |
           set -euo pipefail
-          terraform fmt -check -recursive
           dirs="."
           for t in modules/*/tests; do
             [ -d "$t" ] && dirs="$dirs $(dirname "$t")"
@@ -38,7 +37,6 @@ jobs:
             echo "::group::$d"
             # o backend s3 é parcial: sem -backend=false o init pediria bucket e credencial
             terraform -chdir="$d" init -backend=false -input=false
-            terraform -chdir="$d" validate
             terraform -chdir="$d" test
             echo "::endgroup::"
           done

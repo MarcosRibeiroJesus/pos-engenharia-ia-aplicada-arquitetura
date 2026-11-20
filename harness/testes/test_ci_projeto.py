@@ -32,13 +32,14 @@ class TestCiDoProjeto(unittest.TestCase):
 
     def test_terraform_no_root_e_nos_modulos_com_tests(self):
         self.assertIn(ROOT, self.cod)
-        # init sem backend e sem credencial vem antes de validate e test (achado da T001)
-        cod =re.sub(r"-chdir=\S+ ", "", self.cod)
-        for cmd in ("terraform fmt -check", "terraform init -backend=false", "terraform validate",
-                    "terraform test"):
-            self.assertIn(cmd, cod, cmd)
-        self.assertLess(cod.index("terraform init -backend=false"), cod.index("terraform validate"))
-        self.assertLess(cod.index("terraform validate"), cod.index("terraform test"))
+        # enxugado (D-044 e pedido do dono): fmt e validate já rodam no seguranca.yml; aqui fica
+        # só o init sem backend, que o terraform test exige, e o test
+        cod = re.sub(r"-chdir=\S+ ", "", self.cod)
+        self.assertIn("terraform init -backend=false", cod)
+        self.assertIn("terraform test", cod)
+        self.assertNotIn("terraform fmt", cod)
+        self.assertNotIn("terraform validate", cod)
+        self.assertLess(cod.index("terraform init -backend=false"), cod.index("terraform test"))
         # módulos descobertos pela pasta tests/, para módulo novo entrar sem editar o workflow
         self.assertIn("modules/*/tests", self.cod)
 
