@@ -123,7 +123,7 @@
         "plataforma/agentes/"
       ],
       "specs": "specs/00-plataforma-agentes/",
-      "fase": "tarefas",
+      "fase": "analisar",
       "retroativo": false,
       "pr": null,
       "cloud": null,
