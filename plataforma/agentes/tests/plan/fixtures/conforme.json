@@ -1,0 +1,182 @@
+{
+ "_descricao": "Viola nenhuma: controle positivo: plan que segue todas as regras. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "nenhuma",
+ "variaveis": {
+  "regiao": {
+   "arquivo": "main.tf",
+   "default": "us-east-1",
+   "sensitive": false
+  }
+ },
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_iam_role_policy.leitura_metricas",
+    "mode": "managed",
+    "type": "aws_iam_role_policy",
+    "name": "leitura_metricas",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "name": "metricas",
+      "policy": "{\"Statement\":[{\"Action\":[\"cloudwatch:GetMetricData\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}],\"Version\":\"2012-10-17\"}",
+      "role": "00-plataforma-agentes-evidencias"
+     },
+     "after_unknown": {
+      "id": true,
+      "name_prefix": true
+     },
+     "after_sensitive": {}
+    }
+   },
+   {
+    "address": "aws_sns_topic.alarmes",
+    "mode": "managed",
+    "type": "aws_sns_topic",
+    "name": "alarmes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "beginning_archive_time": "dji79hfe",
+      "fifo_throughput_scope": "9djbkhjl",
+      "id": "s9qigtch",
+      "maximum_message_size": 0,
+      "name": "00-plataforma-agentes-alarmes",
+      "name_prefix": "hidhlzux",
+      "owner": "6rp5derg",
+      "policy": "qettozjf",
+      "region": "ft25jdjs",
+      "signature_version": 0,
+      "tracing_config": "fvafnz3d"
+     },
+     "after_unknown": {},
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   },
+   {
+    "address": "aws_sns_topic_policy.alarmes",
+    "mode": "managed",
+    "type": "aws_sns_topic_policy",
+    "name": "alarmes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "policy": "{\"Statement\":[{\"Action\":\"sns:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":\"arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes\",\"Sid\":\"SoTls\"},{\"Action\":\"sns:Publish\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"111111111111\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudwatch.amazonaws.com\"},\"Resource\":\"arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes\",\"Sid\":\"CloudWatch\"},{\"Action\":\"sns:Publish\",\"Condition\":{\"StringEquals\":{\"aws:PrincipalAccount\":\"111111111111\"}},\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Resource\":\"arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes\",\"Sid\":\"DaConta\"}],\"Version\":\"2012-10-17\"}"
+     },
+     "after_unknown": {
+      "id": true,
+      "owner": true,
+      "region": true
+     },
+     "after_sensitive": {}
+    }
+   },
+   {
+    "address": "aws_ssm_parameter.contrato",
+    "mode": "managed",
+    "type": "aws_ssm_parameter",
+    "name": "contrato",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "name": "/00-plataforma-agentes/contrato/v1",
+      "type": "String",
+      "value": "{\"versao\":\"v1\"}"
+     },
+     "after_unknown": {
+      "arn": true,
+      "data_type": true,
+      "has_value_wo": true,
+      "id": true,
+      "insecure_value": true,
+      "key_id": true,
+      "region": true,
+      "tags_all": true,
+      "tier": true,
+      "version": true
+     },
+     "after_sensitive": {
+      "tags_all": {},
+      "value": true,
+      "value_wo": true
+     }
+    }
+   },
+   {
+    "address": "aws_vpc_endpoint.s3",
+    "mode": "managed",
+    "type": "aws_vpc_endpoint",
+    "name": "s3",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "service_name": "com.amazonaws.us-east-1.s3",
+      "vpc_id": "vpc-00000000000000000"
+     },
+     "after_unknown": {
+      "arn": true,
+      "cidr_blocks": true,
+      "dns_entry": true,
+      "dns_options": [],
+      "id": true,
+      "ip_address_type": true,
+      "network_interface_ids": true,
+      "owner_id": true,
+      "policy": true,
+      "prefix_list_id": true,
+      "private_dns_enabled": true,
+      "region": true,
+      "requester_managed": true,
+      "route_table_ids": true,
+      "security_group_ids": true,
+      "service_region": true,
+      "state": true,
+      "subnet_configuration": [],
+      "subnet_ids": true,
+      "tags_all": true
+     },
+     "after_sensitive": {
+      "cidr_blocks": [],
+      "dns_entry": [],
+      "dns_options": [],
+      "network_interface_ids": [],
+      "route_table_ids": [],
+      "security_group_ids": [],
+      "subnet_configuration": [],
+      "subnet_ids": [],
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {
+   "contrato_parametro": {
+    "actions": [
+     "create"
+    ],
+    "after": "/00-plataforma-agentes/contrato/v1",
+    "after_unknown": false,
+    "after_sensitive": false
+   }
+  }
+ }
+}

@@ -32,7 +32,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Aceite:** gatilho em `pull_request` com filtro de caminho `plataforma/agentes/**`, `infra/conta/**` e `harness/**`; `permissions: contents: read`; actions fixadas por SHA (`TestVersoesDasActions`); sem OIDC e sem credencial da AWS; o texto do workflow não cita `bedrock` nem `Converse` (TH-11). O job do Floci entra no T080.
   - **Depende de:** T001.
 
-- [ ] T003 [P] [engenheiro-seguranca] Regras transversais de segurança e custo sobre o plan · Art. IV, Art. V, RNF-001, RNF-002, RNF-004 · TT-S01, TT-S03, TT-S05, TT-K02, TT-K03
+- [x] T003 [P] [engenheiro-seguranca] Regras transversais de segurança e custo sobre o plan · Art. IV, Art. V, RNF-001, RNF-002, RNF-004 · TT-S01, TT-S03, TT-S05, TT-K02, TT-K03
   - **Teste vermelho:** para cada regra, uma fixture em `plataforma/agentes/tests/plan/fixtures/` que viola a regra (política com `Principal "*"` sem condição de conta; declaração com ação `*` e recurso `*`; credencial em variável, output, tag ou SSM; `aws_nat_gateway`; `aws_vpc_endpoint` do tipo `Interface`; `aws_organizations_account`) e precisa reprovar.
   - **Arquivos:** `plataforma/agentes/tests/plan/test_regras_plan.py` (lê `terraform show -json` do plan com mock provider do root e do módulo), `plataforma/agentes/tests/plan/fixtures/`.
   - **Aceite:** as seis fixtures reprovam com uma mensagem que cita o recurso, e o root do T001 passa. O teste roda no workflow de CI do projeto (T002), sem credencial da AWS.
