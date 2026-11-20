@@ -15,7 +15,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - **Furos do plano:** os furos F1 a F5 apontados na fase tarefas (no fim deste arquivo) foram resolvidos pela emenda 1 do plano (2026-11-20), e os `[BLOQUEADO: Fn]` saíram. As partes afetadas citam "emenda 1".
 
 ## Fase 0 · Preparação
-- [ ] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
+- [x] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
   - **Teste vermelho:** um teste em `harness/testes/test_<assunto>.py` afirma que `plataforma/agentes/adr/0001-*.md` a `0013-*.md` existem (os ADRs 0011 a 0013 vêm das correções da análise 1) e que todo link `adr/...` do `spec.md` e do `plan.md` resolve para um arquivo.
   - **Arquivos:** `git mv specs/00-plataforma-agentes/adr/*.md plataforma/agentes/adr/`; um arquivo de redirecionamento por ADR em `specs/00-plataforma-agentes/adr/` (mesmo nome, só o título e o link para o novo local).
   - **Aceite:** o conteúdo dos ADRs fica só em `plataforma/agentes/adr/`; os links do `plan.md` continuam resolvendo, pelos redirecionamentos, sem editar o `plan.md` (mudar o plano derruba a aprovação, D-033); o hash do `plan.md` segue igual ao de `plano_aprovado`.
