@@ -6,6 +6,23 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-036 · Explicar decisões pelo nome da boa prática e pelo erro comum · fonte: Marcos
+O Marcos pediu que, em vez de falar os códigos dos pontos da prova, a explicação diga o nome da boa prática, o que o arquiteto decide seguindo-a e os erros comuns que as pessoas cometem.
+- **Alcance:** as explicações ao dono (conversa, PRs e relatórios dos especialistas).
+- **O que fica:** os ids continuam nos ADRs (constituição, Art. VII) e na memória, ao lado do nome, para rastreio.
+
+**Aplicado em:**
+- `CLAUDE.md` (decisões delegadas) e `AGENTS.md` (regras inegociáveis);
+- skill `regras-do-especialista`, que define o formato do relatório de todo especialista;
+- teste `TestComoExplicarDecisoes` em `harness/test_harness.py`.
+
+### 2026-11-19 · D-035 · Plano da plataforma de agentes aprovado · fonte: Marcos
+O Marcos aprovou o plano da `00-plataforma-agentes` (P00-P6, PR #24): dois states por ciclo de vida, módulo `registro-produto`, 10 ADRs e teto diário de US$ 1,20.
+
+**Aplicado em:**
+- `harness/estado.json`, campo `plano_aprovado` com o hash do `plan.md`. Esse registro libera a delegação nas fases tarefas, analisar, implementar e verificar (D-033), e um plano alterado depois exige nova aprovação;
+- Monday: o card P00-P6 foi fechado.
+
 ### 2026-11-19 · D-034 · Plataforma: primeiro consumidor, configurações da conta e alarmes · fonte: Marcos
 O Marcos respondeu às P00-P3, P00-P4 e P00-P5 com as recomendações ("responda tudo com o recomendado").
 - **P00-P3:** o primeiro consumidor é a D03 (MCP de regras do CDB). Ela exercita o gateway e a política Cedar de ponta a ponta (2.1, 2.4, 1.4). O risco é a versão de MCP aceita pelo gateway diante da lane de compatibilidade da D03.

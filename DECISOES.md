@@ -29,6 +29,8 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Como explicar decisões ao Marcos** (D-036): pelo nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só os códigos da prova. Os ids ficam nos ADRs e aqui, ao lado do nome.
+- **Plano da `00-plataforma-agentes` aprovado** (D-035), com teto diário de US$ 1,20. Delegação livre nas fases seguintes (D-033).
 - **Plataforma: consumidor, conta e alarmes** (D-034).
   - O primeiro consumidor da `00-plataforma-agentes` é a D03.
   - A tag `project` como tag de alocação de custo e o Transaction Search vão por Terraform no `infra/conta`, aplicado pelo Marcos. A tag precisa estar ativa pelo menos 48 h antes da demonstração.
