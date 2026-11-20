@@ -1,0 +1,52 @@
+name: Plataforma de agentes · CI
+
+# CI de código do 00-plataforma-agentes (T002, TH-12; Art. III, RNF-005, RNF-007).
+# Roda só o que não precisa de credencial: fmt, validate e terraform test com mock provider no
+# root e em cada módulo com tests/, e os testes Python da plataforma. Sem OIDC e sem conta.
+on:
+  pull_request:
+    paths:
+      - "plataforma/agentes/**"
+      - "infra/conta/**"
+      - "harness/**"
+      - ".github/workflows/00-plataforma-agentes-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+      - name: Terraform no root e nos módulos com tests/
+        working-directory: plataforma/agentes/infra/terraform
+        run: |
+          set -euo pipefail
+          terraform fmt -check -recursive
+          dirs="."
+          for t in modules/*/tests; do
+            [ -d "$t" ] && dirs="$dirs $(dirname "$t")"
+          done
+          for d in $dirs; do
+            echo "::group::$d"
+            # o backend s3 é parcial: sem -backend=false o init pediria bucket e credencial
+            terraform -chdir="$d" init -backend=false -input=false
+            terraform -chdir="$d" validate
+            terraform -chdir="$d" test
+            echo "::endgroup::"
+          done
+      - name: Testes Python da plataforma
+        run: |
+          set -euo pipefail
+          if [ -d plataforma/agentes/tests ]; then
+            python3 -m unittest discover -s plataforma/agentes/tests -v
+          else
+            echo "plataforma/agentes/tests ainda não existe; nada a rodar"
+          fi
