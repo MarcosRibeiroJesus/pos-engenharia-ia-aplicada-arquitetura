@@ -1,6 +1,6 @@
 # ADR 0002 · Contrato v1 em parâmetro SSM `String` da camada padrão
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-007, RNF-001, RNF-002, E4
 

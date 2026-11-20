@@ -1,6 +1,6 @@
 # ADR 0001 · Uma chave KMS do cliente por stack da plataforma
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RNF-001 (criptografia), RNF-003 (alarmes no SNS), Art. IV e V
 
@@ -44,7 +44,12 @@ US$ 0,033 por dia (1 × US$ 1 × 24/730), mais requisições: até US$ 0,03 por 
 
 ## Risco
 - **Política da chave mal escrita:** o log group ou o alarme falha no apply. Mitigação: TT-S02 confere a política no plan; o ensaio prova.
-- **Verificação de sobras:** a chave em `PendingDeletion` pode aparecer na busca por tag. O passo do destroy já prevê ignorar chave em exclusão, com teste.
+- **Verificação de sobras:** depois do destroy, a chave fica 7 dias em `PendingDeletion` com a tag `project`, e a Tagging API a devolve. Hoje o modelo de destroy só tem um comentário sobre isso, então a verificação reprova todo destroy da plataforma (análise 1, A01).
+  - **A garantia está na T048**, e não num comentário. O filtro fica no modelo `harness/modelos/destroy.yml` e vale para todo projeto: para cada ARN `arn:aws:kms:`, consulta `aws kms describe-key` e ignora só a chave com `KeyState = PendingDeletion`.
+  - Qualquer outro ARN reprova, e uma chave `Enabled` também. Se a consulta falhar, por exemplo com `AccessDenied`, a chave conta como sobra (falha fechada).
+  - O teste TH-14 começa vermelho com uma saída sintética da Tagging API. Os workflows da plataforma são regenerados a partir do modelo.
+  - Até a T048 ficar verde, nenhum destroy real da plataforma deve ser disparado: o ensaio (T084) depende dela pela T080.
+  - A ressalva no critério de sucesso 3 da spec ("exceto chave KMS com exclusão agendada, sem custo") fica com o especificador.
 
 ## Tarefas da prova
 Nenhuma tarefa direta: configuração de cloud está fora do escopo da prova. A decisão vem do Art. IV. Indiretamente, protege os traces usados na revisão humana (5.5).

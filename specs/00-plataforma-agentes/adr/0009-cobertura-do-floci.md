@@ -1,6 +1,6 @@
 # ADR 0009 · Cobertura do Floci e lacunas
 
-- **Status:** proposto (aprovação junto com o plano, D-033); emenda 1 com nova aprovação pendente
+- **Status:** aprovado com o plano (D-035); emenda 1 aprovada pelo dono (D-038)
 - **Data:** 2026-11-19; emenda 1 em 2026-11-20
 - **Requisitos:** RNF-007, Art. III; CLAUDE.md, seção "TDD e regras de implementação"
 
@@ -33,6 +33,8 @@ A integração roda no Floci (`floci/floci:2.5.0`, D-013) e marca uma lacuna só
   - o `v1.schema.json` continua exigindo `motor_politica_id` e `motor_politica_arn`;
   - os dois alarmes do motor nascem com a dimensão sintética, e o FL-01 afirma só a configuração deles;
   - o relatório marca os dois campos como sintéticos, com o link desta tabela.
+- **Contrato de entrada do motor no módulo `gateway` (análise 1, A03):** a entrada é anulável, com bloco `dynamic` no `policy_engine_configuration`. O root do Floci passa nulo, e o TT-P01 reprova o root real com nulo. O detalhe e o porquê estão no [ADR-0011](0011-entrada-do-motor-no-gateway.md).
+- **Alarmes por consulta do Metrics Insights (análise 1, A05; [ADR-0013](0013-alarmes-sem-dimensoes-publicadas.md)):** a página do CloudWatch do Floci diz "só métrica única". Se o Floci recusar ou ignorar o alarme por consulta, o FL-01 afirma só a configuração gravada, e o relatório registra a lacuna com o link desta tabela. O código correto não muda.
 - **Asserts no Floci:**
   - FL-01: alarmes;
   - FL-02: alvo registrado;

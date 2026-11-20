@@ -1,6 +1,6 @@
 # ADR 0007 · Prazo e ordem de destroy entre produto e plataforma
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-008 (segundo aceite: mecanismo decidido no plano), critério de sucesso 3, D-021, D-024
 
@@ -31,6 +31,15 @@ Os dois destroys disparados na mesma rodada do agendador rodariam em paralelo.
   - confere se os provedores estão no ar;
   - o modelo de apply o chama antes do Terraform.
 - **Testes:** TH-01 a TH-03 no `harness/test_harness.py`.
+
+**Correção da análise 1 (A10, 2026-11-20).** Dois caminhos de erro deixavam stack no ar sem prazo:
+- **O prazo é registrado antes do `terraform apply`.** No modelo de apply, o job `prazo` roda antes do job `apply`, que passa a ter `needs: prazo`. Se o apply falhar no meio, o registro fica, e o agendador destrói o que foi criado no prazo. Destroy de um stack parcial ou vazio não custa nada.
+  - Foi rejeitado o `if: always()` depois do apply: ele também cobre a falha, mas deixa o registro depender de um job que roda depois do custo já criado.
+- **O `requisitos` de um consumidor recusa cedo** quando faltam menos de 2 horas para a plataforma vencer:
+  - 1 hora é a margem desta decisão;
+  - a outra hora é o prazo útil mínimo do consumidor, porque o agendador roda de hora em hora, e menos que isso seria destruído antes da gravação.
+  - A mensagem diz quanto falta e que a plataforma pode ser estendida com `infra.py estender`, sem passar de 24 horas desde o apply dela (5.3).
+- **Testes:** casos novos no TH-01 (T041) e no TH-03 (T043). O `estado.checar_apply` reprova modelo com o registro depois do apply.
 
 ## Alternativas rejeitadas
 - **Só a margem de prazo, sem espera:** se o destroy do produto falhar, a plataforma seria destruída com alvos registrados. O state do produto ficaria órfão, apontando para um gateway que não existe.

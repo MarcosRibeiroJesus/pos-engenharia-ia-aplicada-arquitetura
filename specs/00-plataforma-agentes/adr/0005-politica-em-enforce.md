@@ -1,6 +1,6 @@
 # ADR 0005 · Motor de política em `ENFORCE`
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-002, RF-010, RF-012, E6
 

@@ -1,6 +1,6 @@
 # ADR 0010 · Versões de MCP do gateway e a lane de compatibilidade da D03
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-001, RF-007 (`versoes_mcp` no contrato), D-034 (D03 como primeiro consumidor)
 

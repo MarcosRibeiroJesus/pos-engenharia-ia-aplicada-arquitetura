@@ -1,6 +1,6 @@
 # ADR 0003 · IAM (SigV4) como autenticação de entrada do gateway
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-002, RF-003, RNF-001, E5
 

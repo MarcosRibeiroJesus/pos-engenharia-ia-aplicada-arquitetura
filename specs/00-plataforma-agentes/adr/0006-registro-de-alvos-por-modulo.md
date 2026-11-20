@@ -1,6 +1,6 @@
 # ADR 0006 · Registro de alvos e políticas por módulo da plataforma no state do produto
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-001 (segundo aceite: mecanismo decidido no plano), RF-004, RF-005, RF-007, RF-009, RF-012; critério de sucesso 3
 
@@ -42,7 +42,8 @@ O RF-001 pede que um produto não crie, altere nem remova alvo de outro, e que o
 
 **Nomes:**
 - o padrão é o prefixo da chave (D-029);
-- exceção: o motor e as políticas exigem `^[A-Za-z][A-Za-z0-9_]*$`, então usam `p00_plataforma_agentes` e `p<NN>_<slug>_<regra>`.
+- exceção: o motor e as políticas exigem `^[A-Za-z][A-Za-z0-9_]*$`, então usam `p00_plataforma_agentes` e `p<NN>_<slug>_<regra>`;
+- a lista completa de exceções ao prefixo, com o grupo de log entregue e o parâmetro do produto, está no [ADR-0012](0012-excecoes-ao-prefixo.md) (análise 1, A07).
 
 ## Alternativas rejeitadas
 - **Catálogo central com alvos e políticas no state da plataforma:**

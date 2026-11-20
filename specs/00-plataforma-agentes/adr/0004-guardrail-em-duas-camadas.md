@@ -1,6 +1,6 @@
 # ADR 0004 · Guardrail em duas camadas e conteúdo não confiável
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RF-004, RF-009, RF-010, RF-011, RF-012, E2, E14
 
@@ -54,8 +54,8 @@ Se as duas detecções falharem, a injeção indireta não alcança, no mesmo ag
   - falsos positivos possíveis com limiares padrão, que a calibração resolve com dados.
 
 ## Custo
-- **Plataforma:** até US$ 0,18 por dia nas checagens do Policy (1.000 chamadas) e US$ 0,025 no teste de fumaça.
-- **Produto:** o guardrail no `Converse` é cobrado no teto dele.
+- **Plataforma:** até US$ 0,18 por dia nas checagens do Policy (1.000 chamadas). O teste de fumaça não chama o guardrail (emenda 1, D-038), então não tem custo de guardrail.
+- **Produto:** o guardrail no `Converse` e o `ApplyGuardrail`, incluindo o do DM-05, são cobrados no teto dele.
 - **Fontes:** [preços do Bedrock](https://aws.amazon.com/bedrock/pricing/), tabelas padrão e `InvokeGuardrailChecks`.
 
 ## Risco

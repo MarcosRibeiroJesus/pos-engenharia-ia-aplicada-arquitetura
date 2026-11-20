@@ -1,6 +1,6 @@
 # ADR 0008 · Alarmes da plataforma para os e-mails do `infra/conta`
 
-- **Status:** proposto (aprovação junto com o plano, D-033)
+- **Status:** aprovado com o plano (D-035; emenda 1 aprovada na D-038)
 - **Data:** 2026-11-19
 - **Requisitos:** RNF-003 (alarmes no SNS), D-034 (resposta à P00-P5: mesmos e-mails de `emails_alerta`, sem variável nova)
 
@@ -45,6 +45,11 @@ Parâmetro SSM padrão, US$ 0. SNS por requisição, menos de US$ 0,01 por dia n
 ## Risco
 - **Confirmação esquecida:** os alarmes continuam visíveis no console e no relatório da demonstração.
 - **E-mails num parâmetro da conta:** é dado de contato do dono, na conta dele, sem segredo. O parâmetro não entra no repositório nem em log.
+  - **O log também é público** (análise 1, A06). O repositório é público, então os logs do Actions também são. Se o valor vier de `insecure_value` ou de `nonsensitive()` sobre a lista, o `terraform apply` imprime os e-mails.
+  - **Correção (T011 e T012):** o valor vem do atributo sensível `value`, e só a quantidade sai do sensível: `count = nonsensitive(length(split(",", ...)))`. O `endpoint` de cada assinatura e os destinatários do Budgets continuam sensíveis.
+    - O `nonsensitive()` fica em volta do `length`, e não da lista. Do contrário, a lista inteira deixaria de ser sensível.
+    - O `for_each` sobre o valor sensível foi rejeitado, porque o Terraform não aceita.
+  - **Prova:** o TT-S06 lê o plan em JSON e reprova se `after_sensitive.endpoint` ou `subscriber_email_addresses` não estiver marcado como sensível. Assim, a promessa deste ADR passa a ter teste.
 
 ## Tarefas da prova
 5.2: escalonamento para humano quando o sistema detecta anomalia (negações em série, intervenções, erros).
