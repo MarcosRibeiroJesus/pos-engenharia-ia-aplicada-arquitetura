@@ -28,7 +28,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
 - O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
 - O gate `.claude/hooks/gate_entrega.py` nega push e abertura de PR enquanto a sessão não tiver recebido a versão mais recente da memória.
-- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
+- **Quem grava** (D-046): a sessão em que eu tomei a decisão, seja a orquestração na nuvem ou a sessão local, e só decisões minhas ou delegadas (seção abaixo). Pendências ficam como pendências.
+  - Fluxo de escrita: `git fetch` → edição sobre o topo atual → commit → push sem `--force`.
+  - Se o push for recusado, busque de novo e refaça a edição sobre o novo topo. Nunca reenvie o arquivo inteiro calculado sobre a versão velha, porque isso apaga a decisão gravada por outra sessão.
+  - A orquestração na nuvem audita (`memoria.py auditar`) e mantém o Monday.
 
 ## Boas práticas da certificação (decisões delegadas)
 - Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Registre a decisão na memória compartilhada (fonte: "delegada").
