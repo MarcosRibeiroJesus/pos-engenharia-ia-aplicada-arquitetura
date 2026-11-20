@@ -14,7 +14,7 @@ Na mesma rodada, ele autorizou a emenda 1 do plano ("Corrigir agora"). A nova ap
 - skill `site-projeto` (página em Arquiteturas AWS, post em `plataforma/agentes/posts/aws.md`, links cruzados com os produtos);
 - `CLAUDE.md` (seção Site);
 - teste `TestPublicacaoDaPlataforma`;
-- T089 e a spec da plataforma, pela emenda 1;
+- `tasks.md` da plataforma, pela emenda 1 (T089 é o post e T090 é a página);
 - Monday: o card P00-P7 foi fechado.
 
 ### 2026-11-19 · D-036 · Explicar decisões pelo nome da boa prática e pelo erro comum · fonte: Marcos
