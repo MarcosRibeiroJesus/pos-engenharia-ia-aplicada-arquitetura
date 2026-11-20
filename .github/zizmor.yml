@@ -1,0 +1,7 @@
+# Exceções do zizmor. Cada uma precisa de ADR e prazo.
+rules:
+  unpinned-images:
+    ignore:
+      # Temporária: imagem do Floci configurável por FLOCI_IMAGE até fixarmos uma tag de release.
+      # ADR: docs/adr/0001-imagem-do-floci-no-ci.md
+      - smoke-floci.yml:17

@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["resumo", "achados"],
+  "properties": {
+    "resumo": { "type": "string", "description": "Duas ou três frases sobre o risco geral do PR." },
+    "achados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["arquivo", "linha", "severidade", "categoria", "origem", "status", "confianca", "descricao", "correcao"],
+        "properties": {
+          "arquivo": { "type": "string" },
+          "linha": { "type": ["integer", "null"], "description": "null quando o achado não tem linha definida; não invente." },
+          "severidade": { "enum": ["critica", "alta", "media", "baixa"] },
+          "categoria": { "enum": ["seguranca", "finops", "confiabilidade"] },
+          "origem": { "enum": ["sast", "sca", "iac", "conteiner", "dast", "finops", "revisao"] },
+          "status": { "enum": ["novo", "nao_resolvido"], "description": "Só reporte achados novos ou ainda não resolvidos desde a revisão anterior." },
+          "confianca": { "enum": ["alta", "media", "baixa"] },
+          "descricao": { "type": "string" },
+          "correcao": { "type": "string", "description": "Correção concreta, de preferência com o trecho de código." }
+        }
+      }
+    }
+  }
+}
