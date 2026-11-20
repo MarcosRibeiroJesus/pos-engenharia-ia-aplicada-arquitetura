@@ -161,6 +161,11 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Agentes na esteira, definidos em `.claude/agents/`: **revisor de segurança** (lê o diff e os SARIF e comenta os achados com severidade e correção sugerida), **corretor de segurança** (corrige achados em commits no próprio PR; só roda com o rótulo `auto-fix`, só em PRs do próprio repositório, nunca altera workflows, segredos ou permissões e nunca faz merge) e **revisor FinOps** (compara o custo estimado com o teto da unidade). Os revisores rodam em instâncias independentes do autor do código (tarefa 4.6 da prova). O merge é sempre humano.
 - **Conta AWS única, com isolamento por tag e prefixo** (D-029):
   - todo recurso leva a tag `project` e o prefixo da chave do projeto no nome;
+  - **política de tags no Infracost Cloud, bloqueante no PR** (D-031), com o mesmo padrão da constituição:
+    - `project` por regex da chave;
+    - `module` em kebab;
+    - `managed-by` só `terraform`.
+  - **Como aplicar:** `project` e `managed-by` pelo `default_tags` do provider; `module` pelo `local.tags` de cada módulo. O `terraform test` confere antes, a partir do modelo `harness/modelos/tags.tftest.hcl`;
   - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
 - **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
   - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.

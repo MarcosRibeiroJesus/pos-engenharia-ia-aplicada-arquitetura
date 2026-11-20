@@ -6,7 +6,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - Cada tarefa cita os requisitos que cobre (RF e RNF).
 
 ## Fase 1 · Regras como testes
-- [ ] T001 Escrever as regras da constituição como testes (tags, criptografia, nada público) · RNF-001
+- [ ] T001 Escrever as regras da constituição como testes (tags a partir de `harness/modelos/tags.tftest.hcl`, criptografia, nada público) · RNF-001
 
 ## Fase 2 · Núcleo
 - [ ] T010 ... · RF-001
