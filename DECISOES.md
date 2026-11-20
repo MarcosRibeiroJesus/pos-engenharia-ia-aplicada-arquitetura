@@ -29,6 +29,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **Branch já mergeado não recebe commit novo** (D-032). Mudança depois de PR pronto vai em PR novo a partir do `main`; o `pre-push` bloqueia.
 - **Projeto novo só pelo caminho padrão:** `python3 harness/novo_projeto.py` (D-030). A plataforma compartilhada é o projeto `00-plataforma-agentes`; o produto consome gateway, política, guardrail, perfil de inferência e observabilidade da plataforma (skill `plataforma-agentes`).
 - **Nunca assumir escolhas do Marcos.** Silêncio ou pergunta pulada não são resposta (D-004). Exceção: decisões técnicas e de processo delegadas, que seguem as boas práticas da prova, na ordem recomendada, sempre com o porquê e os ids das tarefas (D-014).
 - **Um projeto de IA aplicada e uma arquitetura AWS por disciplina** (D-009).
@@ -56,4 +57,4 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
 - P00-P1: dentro de um plano SDD aprovado, a orquestração pode delegar aos especialistas sem aprovar cada disparo?
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges, nesta ordem: #17 (leva ao `main` teto diário, destroy em 24 h, especialistas, caminho padrão e plataforma; o #16 e o #18 já foram mergeados), #9, #10, #11 e #12. O #1 (D01) espera a spec retroativa. Os PRs de opções #2 a #8 continuam rascunho.
+- Merges: #16, #17, #18, #9, #10 e #11 já mergeados. Faltam o #19 (padrão de tags D-031 e trava D-032) e o #12 (painel). O #1 (D01) espera a spec retroativa; os PRs de opções #2 a #8 continuam rascunho.

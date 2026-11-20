@@ -6,6 +6,11 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-19 · D-032 · PR mergeado não recebe commit novo · fonte: delegada
+- **O que aconteceu:** os commits do D-031 ficaram fora do `main` porque o #17 e o #9 foram mergeados enquanto a orquestração ainda empurrava nos mesmos branches. Antes disso, o #16 já tinha sido mergeado sem os últimos commits.
+- **A regra:** mudança depois de um PR anunciado como pronto vai em PR novo, a partir do `main`, e só se empilham PRs com dependência real.
+- **A trava:** `harness/branch_mergeado.py` no `pre-push`, para qualquer agente. Ela bloqueia quando o topo anterior do branch remoto já está no `origin/main` e mostra como seguir. É uma trava no git, não uma instrução, que pode ser esquecida (1.4, 5.3).
+
 ### 2026-11-19 · D-031 · Padrão de tags na política do Infracost · fonte: Marcos
 O Marcos adotou a recomendação de trocar a política de tags de exemplo do Infracost Cloud (`Service` e `Environment`) pelo padrão do repositório, com regras bloqueantes no PR:
 - `project`: regex `^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$`, a chave do projeto;
