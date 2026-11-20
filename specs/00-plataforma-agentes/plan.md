@@ -1,6 +1,6 @@
 # Plano: Plataforma de agentes compartilhada na AWS
 
-- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** aprovado pelo dono em 2026-11-19 (D-035). Emenda 1 (2026-11-20, seção no fim) aprovada pelo dono em 2026-11-20 (D-038), com o hash registrado em `harness/estado.json` (D-033)
+- **Spec:** `specs/00-plataforma-agentes/spec.md` · **Status:** aprovado pelo dono em 2026-11-19 (D-035). Emenda 1 (2026-11-20) aprovada pelo dono em 2026-11-20 (D-038) e emenda 2 (2026-11-20, só alinhamento de texto) aprovada em 2026-11-20 (D-040), com o hash registrado em `harness/estado.json` (D-033)
 - **Data:** 2026-11-19; emenda 1 em 2026-11-20 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS
 - **Decisões do dono aplicadas:** D-021, D-022, D-024, D-028, D-029, D-031, D-033, D-034 (respostas às P00-P3, P00-P4 e P00-P5, repassadas pela orquestração em 2026-11-19 às 23:27 BRT) e D-035 (aprovação da versão anterior)
 - **ADRs:** `specs/00-plataforma-agentes/adr/`. O gate SDD (`harness/estado.py checar-arquivos`, hook e `pre-commit`) bloqueia `plataforma/agentes/adr/` antes da fase implementar, então os ADRs nascem junto da spec. A tarefa T000 de implementar os move para `plataforma/agentes/adr/` (seção "Trabalho que o plano cria").
@@ -80,7 +80,7 @@ Fontes consultadas em 2026-11-19. Floci: documentação de [Bedrock AgentCore](h
 
 ### Stack da plataforma (`plataforma/agentes/infra/terraform/`)
 Módulos internos: `nucleo` (KMS, SNS e Budgets), `gateway` (gateway, role de execução e role de fumaça), `politica` (motor), `observabilidade` (entrega de logs e traces, alarmes e role de evidências) e `contrato` (parâmetro `comum` e output `contrato_v1`).
-- **Id e ARN do motor de política:** entram nos módulos `gateway`, `observabilidade` e `contrato` como entradas de composição obrigatórias. No root real, vêm sempre das saídas do módulo `politica` (TT-P01). No root do Floci, que não tem o motor, vêm de valores sintéticos fixos (Estratégia de testes, emenda 1).
+- **Id e ARN do motor de política:** entram no `gateway` como entrada anulável e no `observabilidade` e no `contrato` como entradas obrigatórias (ADR-0011, emenda 2). No root real, vêm sempre das saídas do módulo `politica`, e o TT-P01 reprova nulo. No root do Floci, que não tem o motor, o gateway compõe sem ele e os outros dois recebem valores sintéticos fixos (Estratégia de testes, emenda 1).
 - **Gateway:**
   - `protocol_type = "MCP"` e `authorizer_type = "AWS_IAM"`;
   - `kms_key_arn` da chave da plataforma;
@@ -213,7 +213,7 @@ Os produtos copiam o padrão; a plataforma não publica biblioteca no v1.
 - **`aws_ce_cost_allocation_tag`:**
   - ativa `project` como tag de alocação de custo;
   - a chave só aparece depois que um recurso cobrado com essa tag existir (até 24 h), e a ativação leva até mais 24 h ([ativação de tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html));
-  - **pré-requisito da demonstração:** tag ativa pelo menos 48 h antes.
+  - **ativação única na conta (D-039, emenda 2):** o dono a faz assim que a chave aparecer no Billing, bem antes da primeira demonstração. Ela vale para todos os projetos, e nenhuma demonstração espera 48 h.
 - **Transaction Search:**
   - destino de segmentos do X-Ray no CloudWatch Logs e política de recurso do Logs;
   - ligado uma vez, sem custo fixo; os spans são cobrados por GB.
@@ -453,7 +453,7 @@ Região `us-east-1`. Preços consultados em 2026-11-19; a emenda 1 refez a conta
 | id | Risco | Probabilidade e impacto | O que fazer |
 |---|---|---|---|
 | R1 | Versão de MCP do gateway diferente da lane de compatibilidade da D03 (D-034) | média; o cliente da D03 recebe `-32022`, ou elicitation e sampling falham na tradução | `versoes_mcp` é variável e campo do contrato. A spec da D03 declara as versões do servidor e do cliente, e o plano da D03 confere com este contrato. Se a lane for 2025-06-18, ela entra na lista (versão menor). A D03 não usa elicitation nem sampling pelo gateway (ADR-0010) |
-| R2 | Ativação da tag `project` atrasada | média; o custo por produto não aparece (H3) | Ensaio da plataforma pelo menos 48 h antes; a tarefa de `infra/conta` roda depois do ensaio. Se `aws_ce_cost_allocation_tag` falhar porque a chave não apareceu, roda de novo no dia seguinte. **Emenda 1:** o ensaio é só da plataforma (apply, fumaça, DM-03 e destroy automático), sem produto sintético na AWS real. Isso basta para o R2, porque a chave KMS já é recurso cobrado com a tag `project` |
+| R2 | Ativação da tag `project` atrasada | média; o custo por produto não aparece (H3) | Ativação única na conta, feita pelo dono assim que a chave aparecer no Billing (D-039, emenda 2). Se `aws_ce_cost_allocation_tag` falhar porque a chave não apareceu, roda de novo no dia seguinte. **Emenda 1:** o ensaio é só da plataforma (apply, fumaça, DM-03 e destroy automático), sem produto sintético na AWS real. Isso basta para o R2, porque a chave KMS já é recurso cobrado com a tag `project` |
 | R3 | `PromptAttack` não detecta injeção indireta em resultado de tool | média; a detecção falha | A contenção é estrutural (tríade letal e RF-012); o DM-05 mede e o resultado vai ao ADR-0004 |
 | R4 | `bedrock:InvokeGuardrailChecks` exige recurso amplo | baixa; o privilégio da role do gateway fica maior | Usar o ARN mais estreito que a documentação mostrar; se exigir `*`, usar a condição `aws:SourceAccount` e uma exceção do checkov com ADR |
 | R5 | Provider sem `mcpToolSchema` estático para alvo servidor MCP | média | O fallback é a sincronização da descoberta, com o DM-05 comparando `tools/list` com o catálogo. Tool fora do catálogo continua negada por padrão |
@@ -528,3 +528,13 @@ Autorizada pelo dono no chat em 2026-11-20 00:38 BRT ("Corrigir agora"). Ela fec
 | Custo refeito | Total de US$ 1,082. A soma original das linhas dava 1,097, e não 1,103 como estava escrito: um erro de soma de US$ 0,006, corrigido aqui. O teto fica em US$ 1,20 até a resposta à P00-P8 | **Calcular não é decidir.** O arquiteto refaz a conta com as mesmas fontes e leva a mudança de teto ao dono. O erro comum é ajustar o teto sozinho, para cima ou para baixo (Art. V; 5.6) |
 
 Fora da emenda, nada mudou: arquitetura, ADRs 0001 a 0008 e 0010, matriz dos demais requisitos e demais riscos. A D-037 (página e post da plataforma) muda só a T089 do `tasks.md`, não este plano.
+
+## Emenda 2 (2026-11-20)
+Aprovada pelo dono no chat em 2026-11-20 (D-040). Só alinha três trechos a decisões já tomadas, sem decisão nova, sem mudança de arquitetura e sem mudança de custo:
+
+| Trecho | O que mudou | Boa prática e erro comum |
+|---|---|---|
+| Stack da plataforma, entrada do motor | "obrigatória" passa a valer só para `observabilidade` e `contrato`. No `gateway` a entrada é anulável, como no ADR-0011 | **Uma fonte de verdade por decisão.** O arquiteto mantém o plano igual ao ADR que decidiu. O erro comum é o implementador seguir o trecho velho e o revisor reprovar o certo (5.1) |
+| Configuração da conta, pré-requisito da tag | "tag ativa 48 h antes da demonstração" vira a ativação única na conta, assim que a chave aparecer | **Decisão nova do dono substitui a antiga em todo lugar.** O erro comum é deixar duas regras valendo e planejar uma espera que não existe (D-039; 5.1) |
+| Risco R2, mitigação | a mitigação "ensaio 48 h antes e `infra/conta` depois do ensaio" vira a ativação única, pela D-039 | idem |
+
