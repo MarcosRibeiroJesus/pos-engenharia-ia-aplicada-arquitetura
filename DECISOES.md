@@ -12,6 +12,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **Orquestrador com subagentes e sessões paralelas por projeto** (D-045): a orquestração coordena e delega cada tarefa a um especialista, sem escrever código de projeto. Cada projeto pode ter sessão própria em worktree e branch, com PR para o `main`. As sessões não se mandam mensagem; o estado é o git. Terraform fica só na máquina do Marcos (D-042). O número de sessões ativas é limitado ao que a orquestração acompanha (cada sessão custa 4 a 15 vezes um chat).
 - **Sem `Principal "*"` na policy da plataforma** (D-044): nem com condição; valores de condição de conta sem curinga (`*` ou `?`). ADR-0014.
 - **SDD obrigatório** (D-016, D-017). Todo código nasce de spec → plano → tarefas → análise aprovada, em `specs/<chave>/`; o gate nega código antes da fase implementar. Projetos em andamento fazem primeiro a spec retroativa. Comece toda sessão pela skill `retomar`.
 - **Qualquer agente (Claude Code, Antigravity, Copilot) segue o `AGENTS.md`** (D-018, D-019).

@@ -6,6 +6,18 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-045 · Orquestrador com subagentes e sessões paralelas por projeto · fonte: Marcos
+O Marcos pediu que o harness siga o padrão orquestrador-trabalhador da Anthropic e permita trabalhar nos projetos em paralelo.
+- **Como fica:**
+  - a orquestração coordena, grava a memória e delega cada tarefa a um especialista (subagente); não escreve código de projeto;
+  - cada projeto pode ter sessão própria em paralelo, em worktree (`git worktree add`) e branch próprios, com PR para o `main`;
+  - as sessões não se mandam mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
+  - Terraform continua só na máquina do Marcos (D-042); projeto sem Terraform pode rodar em sessão de nuvem;
+  - o número de sessões ativas é limitado ao que a orquestração consegue acompanhar, porque cada sessão custa de 4 a 15 vezes um chat (medição da Anthropic).
+- **Aplicado em:** `CLAUDE.md` (seção Sessões e a linha de orquestração), no PR #32 (mergeado em `main` no commit bada6a9).
+- **Por que:** o padrão é o recomendado pela Anthropic (post do sistema multiagente e documentação de subagents e worktrees), e o git já é o canal que o harness usa.
+- **Limite:** a documentação não traz comando para criar sessão de nuvem a partir de outra sessão local.
+
 ### 2026-11-20 · D-044 · Sem Principal curinga na policy da plataforma · fonte: Marcos
 O Marcos respondeu "2 aprovo" à proposta de endurecer a regra TT-S01 (nenhum `Principal "*"`, nem com condição, e valores de condição de conta sem curinga). A regra anterior aceitava `*` com qualquer condição de conta e só conferia a presença da chave, não o valor; um `StringLike` com `aws:SourceAccount` igual a `*` passava.
 - **Como ficou:**
