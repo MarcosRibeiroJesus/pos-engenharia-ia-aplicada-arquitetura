@@ -13,6 +13,7 @@ Quando o Marcos decide algo que só ele pode decidir (escopo, produto, orçament
   - o contexto em uma frase;
   - `Boa prática:` com o nome da prática, o que o arquiteto faz e o erro comum que ela evita (D-036).
 - Em cada opção, o tradeoff.
+- Todo código citado (D01, P00-P3, T041, D-033) vem com um nome curto do que ele é (D-050).
 - O hook `gate_pergunta.py` nega a pergunta fora desse formato.
 - A seção `## Perguntas ao dono` do PR é só registro. Quando o dono responder, marque a linha como "Respondida (D-xxx)".
 
