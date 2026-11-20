@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-040 · Emenda 2 do plano da plataforma aprovada · fonte: Marcos
+O Marcos aprovou a emenda 2 com a condição de que ela fosse só o alinhamento de texto: "Se for só isso pode mudar e já aprovo o plano". O diff confirmou três trechos, o cabeçalho e a seção da emenda:
+- a entrada do motor anulável no gateway (ADR-0011);
+- a ativação única da tag no lugar de "48 h antes" (D-039);
+- a mitigação do R2.
+
+**Aplicado em:**
+- `plan.md`, seção "Emenda 2";
+- `harness/estado.json`, `plano_aprovado` com o novo hash;
+- análise independente, rodada 2, disparada em seguida.
+
 ### 2026-11-20 · D-039 · Ativação única da tag de custo, assim que possível · fonte: Marcos
 O Marcos respondeu à P00-P9 depois de entender que a ativação da chave `project` como tag de alocação de custo vale para a conta inteira: ela é feita uma única vez, assim que a chave aparecer no Billing.
 - **Por que muda a D-034:** o "pelo menos 48 h antes" só vale na primeira vez. Depois disso, nenhuma demonstração espera.
