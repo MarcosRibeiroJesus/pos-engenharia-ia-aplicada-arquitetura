@@ -175,7 +175,10 @@ jobs:
   prazo:
     steps:
       - run: python3 harness/infra.py registrar p --stack s --horas 24
+      - run: aws ce list-cost-allocation-tags --tag-keys project
 """
+
+APPLY_SEM_CONTA = APPLY_OK.replace("      - run: aws ce list-cost-allocation-tags --tag-keys project\n", "")
 
 
 class TestInfraReal(unittest.TestCase):
@@ -226,7 +229,7 @@ class TestInfraReal(unittest.TestCase):
 
     def test_apply_sem_prazo_e_reprovado(self):
         self.assertEqual(estado.checar_apply(APPLY_OK), [])
-        self.assertEqual(len(estado.checar_apply("on: workflow_dispatch")), 2)
+        self.assertEqual(len(estado.checar_apply("on: workflow_dispatch")), 3)
 
     def test_modelos_do_harness_cumprem_as_regras(self):
         modelos = AQUI / "modelos"
@@ -523,6 +526,25 @@ class TestVersoesDasActions(unittest.TestCase):
                                                      "00-plataforma-agentes", "plataforma/agentes/")
             atual = (AQUI.parent / ".github" / "workflows" / f"00-plataforma-agentes-{qual}.yml").read_text()
             self.assertEqual(atual, esperado, qual)
+
+
+class TestPreRequisitosDaConta(unittest.TestCase):
+    """D-034: tag de custo e Transaction Search por Terraform no infra/conta; o apply confere antes de subir."""
+
+    def test_apply_sem_conferencia_da_tag_de_custo_reprova(self):
+        self.assertIn("workflow de apply sem conferência da tag de custo project (D-034)", estado.checar_apply(APPLY_SEM_CONTA))
+
+    def test_modelo_de_apply_confere_a_conta_sem_falhar(self):
+        texto = (AQUI / "modelos" / "apply.yml").read_text(encoding="utf-8")
+        self.assertIn("list-cost-allocation-tags", texto)
+        self.assertIn("get-trace-segment-destination", texto)
+        passo = texto.split("Pré-requisitos da conta", 1)[1].split("- name:", 1)[0]
+        self.assertIn("::warning::", passo)
+        self.assertNotIn("exit 1", passo)  # aviso, nunca bloqueio: a role pode não ter a permissão de leitura
+
+    def test_skills_trazem_a_checagem_antes_da_demonstracao(self):
+        for skill in ("ciclo-demonstracao", "plataforma-agentes"):
+            self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
 
 class TestSincronizarSkills(unittest.TestCase):
