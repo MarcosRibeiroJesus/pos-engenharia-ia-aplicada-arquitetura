@@ -66,18 +66,22 @@
         ]
       },
       {
-        "matcher": "AskUserQuestion",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_pergunta.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_pergunta.py\"; fi",
-            "timeout": 10
         "matcher": "Agent|Task",
         "hooks": [
           {
             "type": "command",
             "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_delegacao.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_delegacao.py\"; fi",
             "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_pergunta.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_pergunta.py\"; fi",
+            "timeout": 10
           }
         ]
       }
