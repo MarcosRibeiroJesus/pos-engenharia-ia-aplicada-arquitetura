@@ -45,7 +45,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
 
 ## Perguntas ao dono
-- Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
+- **Eu respondo só no chat** (D-041):
+  - toda pergunta para mim é feita na conversa, em múltipla escolha (`AskUserQuestion`);
+  - o enunciado explica o porquê pelo nome da boa prática, ou seja, como o exame trata o assunto, e o erro comum que ela evita (D-036);
+  - cada opção diz o seu tradeoff.
+  
+  O hook `.claude/hooks/gate_pergunta.py` nega a pergunta fora desse formato.
+- **A seção `## Perguntas ao dono` de PRs e specs é só registro, não é onde eu respondo.**
+  - Quem escreve nela: as sessões sem mim (nuvem, Antigravity, Copilot), com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`).
+  - A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py`, leva ao Monday e me pergunta no chat.
+  - Respondida, a linha vira "Respondida (D-xxx)" no PR.
 
 ## Harness e SDD (spec-driven development)
 @AGENTS.md
@@ -81,6 +90,9 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - O `pre-push` bloqueia commit novo em branch já mergeado.
   - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
+- **Terraform roda na minha máquina** (D-042). A implementação de projeto com Terraform é feita numa sessão do Claude Code no meu computador, com ciclo de teste em segundos.
+  - Essa sessão é a única que comita no branch de implementação.
+  - A orquestração na nuvem coordena, mas não escreve nesse branch.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
@@ -140,7 +152,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Site (GitHub Pages)
 - Vitrine em tema escuro fixo: leitura no estilo Medium e cabeçalho de publicação no estilo Substack. HTML e CSS estáticos, sem fontes ou scripts externos.
-- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas.
+- Menu com duas trilhas: **IA Aplicada** (projetos das aulas, como o Doom) e **Arquiteturas AWS** (a arquitetura escolhida de cada unidade), mais Posts e Temas. A plataforma de agentes (`00-plataforma-agentes`) tem página própria em Arquiteturas AWS e post próprio (D-037).
 - O conteúdo da home vem dos arrays `MODULES` e `ITEMS` em `site/index.html`, com `type` igual a `ia-aplicada`, `arquitetura` ou `post`. Cada projeto tem página com diagrama, ADRs, custo estimado, último relatório de teste e link para o código.
 - Nada inventado: o que estiver pendente aparece como pendente.
 - O site não explica como o conteúdo é produzido (curso, módulos, unidades, aulas, a estratégia de dois projetos) nem traz detalhes do curso ou do meu progresso. Ele apresenta só os projetos, as arquiteturas e os posts.

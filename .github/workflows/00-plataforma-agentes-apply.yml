@@ -51,7 +51,7 @@ jobs:
           ativa=$(aws ce list-cost-allocation-tags --tag-keys project --status Active \
             --query 'length(CostAllocationTags)' --output text 2>/dev/null || echo "?")
           if [ "$ativa" != "1" ]; then
-            echo "::warning::A tag project não está ativa como tag de alocação de custo (ou não foi possível ler). O custo por projeto não aparece no Cost Explorer. Aplique o infra/conta pelo menos 48 h antes da demonstração."
+            echo "::warning::A tag project não está ativa como tag de alocação de custo (ou não foi possível ler). O custo por projeto não aparece no Cost Explorer. A ativação é única na conta (D-039): aplique o infra/conta assim que a chave project aparecer no Billing."
           fi
           destino=$(aws xray get-trace-segment-destination --query Destination --output text 2>/dev/null || echo "?")
           if [ "$destino" != "CloudWatchLogs" ]; then

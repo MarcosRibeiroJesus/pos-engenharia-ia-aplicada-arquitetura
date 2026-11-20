@@ -5,6 +5,13 @@ description: "Terraform com TDD neste repositório. Use para escrever ou mudar i
 
 # Terraform com TDD
 
+## Onde rodar (D-042)
+- **O ciclo vermelho → verde do Terraform roda numa sessão do Claude Code na máquina do dono,** onde há Terraform, providers e Docker para o Floci.
+  - As sessões de nuvem não baixam o Terraform nem os providers.
+  - Lá, o teste só roda no CI, e um ciclo leva minutos.
+- **Sessão de nuvem sem `terraform`:** não escreva Terraform "às cegas" para validar só no CI. Pare e devolva a tarefa à orquestração com o motivo.
+- **Um escritor por branch:** a sessão local é a única que faz commit no branch de implementação do projeto. A orquestração na nuvem coordena (memória, Monday, revisões, perguntas), mas não comita no mesmo branch.
+
 ## Ciclo
 1. **Regra antes do recurso:** escreva o `run` em `tests/*.tftest.hcl` com `mock_provider "aws" {}` e `command = plan`, e veja o teste falhar (`terraform test`).
 2. **Implemente o mínimo** para o teste passar.
