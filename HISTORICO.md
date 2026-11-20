@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-056 · D01 (recomendação): plano aprovado e teto de US$ 7,10 · fonte: Marcos
+O Marcos aprovou o plano da recomendação (D01) e escolheu o teto diário de US$ 7,10 (P01-P5), sobre uma estimativa de US$ 6,43 com cerca de 10% de margem.
+- As partes são a base por 24 h, a janela do MWAA de 2 a 3 h e a plataforma de agentes, com destroy em cascata.
+- O lote sintético fica fechado, com um XGBoost semente que nunca é promovido sozinho.
+- O Claude passa pelo perfil e pelo guardrail da plataforma.
+
+**Aplicado em:**
+- `specs/01-recomendacao/plan.md` (status e perguntas respondidas);
+- `harness/estado.json` (`plano_aprovado` com hash, `teto_diario_usd` igual a 7.1 e D-056 no projeto);
+- fase tarefas disparada pela delegação livre (D-033).
+
 ### 2026-11-20 · D-055 · Não perguntar mais sobre disparos de especificação e planejamento · fonte: Marcos
 Ao ser perguntado se o arquiteto-aws podia escrever o plano da D01 (recomendação), o Marcos respondeu "pode disparar e não me pergunte mais sobre isso".
 - **Alcance aplicado:** os disparos de especialistas nas fases especificar, esclarecer e planejar não pedem mais aprovação.
