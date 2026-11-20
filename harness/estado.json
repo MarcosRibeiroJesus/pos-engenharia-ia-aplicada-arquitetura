@@ -40,13 +40,19 @@
         "D-051",
         "D-052",
         "D-053",
-        "D-054"
+        "D-054",
+        "D-056"
       ],
       "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
       "infra_real": true,
       "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
       "teto_diario_usd": 7.1,
-      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml"
+      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml",
+      "plano_aprovado": {
+        "data": "2026-11-20",
+        "fonte": "Marcos no chat em 2026-11-20 (BRT): \"Aprovar\" o plano da recomendação (D01) e teto \"US$ 7,10\" (P01-P5). Só o status e as linhas das perguntas foram atualizados para refletir a resposta.",
+        "sha256": "b7ef44d70b8d9cb43da67250b4c4f70a407c100947d8d5ba1dc5e81c7f1c0a27"
+      }
     },
     {
       "chave": "01-doom",

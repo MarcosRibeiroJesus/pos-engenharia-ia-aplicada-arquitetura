@@ -1,6 +1,6 @@
 # Plano: Recomendação de e-commerce (plataforma híbrida de recomendação com explicação)
 
-- **Spec:** `specs/01-recomendacao/spec.md` · **Status:** rascunho, aguardando a aprovação do dono (D-033). Nada aqui vale como aprovado antes disso
+- **Spec:** `specs/01-recomendacao/spec.md` · **Status:** aprovado pelo dono em 2026-11-20 (D-056), com o hash registrado em `harness/estado.json` (D-033)
 - **Data:** 2026-11-20 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS e sem código
 - **Decisões do dono aplicadas:** D-006, D-007, D-008, D-013, D-021, D-022, D-024, D-029, D-031, D-034, D-039, D-042, D-050, D-051 (lote como lab sintético fechado), D-052 (MWAA numa janela curta), D-053 (guardrail sem tópico extra), D-054 (publicar só a página e o post AWS), D-055 (disparo deste plano)
 - **Delegadas usadas:** D-023 (mecânica do teto e do prazo), D-030 (plataforma compartilhada), D-036 (como explicar)
@@ -19,13 +19,13 @@
 - **Re-ranker que a AWS aceita.** Serverless Inference sem isolamento de rede, porque o serviço não suporta isolamento. O container é o nativo do XGBoost, sem código nosso, e o artefato é gravado em formato nativo, sem pickle (ADR-0009).
 - **Claude pela plataforma (D-053, E1).** Perfil de inferência e guardrail vêm do contrato v1. O guardrail vai nos cabeçalhos do InvokeModel, imposto por IAM. Um `ApplyGuardrail` revisa o texto final, porque o guardrail do modelo não lê os parâmetros de tool. Não há gateway MCP (ADR-0010).
 - **Correções de segurança e de verdade:** categoria por lista de caracteres permitidos, vetor da sessão no lugar do vetor de zeros, falha de dependência visível e regra dos 30 dias ligada no serviço real (ADR-0011 e ADR-0012).
-- **Teto diário proposto: US$ 7,10**, sobre uma estimativa de US$ 6,43 (seção "Custo do lab"). Somado ao teto da plataforma (US$ 1,20), um dia de demonstração cabe em 42% do limite mensal de US$ 20. O valor de 7,10 é proposta e depende da resposta à P01-P5.
+- **Teto diário: US$ 7,10** (aprovado pelo dono, D-056), sobre uma estimativa de US$ 6,43 (seção "Custo do lab"). Somado ao teto da plataforma (US$ 1,20), um dia de demonstração cabe em 42% do limite mensal de US$ 20. O valor de 7,10 é proposta e depende da resposta à P01-P5.
 
 ## Verificação da constituição
 | Artigo | Como o plano cumpre | Risco |
 |---|---|---|
 | I · SDD | Spec retroativa esclarecida (D-051 a D-054) e este plano. `tasks.md` só depois da aprovação do plano (D-033). ADRs em `specs/` até implementar | nenhum |
-| II · Decisões do dono | Nenhuma escolha do dono assumida. O teto é calculado aqui e entra como proposta, com a P01-P5. A identidade de deploy segue a D-029; o apply do `infra/conta` é ação do dono, não decisão nova | A ativação da tag de custo e o ambiente `aws-lab-destroy` continuam pendentes do dono (D-024, D-039) |
+| II · Decisões do dono | Nenhuma escolha do dono assumida. O teto é calculado aqui e foi aprovado pelo dono (P01-P5, D-056). A identidade de deploy segue a D-029; o apply do `infra/conta` é ação do dono, não decisão nova | A ativação da tag de custo e o ambiente `aws-lab-destroy` continuam pendentes do dono (D-024, D-039) |
 | III · Testes primeiro | Matriz regra → teste abaixo, com todo RF e RNF coberto. Cada tarefa começa por teste vermelho: VT, PY, TT, ST e TH. FL só com o projeto completo. DM para o que só a AWS real prova. Componente Claude só com respostas gravadas (D-006) | O emulador não aplica guardrail nem sobe o endpoint do SageMaker (lacunas com evidência) |
 | IV · Segurança por padrão | ALB interno, sem NAT, KMS do cliente, TLS no MemoryDB e no SNS, roles por função, guardrail imposto por IAM, categoria validada, deploy por role do projeto com ABAC (ADR-0015). A troca do isolamento de rede do re-ranker tem proteções substitutas e ADR (ADR-0009) | MemoryDB `open-access` e HTTP entre ALB e task continuam como riscos aceitos do ADR-0003 |
 | V · Custo consciente | Teto de um dia calculado com fontes. Budgets diário no stack, e o mensal só no `infra/conta`. MWAA só na janela. Endpoint `monitoring` removido (métricas por EMF, ADR-0013). Gate de custo único na esteira, que passa a somar as raízes e pesar a janela pelo prazo (TH-04). Destroy com `confirm_stack`, cascata e verificação de sobras | O custo da hora do MemoryDB e do `mw1.micro` não apareceu nas páginas oficiais; o plano usa um limite superior e o Infracost confirma (R6) |
@@ -526,7 +526,7 @@ Região `us-east-1`. Consultas de preço em 2026-11-20. Sem camada gratuita, que
 | **Subtotal da janela** | **1,864** (com 2 h: 1,284) | |
 | **Total estimado do dia** | **6,428** | |
 
-- **Teto diário proposto: US$ 7,10** (o total mais cerca de 10%, como na plataforma). Gravado em `teto_diario_usd` no `harness/estado.json` como proposta. Ele vai para o README e para o `aws_budgets_budget` diário na implementação, e só vale com a aprovação do plano e a resposta à P01-P5.
+- **Teto diário: US$ 7,10** (o total mais cerca de 10%, como na plataforma), aprovado pelo dono (P01-P5, D-056). Gravado em `teto_diario_usd` no `harness/estado.json`. Ele vai para o README e para o `aws_budgets_budget` diário na implementação, e só vale com a aprovação do plano e a resposta à P01-P5.
   - A alternativa sem margem é US$ 6,50, o total arredondado para a dezena de centavo seguinte, com 1% de folga. Com ela, o Budgets diário avisaria por ruído, porque os volumes são premissas.
   - O Budgets diário filtra pela tag `user:project`. O Claude é cobrado pelo AWS Marketplace, sob o provedor do modelo ([model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html)), e pode não aparecer no filtro da tag (R7). O limite mensal da conta cobre esse caso.
 - **Peso no mês (D-022):**
@@ -587,8 +587,8 @@ Registro (o dono responde no chat, D-041).
 
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
-| P01-P5 (teto diário da recomendação) | Qual teto diário fica para a D01: US$ 7,10 ou US$ 6,50? | o valor do Budgets diário e do README; a aprovação do plano | (a) **US$ 7,10**: cerca de 10% de margem sobre a estimativa de US$ 6,43, como na plataforma; o Budgets só avisa se os volumes passarem bem das premissas. (b) **US$ 6,50**: 1% de margem; aviso por ruído provável. (c) outro valor | (a) US$ 7,10 |
-| Aprovação do plano (D-033) | O plano da D01 está aprovado? | todas as fases seguintes (tarefas, analisar, implementar e verificar) | aprovar · pedir mudanças | aprovar, com a resposta à P01-P5 |
+| P01-P5 (teto diário da recomendação) | ~~US$ 7,10 ou US$ 6,50?~~ **Respondida (D-056):** US$ 7,10. | — | — | — |
+| Aprovação do plano (D-033) | ~~O plano da D01 está aprovado?~~ **Respondida (D-056):** aprovado pelo dono em 2026-11-20. | — | — | — |
 
 ## Fontes (consulta em 2026-11-20)
 Além das fontes da spec (seção "Proveniência"):
