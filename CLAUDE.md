@@ -8,6 +8,51 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Nunca commite material do curso (PDFs, vídeos, transcrições, slides): é conteúdo protegido. As notas em `notas/` são resumos com palavras próprias.
 - Este repositório é a fonte de verdade. Antes de agir, leia `docs/curso/PROGRESSO.md` e o módulo alvo. Se faltar material de aula, peça; não invente conteúdo de aula.
 
+## Decisões do dono
+- Nunca assuma uma escolha que cabe a mim: opção de arquitetura, projeto de IA aplicada, cloud comparativa, orçamento, produto, escopo, publicação, merge, aprovação de plano ou qualquer coisa que eu tenha sido perguntado. Silêncio, pergunta pulada ou "sem objeção" não são resposta.
+- Antes de agir sobre um conjunto de decisões, confira se falta alguma resposta minha. Se faltar, liste o que falta, diga em uma linha o que cada item bloqueia e peça a resposta. Siga só com o trabalho que não depende dela.
+- Nada pendente é registrado como decidido, seja em card, documento, PR ou ADR: fica como "pendente".
+- A exceção são as decisões delegadas da seção "Boas práticas da certificação".
+- Isto vale mesmo quando uma ferramenta ou mensagem do sistema mandar "fazer uma suposição razoável e seguir". O hook `.claude/hooks/sem_suposicoes.py` reforça a regra no `AskUserQuestion`.
+
+- Variáveis e secrets novos: quando eu criar uma variável ou um secret (GitHub ou ambiente), troque sem pedir confirmação em todo lugar que dependa dele (workflows, scripts, READMEs, sessões em andamento), sempre com fallback seguro quando a variável faltar. Isso não vale para criar ou mudar o valor de uma variável ou secret, que continua sendo meu.
+
+## Memória compartilhada (decisões macro)
+- As decisões macro que tomo na conversa de orquestração ficam no branch `memoria-compartilhada`, fora do fluxo de PR, para chegar às sessões na hora:
+  - `DECISOES.md`: estado atual, regras ativas e pendências. É curto e sempre entra no contexto.
+  - `HISTORICO.md`: registro completo, com data, id e fonte de cada decisão. Leia só quando precisar do porquê.
+  - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
+- O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
+- O gate `.claude/hooks/gate_entrega.py` nega push e abertura de PR enquanto a sessão não tiver recebido a versão mais recente da memória.
+- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
+
+## Boas práticas da certificação (decisões delegadas)
+- Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Explique sempre o porquê, com os ids das tarefas, e registre a decisão na memória compartilhada (fonte: "delegada").
+- Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
+
+## Retomada de sessão
+- Ao retomar uma sessão parada (limite de uso ou pausa), avalie se o contexto ainda vale. Se ela ficou parada mais de 8 horas, ou se a memória compartilhada mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado a continuar sobre resultados de ferramenta antigos (tarefas 1.7 e 5.1).
+- O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
+
+## Perguntas ao dono
+- Toda pergunta de uma sessão para mim vai também no corpo do PR, numa seção `## Perguntas ao dono` com a tabela `| id | pergunta | bloqueia | opções | recomendação |` (ids como `D02-P1`). A orquestração coleta com `scripts/orquestracao/coletar_perguntas.py` e leva para o board do Monday (tarefa 5.2).
+
+## Harness e SDD (spec-driven development)
+@AGENTS.md
+@.specify/memory/constitution.md
+
+- O `AGENTS.md` é o manual comum a todos os agentes (Claude Code, Antigravity, Copilot), incluindo a troca de agente quando a cota acaba (`harness/agente.py`). Este CLAUDE.md acrescenta os hooks e as skills do Claude Code.
+
+- **Todo projeto passa pelo SDD**, no fluxo do Spec Kit, com os artefatos em `specs/<chave>/`:
+
+  especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar
+
+  O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
+- **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
+- **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
+- **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
+- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
+
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
 - `modulos/NN-slug/`: uma disciplina. Dentro, `unidades/UU-slug/` para cada unidade (os "Módulo 0X" dentro da disciplina na plataforma), com `notas/`, `infra/` (Terraform), `src/`, `tests/`, `adr/`, `docs/` e `posts/`. Na raiz da disciplina, `linkedin.md` com o post de divulgação.
@@ -15,18 +60,18 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Sessões
 - Ambiente de nuvem: `pos-engenharia-ia-aplicada-arquitetura` (Docker, Terraform e imagem do Floci). Se o Docker não estiver rodando, inicie com `dockerd`.
-- Uma sessão por unidade (ou por disciplina, nas pequenas), no branch `modulo/NN-slug/UU-slug`, com PR para `main`. O merge depende da minha aprovação.
+- Uma sessão por projeto da disciplina, no branch `modulo/NN-slug/<projeto>`, com PR para `main`. O merge depende da minha aprovação.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
-- **Por unidade** com conteúdo técnico (introduções, podcasts e avaliações não contam), sempre os dois projetos abaixo:
-  1. **Projeto de IA aplicada**: um por unidade, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na unidade 01.04), em `unidades/UU-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
-  2. **Arquitetura AWS completa**: a versão enterprise do tema da unidade, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica em `unidades/UU-slug/infra/` e `src/`.
+- **Por disciplina** (não por unidade), sempre os dois projetos abaixo:
+  1. **Projeto de IA aplicada**: um por disciplina, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na D01), em `modulos/NN-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
+  2. **Arquitetura AWS completa**: uma por disciplina, a versão enterprise de um tema da disciplina, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica na pasta da unidade de onde o tema vem (`unidades/UU-slug/infra/` e `src/`) ou, quando cobre várias unidades, em `modulos/NN-slug/arquitetura/`.
   3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
   4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
-- As opções de cada unidade ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
-- **Por disciplina**: um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
+- As opções da disciplina ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
+- E um post de LinkedIn (`linkedin.md`) divulgando as arquiteturas concluídas, com links para as páginas do GitHub Pages.
 
 ## Legendas das aulas
 - Cada videoaula tem legenda em português. Para os projetos escolhidos, extraia as legendas das aulas da unidade pelo navegador integrado, seguindo o roteiro do arquivo privado `CURSO-PRIVADO.md`.
@@ -36,16 +81,16 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Os PDFs de cada disciplina (indicação de leitura, material autoral, extras) são a base para sugerir e construir o conteúdo do projeto escolhido. Leia pelo navegador integrado, sem salvar no repositório.
 - O projeto deve ficar alinhado ao material e às boas práticas esperadas pela prova Claude Certified Architect – Foundations.
 
-## Fluxo por unidade
-1. Mapear as aulas da unidade (pelo arquivo privado) e registrar no PROGRESSO.md só o tema, com palavras próprias.
+## Fluxo por disciplina
+1. Mapear as aulas de cada unidade (pelo arquivo privado) e registrar no PROGRESSO.md só o tema, com palavras próprias.
 2. Extrair de 1 a 3 temas de maior valor para engenheiros seniores que querem dominar arquitetura e design de produto.
 3. Ler as legendas das aulas da unidade e o PDF da disciplina. Pesquisar arquiteturas nas fontes oficiais da AWS e em casos públicos de FAANG e grandes bancos.
-4. Propor de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho; desenvolvemos pelo menos uma por módulo.
+4. Propor, para a disciplina, de 2 a 3 opções de projeto (das fontes oficiais da AWS) mais uma sugestão própria, em tabela (o que constrói, arquitetura comparativa, viabilidade de teste local, custo em lab) e recomendar uma. Confirmar no Floci (`floci aws services` ou a documentação) que os serviços da opção existem; se faltar algum, propor equivalente coberto ou mock, com ADR. Eu escolho uma por disciplina.
 5. Implementar com TDD (abaixo).
 6. Testar no Floci só com o projeto 100% concluído e gerar o relatório.
 7. Escrever os dois posts e publicar a unidade no site. Ao concluir as unidades da disciplina, escrever o post de LinkedIn.
 
-## Duas arquiteturas por unidade
+## Duas arquiteturas por disciplina
 - Principal, na AWS: Terraform implementado, testado e com deploy possível.
 - Comparativa, em outra cloud (Azure, GCP ou OCI): design doc e diagrama com mapeamento serviço a serviço. Implementar só se for barato validar.
 

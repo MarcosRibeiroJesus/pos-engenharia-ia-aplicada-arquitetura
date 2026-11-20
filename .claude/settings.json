@@ -1,0 +1,81 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/sem_suposicoes.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/sem_suposicoes.py\"; fi",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_entrega.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_entrega.py\"; fi",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_sdd.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate_sdd.py\"; fi",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/registrar_uso.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/registrar_uso.py\"; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
