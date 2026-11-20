@@ -546,6 +546,14 @@ class TestPreRequisitosDaConta(unittest.TestCase):
         for skill in ("ciclo-demonstracao", "plataforma-agentes"):
             self.assertIn("D-034", (AQUI.parent / ".claude" / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"), skill)
 
+    def test_ativacao_da_tag_de_custo_e_unica_na_conta(self):
+        # D-039: nenhuma demonstração espera 48 h; a ativação é feita uma vez, assim que a chave aparece.
+        skill = (AQUI.parent / ".claude" / "skills" / "ciclo-demonstracao" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("D-039", skill)
+        modelo = (AQUI / "modelos" / "apply.yml").read_text(encoding="utf-8")
+        self.assertIn("D-039", modelo)
+        self.assertNotIn("48 h antes da demonstração", modelo)
+
 
 class TestSincronizarSkills(unittest.TestCase):
     def test_copia_do_antigravity_igual_as_skills_do_claude(self):
