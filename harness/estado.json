@@ -123,7 +123,7 @@
         "plataforma/agentes/"
       ],
       "specs": "specs/00-plataforma-agentes/",
-      "fase": "planejar",
+      "fase": "tarefas",
       "retroativo": false,
       "pr": null,
       "cloud": null,
@@ -140,7 +140,7 @@
       "infra_real": true,
       "apply_workflow": ".github/workflows/00-plataforma-agentes-apply.yml",
       "destroy_workflow": ".github/workflows/00-plataforma-agentes-destroy.yml",
-      "teto_diario_usd": null
+      "teto_diario_usd": 1.2
     }
   ]
 }

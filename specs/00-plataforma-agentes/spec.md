@@ -1,7 +1,7 @@
 # Spec: Plataforma de agentes compartilhada na AWS
 
 - **Projeto:** `00-plataforma-agentes` · **Disciplina:** 00 (plataforma, atende todas) · **Tipo:** plataforma
-- **Status:** esclarecida (2026-11-19). Não resta ambiguidade técnica. As pendências do dono (P00-P3 a P00-P5) não bloqueiam o plano; elas bloqueiam só a demonstração real, na fase verificar.
+- **Status:** esclarecida (2026-11-19). Não resta ambiguidade técnica. As perguntas do dono P00-P3 a P00-P5 foram respondidas em 2026-11-19 (D-034); não há pergunta aberta.
 - **Artigos da constituição que se aplicam:** I, II, III, IV, V, VI, VII, VIII
 
 ## Problema e objetivo
@@ -14,7 +14,7 @@ Hoje cada projeto da pós resolve sozinho o acesso ao Claude, as tools, a defesa
 - observabilidade e evals.
 
 **Deu certo quando** (os três critérios são verificados na fase verificar):
-1. **Demonstração só pelas interfaces.** O primeiro produto consumidor faz o roteiro de demonstração (RF-010) só pelo contrato v1 (RF-007). `[PENDENTE: P00-P3, qual produto é o primeiro consumidor]`.
+1. **Demonstração só pelas interfaces.** O primeiro produto consumidor, a D03 (`03-mcp-regras-cdb`, alvo servidor MCP; D-034, resposta à P00-P3), faz o roteiro de demonstração (RF-010) só pelo contrato v1 (RF-007).
    - **Então:** o código e o Terraform do produto não têm nenhum ARN ou id da plataforma escrito à mão (busca por `arn:aws:bedrock-agentcore` e `arn:aws:bedrock` dá zero ocorrência fora de testes com dados gravados).
    - **E:** as métricas do dia mostram `AllowDecisions` ≥ 1 e `DenyDecisions` ≥ 1 no motor de política.
 2. **Custo dentro do teto.** O custo de 24 horas estimado pelo Infracost no PR fica ≤ `teto_diario_usd` da plataforma, calculado no plano. O custo real do dia da demonstração, lido no Cost Explorer pela tag `project=00-plataforma-agentes` depois de 48 horas, também fica ≤ esse teto.
@@ -39,7 +39,7 @@ Fontes oficiais que orientam o desenho (detalhe na seção "Proveniência"):
 - **H2.** Como agente de um produto, quero chamar tools só pelo gateway da plataforma, com uma política que limite o que posso fazer, para que uma injeção de prompt não vire ação indevida.
   - **Dado** um pedido de tool fora da política do produto, **quando** o agente chama o gateway, **então** a resposta tem `isError: true`, o alvo não é invocado e a métrica `DenyDecisions` soma 1.
 - **H3.** Como dono, quero que cada chamada ao Claude seja atribuída ao produto que a fez, para comparar o custo com o teto diário.
-  - **Dado** um produto com perfil de inferência de aplicação, **quando** ele chama o modelo, **então** o custo aparece no Cost Explorer agrupado pela tag `project` do produto. Isso exige a tag de alocação de custo ativa (P00-P4).
+  - **Dado** um produto com perfil de inferência de aplicação, **quando** ele chama o modelo, **então** o custo aparece no Cost Explorer agrupado pela tag `project` do produto. Isso exige a tag de alocação de custo ativa pelo menos 48 horas antes da demonstração (D-034, resposta à P00-P4).
 - **H4.** Como avaliador, quero traces e métricas por produto e evals depois da demonstração, para decidir mudanças de prompt e de arquitetura com dados.
   - **Dado** uma demonstração concluída, **quando** abro o relatório da fase verificar, **então** ele traz, por produto, a contagem de decisões de política (permitidas e negadas), as intervenções de guardrail, os ids de trace da sessão e a nota de cada avaliador da avaliação sob demanda (RF-006).
 
@@ -158,7 +158,7 @@ Cada requisito traz o critério de aceite e como ele é verificado. Na coluna de
     | negações de política | `DenyDecisions` | ≥ 5 | o roteiro prevê no máximo 2 negações; 5 indica loop ou tentativa de injeção |
     | intervenção do guardrail do modelo | métrica de intervenção do Bedrock Guardrails (nome confirmado no plano) | ≥ 5 | o roteiro prevê 1 bloqueio |
 
-    Os alarmes publicam num tópico SNS criptografado. Quem recebe é a P00-P5.
+    Os alarmes publicam num tópico SNS criptografado. Quem recebe são os mesmos e-mails de `emails_alerta` do `infra/conta`, sem variável nova (D-034, resposta à P00-P5; mecanismo no ADR-0008 do plano).
   - **Aceite:** os seis alarmes existem no plan com esses parâmetros. (TT, FL se o Floci emular CloudWatch)
 - **RNF-004** (conta, D-029): conta AWS única. Nada de Organizations, Control Tower ou serviço de governança com custo fixo. A conta com OIDC é criada quando o primeiro produto estiver pronto (P00-P2); até lá tudo roda com mock e Floci.
   - **Aceite:** o plan não tem recurso `aws_organizations_*` nem `aws_controltower_*`. (TT)
@@ -186,9 +186,9 @@ Cada requisito traz o critério de aceite e como ele é verificado. Na coluna de
 | E7 | Como a "ação sensível" chega ao humano | técnica | tool `sensivel` negada ao agente e liberada só à role de aprovação (RF-012) | um campo de aprovação no argumento poderia ser forjado por injeção; a decisão fica fora do modelo (1.4, 5.2) |
 | E8 | Formato do erro que o produto recebe | técnica | mapa de categorias com retentável no contrato (RF-011) | o gateway devolve `isError: true` com texto, não um código; o produto precisa de categoria e de retentável para decidir entre tentar de novo e escalar (2.2, 5.3) |
 | E9 | Evals online ou sob demanda | técnica | sob demanda, depois da demonstração | custo por token sem ganho numa sessão curta; o gate de CI segue nas respostas gravadas (4.6, 5.5, D-006) |
-| E10 | Qual produto é o primeiro consumidor | do dono | `[PENDENTE: P00-P3]` | escolha de produto (Art. II); o contrato v1 aceita os dois tipos de alvo, então o plano não depende dela |
-| E11 | Configurações da conta AWS que a plataforma exige | do dono | `[PENDENTE: P00-P4]` | configuração da conta é do dono (CLAUDE.md) |
-| E12 | Quem recebe os alarmes | do dono | `[PENDENTE: P00-P5]` | contato e valor de variável são do dono |
+| E10 | Qual produto é o primeiro consumidor | do dono | D03, `03-mcp-regras-cdb`, alvo servidor MCP (D-034) | escolha de produto (Art. II); o contrato v1 continua aceitando os dois tipos de alvo |
+| E11 | Configurações da conta AWS que a plataforma exige | do dono | caminho misto (D-034): tag `project` de alocação de custo e Transaction Search por Terraform em `infra/conta`, aplicado pelo dono; caso de uso da Anthropic à mão, pelo dono, se o modelo for anterior ao Claude Opus 4.7; tag ativa pelo menos 48 horas antes da demonstração | configuração da conta é do dono (CLAUDE.md) |
+| E12 | Quem recebe os alarmes | do dono | os mesmos e-mails de `emails_alerta` do `infra/conta`, sem variável nova (D-034) | contato e valor de variável são do dono |
 | E13 | Região | técnica | `us-east-1` (RNF-006) | já é o padrão dos modelos de workflow e aparece nos anúncios das três peças com cobertura regional mais estreita |
 | E14 | Camada do guardrail | técnica | `STANDARD` | a `CLASSIC` atende só inglês, francês e espanhol, e os produtos falam português; a `STANDARD` usa inferência entre regiões. O suporte a português na `STANDARD` é confirmado no plano (incerto) |
 
@@ -246,19 +246,16 @@ A plataforma não tem agente de produto. Ela é a camada de governança dos agen
 - **Avaliação online contínua,** autorização de entrada por JWT ou Cognito, tópicos negados na base do guardrail e várias regiões (E5, E9, E3, RNF-006).
 
 ## Decisões do dono que esta spec usa
-D-021, D-022, D-024, D-025, D-027, D-028, D-029, D-031, D-033 e a resposta à P00-P2; e D-030 (delegada: componentes da plataforma).
+D-021, D-022, D-024, D-025, D-027, D-028, D-029, D-031, D-033, D-034 e a resposta à P00-P2; e D-030 (delegada: componentes da plataforma).
 
 ## Perguntas ao dono
-As perguntas P00-P1 e P00-P2 já foram respondidas e estão na seção seguinte, fora desta tabela, para o coletor não as levar de novo ao board.
-
-| id | pergunta | bloqueia | opções | recomendação |
-|---|---|---|---|---|
-| P00-P3 | Qual produto é o primeiro consumidor da plataforma na demonstração real? | o critério de sucesso 1 e a demonstração na fase verificar; não bloqueia o plano, porque o contrato v1 aceita os dois tipos de alvo | D02, assistente de agendamento (alvo Lambda); D03, MCP de regras do CDB (alvo servidor MCP) | D03: ele é um servidor MCP, então exercita o gateway e a política Cedar de ponta a ponta, que são o centro da plataforma (2.1, 2.4, 1.4). A versão de MCP aceita pelo gateway precisa ser confirmada contra a lane de compatibilidade da D03 |
-| P00-P4 | Como aplicar as configurações da conta que a plataforma exige: ativar a tag `project` como tag de alocação de custo, ligar o Transaction Search do CloudWatch e, se o modelo do produto for anterior ao Claude Opus 4.7, enviar o caso de uso da Anthropic? | H3 e RF-005 (custo por produto), RF-006 (traces) e a primeira chamada ao Claude na demonstração; não bloqueia o plano | por Terraform em `infra/conta`, aplicado por você no ambiente protegido; à mão no console, por você; um misto (tag e Transaction Search por Terraform, caso de uso à mão) | o misto: a tag e o Transaction Search versionados em `infra/conta`, e o caso de uso à mão, porque é um termo aceito em seu nome. A tag precisa estar ativa pelo menos 48 horas antes da demonstração |
-| P00-P5 | Quem recebe os alarmes da plataforma (tópico SNS)? | só a notificação dos alarmes na demonstração; sem resposta, os alarmes ficam visíveis só no console | os mesmos e-mails de `emails_alerta` do `infra/conta`; outro e-mail, numa variável nova criada por você; nenhum (só no console) | os mesmos e-mails do `infra/conta`: um lugar só para alertas de custo e de operação, sem variável nova |
+Nenhuma pergunta aberta. As perguntas P00-P1 a P00-P5 já foram respondidas e estão na seção seguinte, fora da tabela de perguntas, para o coletor não as levar de novo ao board.
 
 ## Perguntas respondidas
 | id | pergunta | resposta |
 |---|---|---|
+| P00-P3 | Qual produto é o primeiro consumidor da plataforma na demonstração real? | **Respondida, D-034 (dono, 2026-11-19):** a D03, MCP de regras do CDB (alvo servidor MCP), como recomendado. A versão de MCP aceita pelo gateway contra a lane de compatibilidade da D03 fica como risco no plano. |
+| P00-P4 | Como aplicar as configurações da conta que a plataforma exige (tag `project` de alocação de custo, Transaction Search, caso de uso da Anthropic)? | **Respondida, D-034 (dono, 2026-11-19):** o caminho misto, como recomendado. A tag e o Transaction Search vão por Terraform em `infra/conta`, aplicado pelo dono; o caso de uso vai à mão, pelo dono, no console, se o modelo for anterior ao Claude Opus 4.7. A tag precisa estar ativa pelo menos 48 horas antes da demonstração. |
+| P00-P5 | Quem recebe os alarmes da plataforma (tópico SNS)? | **Respondida, D-034 (dono, 2026-11-19):** os mesmos e-mails de `emails_alerta` do `infra/conta`, sem variável nova, como recomendado. O mecanismo está no ADR-0008 do plano. |
 | P00-P1 | Dentro de um plano SDD aprovado, a orquestração pode delegar cada tarefa ao especialista sem pedir aprovação a cada disparo? | **Respondida (D-033):** sim, nas fases tarefas, analisar, implementar e verificar de um plano aprovado e registrado. O gate `sdd-analisar`, o merge e a publicação continuam com o dono. |
 | P00-P2 | Conta AWS com OIDC para o primeiro deploy real da plataforma: criar agora ou quando o primeiro produto estiver pronto? | **Respondida pelo dono (2026-11-19):** a conta com OIDC será criada quando o primeiro produto estiver pronto. O desenvolvimento e o Floci seguem sem conta. |
