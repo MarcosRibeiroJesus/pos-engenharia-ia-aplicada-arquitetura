@@ -71,6 +71,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
   O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
 - **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
+- **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
+  - **Como trabalha:** delega cada tarefa ao especialista, manda um revisor independente conferir cada tarefa (nunca quem implementou, no máximo 2 rodadas de correção) e comita só o que foi aprovado.
+  - **Comandos:** os necessários ficam liberados em `.claude/settings.json`. O hook `.claude/hooks/gate_execucao.py` (com shlex) e o `.githooks/pre-push` (`harness/push_seguro.py`) negam push com força, push no `main`, merge e apply ou destroy fora do Floci. Os agentes da esteira rodam com `--setting-sources user`, e os scripts deles vêm da base, nunca do PR.
+  - **Quando me interrompe:** só por critério explícito (tarefa `[DONO]`, mudança de plano, falha repetida, ação irreversível), com o contexto pronto, pelo Monday, notificação e `## Bloqueios` do PR.
 - **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
 - **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
 - **Agentes especialistas:** um por tarefa fim, definidos em `harness/especialistas.json` e gerados em `.claude/agents/` e `.github/agents/` (catálogo em `harness/AGENTES.md`).

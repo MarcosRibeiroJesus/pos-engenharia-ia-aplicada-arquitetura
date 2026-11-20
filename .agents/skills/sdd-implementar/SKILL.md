@@ -5,6 +5,8 @@ description: Fase implementar do SDD. Use para executar a próxima tarefa não m
 
 # Implementar (uma tarefa por vez)
 
+**Para executar várias tarefas seguidas, use a skill `executar-tarefas` (D-047).** Ela delega cada tarefa ao especialista, manda um revisor diferente conferir e só comita o que foi aprovado. Esta skill é o passo a passo de **uma** tarefa, seguido pelo especialista.
+
 1. Pegue a **primeira** tarefa não marcada em `tasks.md` (`python3 harness/estado.py status` mostra qual é). Não puxe trabalho de outras tarefas.
 2. **Vermelho:** escreva o teste que expressa o critério de aceite do requisito citado e veja-o falhar.
 3. **Verde:** implemente o mínimo para passar. Rode a suíte inteira do projeto.
