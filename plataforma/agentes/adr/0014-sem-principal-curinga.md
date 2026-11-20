@@ -1,6 +1,6 @@
 # ADR 0014 · Sem Principal curinga
 
-- **Status:** aceito. O dono aprovou o endurecimento no chat em 2026-11-20. A mudança altera uma linha do `plan.md`, então o registro da nova aprovação do plano fica com a orquestração (`estado.py aprovar-plano`).
+- **Status:** aceito (**D-044**). O dono aprovou o endurecimento no chat em 2026-11-20 ("2 aprovo"). A mudança altera uma linha do `plan.md`, e a nova aprovação do plano foi registrada com `estado.py aprovar-plano`.
 - **Data:** 2026-11-20
 - **Requisitos:** RNF-001 (nada público), Art. IV; regra TT-S01 (T003)
 

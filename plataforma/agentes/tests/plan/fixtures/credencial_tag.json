@@ -17,7 +17,7 @@
      "after": {
       "name": "00-plataforma-agentes-alarmes",
       "tags": {
-       "api_key": "valor-sintetico"
+       "senha": "valor-sintetico"
       }
      },
      "after_unknown": {
