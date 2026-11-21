@@ -55,3 +55,13 @@ variable "modo_politica" {
     error_message = "modo_politica é ENFORCE ou LOG_ONLY (ADR-0005)."
   }
 }
+
+variable "role_deploy_arn" {
+  description = "ARN da role de deploy (OIDC do GitHub), a única que assume a role de fumaça (T014, ADR-0014). ARN completo de uma role, sem curinga."
+  type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+$", var.role_deploy_arn))
+    error_message = "Informe o ARN completo de uma role IAM (arn:aws:iam::<conta>:role/<nome>), sem curinga nem a raiz da conta (ADR-0014)."
+  }
+}

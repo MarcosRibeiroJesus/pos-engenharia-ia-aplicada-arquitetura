@@ -22,3 +22,8 @@ output "tags" {
   description = "Tags do módulo (module); project e managed-by vêm do default_tags do root (D-031)."
   value       = local.tags
 }
+
+output "role_fumaca_arn" {
+  description = "ARN da role de fumaça (só InvokeGateway): script de fumaça (T066) e job fumaca do workflow de evidências (T069)."
+  value       = aws_iam_role.fumaca.arn
+}

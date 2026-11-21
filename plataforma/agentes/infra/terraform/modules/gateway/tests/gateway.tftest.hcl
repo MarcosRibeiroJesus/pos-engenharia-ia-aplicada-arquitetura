@@ -35,7 +35,8 @@ mock_provider "aws" {
 }
 
 variables {
-  kms_key_arn = "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001"
+  kms_key_arn     = "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001"
+  role_deploy_arn = "arn:aws:iam::111111111111:role/00-plataforma-agentes-deploy-sintetica"
 }
 
 run "gateway_mcp_com_iam_e_chave_da_plataforma" {
