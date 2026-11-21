@@ -86,10 +86,12 @@ class TestRespostasDoDonoD062(unittest.TestCase):
                     ".claude/agents/arquiteto-cloud-comparativa.md"):
             self.assertIn("da D04 à D07", self._texto(arq), arq)
 
-    def test_rodada_real_so_com_teto_aprovado_pelo_dono(self):
+    def test_rodada_real_com_teto_de_20_dolares_do_dono(self):
         texto = self._texto(".claude/skills/avaliacao-llm/SKILL.md")
         self.assertIn("D-062", texto)
-        self.assertIn("Sem teto aprovado, não roda", texto)
+        self.assertIn("US$ 20", texto)
+        self.assertIn("D-068", texto)
+        self.assertIn("Passou do teto, a rodada para", texto)
 
     def test_merge_e_do_dono_sem_aprovacao_formal(self):
         self.assertIn("Não peça aprovação formal de PR", self._texto("CLAUDE.md"))
