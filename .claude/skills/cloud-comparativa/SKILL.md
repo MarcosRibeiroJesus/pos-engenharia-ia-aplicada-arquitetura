@@ -1,11 +1,11 @@
 ---
 name: cloud-comparativa
-description: Arquitetura comparativa em outra cloud (GCP na D01 e D02, Azure na D03, D-007). Use para o mapeamento serviço a serviço, o que muda sem equivalente direto, o design doc, o diagrama e o post da cloud comparativa.
+description: Arquitetura comparativa em outra cloud (GCP na D01, na D02 e da D04 à D07, Azure na D03; D-007 e D-062). Use para o mapeamento serviço a serviço, o que muda sem equivalente direto, o design doc, o diagrama e o post da cloud comparativa.
 ---
 
 # Cloud comparativa
 
-A cloud de cada disciplina é decisão do dono (D-007): GCP na D01 e na D02, Azure na D03. Não troque.
+A cloud de cada disciplina é decisão do dono: GCP na D01 e na D02 e Azure na D03 (D-007); GCP da D04 à D07 (D-062). Não troque.
 
 ## Mapeamento
 | Componente | AWS | <cloud> | Equivalência | O que muda e por quê | Fonte oficial |
