@@ -98,7 +98,7 @@ Resumo dos temas, com palavras próprias, para orientar as propostas. Introduç�
 ## Projetos em andamento
 
 ### 01.03 · Plataforma híbrida de recomendação na AWS (arquitetura AWS)
-**Pausado pelo dono em 2026-11-21 (D-060), sem cancelar:** por ora a D01 segue só com o Doom.
+Pausado e retomado pelo dono em 2026-11-21 (D-060 e D-064): é um dos três projetos AWS em desenvolvimento, com a D02 e a D03.
 Em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`, PR #1. Código e testes de aplicação prontos; em andamento: state remoto, saída de rede do ECS, TLS no MemoryDB, IAM, workflows, `terraform test`, componente com Claude (explicação via Bedrock com saída estruturada), teste no Floci e posts.
 
 ### 01.04 · IA que vence Doom (IA aplicada)
