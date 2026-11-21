@@ -1,0 +1,84 @@
+{
+  "variaveis": {},
+  "plano": {
+    "resource_changes": [
+      {
+        "address": "aws_sns_topic_subscription.alarmes[0]",
+        "mode": "managed",
+        "type": "aws_sns_topic_subscription",
+        "name": "alarmes",
+        "index": 0,
+        "provider_name": "registry.terraform.io/hashicorp/aws",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "confirmation_timeout_in_minutes": null,
+            "delivery_policy": null,
+            "endpoint": "alerta-a@example.com",
+            "endpoint_auto_confirms": null,
+            "filter_policy": null,
+            "protocol": "email",
+            "raw_message_delivery": null,
+            "redrive_policy": null,
+            "replay_policy": null,
+            "subscription_role_arn": null,
+            "topic_arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+          },
+          "after_unknown": {
+            "arn": true,
+            "confirmation_was_authenticated": true,
+            "filter_policy_scope": true,
+            "id": true,
+            "owner_id": true,
+            "pending_confirmation": true,
+            "region": true
+          },
+          "before_sensitive": false,
+          "after_sensitive": {}
+        }
+      },
+      {
+        "address": "aws_sns_topic_subscription.alarmes[1]",
+        "mode": "managed",
+        "type": "aws_sns_topic_subscription",
+        "name": "alarmes",
+        "index": 1,
+        "provider_name": "registry.terraform.io/hashicorp/aws",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "confirmation_timeout_in_minutes": null,
+            "delivery_policy": null,
+            "endpoint": "alerta-b@example.com",
+            "endpoint_auto_confirms": null,
+            "filter_policy": null,
+            "protocol": "email",
+            "raw_message_delivery": null,
+            "redrive_policy": null,
+            "replay_policy": null,
+            "subscription_role_arn": null,
+            "topic_arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+          },
+          "after_unknown": {
+            "arn": true,
+            "confirmation_was_authenticated": true,
+            "filter_policy_scope": true,
+            "id": true,
+            "owner_id": true,
+            "pending_confirmation": true,
+            "region": true
+          },
+          "before_sensitive": false,
+          "after_sensitive": {}
+        }
+      }
+    ],
+    "output_changes": {}
+  }
+}
