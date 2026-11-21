@@ -71,7 +71,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - quem garante o valor no root real é o TT-P01 (T015 e T020).
   - **Aceite:** o ARN do motor de política entra como variável de composição anulável (ADR-0009 e ADR-0011); a role de execução do gateway não tem permissão de invocar alvos e tem `bedrock:InvokeGuardrailChecks` no recurso mais estreito que a documentação aceitar (R4; se exigir `*`, condição `aws:SourceAccount`, exceção do checkov e ADR).
   - **Depende de:** T010.
-- [ ] T014 [P] [engenheiro-terraform] Role de fumaça · RF-002, RNF-001, RNF-002 · TT-R09
+- [x] T014 [P] [engenheiro-terraform] Role de fumaça · RF-002, RNF-001, RNF-002 · TT-R09
   - **Teste vermelho:** `modules/gateway/tests/fumaca.tftest.hcl` afirma a role `00-plataforma-agentes-fumaca`, confiada só pela role de deploy (variável), com uma única declaração `bedrock-agentcore:InvokeGateway` no ARN do gateway.
   - **Arquivos:** `modules/gateway/fumaca.tf`, `modules/gateway/tests/fumaca.tftest.hcl`.
   - **Aceite:** nenhum `permit` no Cedar cita esta role (conferido de novo no T036). A role não tem `bedrock:ApplyGuardrail`, e o TT-R09 falha se ela ganhar uma segunda declaração (emenda 1, F1).
