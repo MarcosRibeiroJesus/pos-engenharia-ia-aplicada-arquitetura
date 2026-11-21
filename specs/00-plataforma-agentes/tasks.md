@@ -76,7 +76,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Arquivos:** `modules/gateway/fumaca.tf`, `modules/gateway/tests/fumaca.tftest.hcl`.
   - **Aceite:** nenhum `permit` no Cedar cita esta role (conferido de novo no T036). A role não tem `bedrock:ApplyGuardrail`, e o TT-R09 falha se ela ganhar uma segunda declaração (emenda 1, F1).
   - **Depende de:** T013.
-- [ ] T015 [engenheiro-terraform] Módulo `politica`: motor em `ENFORCE` · RF-002, Art. IV · TT-P01, TT-P02, TT-S02 (motor)
+- [x] T015 [engenheiro-terraform] Módulo `politica`: motor em `ENFORCE` · RF-002, Art. IV · TT-P01, TT-P02, TT-S02 (motor)
   - **Teste vermelho:** `modules/politica/tests/politica.tftest.hcl` com `expect_failures` para `modo_politica = "LOG_ONLY"` sem `calibracao = true`; asserts do nome `p00_plataforma_agentes` (regex `^[A-Za-z][A-Za-z0-9_]*$`) e de `encryption_key_arn` da chave da plataforma; `tests/composicao.tftest.hcl` no root afirma `length(policy_engine_configuration) == 1` no gateway, com `mode = "ENFORCE"` por padrão e o ARN vindo de `module.politica`. Uma fixture de root que passa `motor_politica_arn = null` ao gateway precisa reprovar o TT-P01 (análise 1, A03; ADR-0011).
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/politica/`, `tests/composicao.tftest.hcl` do root.
   - **Aceite:** ADR-0005 cumprido; o modo nunca é input de workflow.

@@ -18,6 +18,18 @@ output "role_execucao_arn" {
   value       = aws_iam_role.execucao.arn
 }
 
+# Lidos do recurso, não da entrada: o TT-P01 (tests/composicao.tftest.hcl do root, T015) confere o
+# bloco que o gateway vai ter de fato, porque um assert no root não alcança o recurso do módulo.
+output "policy_engine_configuration" {
+  description = "Bloco policy_engine_configuration do gateway (arn e mode); vazio sem o motor (ADR-0011)."
+  value       = aws_bedrockagentcore_gateway.plataforma.policy_engine_configuration
+}
+
+output "kms_key_arn" {
+  description = "Chave com que o gateway é cifrado (TT-S02), conferida no composicao.tftest.hcl do root."
+  value       = aws_bedrockagentcore_gateway.plataforma.kms_key_arn
+}
+
 output "tags" {
   description = "Tags do módulo (module); project e managed-by vêm do default_tags do root (D-031)."
   value       = local.tags
