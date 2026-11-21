@@ -24,11 +24,21 @@ mock_provider "aws" {
       arn = "arn:aws:iam::111111111111:role/00-plataforma-agentes-gateway-execucao"
     }
   }
+  # T014: a política da role de fumaça cita o ARN do gateway; sem o mock, ela fica desconhecida
+  # no plan e as regras TT-S01 e TT-S03 não conseguem lê-la.
+  mock_resource "aws_bedrockagentcore_gateway" {
+    defaults = {
+      gateway_arn = "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/00-plataforma-agentes-gateway-sintetico"
+      gateway_id  = "00-plataforma-agentes-gateway-sintetico"
+      gateway_url = "https://00-plataforma-agentes-gateway-sintetico.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
+    }
+  }
 }
 
 variables {
   kms_key_arn        = "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001"
   motor_politica_arn = "arn:aws:bedrock-agentcore:us-east-1:111111111111:policy-engine/p00_plataforma_agentes-sintetico"
+  role_deploy_arn    = "arn:aws:iam::111111111111:role/00-plataforma-agentes-deploy-sintetica"
 }
 
 run "plano_para_regras" {
