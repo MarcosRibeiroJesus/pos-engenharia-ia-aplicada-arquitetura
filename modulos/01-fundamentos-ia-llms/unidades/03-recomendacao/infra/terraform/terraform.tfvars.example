@@ -1,0 +1,11 @@
+# Copie para terraform.tfvars (fora do git). Valores do lab.
+aws_region                  = "us-east-1"
+project_name                = "recsys"
+environment                 = "lab"
+enable_mwaa                 = false # maior custo fixo; ligue só para validar o DAG
+expose_api_publicly         = false # ALB interno; true exige certificate_arn
+interface_endpoint_az_count = 1
+ecs_desired_count           = 1
+bedrock_model_id            = "anthropic.claude-haiku-5-5"
+monthly_budget_usd          = 10
+alert_emails                = ["voce@example.com"]

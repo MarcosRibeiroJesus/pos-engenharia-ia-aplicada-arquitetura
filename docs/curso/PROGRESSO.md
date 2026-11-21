@@ -8,7 +8,7 @@ Cada unidade com conteúdo técnico tem dois projetos: **IA aplicada** (baseado 
 
 | Módulo | Disciplina | Projetos IA aplicada | Arquiteturas AWS | Opções |
 |---|---|---|---|---|
-| 01 | Fundamentos de IA e LLMs para Programadores | 04: IA que vence Doom (variante em escolha) | 03: plataforma de recomendação (em construção, PR #1) | PR #8 |
+| 01 | Fundamentos de IA e LLMs para Programadores | 04: IA que vence Doom (variante em escolha) | 03: plataforma de recomendação (implementada e testada; em revisão no PR #1) | PR #8 |
 | 02 | APIs de IA Generativa e Prompt Engineering | a escolher | a escolher | PR #7 |
 | 03 | Model Context Protocol (MCP) | a escolher | a escolher | PR #6 |
 | 04 | Criação de Agentes Autônomos | a escolher | a escolher | PR #2 |
@@ -98,7 +98,17 @@ Resumo dos temas, com palavras próprias, para orientar as propostas. Introduç�
 ## Projetos em andamento
 
 ### 01.03 · Plataforma híbrida de recomendação na AWS (arquitetura AWS)
-Em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`, PR #1. Código e testes de aplicação prontos; em andamento: state remoto, saída de rede do ECS, TLS no MemoryDB, IAM, workflows, `terraform test`, componente com Claude (explicação via Bedrock com saída estruturada), teste no Floci e posts.
+Em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`, PR #1 (em revisão).
+
+| Entregável | Status |
+|---|---|
+| Terraform: state remoto com lock, endpoints sem NAT, TLS, IAM escopado, Budgets | concluído; `terraform test` 20/20, checkov sem falhas, tflint sem avisos |
+| Componente com Claude (explicação via Bedrock, tool_use, validação, retentativa, fallback) | concluído; 39/39 Vitest com respostas sintéticas, sem chamada ao modelo real |
+| Workflows na raiz (CI, apply e destroy protegidos, OIDC) | concluído; aguarda variáveis, ambiente `aws-lab` e roles no GitHub |
+| Integração no Floci | aprovada com ressalvas: 27 ok, 0 falhas, 7 lacunas do emulador (ADR-0006) |
+| `posts/aws.md` e `posts/gcp.md` | rascunho para revisão do dono |
+| Página no site | pronta no branch; vai ao ar com o merge |
+| Teto do lab | US$ 10/mês, respondido pelo dono na sessão da unidade em 2026-11-18 |
 
 ### 01.04 · IA que vence Doom (IA aplicada)
 "Vencer Doom" é uma escada de cenários do ViZDoom (`basic` → `defend_the_center` → `deadly_corridor` → mapa completo), com assets Freedoom. Variantes em `modulos/01-fundamentos-ia-llms/OPCOES.md` (PR #8); a recomendada é treino em escala na nuvem com promoção por avaliação e demonstração no navegador.

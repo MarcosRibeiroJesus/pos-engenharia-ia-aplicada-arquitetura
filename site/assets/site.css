@@ -87,7 +87,11 @@ aside h3 { font: 600 15px var(--sans); margin: 0 0 14px; }
 .artifact b { display: block; margin-bottom: 4px; }
 
 footer.site { border-top: 1px solid var(--line); padding: 28px 24px; text-align: center; color: var(--soft); font-size: 13.5px; }
-
+@media (max-width: 560px) {
+  .topbar .in { padding: 10px 16px; gap: 12px; flex-wrap: wrap; }
+  .topbar nav { gap: 12px; font-size: 14px; }
+  .topbar .btn.ghost { display: none; }
+}
 /* Painel de uso de IA: barras de uma série, cor única validada contra --paper. */
 .uso-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 8px 0 18px; }
 .uso-tile { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 14px; font: 13px var(--sans); color: var(--mute); }

@@ -1,0 +1,86 @@
+name: "01.03 recomendação · destroy (ambiente protegido)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_stack:
+        description: "Digite o nome do stack para confirmar (recsys-lab)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: recsys-01-03-state
+  cancel-in-progress: false
+
+env:
+  TF_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/infra/terraform
+  TF_VERSION: 1.13.4
+  STACK_NAME: recsys-lab
+  PROJECT_TAG: recsys
+  ENVIRONMENT_TAG: lab
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: aws-lab
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - name: Confirmação pelo nome do stack
+        env:
+          CONFIRM: ${{ inputs.confirm_stack }}
+        run: |
+          if [ "$CONFIRM" != "$STACK_NAME" ]; then
+            echo "::error::Confirmação '$CONFIRM' não confere com '$STACK_NAME'. Nada foi destruído."
+            exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION || 'us-east-1' }}" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+      - name: Destroy
+        env:
+          TF_VAR_alert_emails: ${{ vars.ALERT_EMAILS || '[]' }}
+        run: terraform destroy -input=false -auto-approve -lock-timeout=120s
+      - name: Verificar sobras pela tag do projeto
+        run: |
+          # Chaves KMS ficam em PendingDeletion por 7 dias e serviços ECS apagados ficam INACTIVE
+          # (ainda visíveis no índice de tags); nenhum dos dois é sobra com custo.
+          left=$(aws resourcegroupstaggingapi get-resources \
+            --tag-filters Key=project,Values="$PROJECT_TAG" Key=environment,Values="$ENVIRONMENT_TAG" \
+            --query 'ResourceTagMappingList[].ResourceARN' --output text | tr '\t' '\n' | grep -v '^$' || true)
+          real=""
+          for arn in $left; do
+            case "$arn" in
+              arn:aws:kms:*)
+                state=$(aws kms describe-key --key-id "$arn" --query KeyMetadata.KeyState --output text 2>/dev/null || echo Unknown)
+                [ "$state" = "PendingDeletion" ] && continue ;;
+              arn:aws:ecs:*:service/*)
+                path=${arn#*:service/}
+                svc_state=$(aws ecs describe-services --cluster "${path%%/*}" --services "${path#*/}" \
+                  --query 'services[0].status' --output text 2>/dev/null || echo MISSING)
+                case "$svc_state" in ACTIVE|DRAINING) ;; *) continue ;; esac ;;
+            esac
+            real="$real $arn"
+          done
+          if [ -n "$real" ]; then
+            echo "::error::Recursos com tag project=$PROJECT_TAG ainda existem:"; printf '%s\n' $real; exit 1
+          fi
+          echo "Nenhuma sobra com a tag project=$PROJECT_TAG."

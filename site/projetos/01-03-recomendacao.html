@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recomendação do lote ao tempo real na AWS · Arquitetura na Prática</title>
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="in">
+  <a class="brand" href="../">Arquitetura na Prática</a>
+  <nav><a href="../#posts">Posts</a><a href="../#projetos">Projetos</a><a href="../#modulos">Módulos</a></nav>
+</div></header>
+
+<article class="article">
+  <div class="kicker">Arquitetura AWS · Recomendação · <span class="status draft">Em revisão</span></div>
+  <h1>Recomendação do lote ao tempo real na AWS, com um LLM que explica sem inventar</h1>
+  <p class="dek">Plataforma híbrida de recomendação em Terraform testado: lote diário, busca vetorial em tempo real, re-ranking sem custo ocioso e uma explicação por item gerada com Claude no Bedrock, validada e com fallback.</p>
+
+  <div class="author">
+    <div class="avatar">MR</div>
+    <div><b>Marcos Ribeiro de Jesus</b><br><span style="color:var(--mute)">10 min de leitura · rascunho para revisão</span></div>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 720 300" width="100%" role="img" aria-label="Arquitetura: lote diário alimenta DynamoDB e MemoryDB; o serviço em ECS combina os dois, re-ranqueia no SageMaker e, com explain=true, chama o Claude no Bedrock" style="color:var(--ink)">
+      <defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="currentColor" fill-opacity=".55"/></marker></defs>
+      <g font-family="system-ui" font-size="12" fill="currentColor" text-anchor="middle">
+        <text x="160" y="18" font-size="11" fill-opacity=".7">lote diário (orquestrado pelo MWAA, desligado por padrão)</text>
+        <text x="520" y="18" font-size="11" fill-opacity=".7">requisição · VPC privada sem NAT</text>
+        <g fill="none" stroke="currentColor" stroke-opacity=".5">
+          <rect x="10" y="30" width="130" height="40" rx="7"/><rect x="170" y="30" width="130" height="40" rx="7"/>
+          <rect x="10" y="100" width="130" height="40" rx="7"/>
+          <rect x="170" y="100" width="130" height="40" rx="7"/><rect x="170" y="160" width="130" height="40" rx="7"/>
+          <rect x="400" y="30" width="110" height="40" rx="7"/><rect x="560" y="30" width="150" height="40" rx="7"/>
+          <rect x="560" y="100" width="150" height="40" rx="7"/><rect x="560" y="160" width="150" height="40" rx="7"/>
+          <rect x="400" y="240" width="310" height="40" rx="7" stroke-dasharray="4 3"/>
+        </g>
+        <text x="75" y="54">S3 golden (KMS)</text><text x="235" y="54">Athena + Glue</text>
+        <text x="75" y="124">SageMaker treino Spot</text>
+        <text x="235" y="124">DynamoDB (lote)</text><text x="235" y="184">MemoryDB (TLS)</text>
+        <text x="455" y="54">ALB interno</text><text x="635" y="54">ECS Fargate</text>
+        <text x="635" y="124">SageMaker Serverless</text><text x="635" y="184">Bedrock · Claude Haiku</text>
+        <text x="555" y="258" font-size="11">endpoints: ECR, Logs, CloudWatch,</text><text x="555" y="272" font-size="11">SageMaker, Bedrock · S3/DynamoDB gateway</text>
+        <g stroke="currentColor" stroke-opacity=".45" fill="none" marker-end="url(#ar)">
+          <path d="M140 50H168"/><path d="M235 70V98"/><path d="M200 70 C 160 80, 120 90, 100 98"/>
+          <path d="M300 60 C 330 100, 330 160, 302 180"/>
+          <path d="M510 50H558"/><path d="M635 70V98"/>
+          <path d="M600 70 C 520 80, 380 100, 302 118"/><path d="M590 70 C 500 100, 380 170, 302 182"/>
+          <path d="M680 70 C 720 100, 720 150, 690 160" stroke-dasharray="4 3"/>
+        </g>
+        <text x="545" y="152" font-size="10" fill-opacity=".7" text-anchor="end">explain=true →</text>
+      </g>
+    </svg>
+    <figcaption>Desenho do lab. Inspirado no relato público de um time da Amazon.com no AWS Big Data Blog; não é o sistema deles.</figcaption>
+  </figure>
+
+  <h2>A referência e o que este lab é</h2>
+  <p>No AWS Big Data Blog, um time da Amazon.com descreve uma arquitetura <i>batch-first</i>: golden datasets no S3 governados pelo Lake Formation, pipelines no MWAA que leem pelo Athena, transformam no Glue e treinam no SageMaker, e recomendações pré-calculadas no DynamoDB servidas por ECS. Depois o desenho ganhou MemoryDB para busca vetorial com sinais da sessão. Este lab segue esse padrão com dados sintéticos e a menor escala que o demonstra. Tudo além do post é decisão própria, registrada em ADR.</p>
+
+  <h2>Três decisões de arquiteto</h2>
+  <p><b>Saída sem NAT.</b> As tasks não têm rota para a internet. Endpoints de interface (ECR, Logs, CloudWatch, SageMaker Runtime, Bedrock Runtime) em uma AZ no lab e de gateway para S3 e DynamoDB. Por hora custam mais que um NAT, mas o tráfego não sai da AWS e o custo por GB é 4,5 vezes menor.</p>
+  <p><b>Custo fixo explícito.</b> Cada recurso que cobra parado está num inventário no ADR, e um teste falha se aparecer um novo sem citação. MWAA desligado por padrão. Cerca de US$ 0,16 por hora com o stack de pé, teto de US$ 10 por mês no AWS Budgets.</p>
+  <p><b>Privado por padrão.</b> ALB interno; API pública só com opt-in e certificado (o plan falha sem ele). TLS no MemoryDB, KMS do cliente em tudo, IAM sem <code>Resource = "*"</code> sem condição.</p>
+
+  <h2>Claude explica, mas não inventa</h2>
+  <p>Com <code>explain=true</code>, o top-N vai para o Claude Haiku 5.5 no Bedrock numa única chamada. A saída vem por uma tool com schema estrito e <code>tool_choice</code> forçado. O serviço calcula quais sinais cada item pode citar a partir dos dados ("histórico de compras" só se o item veio do lote) e rejeita a resposta que cita sinal sem lastro, promete desconto ou esquece um item. Na falha, o erro volta ao modelo como <code>tool_result</code> com <code>is_error</code>, numa retentativa só. Se ainda falhar, ou se o Bedrock estiver fora, as recomendações saem iguais, sem explicação, com o motivo no campo <code>explanation</code> e uma métrica com alarme.</p>
+  <div class="callout">A explicação fica fora do SLO de 60 ms de propósito. Em produção, ela seria gerada em lote junto com as recomendações, e a chamada online ficaria só para itens da sessão.</div>
+
+  <h2>Testes</h2>
+  <p>As regras do repositório viraram 20 blocos de <code>terraform test</code> com mock provider antes do código, mais checkov (315 verificações, 0 falhas, 18 exceções justificadas no recurso), tflint, 39 testes do serviço (13 do componente com Claude) e 14 do lote. A integração aplica o stack no emulador Floci com o state remoto e o lock no próprio emulador, verifica cada regra e destrói. Recursos que o emulador não cobre (MemoryDB, endpoint do SageMaker, revogação de permissões do Lake Formation) ficam provados no plan, com a evidência no ADR. A integração também pegou um bug real: o Lake Formation recusa como principal o ARN de quem roda o Terraform.</p>
+  <p id="relatorio" class="note">Último relatório de integração (Floci 2.5, execução 20261119-032618): <b>aprovado com ressalvas</b>. 34 passos, 27 ok, 0 falhas, 7 lacunas do emulador cobertas no plan; apply em 73 s, destroy em 22 s sem sobras, lock do state liberado.</p>
+
+  <h2>Custo estimado</h2>
+  <p>~US$ 0,16/h com o stack de pé (endpoints, ALB, MemoryDB, 1 task Fargate, KMS); ~US$ 3,20 em 20 h de lab por mês; MWAA soma ~US$ 0,49/h se ligado; explicação com Claude ~US$ 0,00035 por requisição (tabela da API da Anthropic; o Bedrock tem tabela própria). Teto: US$ 10/mês. Preços públicos de 2026-11, aproximados.</p>
+
+  <h2>Comparativa</h2>
+  <p>No Google Cloud, o mesmo desenho troca ECS e ALB por Cloud Run com ingress interno, endpoints de interface por Private Google Access (sem custo por endpoint), DynamoDB por Firestore e o Bedrock pelo Claude no Vertex AI, com o mesmo código do componente atrás de outro adaptador. O design está em <code>posts/gcp.md</code> no repositório.</p>
+
+  <div class="artifacts">
+    <a class="artifact" href="https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/tree/main/modulos/01-fundamentos-ia-llms/unidades/03-recomendacao"><b>Código</b>Terraform, serviço e workflows</a>
+    <a class="artifact" href="../relatorios/01-03-recomendacao.html"><b>Relatório de integração</b>Floci, último run</a>
+    <a class="artifact" href="https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/tree/main/modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/adr"><b>ADRs</b>0001 a 0006</a>
+  </div>
+
+  <h2>Fontes</h2>
+  <p style="font-size:16px"><a href="https://aws.amazon.com/blogs/big-data/building-a-scalable-personalized-recommendation-system-on-aws-from-batch-to-real-time/">AWS Big Data Blog: Building a scalable personalized recommendation system on AWS: From batch to real-time</a> (lido em 2026-11-19)</p>
+</article>
+
+<footer class="site">Arquitetura na Prática · conteúdo construído com fontes públicas</footer>
+</body>
+</html>
