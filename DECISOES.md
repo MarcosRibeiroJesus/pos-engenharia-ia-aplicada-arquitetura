@@ -6,14 +6,15 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 
 | Disciplina | Arquitetura AWS | IA aplicada | Cloud comparativa | Teto (custo de 1 dia) |
 |---|---|---|---|---|
-| D01 Fundamentos | Recomendação de e-commerce (PR #1), **pausada** (D-060) | Doom, opção 04-C (D-059): calibrador do limiar com gate humano sobre YOLO em TF.js num Web Worker; rótulos pelo motor do jogo; não é aprendizado por reforço. Por ora a D01 segue só com o Doom | GCP | calcular no plano |
+| D01 Fundamentos | Recomendação de e-commerce (PR #1), em desenvolvimento (D-064) | Doom, opção 04-C (D-059): calibrador do limiar com gate humano sobre YOLO em TF.js num Web Worker; rótulos pelo motor do jogo; não é aprendizado por reforço | GCP | calcular no plano |
 | D02 APIs de IA generativa | Assistente de agendamento completo | pendente | GCP | calcular no plano |
 | D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
 - **Respostas da rodada anterior** (D-062): GCP como cloud comparativa da D04 à D07; uma rodada real paga por projeto, só com teto por execução aprovado pelo Marcos; sem teto por disciplina; ele revisa e mergeia, sem aprovação formal de PR.
-- **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje: `01-recomendacao`.
+- **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje nenhum projeto está pausado (D-064).
+- **Em desenvolvimento agora** (D-064): D01 recomendação, D02 assistente de agendamento e D03 MCP do CDB, com o Doom como IA aplicada da D01.
 - **Branch sem o harness atual da base reprova no CI** (D-061, delegada): atualize com o `main` e rode `bash harness/init.sh` antes de trabalhar num branch antigo.
 - **Orquestrador com subagentes e sessões paralelas por projeto** (D-045): a orquestração coordena e delega cada tarefa a um especialista, sem escrever código de projeto. Cada projeto pode ter sessão própria em worktree e branch, com PR para o `main`. As sessões não se mandam mensagem; o estado é o git. Terraform fica só na máquina do Marcos (D-042). O número de sessões ativas é limitado ao que a orquestração acompanha (cada sessão custa 4 a 15 vezes um chat).
 - **Sem `Principal "*"` na policy da plataforma** (D-044): nem com condição; valores de condição de conta sem curinga (`*` ou `?`). ADR-0014.
@@ -103,4 +104,4 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - Projetos de IA aplicada da D02 e da D03.
 - Revisores de IA na esteira: o Marcos escolheu a assinatura (D-028). Falta ele criar o secret com o token da assinatura (`claude setup-token`). Conta AWS com OIDC: criar quando o primeiro produto estiver pronto (P00-P2).
 - Configurações do GitHub ainda abertas: ruleset do `main`. Já feitas pelo Marcos: variável `FLOCI_IMAGE`, secret `INFRACOST_API_KEY`, Dependency graph e proteção do branch `memoria-compartilhada`. Use `vars.FLOCI_IMAGE` e não escreva `floci/floci:latest` nos workflows (D-012, D-013).
-- Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. O #21 (actions dos modelos) também foi mergeado. Falta o PR da D-033 (delegação dentro do plano aprovado). O #1 (D01) está pausado (D-060); os PRs de opções #2 a #8 continuam rascunho. Abertos para revisão: #38 (gate de branch defasado, D-061) e #39 (pausa e Doom, D-059 e D-060).
+- Merges: até o #20, mais o #12 (painel) e o #19 (Dependabot), já mergeados. O #21 (actions dos modelos) também foi mergeado. Falta o PR da D-033 (delegação dentro do plano aprovado). O #1 (D01) voltou a andar (D-064); os PRs de opções #2 a #8 continuam rascunho. Abertos para revisão: #38 (gate de branch defasado, D-061) e #39 (pausa e Doom, D-059 e D-060).

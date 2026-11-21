@@ -6,6 +6,12 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-064 · Desenvolver os três primeiros projetos AWS: D01, D02 e D03 · fonte: Marcos
+O Marcos pediu para desenvolver os três primeiros projetos de arquitetura AWS e, perguntado sobre a pausa, escolheu "D01, D02 e D03": recomendação de e-commerce, assistente de agendamento e MCP de regras do CDB. Substitui a D-060 na parte da pausa: a recomendação volta a andar. O Doom continua como IA aplicada da D01 (D-059).
+
+**Aplicado em:**
+- `harness/estado.json` (sem `pausado` no `01-recomendacao`) e `docs/curso/PROGRESSO.md`, PR #39.
+
 ### 2026-11-21 · D-063 · Terraform nas sessões de nuvem, sem ciclo local · fonte: Marcos
 "Vamos pular testes de Terraform localmente para que você possa andar mais rápido gerando diversos agentes com suas sessões na cloud." Substitui a D-042: a implementação e os testes de Terraform rodam em agentes e sessões de nuvem, em paralelo, um por projeto. Continua: um escritor por branch, sem Terraform às cegas (a sessão sem `terraform`, providers ou Floci para e avisa) e apply em conta real só pelo workflow protegido, disparado pelo Marcos.
 
