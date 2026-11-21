@@ -6,6 +6,34 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-061 · Gate no CI para branch sem o harness atual da base · fonte: delegada
+O PR #8 (opções da D01) saiu de um `main` anterior ao harness. A sessão que trabalhou nele ficou sem `pre-push`, sem skills e sem especialistas, e quatro commits saíram por fora dos gates. Boa prática: controle que não depende de o agente lembrar de ativá-lo (gate programático no CI, 1.4 e 3.6). Erro que evita: confiar só no hook local, que um clone novo ou um branch velho ignora. Trade-off: toda mudança no harness pede aos PRs abertos que se atualizem com o `main`.
+
+**Aplicado em:**
+- `harness/branch_defasado.py` e passo novo no `.github/workflows/harness.yml` (PR #38);
+- teste `harness/testes/test_branch_defasado.py`;
+- `harness/VERSAO.md` (0.6.1).
+
+### 2026-11-21 · D-060 · D01: por ora só o Doom; recomendação pausada · fonte: Marcos
+Sobre o catálogo de opções da D01, o Marcos disse "só vamos fazer o Doom na disciplina 1". Perguntado sobre o alcance, escolheu "Pausar a recomendação": a recomendação (PR #1, plano aprovado na D-056) fica parada, sem cancelar, e retoma só com nova decisão dele.
+- As opções por unidade do `OPCOES.md` ficam como catálogo de referência (já era a D-009).
+- Escolhas dele registradas no catálogo, só como referência e sem implementação: unidade 05 com pesos próprios no S3 (não o Gemini Nano da aula); unidade 08 com CloudWatch e X-Ray; unidade 09 com modelo de 20B ou 30B como exceção à regra de lab, com ADR e teto diário; unidade 10 com S3 Vectors.
+
+**Aplicado em:**
+- `harness/estado.py` (campo `pausado`: `pode-delegar` nega, `validar` exige data e fonte, `status` mostra) e `harness/estado.json` (`01-recomendacao` pausado), PR #39;
+- teste `harness/testes/test_pausa.py`;
+- `docs/curso/PROGRESSO.md` (recomendação pausada), PR #39;
+- `modulos/01-fundamentos-ia-llms/OPCOES.md` (status de catálogo e escolhas de referência), PR #8.
+
+### 2026-11-21 · D-059 · D01 Doom: opção 04-C e rótulos pelo motor do jogo · fonte: Marcos
+As aulas da unidade 04 ensinam um detector YOLO pronto em TensorFlow.js, num Web Worker, com filtro de confiança fixo; não ensinam treino nem aprendizado por reforço. O Marcos escolheu:
+- a opção 04-C: calibrador do limiar de confiança com gate humano, sobre a versão fiel à aula (04-A);
+- Doom (assets Freedoom) em vez do Duck Hunt da aula, com rótulos gerados pelo motor do jogo. O ajuste do YOLO com esses rótulos fica fora do que a aula ensina e entra no plano.
+
+**Aplicado em:**
+- `harness/estado.json` (`01-doom`: nota com a 04-C, `infra_real`, workflows a criar, teto a calcular, GCP) e `docs/curso/PROGRESSO.md`, PR #39;
+- `modulos/01-fundamentos-ia-llms/OPCOES.md` (unidade 04), PR #8.
+
 ### 2026-11-20 · D-058 · Economia de tokens: sessão nova e Sonnet no mecânico · fonte: Marcos
 O Marcos achou alto o gasto de tokens.
 - **O que a orquestração encontrou:**
