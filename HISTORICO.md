@@ -6,6 +6,11 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-067 · rtk em todas as sessões e headroom só na máquina do dono · fonte: Marcos (pedido); desenho delegado
+O Marcos pediu a instalação do rtk e do headroom para economizar tokens no harness e em todas as sessões. O desenho é delegado (boa prática: não ampliar permissões por conveniência). O hook do rtk devolve `allow` e reescreve até `git push`, então o wrapper `rtk_rewrite.py` só repassa a reescrita de comandos simples de leitura e de teste; o resto segue as permissões e os gates normais. O rtk 1.2.1 entra pelo `setup-ambiente.sh` (tag fixa do repositório oficial; o crates.io tem outro pacote) e pelo plugin do Antigravity. O headroom 0.44.0 só vale na máquina do dono (`scripts/headroom-local.sh`, telemetria desligada, modo cache, sem `headroom learn`), porque nas sessões de nuvem o tráfego do modelo não passa por um processo local. PR #40.
+
+**Aplicado em:** `.claude/hooks/rtk_rewrite.py`, `.claude/settings.json`, `scripts/setup-ambiente.sh`, `scripts/headroom-local.sh`, `.agents/plugins/rtk`, `harness/init.sh`, `docs/adr/0004-rtk-e-headroom.md`, `CLAUDE.md`, `AGENTS.md`, `harness/testes/test_economia_tokens.py`.
+
 ### 2026-11-21 · D-066 · Uma sessão por vez, aberta pelo dono no ambiente pos-arquitetura · fonte: Marcos
 As sessões agendadas pela orquestração em 21/11 cedo falharam: a D02 e a D03 por limite de uso (três em paralelo esgotaram o limite de 5 horas em 25 minutos, sem push), e a D01 porque herdou a rede da conversa de orquestração, que bloqueia o Terraform e o Floci. O Marcos escolheu: ele abre cada sessão no ambiente pos-arquitetura com o prompt da orquestração, uma por vez, na ordem D02, D03 e D01, com push ao fim de cada fase. Substitui a parte "em paralelo" da D-065.
 

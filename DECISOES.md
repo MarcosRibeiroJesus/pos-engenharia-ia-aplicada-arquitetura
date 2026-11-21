@@ -14,6 +14,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 ## Regras ativas
 - **Respostas da rodada anterior** (D-062): GCP como cloud comparativa da D04 à D07; uma rodada real paga por projeto, só com teto por execução aprovado pelo Marcos; sem teto por disciplina; ele revisa e mergeia, sem aprovação formal de PR.
 - **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje nenhum projeto está pausado (D-064).
+- **Economia de tokens** (D-067): rtk 1.2.1 em todas as sessões (wrapper só para leitura e teste simples, sem ampliar permissão); headroom 0.44.0 só na máquina do Marcos, com telemetria desligada. PR #40.
 - **Âncoras e sessões** (D-065): âncora oficial da AWS de cada projeto no `harness/estado.json` (D01 Big Data Blog, D02 Natera, D03 MCP sem estado); o `estado.py validar` exige âncora depois do planejar. Sessões: uma por vez, abertas pelo Marcos no ambiente pos-arquitetura, na ordem D02, D03 e D01, com push ao fim de cada fase (D-066, substitui o paralelo).
 - **Em desenvolvimento agora** (D-064): D01 recomendação, D02 assistente de agendamento e D03 MCP do CDB, com o Doom como IA aplicada da D01.
 - **Branch sem o harness atual da base reprova no CI** (D-061, delegada): atualize com o `main` e rode `bash harness/init.sh` antes de trabalhar num branch antigo.
