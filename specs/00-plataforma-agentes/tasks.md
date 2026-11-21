@@ -39,7 +39,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - O módulo `registro-produto` ainda não existe aqui: ele entra no teste na T030, e a T032 confirma de novo (análise 1, A14).
   - **Depende de:** T001, T002.
 ## Fase 2 · Núcleo: stack da plataforma
-- [ ] T010 [P] [engenheiro-terraform] Módulo `nucleo`: chave KMS do cliente · Art. IV, RNF-001 · TT-S02 (chave)
+- [x] T010 [P] [engenheiro-terraform] Módulo `nucleo`: chave KMS do cliente · Art. IV, RNF-001 · TT-S02 (chave)
   - **Teste vermelho:** `modules/nucleo/tests/kms.tftest.hcl` afirma rotação ligada, `deletion_window_in_days = 7`, alias `alias/00-plataforma-agentes-chave` e a política da chave do ADR-0001 (logs com `kms:EncryptionContext:aws:logs:arn` no prefixo dos grupos da plataforma; `cloudwatch` e `sns` com `aws:SourceAccount` e `aws:SourceArn`; `bedrock-agentcore` com `aws:SourceAccount`).
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/nucleo/{main.tf,variables.tf,outputs.tf}`, `modules/nucleo/tests/kms.tftest.hcl`.
   - **Aceite:** testes verdes; o T003 continua verde; ADR-0001 cumprido item a item.
