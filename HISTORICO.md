@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-057 · D01 (recomendação): emenda 1 do plano aprovada · fonte: Marcos
+O Marcos autorizou e aprovou de antemão ("Pode emendar e já aprovo", D01-P6) a emenda de texto que fecha os achados A01 e A06 da análise 1:
+- **A01:** as permissões do Bedrock da task role passam a ser descritas como o módulo `registro-produto` concede, presas ao perfil, aos modelos de origem e ao guardrail. O ECS não acrescenta nenhuma ação do Bedrock.
+- **A06:** o teto de US$ 7,10 deixa de aparecer como "proposta".
+
+A orquestração conferiu que o diff do `plan.md` se limita a esses trechos e à seção da emenda antes de registrar.
+
+**Aplicado em:**
+- `specs/01-recomendacao/plan.md` (Emenda 1);
+- `harness/estado.json` (`plano_aprovado` com o novo hash, D-057 no projeto).
+
 ### 2026-11-20 · D-056 · D01 (recomendação): plano aprovado e teto de US$ 7,10 · fonte: Marcos
 O Marcos aprovou o plano da recomendação (D01) e escolheu o teto diário de US$ 7,10 (P01-P5), sobre uma estimativa de US$ 6,43 com cerca de 10% de margem.
 - As partes são a base por 24 h, a janela do MWAA de 2 a 3 h e a plataforma de agentes, com destroy em cascata.

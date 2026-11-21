@@ -31,6 +31,8 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - `managed-by` = `terraform`.
 
   Comece o teste do stack por `harness/modelos/tags.tftest.hcl`. **D01:** trocar `PROJECT_TAG`/`project` de `recsys` para `01-recomendacao` na spec retroativa (workflows de apply e destroy e Terraform).
+- **D01 (recomendação): emenda 1 do plano aprovada** (D-057). É só texto: as permissões do Bedrock descritas como a plataforma concede e o teto sem "proposta".
+- **Plataforma, a conferir na T032 (permissões do produto):** `bedrock:Converse` não é uma ação de IAM; o `bedrock:InvokeModel` já cobre o Converse. Achado do arquiteto-aws na D01.
 - **D01 (recomendação): plano aprovado** (D-056), com teto diário de US$ 7,10. As partes são a base por 24 h, a janela do MWAA de 2 a 3 h e a plataforma de agentes, com destroy em cascata. Um dia de demonstração usa cerca de 42% do limite mensal.
 - **Disparos antes do plano são livres** (D-055): especificar, esclarecer e planejar saem sem perguntar ao Marcos. O plano escrito continua indo para a aprovação dele, e a fase publicar continua dele.
 - **D01 (recomendação), respostas da spec retroativa:**
