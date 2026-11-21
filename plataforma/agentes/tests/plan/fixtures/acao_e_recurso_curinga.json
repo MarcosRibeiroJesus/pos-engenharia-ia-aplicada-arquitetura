@@ -1,0 +1,63 @@
+{
+ "_descricao": "Viola TT-S03: declaração com ação * e recurso *. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S03",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_iam_role.agente",
+    "mode": "managed",
+    "type": "aws_iam_role",
+    "name": "agente",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"bedrock-agentcore.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+      "name": "00-plataforma-agentes-agente"
+     },
+     "after_unknown": {
+      "arn": true,
+      "create_date": true,
+      "id": true,
+      "inline_policy": [],
+      "managed_policy_arns": true,
+      "name_prefix": true,
+      "tags_all": true,
+      "unique_id": true
+     },
+     "after_sensitive": {
+      "inline_policy": [],
+      "managed_policy_arns": [],
+      "tags_all": {}
+     }
+    }
+   },
+   {
+    "address": "aws_iam_role_policy.tudo",
+    "mode": "managed",
+    "type": "aws_iam_role_policy",
+    "name": "tudo",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "name": "tudo",
+      "policy": "{\"Statement\":[{\"Action\":\"*\",\"Effect\":\"Allow\",\"Resource\":\"*\"}],\"Version\":\"2012-10-17\"}",
+      "role": "00-plataforma-agentes-agente"
+     },
+     "after_unknown": {
+      "id": true,
+      "name_prefix": true
+     },
+     "after_sensitive": {}
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}
