@@ -6,6 +6,11 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-068 · Teto da rodada real paga: US$ 20 por execução · fonte: Marcos
+O Marcos respondeu "$20" à pendência da D-062 (valor do teto por execução da rodada real paga do componente Claude). O valor é o máximo por execução: o plano propõe o custo estimado abaixo dele e o relatório informa o medido; passou do teto, a rodada para. É o mesmo número do limite mensal da conta (US$ 20, D-022), que continua valendo por cima de tudo.
+
+**Aplicado em:** `.claude/skills/avaliacao-llm/SKILL.md`, `.agents/skills/avaliacao-llm/SKILL.md`, `harness/testes/test_regras_do_dono.py`, `docs/orquestracao/prompts-sessoes-2026-11-21.md`.
+
 ### 2026-11-21 · D-067 · rtk em todas as sessões e headroom só na máquina do dono · fonte: Marcos (pedido); desenho delegado
 O Marcos pediu a instalação do rtk e do headroom para economizar tokens no harness e em todas as sessões. O desenho é delegado (boa prática: não ampliar permissões por conveniência). O hook do rtk devolve `allow` e reescreve até `git push`, então o wrapper `rtk_rewrite.py` só repassa a reescrita de comandos simples de leitura e de teste; o resto segue as permissões e os gates normais. O rtk 1.2.1 entra pelo `setup-ambiente.sh` (tag fixa do repositório oficial; o crates.io tem outro pacote) e pelo plugin do Antigravity. O headroom 0.44.0 só vale na máquina do dono (`scripts/headroom-local.sh`, telemetria desligada, modo cache, sem `headroom learn`), porque nas sessões de nuvem o tráfego do modelo não passa por um processo local. PR #40.
 
