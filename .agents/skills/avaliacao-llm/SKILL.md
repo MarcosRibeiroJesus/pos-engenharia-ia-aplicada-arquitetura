@@ -21,6 +21,7 @@ description: Avaliações e red team de componentes com LLM (D02 assistente de a
 ## Execução
 - **No CI:** respostas gravadas e asserts determinísticos. É o gate de regressão (D-006).
 - **Fora do CI**, só com aprovação do dono, porque chama modelo e tem custo: rodada com o modelo real para renovar as gravações.
+- **Rodada real paga para medir acerto e custo** (D-062): o dono autorizou uma por projeto, com teto por execução. O valor do teto é dele: vai proposto no plano e só roda depois que ele aprovar. Sem teto aprovado, não roda.
 - **Juiz por modelo:** só para critérios que não dá para medir com código, em instância separada do autor (4.6), com rubrica escrita e exemplos.
 
 ## Red team (mínimo)

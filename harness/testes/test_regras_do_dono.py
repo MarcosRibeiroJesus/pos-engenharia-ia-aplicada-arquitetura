@@ -72,3 +72,23 @@ class TestQuemGravaAMemoria(unittest.TestCase):
         self.assertIn("D-046", texto)
         self.assertIn("push sem `--force`", texto)
 
+
+
+class TestRespostasDoDonoD062(unittest.TestCase):
+    """D-062: GCP como cloud comparativa da D04 à D07, rodada real paga só com teto aprovado e merge do dono."""
+
+    def _texto(self, arq: str) -> str:
+        return (AQUI.parent / arq).read_text(encoding="utf-8")
+
+    def test_cloud_da_d04_a_d07_na_skill_e_no_especialista(self):
+        for arq in (".claude/skills/cloud-comparativa/SKILL.md", ".agents/skills/cloud-comparativa/SKILL.md",
+                    ".claude/agents/arquiteto-cloud-comparativa.md"):
+            self.assertIn("da D04 à D07", self._texto(arq), arq)
+
+    def test_rodada_real_so_com_teto_aprovado_pelo_dono(self):
+        texto = self._texto(".claude/skills/avaliacao-llm/SKILL.md")
+        self.assertIn("D-062", texto)
+        self.assertIn("Sem teto aprovado, não roda", texto)
+
+    def test_merge_e_do_dono_sem_aprovacao_formal(self):
+        self.assertIn("Não peça aprovação formal de PR", self._texto("CLAUDE.md"))

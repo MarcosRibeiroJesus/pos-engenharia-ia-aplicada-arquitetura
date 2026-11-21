@@ -104,7 +104,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - cada sessão esteja no seu próprio worktree (`git worktree add`), no branch `modulo/NN-slug/<projeto>` ou `plataforma/<projeto>-impl`, com PR para `main`;
   - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
   - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
-  - o merge depende da minha aprovação.
+  - o merge é meu: eu reviso o PR quando estiver pronto e mergeio. Não peça aprovação formal de PR; avise quando estiver pronto (D-062).
   - Um projeto com Terraform roda só na minha máquina (D-042); projeto sem Terraform pode rodar em sessão de nuvem, sem Bedrock.
   - Cada sessão paralela consome o limite de uso da conta; o custo estimado de tokens é de 4 a 15 vezes uma sessão de chat (medição da própria Anthropic), então eu limito a quantidade de sessões ativas ao que eu consigo acompanhar.
 - **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
