@@ -6,6 +6,21 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-20 · D-058 · Economia de tokens: sessão nova e Sonnet no mecânico · fonte: Marcos
+O Marcos achou alto o gasto de tokens.
+- **O que a orquestração encontrou:**
+  - os 13 disparos de especialistas do dia foram todos Opus, somando cerca de 2,8 milhões de tokens;
+  - a conversa de orquestração estava muito longa;
+  - o registro de uso não pegava os subagentes, não comitava o uso da sessão local e não tinha medição da orquestração na nuvem.
+- **A escolha dele:** sessão nova com resumo estruturado, e Sonnet no trabalho mecânico. Plano e análise continuam em Opus.
+
+**Aplicado em:**
+- `CLAUDE.md` (Modelo por tarefa);
+- skill `executar-tarefas` (Sonnet no mecânico e comitar `harness/uso/`);
+- `.claude/hooks/registrar_uso.py` e `scripts/uso/uso.py` (soma dos subagentes, coluna `total` com `medido-total`);
+- `docs/uso/uso-tokens.csv` (os 13 disparos lançados e a orquestração de 19 e 20/11 como `nao-medido`);
+- teste `harness/testes/test_uso_de_tokens.py`.
+
 ### 2026-11-20 · D-057 · D01 (recomendação): emenda 1 do plano aprovada · fonte: Marcos
 O Marcos autorizou e aprovou de antemão ("Pode emendar e já aprovo", D01-P6) a emenda de texto que fecha os achados A01 e A06 da análise 1:
 - **A01:** as permissões do Bedrock da task role passam a ser descritas como o módulo `registro-produto` concede, presas ao perfil, aos modelos de origem e ao guardrail. O ECS não acrescenta nenhuma ação do Bedrock.
