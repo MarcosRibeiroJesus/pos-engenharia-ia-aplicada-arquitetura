@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-065 · Âncoras dos três projetos AWS e uma sessão por projeto · fonte: Marcos
+O Marcos aceitou as três arquiteturas âncora ("Aceito as três"), abertas e conferidas em 2026-11-21:
+- D01 (recomendação): https://aws.amazon.com/blogs/big-data/building-a-scalable-personalized-recommendation-system-on-aws-from-batch-to-real-time/ (27/07/2026);
+- D02 (agendamento): https://aws.amazon.com/blogs/machine-learning/nateras-intelligent-appointment-scheduling-with-amazon-bedrock-agentcore/ (26/08/2026). Diferença: a Natera é agente de voz sem aprovação humana; o nosso é de texto, com cancelamento aprovado por humano, como extensão;
+- D03 (MCP do CDB): https://aws.amazon.com/blogs/architecture/mcp-went-stateless-is-your-aws-mcp-server-deployment-well-architected (01/09/2026).
+E escolheu uma sessão de agente por projeto, em paralelo.
+
+**Aplicado em:**
+- `harness/estado.py` (gate: arquitetura depois do planejar sem `ancora` oficial reprova) e `harness/estado.json` (as três âncoras), PR #39;
+- teste `harness/testes/test_ancora.py`.
+
 ### 2026-11-21 · D-064 · Desenvolver os três primeiros projetos AWS: D01, D02 e D03 · fonte: Marcos
 O Marcos pediu para desenvolver os três primeiros projetos de arquitetura AWS e, perguntado sobre a pausa, escolheu "D01, D02 e D03": recomendação de e-commerce, assistente de agendamento e MCP de regras do CDB. Substitui a D-060 na parte da pausa: a recomendação volta a andar. O Doom continua como IA aplicada da D01 (D-059).
 
