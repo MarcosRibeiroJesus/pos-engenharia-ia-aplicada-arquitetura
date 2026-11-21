@@ -6,6 +6,25 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-063 · Terraform nas sessões de nuvem, sem ciclo local · fonte: Marcos
+"Vamos pular testes de Terraform localmente para que você possa andar mais rápido gerando diversos agentes com suas sessões na cloud." Substitui a D-042: a implementação e os testes de Terraform rodam em agentes e sessões de nuvem, em paralelo, um por projeto. Continua: um escritor por branch, sem Terraform às cegas (a sessão sem `terraform`, providers ou Floci para e avisa) e apply em conta real só pelo workflow protegido, disparado pelo Marcos.
+
+**Aplicado em:**
+- `CLAUDE.md` (Sessões) e skill `terraform-tdd` (Onde rodar), PR #39;
+- teste `harness/testes/test_regras_do_dono.py` (TestOndeRodaOTerraform).
+
+### 2026-11-21 · D-062 · Respostas da rodada anterior: cloud da D04 à D07, rodada real com teto e merge do dono · fonte: Marcos
+- Cloud comparativa da D04 à D07: GCP.
+- Uma rodada real paga por projeto, para medir acerto e custo, com teto por execução. O valor do teto é dele: vai proposto no plano e só roda depois da aprovação.
+- Escolha das opções por disciplina, lendo cada tabela; sem teto por disciplina (vale o teto diário de cada projeto, D-021, e o limite mensal de US$ 20, D-022).
+- O Marcos não aprova PR formalmente: revisa quando estiver pronto e mergeia.
+
+**Aplicado em:**
+- skill `cloud-comparativa` e especialista `arquiteto-cloud-comparativa` (`harness/especialistas.json`), PR #39;
+- skill `avaliacao-llm` (rodada real só com teto aprovado), PR #39;
+- `CLAUDE.md` (merge do dono sem aprovação formal), PR #39;
+- teste `harness/testes/test_regras_do_dono.py` (TestRespostasDoDonoD062).
+
 ### 2026-11-21 · D-061 · Gate no CI para branch sem o harness atual da base · fonte: delegada
 O PR #8 (opções da D01) saiu de um `main` anterior ao harness. A sessão que trabalhou nele ficou sem `pre-push`, sem skills e sem especialistas, e quatro commits saíram por fora dos gates. Boa prática: controle que não depende de o agente lembrar de ativá-lo (gate programático no CI, 1.4 e 3.6). Erro que evita: confiar só no hook local, que um clone novo ou um branch velho ignora. Trade-off: toda mudança no harness pede aos PRs abertos que se atualizem com o `main`.
 

@@ -12,6 +12,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **Respostas da rodada anterior** (D-062): GCP como cloud comparativa da D04 à D07; uma rodada real paga por projeto, só com teto por execução aprovado pelo Marcos; sem teto por disciplina; ele revisa e mergeia, sem aprovação formal de PR.
 - **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje: `01-recomendacao`.
 - **Branch sem o harness atual da base reprova no CI** (D-061, delegada): atualize com o `main` e rode `bash harness/init.sh` antes de trabalhar num branch antigo.
 - **Orquestrador com subagentes e sessões paralelas por projeto** (D-045): a orquestração coordena e delega cada tarefa a um especialista, sem escrever código de projeto. Cada projeto pode ter sessão própria em worktree e branch, com PR para o `main`. As sessões não se mandam mensagem; o estado é o git. Terraform fica só na máquina do Marcos (D-042). O número de sessões ativas é limitado ao que a orquestração acompanha (cada sessão custa 4 a 15 vezes um chat).
@@ -60,7 +61,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
   - **Revisores da esteira:** usam o `CLAUDE_CODE_OAUTH_TOKEN` (D-028).
 - **Quem grava a memória** (D-046, delegada): a decisão do Marcos é gravada pela sessão em que ele decidiu, seja a orquestração na nuvem ou a sessão local, sempre com o fluxo de escrita segura: `git fetch` → edição sobre o topo atual → commit → push sem `--force`. Se o push for recusado, a sessão busca de novo e refaz a edição sobre o novo topo, nunca reenvia o arquivo inteiro antigo. A orquestração na nuvem audita (`memoria.py auditar`) e mantém o Monday.
 - **Testes do harness por assunto** (D-043): um arquivo `harness/testes/test_<assunto>.py` por assunto, com o que é comum em `comum.py`. O `harness/test_harness.py` só reúne os arquivos e não recebe testes; um teste reprova se receber.
-- **Terraform na máquina do Marcos** (D-042): a implementação de projeto com Terraform roda numa sessão do Claude Code no computador dele. Essa sessão é a única que comita no branch de implementação; a orquestração na nuvem só coordena.
+- **Terraform nas sessões de nuvem** (D-063, substitui a D-042): agentes e sessões de nuvem em paralelo, um por projeto, sem ciclo local. Sem `terraform`, providers ou Floci na sessão, não escreva Terraform às cegas: pare e avise. Um escritor por branch; apply real só pelo workflow protegido.
 - **Perguntas ao Marcos só no chat** (D-041): em múltipla escolha, com a boa prática no enunciado (como o exame trata e o erro comum que ela evita) e o tradeoff de cada opção. A seção `## Perguntas ao dono` dos PRs é só registro; ele não responde lá.
 - **Emenda 2 do plano da plataforma aprovada** (D-040): só alinha o texto à D-039 e ao ADR-0011.
 - **Tag de custo `project`** (D-039): a ativação é única na conta e vale para todos os projetos. O Marcos a faz assim que a chave aparecer no Billing, e nenhuma demonstração espera 48 h. Substitui o "48 h antes da demonstração" da D-034.
