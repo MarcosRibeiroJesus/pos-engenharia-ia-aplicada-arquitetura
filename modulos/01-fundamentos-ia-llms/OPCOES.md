@@ -2,12 +2,12 @@
 
 Proposta de projetos para as unidades 02 e 04 a 10 de **Fundamentos de IA e LLMs para Programadores**. Nada foi implementado. A unidade 03 (recomendação) tem sessão própria (PR #1) e fica fora deste documento; a unidade 01 é introdução e não tem conteúdo técnico.
 
-Data da pesquisa: 2026-11-18.
+Data da pesquisa: 2026-11-18. Unidade 04 revisada em 2026-11-21, com o resumo das aulas 15 a 19.
 
 ## Como ler este documento
 
 **Limites desta proposta (leia antes de escolher):**
-- Não tive acesso às aulas, às legendas nem ao PDF da disciplina. As unidades foram lidas só pelos títulos do `PROGRESSO.md`. Cada unidade tem um bloco **"Confirmar nas legendas e no PDF"**. Nenhuma opção é definitiva antes dessa confirmação.
+- Não tive acesso ao vídeo nem ao PDF da disciplina. A unidade 04 foi revista com o resumo das aulas 15 a 19 (feito das legendas automáticas, a conferir no vídeo). As demais unidades continuam lidas só pelos títulos do `PROGRESSO.md`. Cada unidade tem um bloco **"Confirmar nas legendas e no PDF"**. Nenhuma opção é definitiva antes dessa confirmação.
 - A "lente CCAR-F" usa os ids de tarefa do `CLAUDE.md`. O guia oficial do exame exige login e eu não o li. O mapeamento é meu, a partir dos ids e nomes do `CLAUDE.md`, e precisa de conferência contra o guia.
 - **Custo em lab** é uma faixa qualitativa minha, não um preço consultado: `$` = menos de ~US$ 5 por ciclo de lab (subir, testar, destruir); `$$` = ~US$ 5 a 25; `$$$` = passa de US$ 25 se algo ficar ligado. É estimativa a validar com Infracost e o AWS Pricing Calculator na fase de implementação.
 - **Datas das fontes**: indico o ano só quando a própria página ou a busca mostrou. As demais ficam como "data a confirmar" e entram datadas nos posts.
@@ -42,7 +42,7 @@ Regra do repositório: só marco "lacuna do emulador" com evidência (matriz aci
 | Unid. | Tema | Recomendação | Nuvem comparativa sugerida | Custo lab | Principais tarefas CCAR-F |
 |---|---|---|---|---|---|
 | 02 | ML, DL e IA | **02-S** · Triagem com classificador próprio e escalonamento para Claude com gate de confiança | GCP | `$` | 5.2, 1.4, 4.3, 5.5 |
-| 04 | Vencer jogos (Doom) | **D2+** · treino em Spot com promoção por avaliação e agente revisor de promoção (D2 do PROGRESSO + componente Claude) | GCP | `$`–`$$` | 1.4, 4.3, 4.4, 5.5 |
+| 04 | Vencer jogos com visão no navegador (YOLO em TF.js, aulas 15 a 19) | **04-C** · Calibrador do limiar de confiança com gate humano, sobre a 04-A fiel à aula (sugestão minha) | GCP | `$` | 1.4 (gate e handoff), 4.3 (saída via tool_use), 4.4 (validação e retentativa), 5.5 (calibração), 5.6 (incerteza) |
 | 05 | Web AI e LLMs | **05-A** · Inferência híbrida: navegador primeiro, Claude multimodal como fallback | GCP | `$` | 2.3, 4.3, 4.4 |
 | 06 | Prompts | **06-B** · Serviço de extração estruturada (JSON vs TOON) com validação e retentativa | GCP | `$` | 4.1, 4.2, 4.3, 4.4, 2.2 |
 | 07 | Ferramentas e agentes | **07-A** · Agente com loop por `stop_reason`, gates programáticos e aprovação humana | GCP | `$` | 1.1, 1.4, 1.5, 1.6, 2.2, 5.2 |
@@ -50,9 +50,9 @@ Regra do repositório: só marco "lacuna do emulador" com evidência (matriz aci
 | 09 | Modelos | **09-C** · Roteador por sensibilidade de dados (modelo aberto local vs. Claude) sobre um gateway fino | GCP | `$` | 5.2, 4.1, 2.2, 5.3 |
 | 10 | RAG | **10-C** · RAG agêntico com proveniência e incerteza sobre S3 Vectors | GCP | `$` | 5.6, 5.3, 2.1, 4.1 |
 
-Cobertura por domínio das recomendações (pesos do exame): Domínio 1 (27%) nas unidades 02, 04 e 07; Domínio 2 (18%) em 08 e 09; Domínio 4 (20%) em 04, 05 e 06; Domínio 5 (15%) em 02, 09 e 10. **O Domínio 3 (20%, Claude Code, CLAUDE.md, CI) não é coberto por nenhuma recomendação.** A opção **07-B** o cobre; a lista de perguntas no fim sugere fazê-la como segundo projeto da disciplina ou tratá-la como prática do próprio repositório.
+Cobertura por domínio das recomendações (pesos do exame): Domínio 1 (27%) nas unidades 02, 04 e 07; Domínio 2 (18%) em 08 e 09; Domínio 4 (20%) em 04, 05 e 06; Domínio 5 (15%) em 02, 04, 09 e 10. **O Domínio 3 (20%, Claude Code, CLAUDE.md, CI) não é coberto por nenhuma recomendação.** A opção **07-B** o cobre; a lista de perguntas no fim sugere fazê-la como segundo projeto da disciplina ou tratá-la como prática do próprio repositório.
 
-Coerência entre unidades: a 04 já traz o ciclo treinar → avaliar → promover, então a 02 não repete MLOps e foca inferência e decisão sob incerteza. A unidade 08 deve ser alinhada com o projeto escolhido na 03 (MCP), que não li: se o da 03 já for um servidor MCP, a 08-C complementa (telemetria, resources); se for outra coisa, também serve.
+Coerência entre unidades: a 04 não treina modelo (usa um YOLO pronto), então o ciclo de treino e promoção fica com a 02-A, sem repetição. As unidades 02 e 04 se encontram em decisão sob incerteza: o gate de confiança (02-S) e a calibração de limiar (04-C) são o mesmo padrão aplicado a dois domínios. A unidade 08 deve ser alinhada com o projeto escolhido na 03 (MCP), que não li: se o da 03 já for um servidor MCP, a 08-C complementa (telemetria, resources); se for outra coisa, também serve.
 
 ---
 
@@ -97,53 +97,77 @@ Coerência entre unidades: a 04 já traz o ciclo treinar → avaliar → promove
 | Custo lab | `$` |
 | Fonte | Composição das fontes da 02-B (inferência) e do gate com humano em [Human-in-the-loop constructs for agentic workflows](https://aws.amazon.com/blogs/machine-learning/human-in-the-loop-constructs-for-agentic-workflows-in-healthcare-and-life-sciences/) (AWS ML Blog, data a confirmar) |
 
-**Recomendação: 02-S.** Como arquiteta, eu a escolheria por três motivos. (1) O que separa um sênior de quem só treinou uma rede é decidir *quando não confiar nela*; o gate de confiança é essa decisão tornada código e testável (limiar em `terraform test` e asserts no plano). (2) A 04 já cobre o ciclo de promoção de modelo, então a 02-A seria repetição. (3) É a que mais pontua no exame sem depender de recurso que o Floci não emula. Risco: calibrar o limiar exige dados reais do exercício; usar dados sintéticos e dizer isso no post. Se você preferir ficar só em fontes oficiais, a 02-B é a base e a 02-S nasce dela.
+**Recomendação: 02-S.** Como arquiteta, eu a escolheria por três motivos. (1) O que separa um sênior de quem só treinou uma rede é decidir *quando não confiar nela*; o gate de confiança é essa decisão tornada código e testável (limiar em `terraform test` e asserts no plano). (2) O ciclo de treino e promoção da 02-A continua a alternativa mais forte da disciplina, porque a 04 não o cobre; a 02-S, porém, trata de decidir quando não confiar, que a 02-A não cobre. (3) É a que mais pontua no exame sem depender de recurso que o Floci não emula. Risco: calibrar o limiar exige dados reais do exercício; usar dados sintéticos e dizer isso no post. Se você preferir ficar só em fontes oficiais, a 02-B é a base e a 02-S nasce dela.
 
 ---
 
 ## Unidade 04 · Como vencer qualquer jogo (Doom)
 
-**Títulos usados:** só a pt 1 assistida; pt 2 a 5 pendentes, com o módulo 05 (algoritmos genéticos e Web AI) como complemento.
+**Títulos usados:** pt 1 assistida (status no `PROGRESSO.md`). Pt 2 a 5 com resumo lido: aulas 15 a 19, feito das legendas automáticas e a conferir no vídeo. A aula 20 (algoritmos genéticos) e as aulas 21 a 23 (Web AI) ficam com o módulo 05.
 
-**Revisão das variantes D1 a D3 do PROGRESSO.md com a lente CCAR-F.** As variantes originais são boas arquiteturas de ML, mas nenhuma tem um componente Claude que exercite a prova, exceto a D3, que o tem de forma frágil. A tabela mostra o que muda.
+**Tema de alto valor para sênior:** inferência de visão no cliente. Onde o modelo roda, em qual thread, com que limiar, e como se mede se esse limiar é bom. A aula fixa um limiar de 40% sem medir nada; esta unidade trata essa escolha como decisão de arquitetura.
 
-| Variante | Veredito CCAR-F | Ajuste proposto |
-|---|---|---|
-| D1 · navegador (TF.js + Doom em WASM) | Sem Claude; só ML clássico. Boa para "Web ML", fraca para a prova | Manter como *camada de demo* da D2, não como projeto isolado |
-| **D2 · treino em Spot + MLOps + demo no navegador** | Sem Claude. Domínio de MLOps é forte para arquitetura, mas só 1.4 (gate) entra por analogia | **Adicionar um agente revisor de promoção** (ver D2+ abaixo) |
-| D3 · agente com LLM multimodal joga | Tem Claude, mas latência de segundos por quadro inviabiliza tempo real; exercita pouco além de 2.3 e 4.3. Custo cresce por token a cada partida | Rebaixar para *experimento de comparação* (turno a turno, no cenário `basic`): baseline de custo e latência contra a política treinada, útil para o post |
+**O que a aula ensina (resumo com palavras próprias):**
+- Um detector de objetos YOLO já treinado por terceiros, convertido para TensorFlow.js (cerca de 8 MB, com um arquivo de rótulos). A aula não ensina treino.
+- Um jogo de tiro no navegador, Duck Hunt, feito com PixiJS, com um fork que acrescenta uma mira. Os patos aparecem para o modelo como a classe "kite".
+- Pipeline: a thread principal só captura o canvas e envia a imagem a um Web Worker. O worker carrega o modelo, redimensiona a imagem para 640 por 640, normaliza, roda a inferência, filtra por confiança (40%) e classe, converte as coordenadas para a tela e devolve o centro da caixa, que move a mira e dispara o clique.
+- Não há RL, neuroevolução, ViZDoom nem nuvem na unidade.
 
-**Confirmar nas legendas e no PDF (críticos aqui):** qual técnica a pt 1 e as pt 2 a 5 ensinam (algoritmo genético, neuroevolução, RL com DQN/PPO, busca em árvore?). **A D2 assume RL com PPO**; se o curso ensina neuroevolução, a função de aptidão e o paralelismo mudam, e o Step Functions com Distributed Map passa a ser melhor que Batch para gerações. Confirmar também o ambiente usado no curso (ViZDoom? outro jogo?) e a licença dos assets.
+**Confirmação pendente:** os números (40%, 640×640, cerca de 8 MB, classe "kite") vêm de legendas automáticas. Conferir no vídeo e no `labels.json` antes de implementar.
 
-### D2 (revisada) · Treino em Spot na nuvem, promoção por avaliação, demo no navegador
+**As variantes D1 a D3 do PROGRESSO não batem com a aula.** O próprio PROGRESSO as chama de hipóteses até a leitura do material da unidade. Com a leitura feita:
+
+| Variante | O que a aula cobre | O que não cobre | Ajuste |
+|---|---|---|---|
+| D1 · TF.js + Doom em WASM | Inferência em TF.js no navegador (aulas 16 a 18) | Neuroevolução, RL, treino, Doom | Fica a parte do navegador (04-A). O treino sai desta unidade |
+| D2 · ViZDoom + PPO em Spot, MLOps | Nada disso | Treino, Spot, promoção de modelo | Sai desta unidade; vira estudo extra fora da aula |
+| D3 · LLM multimodal joga | Nada disso | Latência e custo por quadro | Vira experimento opcional de comparação, sem peso na unidade |
+
+**Lacuna entre o jogo da aula e a decisão registrada (Doom).** A decisão registrada em `DECISOES.md` é Doom com YOLO, e a aula usa Duck Hunt. Pelo que o resumo descreve (mais de 80 categorias, com "kite"), as classes do modelo parecem ser as do COCO, que tem pipa e não tem monstros de Doom (inferência minha; conferir no `labels.json`). Para reconhecer inimigos de Doom, o modelo precisaria de ajuste com imagens rotuladas do jogo, e a unidade não ensina isso. As três opções abaixo valem para Duck Hunt sem mudança; com Doom, a arquitetura muda. A escolha do jogo é sua e está pendente.
+
+**Riscos de licença:** Duck Hunt é de terceiros e não tenho a licença do fork da aula. O site da 04-A não deve publicar assets do jogo original. Doom só com Freedoom, como já definido no PROGRESSO.
+
+### 04-A · Fiel à aula: inferência no navegador, site privado na AWS e telemetria
+
 | Campo | Conteúdo |
 |---|---|
-| O que constrói | Step Functions orquestra: treino do agente (ViZDoom + PPO) em contêiner → avaliação por cenário (`basic` → `defend_the_center` → `deadly_corridor`) → promoção condicional → exportação para TF.js e replays no site. Checkpoints no S3 para tolerar interrupção de Spot |
-| Serviços AWS | Step Functions, AWS Batch (ou SageMaker Training com Managed Spot), S3, ECR, CloudWatch, CloudFront, EventBridge. Evitar NAT Gateway: contêiner de treino em sub-rede pública com egress restrito por SG, ou endpoints sob demanda (ADR) |
-| Componente Claude | Ver D2+ |
-| Outra cloud | Vertex AI custom training com Spot VMs + Vertex AI Pipelines (GCP); Azure ML com Spot + pipelines |
-| Floci | Médio: Step Functions, S3, CloudFront, EventBridge, ECS, ECR cobertos; Batch tem 10 operações (execução real a confirmar); treino real roda no Docker local |
-| Custo lab | `$`–`$$`, só durante o treino (CPU Spot; GPU só se a técnica pedir) |
-| Fontes | [How to train procedurally generated game-like environments at scale with Amazon SageMaker RL](https://aws.amazon.com/blogs/machine-learning/winning-neurips-2020-procgen-benchmark-competition-with-amazon-sagemaker-reinforcement-learning/) (2020; PPO e Spot em ambientes de jogo, com economia de ~70% reportada em GPU). [Scale Reinforcement Learning with AWS Batch Multi-Node Parallel Jobs](https://aws.amazon.com/blogs/hpc/scale-reinforcement-learning-with-aws-batch-multi-node-parallel-jobs/) (AWS HPC Blog, 2025; orquestração em Batch, checkpoints em EFS). [Managed Spot Training](https://docs.aws.amazon.com/sagemaker/latest/dg/model-managed-spot-training.html) e [Checkpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/model-checkpoints.html) (documentação). [Scaling MoE reinforcement learning on Amazon EKS](https://aws.amazon.com/blogs/machine-learning/scaling-moe-reinforcement-learning-on-amazon-eks-with-efa-and-deepep-with-40-more-throughput/) (padrão de pôr Spot só nos *rollouts*, não no aprendiz) |
+| O que constrói | Site com o jogo, o worker, o modelo em TF.js e o arquivo de rótulos, servido pelo CloudFront a partir de um bucket S3 sem acesso público. Nenhuma inferência no servidor. Ao fim da partida, o navegador envia a telemetria (por quadro: classe, confiança, caixa, disparo e resultado) em lote a uma API, que grava no DynamoDB |
+| Serviços AWS | S3 com os quatro bloqueios de acesso público ligados, CloudFront com origin access control (OAC), API Gateway, Lambda, DynamoDB, KMS (criptografia da telemetria), CloudWatch |
+| Componente Claude | Relatório pós-partida. A Lambda envia a telemetria resumida ao Claude (Bedrock) e pede o relatório por `tool_use` com schema fixo: fases em que a IA errou, causas prováveis e evidências com o id do quadro. Um validador rejeita evidência que não existe no lote e pede nova tentativa, até um limite. O campo "incerto" é obrigatório quando a telemetria não cobre a afirmação. **Tarefas da prova:** 4.3 (saída via tool_use), 4.4 (validação e retentativa), 5.6 (proveniência e incerteza). **Cenário:** extração de dados estruturados. **Curso:** *Building with the Claude API* e *Claude with Amazon Bedrock*. A aula não usa Claude; o componente é acréscimo para a prova |
+| Outra cloud | Cloud Storage sem acesso público, com Cloud CDN (backend bucket), para o site; Cloud Run e Firestore para a telemetria; Claude na Vertex AI. O que muda: o OAC não tem nome equivalente, e o acesso ao bucket passa pelo balanceador. Mapeamento meu, a validar no post |
+| Floci | Médio-alto: S3, Lambda, API Gateway, DynamoDB, KMS e CloudWatch listados. **CloudFront está listado, mas o suporte a OAC e à política do bucket precisa de confirmação** com `floci aws services` antes da implementação. Bedrock Runtime é stub: o relatório se testa com respostas roteirizadas, incluindo validação e retentativa. O jogo no navegador se testa com Playwright, fora do Floci |
+| Custo lab | `$`: site estático, tráfego mínimo e Lambda sob demanda |
+| Fontes | [Restrict access to an Amazon S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) (CloudFront, data a confirmar): o OAC exige bucket comum, e não um bucket configurado como endpoint de site. [Amazon CloudFront launches Origin Access Control](https://aws.amazon.com/about-aws/whats-new/2022/08/amazon-cloudfront-origin-access-control) (25/08/2022): só as distribuições designadas acessam o bucket. [Hosting a static website using Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/HowDoIWebsiteConfiguration.html) (S3, data a confirmar): endpoints de site só aceitam HTTP, e a própria documentação indica OAC para quem mantém os quatro bloqueios ligados |
 
-Decisão a registrar em ADR: **Batch vs. SageMaker Training**. SageMaker Training com Managed Spot dá checkpoint e retomada prontos (mais simples, menos controle); Batch dá controle de imagem, filas e custo, e é mais fácil de rodar no Docker local. Minha inclinação é Batch pelo controle, mas isso depende da confirmação do Floci.
+### 04-B · Inferência na AWS: o navegador só captura, a Lambda roda o modelo
 
-### D2+ · D2 com agente revisor de promoção (recomendada)
 | Campo | Conteúdo |
 |---|---|
-| O que acrescenta | Depois da avaliação numérica, um agente Claude lê o relatório (recompensa por cenário, taxa de morte, variância entre sementes, comparação com o modelo promovido) e produz um parecer estruturado: `promover`, `rejeitar` ou `revisão humana`, com evidências por cenário. **Nunca promove sozinho**: o gate programático (limiar numérico) decide o mínimo, o agente só pode *bloquear* ou *pedir humano* |
-| Componente Claude / prova | **1.4** workflow com gates e handoff; **4.3** parecer via `tool_use` com schema; **4.4** validação e retentativa; **5.5** calibração (amostra de pareceres revisada por humano); **4.5** análise dos replays em lote, se fizer sentido (aqui é o Message Batches da API da Anthropic; no Bedrock o equivalente é inferência em lote). **Cenário:** produtividade de devs / extração estruturada. **Curso:** *Building with the Claude API* |
-| Floci | Bedrock Runtime é stub: testar o gate e o schema com pareceres roteirizados |
-| Custo extra | Poucos centavos por avaliação |
+| O que constrói | O mesmo jogo e o mesmo site, mas o navegador envia cada quadro capturado a uma Lambda em contêiner, que roda o modelo (TF.js no Node) e devolve as caixas. O disparo continua no navegador. Mede-se a latência ponta a ponta e o custo por quadro, para comparar com a 04-A no post |
+| Serviços AWS | ECR, Lambda (imagem de contêiner), API Gateway, S3 e CloudFront (site), CloudWatch |
+| Componente Claude | O mesmo relatório pós-partida da 04-A. Não acrescenta prova nova; por isso a 04-B se justifica como comparação de arquitetura, não como projeto autônomo |
+| Outra cloud | Cloud Run (contêiner) para a inferência; Cloud Storage e Cloud CDN para o site |
+| Floci | Alto: Lambda com contêiner real, ECR e API Gateway listados. A latência de rede não se mede no Floci, que roda local |
+| Custo lab | `$`, com teto de invocações, porque cada quadro vira uma chamada |
+| Fontes | [Machine learning inference at scale using AWS serverless](https://aws.amazon.com/blogs/machine-learning/machine-learning-inference-at-scale-using-aws-serverless/) (AWS ML Blog, 2021) · [Choosing between storage mechanisms for ML inferencing with AWS Lambda](https://aws.amazon.com/blogs/compute/choosing-between-storage-mechanisms-for-ml-inferencing-with-aws-lambda/) (AWS Compute Blog, 2021; segundo a pesquisa da unidade 02, o modelo dentro da imagem tem a menor latência) · [Edge AI and global inference distribution](https://docs.aws.amazon.com/prescriptive-guidance/latest/agentic-ai-serverless/edge-ai.html) (Prescriptive Guidance, data a confirmar): onde roda a inferência é decisão de arquitetura |
 
-### D4 · Sugestão minha: Claude narra e depura, a política joga
+A troca: a aula inteira trata de inferência no cliente, que sai de graça para quem opera. Esta opção a substitui por uma chamada de rede a cada quadro e manda a imagem da tela para fora do navegador.
+
+### 04-C · Sugestão minha: calibrador do limiar de confiança com gate humano (construída sobre a 04-A)
+
 | Campo | Conteúdo |
 |---|---|
-| O que constrói | A política treinada joga; um agente Claude, com tools de leitura (`list_replays`, `get_episode_metrics`), responde perguntas do tipo "por que o agente morre no corredor?" sobre telemetria, com resposta rastreável a episódios |
-| Prova | 2.1, 2.2, 5.6 |
-| Por que não é a principal | Não exercita o ciclo de arquitetura (treino, promoção, custo) que a unidade destaca; funciona melhor como *módulo extra* da D2+ |
+| O que constrói | A aula fixa a confiança mínima em 40% sem medir. Esta opção mede se o valor serve. Código varre os limiares sobre a telemetria da 04-A e calcula, por fase do jogo, acertos e disparos perdidos. O Claude lê essa tabela e uma amostra de quadros e propõe um limiar, dentro de limites fixos, com justificativa que cita os quadros. Um gate programático rejeita proposta fora dos limites ou sem evidência. Um humano aprova ou rejeita; só a aprovação grava o valor no SSM Parameter Store, que o worker lê na partida seguinte |
+| Serviços AWS | Tudo da 04-A, mais Step Functions (gate e espera por humano com task token), Lambda (varredura), SSM Parameter Store, SNS (aviso de aprovação pendente), CloudWatch |
+| Componente Claude | Proposta de limiar por `tool_use` com schema (`limiar`, `fases`, `evidencias`, `sem_evidencia`). Validação de limites e de citações, com retentativa. "Sem evidência" é resposta válida e não muda nada. **Tarefas da prova:** 1.4 (gate programático e handoff para humano), 4.3 (saída via tool_use), 4.4 (validação e retentativa), 5.5 (calibração: a proposta é conferida contra decisões humanas em amostra), 5.6 (incerteza). **Cenário:** extração de dados estruturados. **Curso:** *Building with the Claude API* |
+| Outra cloud | Cloud Run jobs e Workflows (gate), Firestore (valor vigente), Claude na Vertex AI (GCP). Mapeamento meu, a validar no post |
+| Floci | Alto na orquestração: Step Functions com task token, SSM, SNS e Lambda listados. Bedrock Runtime é stub: a proposta se testa com respostas roteirizadas, inclusive a rejeição por limite e por citação inexistente |
+| Custo lab | `$`: uma execução por partida; a espera pelo humano não tem custo fixo |
+| Fontes | [Human-in-the-loop constructs for agentic workflows](https://aws.amazon.com/blogs/machine-learning/human-in-the-loop-constructs-for-agentic-workflows-in-healthcare-and-life-sciences/) (AWS ML Blog, data a confirmar), a mesma fonte da 02-S. Não achei fonte oficial sobre calibração de limiar com LLM: o desenho é meu |
 
-**Recomendação: D2+.** O porquê, como arquiteto: a unidade pede dominar "como vencer", e o que se leva para a vida profissional é *treinar barato, medir com honestidade e promover com critério*. D2 entrega isso (Spot com checkpoint, avaliação por degrau, separação treino/inferência), a demo no navegador aproveita o módulo 05, e o agente revisor dá a D2 a ponte com a prova sem violar a regra de que o gate crítico é código e não opinião de modelo. Riscos: (1) **fidelidade de observação** entre ViZDoom e o navegador, mitigada começando por replays; (2) ViZDoom e Doom em WASM têm licenças próprias, e os assets devem ser Freedoom, nunca WADs comerciais; (3) custo de GPU se o curso exigir rede profunda (tratar com ADR e teto de horas Spot).
+**Ressalva que pesa na escolha:** a varredura de limiares é estatística e não precisa de modelo de linguagem. O Claude agrega só a explicação por fase (por que o mesmo limiar erra no início e acerta no fim) e a checagem de citações. Se a justificativa não for mais útil que a tabela, o componente Claude vira enfeite e a prova não se exercita de verdade. Esse é o principal risco desta opção. Outro risco: a calibração precisa de muitas partidas e de rótulos humanos. Uma telemetria de um cenário só não generaliza.
+
+**Recomendação: 04-C, construída sobre a 04-A.** Como arquiteto, escolho por três razões. (1) A aula toma uma constante, o 40%, sem medir; um sênior transforma essa constante em decisão medida, com dono, gate e registro. Essa é a diferença entre usar uma técnica e operá-la. (2) Reaproveita a base da 04-A, que é a versão fiel à aula; a 04-B fica como comparação de custo e latência para o post. (3) Exercita 1.4 (gate e handoff) e 5.5 (calibração), que a prova cobra de quem revisa decisões automatizadas e que nenhuma outra opção deste documento cobre tão diretamente. Se você quiser só a parte fiel e clara da aula, a 04-A basta. A escolha é sua.
 
 ---
 
@@ -184,7 +208,7 @@ Decisão a registrar em ADR: **Batch vs. SageMaker Training**. SageMaker Trainin
 | Prova | 4.1, 4.6 (o julgamento deve ser feito por instância separada da que gerou) |
 | Ressalva | Sobreposição com a unidade 06 e custo por token alto por geração. Citar a literatura de otimização evolutiva de prompts só depois de confirmar a fonte; não a incluí aqui por não ter verificado |
 
-**Recomendação: 05-A.** É a opção que transforma a aula "IA na web" em decisão de arquiteto: política de roteamento entre navegador e nuvem, com os trade-offs de privacidade (dado não sai do dispositivo), custo (inferência no cliente é de graça para você), e confiabilidade (fallback). O servidor fica fino e barato. O risco real é de teste: WebGPU não roda em CI sem GPU, então o ADR deve definir testes de contrato do roteador no Floci e um smoke test com Playwright e modelo mínimo. Observação: a unidade 04 também exporta um modelo para TF.js; se ambas avançarem, compartilhar a página de demo e o módulo Terraform do site.
+**Recomendação: 05-A.** É a opção que transforma a aula "IA na web" em decisão de arquiteto: política de roteamento entre navegador e nuvem, com os trade-offs de privacidade (dado não sai do dispositivo), custo (inferência no cliente é de graça para você), e confiabilidade (fallback). O servidor fica fino e barato. O risco real é de teste: WebGPU não roda em CI sem GPU, então o ADR deve definir testes de contrato do roteador no Floci e um smoke test com Playwright e modelo mínimo. Observação: a unidade 04 também serve um modelo YOLO em TF.js pelo navegador (04-A); se ambas avançarem, compartilhar a página de demo e o módulo Terraform do site.
 
 ---
 
@@ -412,7 +436,7 @@ Decisão a registrar em ADR: **Batch vs. SageMaker Training**. SageMaker Trainin
 3. **Teto de orçamento por módulo.** Com o teto definido, desenho o AWS Budgets e a escala do lab. Não assumi nenhum valor.
 4. **Execução real paga.** Opções que dependem de Claude (todas) só validam o contrato no Floci. Autoriza **uma rodada real e pequena** por projeto (Bedrock ou API da Anthropic) para medir acerto e custo reais? Se sim, com qual credencial (papel IAM com OIDC, sem chaves estáticas)?
 5. **Domínio 3.** Fazer a 07-B como projeto adicional, ou tratar o uso de Claude Code neste repositório como a prática do Domínio 3?
-6. **Fontes das aulas.** Para fechar cada opção preciso das legendas e do PDF da disciplina, pelo navegador integrado e com você logado na plataforma do curso. Sugiro começar pela unidade 04, que tem a variante mais dependente da técnica ensinada.
+6. **Fontes das aulas.** Para fechar cada opção preciso das legendas e do PDF da disciplina, pelo navegador integrado e com você logado na plataforma do curso. A unidade 04 já foi revista com o resumo das aulas 15 a 19; as demais precisam desse material antes da escolha.
 7. **Guia do exame.** Posso conferir os ids de tarefa contra o guia oficial (exige login) antes de escrever os ADRs?
 
 **Verificações que ficaram pendentes por falta de ambiente:** `floci aws services` (lista completa de operações e versão), existência de Pipelines e Model Registry no SageMaker do Floci, execução real de jobs no Batch do Floci, detecção de PII no Comprehend do Floci, preços atuais (Infracost). Todas entram no início da implementação, antes de qualquer teste.
