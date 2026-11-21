@@ -81,7 +81,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/politica/`, `tests/composicao.tftest.hcl` do root.
   - **Aceite:** ADR-0005 cumprido; o modo nunca é input de workflow.
   - **Depende de:** T013.
-- [ ] T016 [P] [engenheiro-terraform] Módulo `observabilidade`: entrega de logs e traces · RF-006, Art. VI · TT-O01, TT-O02
+- [x] T016 [P] [engenheiro-terraform] Módulo `observabilidade`: entrega de logs e traces · RF-006, Art. VI · TT-O01, TT-O02
   - **Teste vermelho:** `modules/observabilidade/tests/entrega.tftest.hcl` afirma `aws_cloudwatch_log_delivery_source` dos `APPLICATION_LOGS` do gateway, destino no grupo `/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/{gateway_id}` com retenção de 7 dias e `kms_key_id` da chave, e a entrega de traces para o X-Ray.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/{entrega.tf,variables.tf,outputs.tf}`, `modules/observabilidade/tests/entrega.tftest.hcl`.
   - **Aceite:** todos os recursos entram no destroy; o grupo `aws/spans` não é criado aqui (é da conta, `infra/conta`).
