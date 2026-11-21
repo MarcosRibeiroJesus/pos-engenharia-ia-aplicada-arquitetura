@@ -53,7 +53,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - O `endpoint` vem de `split(...)[count.index]` sobre o valor sensível e continua sensível.
     - Nenhum output expõe os endereços. O repositório e os logs do Actions são públicos (Art. VIII).
   - **Depende de:** T010.
-- [ ] T012 [P] [engenheiro-terraform] Módulo `nucleo`: AWS Budgets diário com o teto · Art. V, RNF-002 · TT-K01, TH-06
+- [x] T012 [P] [engenheiro-terraform] Módulo `nucleo`: AWS Budgets diário com o teto · Art. V, RNF-002 · TT-K01, TH-06
   - **Teste vermelho:** `modules/nucleo/tests/budgets.tftest.hcl` afirma `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd` e filtro `user:project$00-plataforma-agentes`; TH-06 em `harness/testes/test_<assunto>.py` lê o padrão de `teto_diario_usd` em `variables.tf` do root e compara com `teto_diario_usd` do `harness/estado.json` (1,2).
   - **TT-S06 (análise 1, A06):** o `test_dados_pessoais.py` do T011 também reprova se `subscriber_email_addresses` das notificações do `aws_budgets_budget` não for sensível no plan.
   - **Arquivos:** `modules/nucleo/budgets.tf`, `modules/nucleo/tests/budgets.tftest.hcl`, `variables.tf` do root, `harness/testes/test_<assunto>.py`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`.

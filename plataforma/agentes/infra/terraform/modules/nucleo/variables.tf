@@ -1,3 +1,16 @@
+variable "teto_diario_usd" {
+  description = <<-EOT
+    Teto de um dia de demonstração, em USD (Art. V, D-021). Sem padrão aqui: o valor vem do root,
+    cujo padrão o TH-06 compara com teto_diario_usd do harness/estado.json.
+  EOT
+  type        = number
+
+  validation {
+    condition     = var.teto_diario_usd > 0
+    error_message = "O teto diário é positivo: orçamento zero avisaria a cada centavo."
+  }
+}
+
 variable "nomes_dos_alarmes" {
   description = <<-EOT
     Nomes exatos dos alarmes da plataforma que publicam no tópico cifrado (T017). Entram como
