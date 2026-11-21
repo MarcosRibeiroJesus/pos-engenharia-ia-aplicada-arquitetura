@@ -1,3 +1,10 @@
+# Teto do Budgets diário (Art. V, D-021), para o README e o resumo do apply. A T020 passa a mesma
+# variável ao módulo nucleo; até lá, este output é o único consumidor dela no root.
+output "teto_diario_usd" {
+  description = "Teto de um dia de demonstração em USD (Budgets diário do módulo nucleo)."
+  value       = var.teto_diario_usd
+}
+
 output "tags_padrao" {
   description = "Tags que o provider aplica a todo recurso (default_tags)."
   value       = local.tags_padrao

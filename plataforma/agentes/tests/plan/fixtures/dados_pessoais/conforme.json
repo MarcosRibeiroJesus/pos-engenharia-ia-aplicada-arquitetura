@@ -3,6 +3,98 @@
   "plano": {
     "resource_changes": [
       {
+        "address": "aws_budgets_budget.diario",
+        "mode": "managed",
+        "type": "aws_budgets_budget",
+        "name": "diario",
+        "provider_name": "registry.terraform.io/hashicorp/aws",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "auto_adjust_data": [],
+            "billing_view_arn": null,
+            "budget_type": "COST",
+            "cost_filter": [
+              {
+                "name": "TagKeyValue",
+                "values": [
+                  "user:project$00-plataforma-agentes"
+                ]
+              }
+            ],
+            "cost_types": [],
+            "filter_expression": [],
+            "limit_amount": "1.2",
+            "limit_unit": "USD",
+            "metrics": null,
+            "name": "00-plataforma-agentes-teto-diario",
+            "notification": [
+              {
+                "comparison_operator": "GREATER_THAN",
+                "notification_type": "ACTUAL",
+                "subscriber_email_addresses": [
+                  "alerta-a@example.com",
+                  "alerta-b@example.com"
+                ],
+                "subscriber_sns_topic_arns": null,
+                "threshold": 100,
+                "threshold_type": "PERCENTAGE"
+              }
+            ],
+            "planned_limit": [],
+            "tags": null,
+            "time_period_end": null,
+            "time_unit": "DAILY"
+          },
+          "after_unknown": {
+            "account_id": true,
+            "arn": true,
+            "auto_adjust_data": [],
+            "cost_filter": [
+              {
+                "values": [
+                  false
+                ]
+              }
+            ],
+            "cost_types": [],
+            "filter_expression": [],
+            "id": true,
+            "name_prefix": true,
+            "notification": [
+              {
+                "subscriber_email_addresses": [
+                  false,
+                  false
+                ]
+              }
+            ],
+            "planned_limit": [],
+            "tags_all": true,
+            "time_period_start": true
+          },
+          "before_sensitive": false,
+          "after_sensitive": {
+            "auto_adjust_data": [],
+            "cost_filter": [
+              {
+                "values": [
+                  false
+                ]
+              }
+            ],
+            "cost_types": [],
+            "filter_expression": [],
+            "notification": true,
+            "planned_limit": [],
+            "tags_all": {}
+          }
+        }
+      },
+      {
         "address": "aws_sns_topic_subscription.alarmes[0]",
         "mode": "managed",
         "type": "aws_sns_topic_subscription",

@@ -29,6 +29,7 @@ mock_provider "aws" {
 
 variables {
   nomes_dos_alarmes = ["00-plataforma-agentes-sintetico-a", "00-plataforma-agentes-sintetico-b"]
+  teto_diario_usd   = 1.2
 }
 
 run "chave_com_rotacao_exclusao_e_alias" {

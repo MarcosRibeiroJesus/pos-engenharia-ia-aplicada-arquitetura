@@ -7,7 +7,9 @@ formato do `terraform show -json`) e reprova:
 - `aws_sns_topic_subscription` cujo `after_sensitive.endpoint` não seja `true`;
 - output não sensível com endereço de e-mail no valor.
 
-A T012 estende a regra aos destinatários das notificações do `aws_budgets_budget`.
+- `aws_budgets_budget` com `subscriber_email_addresses` de alguma notificação não sensível no
+  plan (T012). Com o valor sensível, o Terraform marca o bloco `notification` inteiro, porque ele
+  é um conjunto; a regra aceita a marca no recurso, no conjunto, na notificação ou no atributo.
 
 As fixtures de `fixtures/dados_pessoais/` foram geradas do plan com mock de roots sintéticos, com
 e-mails do domínio reservado `example.com`:
@@ -16,7 +18,10 @@ e-mails do domínio reservado `example.com`:
   sobre o `value` sensível do parâmetro (o padrão do ADR-0008);
 - `insecure_value`: o mesmo, lendo o atributo não sensível `insecure_value`;
 - `nonsensitive_lista`: `nonsensitive()` em volta da lista, e não só da contagem;
-- `output_com_emails`: assinaturas conformes, mas um output devolve a lista sem o sensível.
+- `output_com_emails`: assinaturas conformes, mas um output devolve a lista sem o sensível;
+- `budgets_insecure_value`: assinaturas conformes, mas o orçamento lê `insecure_value` (T012).
+
+A `conforme` tem também um orçamento diário com os destinatários lidos do `value` (T012).
 
 O módulo `nucleo` é lido pelo plan com mock (`modules/nucleo/tests/plan_json.tftest.hcl`), sem
 credencial da AWS. Quando a T020 ligar o módulo no root, o root passa a ser coberto pelo T003.
@@ -40,6 +45,7 @@ VIOLADORAS = {
     "insecure_value": ["aws_sns_topic_subscription.alarmes[0]", "aws_sns_topic_subscription.alarmes[1]"],
     "nonsensitive_lista": ["aws_sns_topic_subscription.alarmes[0]", "aws_sns_topic_subscription.alarmes[1]"],
     "output_com_emails": ["output.destinos_dos_alarmes"],
+    "budgets_insecure_value": ["aws_budgets_budget.diario"],
 }
 
 
@@ -48,6 +54,24 @@ def _sensivel(marca, atributo: str) -> bool:
     if marca is True:
         return True
     return isinstance(marca, dict) and marca.get(atributo) is True
+
+
+def _destinatarios_sensiveis(marca, indice: int) -> bool:
+    """Marca de `subscriber_email_addresses` da notificação `indice` em `after_sensitive`."""
+    if marca is True:
+        return True
+    if not isinstance(marca, dict):
+        return False
+    conjunto = marca.get("notification")
+    if conjunto is True:
+        return True
+    if not isinstance(conjunto, list) or indice >= len(conjunto):
+        return False
+    item = conjunto[indice]
+    if item is True:
+        return True
+    destinos = item.get("subscriber_email_addresses") if isinstance(item, dict) else None
+    return destinos is True or (isinstance(destinos, list) and bool(destinos) and all(d is True for d in destinos))
 
 
 def _strings(valor):
@@ -69,6 +93,16 @@ def dados_pessoais_expostos(documento: dict) -> list[str]:
                     f"TT-S06 {r['address']}: endpoint não sensível no plan; o log público do CI "
                     "imprimiria o destino. Leia o value do parâmetro e use nonsensitive() só em "
                     "volta do length (ADR-0008)")
+        if r.get("type") == "aws_budgets_budget":
+            notificacoes = (mudanca.get("after") or {}).get("notification") or []
+            for i, n in enumerate(notificacoes):
+                if (n or {}).get("subscriber_email_addresses") and not _destinatarios_sensiveis(
+                        mudanca.get("after_sensitive"), i):
+                    erros.append(
+                        f"TT-S06 {r['address']}: subscriber_email_addresses da notificação {i} "
+                        "não sensível no plan; o log público do CI imprimiria os destinatários. "
+                        "Leia o value do parâmetro, nunca insecure_value nem nonsensitive() "
+                        "sobre a lista (ADR-0008)")
     for nome, saida in (plan.get("output_changes") or {}).items():
         if saida.get("after_sensitive") is True:
             continue
@@ -114,6 +148,9 @@ class TestFixtures(unittest.TestCase):
                        if r["type"] == "aws_sns_topic_subscription"]
         # controle positivo com o que checar: duas assinaturas, como o mock
         self.assertEqual(len(assinaturas), 2)
+        orcamentos = [r for r in doc["plano"]["resource_changes"] if r["type"] == "aws_budgets_budget"]
+        self.assertEqual(len(orcamentos), 1)
+        self.assertTrue(orcamentos[0]["change"]["after"]["notification"][0]["subscriber_email_addresses"])
         self.assertEqual(dados_pessoais_expostos(doc), [])
 
     def test_fixtures_usam_so_dominio_reservado(self):
@@ -141,6 +178,30 @@ class TestDetalhes(unittest.TestCase):
             "change": {"actions": ["create"], "after": {"endpoint": "x@example.com"}}}]}}
         self.assertTrue(dados_pessoais_expostos(doc))
 
+    @staticmethod
+    def _orcamento(after_sensitive, destinos=("x@example.com",)):
+        return {"plano": {"resource_changes": [{
+            "address": "aws_budgets_budget.b", "mode": "managed", "type": "aws_budgets_budget",
+            "change": {"actions": ["create"],
+                       "after": {"notification": [{"subscriber_email_addresses": list(destinos)}]},
+                       "after_sensitive": after_sensitive}}]}}
+
+    def test_orcamento_com_destinatarios_sensiveis_passa(self):
+        for marca in (True, {"notification": True}, {"notification": [True]},
+                      {"notification": [{"subscriber_email_addresses": True}]},
+                      {"notification": [{"subscriber_email_addresses": [True]}]}):
+            with self.subTest(marca=marca):
+                self.assertEqual(dados_pessoais_expostos(self._orcamento(marca)), [])
+
+    def test_orcamento_sem_marca_reprova(self):
+        for marca in (None, False, {}, {"notification": []},
+                      {"notification": [{"subscriber_email_addresses": [False]}]}):
+            with self.subTest(marca=marca):
+                self.assertTrue(dados_pessoais_expostos(self._orcamento(marca)))
+
+    def test_orcamento_so_com_sns_passa(self):
+        self.assertEqual(dados_pessoais_expostos(self._orcamento(None, destinos=())), [])
+
     def test_output_sensivel_passa(self):
         doc = {"plano": {"output_changes": {"d": {"after": ["x@example.com"], "after_sensitive": True}}}}
         self.assertEqual(dados_pessoais_expostos(doc), [])
@@ -164,6 +225,14 @@ class TestModuloNucleo(unittest.TestCase):
         assinaturas = [r for r in self.doc["plano"]["resource_changes"]
                        if r["type"] == "aws_sns_topic_subscription"]
         self.assertEqual(len(assinaturas), 2)
+
+    def test_plan_tem_o_orcamento_com_destinatarios(self):
+        orcamentos = [r for r in self.doc["plano"]["resource_changes"]
+                      if r["type"] == "aws_budgets_budget"]
+        self.assertEqual(len(orcamentos), 1)
+        notificacoes = orcamentos[0]["change"]["after"]["notification"]
+        self.assertTrue(notificacoes)
+        self.assertTrue(all(n["subscriber_email_addresses"] for n in notificacoes))
 
     def test_nucleo_sem_dado_pessoal_exposto(self):
         self.assertEqual(dados_pessoais_expostos(self.doc), [])
