@@ -10,12 +10,15 @@ from pathlib import Path
 
 
 def git(raiz: Path, *args: str, entrada: str | None = None, timeout: int = 30) -> str:
-    # encoding explícito: o git fala UTF-8 em qualquer SO; no Windows o padrão seria cp1252 e quebraria caminhos com acento
-    r = subprocess.run(["git", "-C", str(raiz), *args], input=entrada, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace", timeout=timeout)
+    # bytes nos dois sentidos: em modo texto o Windows troca \n por \r\n na entrada, e o nome
+    # de arquivo gravado no git vira "arquivo\r" (ls-tree e show não o encontram depois)
+    r = subprocess.run(["git", "-C", str(raiz), *args],
+                       input=None if entrada is None else entrada.encode("utf-8"),
+                       capture_output=True, timeout=timeout)
     if r.returncode != 0:
-        raise RuntimeError(r.stderr.strip() or f"git {' '.join(args)} falhou")
-    return r.stdout
+        erro = r.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(erro or f"git {' '.join(args)} falhou")
+    return r.stdout.decode("utf-8", errors="replace")
 
 
 def buscar(raiz: Path, ramo: str) -> str | None:
