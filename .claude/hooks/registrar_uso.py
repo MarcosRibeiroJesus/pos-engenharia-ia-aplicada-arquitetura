@@ -46,12 +46,31 @@ def branch(raiz: Path) -> str:
         return ""
 
 
+def arquivos_da_sessao(transcript: Path) -> list[Path]:
+    """O transcript principal e os dos subagentes, que o Claude Code grava em <sessao>/subagents/*.jsonl.
+
+    Sem os subagentes, o maior gasto (especialistas, revisores) ficava fora do registro (D-058).
+    """
+    pasta = transcript.parent / transcript.stem / "subagents"
+    return [transcript] + (sorted(pasta.glob("*.jsonl")) if pasta.is_dir() else [])
+
+
+def somar_sessao(transcript: Path) -> dict:
+    total: dict = {}
+    for arq in arquivos_da_sessao(transcript):
+        for modelo, nums in somar(arq).items():
+            g = total.setdefault(modelo, {"requisicoes": 0, **{v: 0 for v in CAMPOS.values()}})
+            for k, v in nums.items():
+                g[k] += v
+    return total
+
+
 def registrar(entrada: dict, raiz: Path) -> Path | None:
     transcript = Path(entrada.get("transcript_path") or "")
     sessao = entrada.get("session_id") or transcript.stem
     if not sessao or not transcript.is_file():
         return None
-    modelos = somar(transcript)
+    modelos = somar_sessao(transcript)
     if not modelos:
         return None
     destino = raiz / "harness" / "uso" / f"{sessao}.json"

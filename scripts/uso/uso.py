@@ -25,9 +25,11 @@ LEDGER = RAIZ / "docs" / "uso" / "uso-tokens.csv"
 SITE = RAIZ / "site"
 CAMPOS = [
     "data", "sessao", "projeto", "disciplina", "unidade", "tarefa", "modelo",
-    "requisicoes", "input", "cache_write", "cache_read", "output", "fonte", "observacao",
+    "requisicoes", "input", "cache_write", "cache_read", "output", "total", "fonte", "observacao",
 ]
-NUMEROS = ["requisicoes", "input", "cache_write", "cache_read", "output"]
+# "total": medição que só traz a soma (ex.: o total que um subagente informa ao terminar), sem a divisão
+# por tipo de token. Nunca é estimado: fica 0 quando a divisão existe (D-058).
+NUMEROS = ["requisicoes", "input", "cache_write", "cache_read", "output", "total"]
 # Pesos de custo relativo a um token de entrada comum (estimativa, não preço).
 PESOS = {"input": 1.0, "cache_write": 2.0, "cache_read": 0.1, "output": 5.0}
 WIDGET = re.compile(r"(<!-- uso:projeto=(?P<chave>[\w.\-/]+) -->)(.*?)(<!-- /uso -->)", re.S)
@@ -44,9 +46,25 @@ def ler_ledger(caminho: Path = LEDGER) -> list[dict]:
     return linhas
 
 
+def _migrar_cabecalho(caminho: Path) -> None:
+    """Ledger antigo sem a coluna total: reescreve com o cabeçalho atual, sem perder linhas."""
+    with caminho.open(newline="", encoding="utf-8") as f:
+        leitor = csv.DictReader(f)
+        if leitor.fieldnames == CAMPOS:
+            return
+        linhas = list(leitor)
+    with caminho.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=CAMPOS)
+        w.writeheader()
+        for l in linhas:
+            w.writerow({c: l.get(c) or ("0" if c in NUMEROS else "") for c in CAMPOS})
+
+
 def gravar_linhas(novas: list[dict], caminho: Path = LEDGER) -> None:
     caminho.parent.mkdir(parents=True, exist_ok=True)
     existe = caminho.exists()
+    if existe:
+        _migrar_cabecalho(caminho)
     chaves = {(l["sessao"], l["modelo"]) for l in ler_ledger(caminho)} if existe else set()
     with caminho.open("a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CAMPOS)
@@ -59,11 +77,18 @@ def gravar_linhas(novas: list[dict], caminho: Path = LEDGER) -> None:
             w.writerow({c: linha.get(c, "") for c in CAMPOS})
 
 
+def arquivos_da_sessao(caminho: Path) -> list[Path]:
+    """Transcript principal e os dos subagentes (<sessao>/subagents/*.jsonl), D-058."""
+    pasta = caminho.parent / caminho.stem / "subagents"
+    return [caminho] + (sorted(pasta.glob("*.jsonl")) if pasta.is_dir() else [])
+
+
 def somar_transcript(caminho: Path) -> dict[str, dict[str, int]]:
-    """Soma message.usage por modelo, sem contar duas vezes a mesma mensagem."""
+    """Soma message.usage por modelo, com os subagentes, sem contar duas vezes a mesma mensagem."""
     por_modelo: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     vistos: set[str] = set()
-    for bruta in caminho.read_text(encoding="utf-8").splitlines():
+    brutas = [b for arq in arquivos_da_sessao(caminho) for b in arq.read_text(encoding="utf-8").splitlines()]
+    for bruta in brutas:
         try:
             evento = json.loads(bruta)
         except json.JSONDecodeError:
@@ -86,7 +111,9 @@ def somar_transcript(caminho: Path) -> dict[str, dict[str, int]]:
 
 
 def equivalente(linha: dict) -> float:
-    return sum(linha[k] * p for k, p in PESOS.items())
+    detalhado = sum(linha.get(k, 0) * p for k, p in PESOS.items())
+    # Só o total conhecido: conta como entrada comum, sem inventar a divisão (fica marcado na fonte).
+    return detalhado if detalhado else float(linha.get("total", 0) or 0)
 
 
 def agrupar(linhas: list[dict], chave: str) -> list[tuple[str, dict]]:
@@ -94,7 +121,7 @@ def agrupar(linhas: list[dict], chave: str) -> list[tuple[str, dict]]:
     for l in linhas:
         g = grupos[l[chave] or "—"]
         for n in NUMEROS:
-            g[n] += l[n]
+            g[n] += l.get(n, 0) or 0
         g["equiv"] += equivalente(l)
     return sorted(grupos.items(), key=lambda kv: kv[1]["equiv"], reverse=True)
 
@@ -126,18 +153,19 @@ def barras(grupos: list[tuple[str, dict]], titulo: str) -> str:
 
 def tabela(linhas: list[dict]) -> str:
     cab = "".join(f"<th>{c}</th>" for c in ["Projeto", "Tarefa", "Modelo", "Requisições", "Entrada",
-                                              "Cache escrito", "Cache lido", "Saída", "Fonte"])
+                                              "Cache escrito", "Cache lido", "Saída", "Total sem divisão", "Fonte"])
     corpo = "".join(
         "<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in [
             l["projeto"], l["tarefa"], l["modelo"], l["requisicoes"], fmt(l["input"]),
-            fmt(l["cache_write"]), fmt(l["cache_read"]), fmt(l["output"]), l["fonte"]]) + "</tr>"
+            fmt(l["cache_write"]), fmt(l["cache_read"]), fmt(l["output"]), fmt(l.get("total", 0) or 0),
+            l["fonte"]]) + "</tr>"
         for l in linhas
     )
     return f'<details class="uso-tabela"><summary>Ver como tabela</summary><table><thead><tr>{cab}</tr></thead><tbody>{corpo}</tbody></table></details>'
 
 
 def tiles(linhas: list[dict]) -> str:
-    total = {n: sum(l[n] for l in linhas) for n in NUMEROS}
+    total = {n: sum(l.get(n, 0) or 0 for l in linhas) for n in NUMEROS}
     equiv = sum(equivalente(l) for l in linhas)
     nao_medidas = sum(1 for l in linhas if l["fonte"] == "nao-medido")
     itens = [
@@ -146,6 +174,8 @@ def tiles(linhas: list[dict]) -> str:
         ("Contexto lido do cache", fmt(total["cache_read"])),
         ("Requisições", f"{total['requisicoes']}"),
     ]
+    if total["total"]:
+        itens.append(("Medido só no total", fmt(total["total"])))
     html_tiles = "".join(f'<div class="uso-tile"><span>{a}</span><b>{b}</b></div>' for a, b in itens)
     aviso = (f'<p class="note">{nao_medidas} trecho(s) de trabalho sem medição registrada não entram nos totais.</p>'
              if nao_medidas else "")

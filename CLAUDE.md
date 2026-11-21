@@ -233,6 +233,13 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Haiku**: tarefas mecânicas e verificáveis, como formatação, renomeações, atualização de índices e do registro de uso, e checagens de links.
 - **Fable (camada Mythos)**: só com a minha aprovação, para uma segunda opinião em decisão cara de reverter.
 - Na dúvida entre dois modelos, use o mais capaz para decidir e o mais barato para executar o que já foi decidido.
+- **Economia de tokens** (D-058):
+  - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
+  - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
+  - **Uso registrado de tudo:**
+    - o hook de uso soma também os transcripts dos subagentes;
+    - o executor comita `harness/uso/` ao fechar cada fase;
+    - o total que um subagente informa ao terminar, quando não há transcript, entra no ledger como `medido-total`, com `uso.py manual --total`.
 
 ## Registro de uso de IA
 - O registro físico é `docs/uso/uso-tokens.csv`, com uma linha por sessão e modelo. Toda sessão registra o próprio uso ao terminar uma entrega, com `scripts/uso/uso.py registrar` (lê o transcript do Claude Code) ou `manual` quando só houver a medição da conversa, e roda `uso.py painel`.
