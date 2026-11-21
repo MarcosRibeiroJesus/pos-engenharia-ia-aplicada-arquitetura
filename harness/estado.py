@@ -33,6 +33,7 @@ FASES_DELEGAVEIS = ("tarefas", "analisar", "implementar", "verificar")
 # continua precisando da aprovação do dono, que libera as fases de FASES_DELEGAVEIS.
 FASES_ANTES_DO_PLANO = ("especificar", "esclarecer", "planejar")
 CAMPOS_APROVACAO = {"data", "fonte", "sha256"}
+CAMPOS_PAUSA = {"data", "fonte"}  # D-060: pausa decidida pelo dono, com as palavras dele
 
 
 def carregar(arquivo: Path = ARQUIVO) -> dict:
@@ -76,6 +77,9 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
             if not (raiz / p["specs"] / arq).exists():
                 erros.append(f"{p['chave']}: fase '{p['fase']}' exige {p['specs']}{arq}")
         erros += problemas_infra(estado, p, raiz)
+        pausa = p.get("pausado")
+        if pausa is not None and (not isinstance(pausa, dict) or CAMPOS_PAUSA - pausa.keys()):
+            erros.append(f"{p['chave']}: pausado precisa de {sorted(CAMPOS_PAUSA)} (a data e as palavras do dono)")
         aprov = p.get("plano_aprovado")
         if aprov is not None and (not isinstance(aprov, dict) or CAMPOS_APROVACAO - aprov.keys()):
             erros.append(f"{p['chave']}: plano_aprovado precisa de {sorted(CAMPOS_APROVACAO)} "
@@ -110,6 +114,10 @@ def pode_delegar(estado: dict, chave: str, raiz: Path = RAIZ) -> tuple[bool, str
     p = next((x for x in estado["projetos"] if x["chave"] == chave), None)
     if not p:
         return False, f"projeto {chave} não existe em harness/estado.json"
+    pausa = p.get("pausado")
+    if pausa:
+        return False, (f"{chave} está pausado pelo dono desde {pausa.get('data')} ({pausa.get('fonte')}). "
+                       "Nenhuma tarefa dele sai sem uma nova decisão do dono")
     if p["fase"] in FASES_ANTES_DO_PLANO:
         return True, ""
     aprov = p.get("plano_aprovado")
@@ -190,13 +198,19 @@ def bloqueios(estado: dict, arquivos: list[str]) -> list[tuple[str, str, str]]:
     return saida
 
 
+def linha_status(raiz: Path, p: dict) -> str:
+    feitas, total, proxima = tarefas(raiz, p)
+    pausa = p.get("pausado")
+    marca = f"  PAUSADO desde {pausa.get('data')}" if pausa else ""
+    return f"{p['chave']:28} fase={p['fase']:12} tarefas={feitas}/{total}  próxima: {proxima or '—'}{marca}"
+
+
 def main(argv: list[str]) -> int:
     estado = carregar()
     cmd = argv[0] if argv else "status"
     if cmd == "status":
         for p in estado["projetos"]:
-            feitas, total, proxima = tarefas(RAIZ, p)
-            print(f"{p['chave']:28} fase={p['fase']:12} tarefas={feitas}/{total}  próxima: {proxima or '—'}")
+            print(linha_status(RAIZ, p))
         return 0
     if cmd == "validar":
         erros = problemas(estado)

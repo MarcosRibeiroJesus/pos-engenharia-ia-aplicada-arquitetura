@@ -36,7 +36,11 @@
       "infra_real": true,
       "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
       "teto_diario_usd": null,
-      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml"
+      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml",
+      "pausado": {
+        "data": "2026-11-21",
+        "fonte": "Marcos no chat em 2026-11-21, ao alcance de \"só vamos fazer o Doom na disciplina 1\": \"Pausar a recomendação\" (sem cancelar; D-060)"
+      }
     },
     {
       "chave": "01-doom",
@@ -51,12 +55,18 @@
       "fase": "especificar",
       "retroativo": false,
       "pr": null,
-      "cloud": null,
+      "cloud": "gcp",
       "decisoes": [
-        "D-010"
+        "D-010",
+        "D-007",
+        "D-059",
+        "D-060"
       ],
-      "nota": "Onda 2 do plano.",
-      "infra_real": false
+      "nota": "Opção 04-C escolhida pelo dono (D-059): calibrador do limiar de confiança com gate humano, sobre o jogo fiel à aula (YOLO em TF.js num Web Worker). Doom com rótulos gerados pelo motor do jogo e ajuste do YOLO fora da aula. Tem parte na AWS (site privado, telemetria e gate); o ciclo de demonstração entra no plano.",
+      "infra_real": true,
+      "apply_workflow": ".github/workflows/01-doom-apply.yml",
+      "destroy_workflow": ".github/workflows/01-doom-destroy.yml",
+      "teto_diario_usd": null
     },
     {
       "chave": "02-assistente-agendamento",
