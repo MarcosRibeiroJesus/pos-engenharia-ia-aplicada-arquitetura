@@ -61,7 +61,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - Os alertas do orçamento vão para os mesmos e-mails do parâmetro `/00-conta/alertas/emails`, lidos do atributo sensível. Mudar o teto num lugar só reprova o TH-06.
     - **O filtro `user:project$00-plataforma-agentes` só enxerga custo depois que a tag `project` estiver ativa como tag de alocação de custo** (D-039, T053). Antes disso, o orçamento diário não vê nada, e sobra só o mensal. O README (T072) e o roteiro do ensaio (T084) dizem isso (análise 1, A17).
   - **Depende de:** T001.
-- [ ] T013 [engenheiro-terraform] Módulo `gateway`: gateway MCP com IAM na entrada · RF-001, RF-003, Art. IV · TT-G01, TT-G02, TT-S02 (gateway)
+- [x] T013 [engenheiro-terraform] Módulo `gateway`: gateway MCP com IAM na entrada · RF-001, RF-003, Art. IV · TT-G01, TT-G02, TT-S02 (gateway)
   - **Teste vermelho:** `modules/gateway/tests/gateway.tftest.hcl` com `expect_failures` para `authorizer_type = "NONE"` e `"AUTHENTICATE_ONLY"`; asserts de exatamente um `aws_bedrockagentcore_gateway`, `protocol_type = "MCP"`, `kms_key_arn` da chave da plataforma, `supported_versions` padrão `["2025-11-25", "2026-07-28"]` (ADR-0010), sem `search_type = "SEMANTIC"` e sem `exception_level = "DEBUG"`.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/gateway/{main.tf,variables.tf,outputs.tf}`, `modules/gateway/tests/gateway.tftest.hcl`.
   - **Contrato da entrada do motor (análise 1, A03; [ADR-0011](adr/0011-entrada-do-motor-no-gateway.md)):**
