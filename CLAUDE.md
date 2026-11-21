@@ -236,6 +236,9 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Economia de tokens** (D-058):
   - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
   - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
+  - **rtk e headroom** (D-067, ADR 0004):
+    - o rtk compacta a saída do Bash em toda sessão, pelo hook `.claude/hooks/rtk_rewrite.py`, que só repassa a reescrita de comandos simples de leitura e de teste, sem pular pedidos de permissão. Saída compacta demais: `rtk bypass <cmd>`;
+    - o headroom comprime o contexto só na minha máquina: `bash scripts/headroom-local.sh`, com a telemetria desligada. Nas sessões de nuvem ele não fica no caminho do modelo. Nunca use o `headroom learn` aqui;
   - **Uso registrado de tudo:**
     - o hook de uso soma também os transcripts dos subagentes;
     - o executor comita `harness/uso/` ao fechar cada fase;
