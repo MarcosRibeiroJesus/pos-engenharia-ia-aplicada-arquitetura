@@ -105,16 +105,17 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
   - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
   - o merge é meu: eu reviso o PR quando estiver pronto e mergeio. Não peça aprovação formal de PR; avise quando estiver pronto (D-062).
-  - Um projeto com Terraform roda só na minha máquina (D-042); projeto sem Terraform pode rodar em sessão de nuvem, sem Bedrock.
+  - Projeto com Terraform também roda em sessão de nuvem, com um agente por projeto em paralelo (D-063, substitui a D-042), sem Bedrock.
   - Cada sessão paralela consome o limite de uso da conta; o custo estimado de tokens é de 4 a 15 vezes uma sessão de chat (medição da própria Anthropic), então eu limito a quantidade de sessões ativas ao que eu consigo acompanhar.
 - **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
   - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
   - O `pre-push` bloqueia commit novo em branch já mergeado.
   - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
-- **Terraform roda na minha máquina** (D-042). A implementação de projeto com Terraform é feita numa sessão do Claude Code no meu computador, com ciclo de teste em segundos.
-  - Essa sessão é a única que comita no branch de implementação.
-  - A orquestração na nuvem coordena, mas não escreve nesse branch.
+- **Terraform nas sessões de nuvem** (D-063, substitui a D-042). Sem ciclo local na minha máquina: a implementação de Terraform roda em agentes e sessões de nuvem, em paralelo, um por projeto.
+  - A sessão precisa ter `terraform`, os providers e o Floci (rede do ambiente com releases.hashicorp.com, registry.terraform.io, floci.io e o Docker Hub). Sem eles, ela não escreve Terraform às cegas: para e avisa a orquestração.
+  - A sessão do projeto é a única que comita no branch de implementação; a orquestração coordena, mas não escreve nesse branch.
+  - O apply numa conta real continua só pelo workflow protegido, disparado por mim.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis

@@ -1,4 +1,4 @@
-"""Regras do dono em manuais e skills (D-036, D-037, D-041, D-042)."""
+"""Regras do dono em manuais e skills (D-036, D-037, D-041, D-063)."""
 from __future__ import annotations
 
 from comum import *  # noqa: F401,F403
@@ -54,14 +54,15 @@ class TestPerguntaAoDono(unittest.TestCase):
 
 
 class TestOndeRodaOTerraform(unittest.TestCase):
-    """D-042: Terraform na máquina do dono; um escritor por branch."""
+    """D-063 (substitui a D-042): Terraform nas sessões de nuvem, sem escrever às cegas; um escritor por branch."""
 
     def test_regra_na_skill_e_no_claude_md(self):
         for arq, frase in ((".claude/skills/terraform-tdd/SKILL.md", "Um escritor por branch"),
                            ("CLAUDE.md", "única que comita")):
             texto = (AQUI.parent / arq).read_text(encoding="utf-8")
-            self.assertIn("D-042", texto, arq)
+            self.assertIn("D-063", texto, arq)
             self.assertIn(frase, texto, arq)
+            self.assertIn("às cegas", texto, arq)
 
 
 class TestQuemGravaAMemoria(unittest.TestCase):
