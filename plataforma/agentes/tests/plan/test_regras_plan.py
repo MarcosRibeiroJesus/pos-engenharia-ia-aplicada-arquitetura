@@ -6,6 +6,8 @@ TT-S03 · menor privilégio: nenhuma declaração com ação "*" e recurso "*".
 TT-S05 · sem credencial: nenhuma credencial em variável, output, tag ou parâmetro SSM.
 TT-K02 · sem custo fixo ocioso: nada de NAT Gateway, endpoint de interface, cluster ou instância.
 TT-K03 · conta única: nada de aws_organizations_* nem aws_controltower_*.
+TT-O03 · alarme que pode disparar: alarme comum só sobre conjunto de dimensões publicado; sem ele,
+alarme por consulta do Metrics Insights (ADR-0013, T017).
 
 Cada fixture de `fixtures/` viola uma regra e foi gerada do plan com mock de um root sintético;
 a `conforme.json` é o controle positivo. O root do T001 roda pelo terraform test com mock, sem
@@ -41,6 +43,11 @@ VIOLADORAS = {
     "principal_publico_com_conta": ("TT-S01", "aws_sns_topic_policy.com_conta"),
     "condicao_conta_curinga": ("TT-S01", "aws_sns_topic_policy.conta_curinga"),
     "condicao_arn_curinga": ("TT-S01", "aws_sns_topic_policy.arn_curinga"),
+    # T017 (ADR-0013, análise 1 A05): alarme comum sobre métrica sem conjunto de dimensões
+    # publicado; o "verde" que nunca fica vermelho
+    "alarme_comum_deny_decisions": ("TT-O03", "aws_cloudwatch_metric_alarm.negacoes"),
+    # o mesmo alarme comum, escrito como metric_query.metric (revisão da T017, M1)
+    "alarme_metric_query_deny_decisions": ("TT-O03", "aws_cloudwatch_metric_alarm.negacoes_por_query"),
 }
 
 # valores com formato de credencial montados em tempo de execução, para nenhum segredo de mentira
@@ -228,6 +235,77 @@ class TestDetalhesDasRegras(unittest.TestCase):
         r = _recurso("aws_nat_gateway.velho", {})
         r["change"]["actions"] = ["delete"]
         r["change"]["after"] = None
+        self.assertEqual(plano.violacoes(_doc([r])), [])
+
+    def test_alarme_comum_no_namespace_do_agentcore_reprova(self):
+        # TT-O03 (ADR-0013): nenhuma métrica do AgentCore tem conjunto de dimensões publicado e
+        # registrado em plano.CONJUNTOS_PUBLICADOS, então qualquer conjunto reprova
+        for dims in ({}, {"Mode": "ENFORCE"}, {"PolicyEngine": "p00_x", "Mode": "ENFORCE"},
+                     {"Resource": "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/g"}):
+            with self.subTest(dimensoes=dims):
+                r = _recurso("aws_cloudwatch_metric_alarm.a", {
+                    "alarm_name": "00-plataforma-agentes-a", "namespace": "AWS/Bedrock-AgentCore",
+                    "metric_name": "SystemErrors", "dimensions": dims, "metric_query": []})
+                erros = plano.violacoes(_doc([r]))
+                self.assertTrue([e for e in erros if "TT-O03" in e], erros)
+
+    def test_alarme_comum_com_conjunto_publicado_passa(self):
+        # Guardrails (T037): InvocationsIntervened com GuardrailArn e GuardrailVersion (plano)
+        r = _recurso("aws_cloudwatch_metric_alarm.g", {
+            "alarm_name": "00-plataforma-agentes-g", "namespace": "AWS/Bedrock/Guardrails",
+            "metric_name": "InvocationsIntervened", "metric_query": [],
+            "dimensions": {"GuardrailArn": "arn:aws:bedrock:us-east-1:111111111111:guardrail/x",
+                           "GuardrailVersion": "1"}})
+        self.assertEqual(plano.violacoes(_doc([r])), [])
+
+    def test_alarme_comum_com_conjunto_diferente_do_publicado_reprova(self):
+        r = _recurso("aws_cloudwatch_metric_alarm.g", {
+            "alarm_name": "00-plataforma-agentes-g", "namespace": "AWS/Bedrock/Guardrails",
+            "metric_name": "InvocationsIntervened", "metric_query": [],
+            "dimensions": {"GuardrailArn": "arn:aws:bedrock:us-east-1:111111111111:guardrail/x"}})
+        erros = plano.violacoes(_doc([r]))
+        self.assertTrue([e for e in erros if "TT-O03" in e], erros)
+
+    def test_metrica_dentro_do_metric_query_e_conferida(self):
+        def alarme(metrica):
+            return _recurso("aws_cloudwatch_metric_alarm.m", {
+                "alarm_name": "00-plataforma-agentes-m", "metric_query": [
+                    {"id": "e1", "expression": "m1 + 0", "return_data": True, "metric": []},
+                    {"id": "m1", "return_data": False, "metric": [metrica]}]})
+        agentcore = {"namespace": "AWS/Bedrock-AgentCore", "metric_name": "SystemErrors",
+                     "dimensions": {"Resource": "g"}, "period": 300, "stat": "Sum"}
+        erros = plano.violacoes(_doc([alarme(agentcore)]))
+        self.assertTrue([e for e in erros if "TT-O03" in e and "metric_query[1]" in e], erros)
+        guardrail = {"namespace": "AWS/Bedrock/Guardrails", "metric_name": "InvocationsIntervened",
+                     "dimensions": {"GuardrailArn": "a", "GuardrailVersion": "1"},
+                     "period": 300, "stat": "Sum"}
+        self.assertEqual(plano.violacoes(_doc([alarme(guardrail)])), [])
+        incompleto = dict(guardrail, dimensions={"GuardrailArn": "a"})
+        self.assertTrue([e for e in plano.violacoes(_doc([alarme(incompleto)])) if "TT-O03" in e])
+
+    def test_metric_name_desconhecido_reprova(self):
+        # falha fechada: a regra não lê o nome, então não pode afirmar que o conjunto é o publicado
+        topo = _recurso("aws_cloudwatch_metric_alarm.t", {"alarm_name": "00-plataforma-agentes-t",
+                                                          "metric_query": []},
+                        {"metric_name": True})
+        aninhado = _recurso(
+            "aws_cloudwatch_metric_alarm.n",
+            {"alarm_name": "00-plataforma-agentes-n", "metric_query": [
+                {"id": "m1", "return_data": True, "metric": [
+                    {"namespace": "AWS/Bedrock/Guardrails", "period": 300, "stat": "Sum",
+                     "dimensions": {"GuardrailArn": "a", "GuardrailVersion": "1"}}]}]},
+            {"metric_query": [{"metric": [{"metric_name": True}]}]})
+        for r in (topo, aninhado):
+            with self.subTest(endereco=r["address"]):
+                erros = plano.violacoes(_doc([r]))
+                self.assertTrue([e for e in erros if "TT-O03" in e and r["address"] in e], erros)
+
+    def test_alarme_por_consulta_passa(self):
+        r = _recurso("aws_cloudwatch_metric_alarm.q", {
+            "alarm_name": "00-plataforma-agentes-q", "metric_query": [{
+                "id": "q1", "period": 300, "return_data": True, "metric": [],
+                "expression": "SELECT SUM(DenyDecisions) FROM \"AWS/Bedrock-AgentCore\" "
+                              "WHERE PolicyEngine = 'p00_x' AND Mode = 'ENFORCE'"}]})
         self.assertEqual(plano.violacoes(_doc([r])), [])
 
     def test_fixture_nao_e_alterada(self):

@@ -16,9 +16,10 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      # delivery_destination_type = "XRAY" foi conferido no schema do provider 6.73.0
-      # (terraform providers schema -json); o root fixa ~> 6.50.
-      version = "~> 6.50"
+      # delivery_destination_type = "XRAY" e o destination_resource_arn opcional foram conferidos
+      # só no schema do provider 6.73.0 (terraform providers schema -json), que é a versão do lock
+      # do root (root: ~> 6.50). Por isso o piso do módulo é 6.73.
+      version = ">= 6.73, < 7.0"
     }
   }
 }
@@ -80,6 +81,9 @@ resource "aws_cloudwatch_log_delivery_destination" "logs_gateway" {
 # todos os recursos do Logs da conta, então o valor é um recurso do Logs. Ficam a fonte e o destino
 # desta entrega; o ARN da própria entrega não entra, porque ela depende desta política (ciclo).
 # A conferência é do ensaio contra a AWS (T084): se a entrega não gravar, o ajuste é aqui.
+#
+# Cota: o CloudWatch Logs aceita até 10 políticas de recurso por região na conta, e a conta é
+# única para todos os projetos (D-029). Esta política ocupa uma delas durante a demonstração.
 resource "aws_cloudwatch_log_resource_policy" "entrega_gateway" {
   policy_name = "${local.prefixo}-entrega-logs-gateway"
 

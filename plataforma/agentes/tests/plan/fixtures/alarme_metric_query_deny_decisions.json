@@ -1,0 +1,61 @@
+{
+ "_descricao": "Viola TT-O03: alarme com metric_query cuja métrica (metric_query.metric) é DenyDecisions só com a dimensão Mode. É o mesmo alarme comum da fixture alarme_comum_deny_decisions, escrito dentro do metric_query: o conjunto de dimensões não está publicado, então a série nunca casaria (ADR-0013). Montada no formato do plan com mock (T017, revisão M1).",
+ "_regra": "TT-O03",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_cloudwatch_metric_alarm.negacoes_por_query",
+    "mode": "managed",
+    "type": "aws_cloudwatch_metric_alarm",
+    "name": "negacoes_por_query",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "alarm_name": "00-plataforma-agentes-motor-deny-decisions",
+      "evaluation_periods": 1,
+      "threshold": 5,
+      "comparison_operator": "GreaterThanOrEqualToThreshold",
+      "treat_missing_data": "notBreaching",
+      "alarm_actions": [
+       "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+      ],
+      "metric_query": [
+       {
+        "id": "m1",
+        "expression": null,
+        "return_data": true,
+        "metric": [
+         {
+          "namespace": "AWS/Bedrock-AgentCore",
+          "metric_name": "DenyDecisions",
+          "dimensions": {
+           "Mode": "ENFORCE"
+          },
+          "period": 300,
+          "stat": "Sum"
+         }
+        ]
+       }
+      ],
+      "tags": {
+       "module": "observabilidade"
+      }
+     },
+     "after_unknown": {
+      "arn": true,
+      "id": true,
+      "tags_all": true
+     },
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

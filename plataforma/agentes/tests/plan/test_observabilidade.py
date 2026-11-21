@@ -46,6 +46,18 @@ class TestObservabilidadeNoPlan(unittest.TestCase):
         self.assertIn("XRAY", destinos)
         self.assertEqual(len(self._criados("aws_cloudwatch_log_delivery")), 2)
 
+    def test_cinco_alarmes_por_consulta_no_topico(self):
+        # T017 (RNF-003, ADR-0013): os cinco alarmes, todos por consulta do Metrics Insights, sem
+        # métrica única no topo, e só com o tópico da plataforma como ação
+        alarmes = self._criados("aws_cloudwatch_metric_alarm")
+        self.assertEqual(len(alarmes), 5, "o módulo cria os cinco alarmes do RNF-003")
+        for a in alarmes:
+            self.assertFalse(a.get("metric_name"), f"{a['alarm_name']}: alarme por consulta (ADR-0013)")
+            self.assertEqual(len(a["metric_query"]), 1, a["alarm_name"])
+            self.assertTrue(a["metric_query"][0]["expression"].startswith("SELECT SUM("), a["alarm_name"])
+            self.assertEqual(a["alarm_actions"],
+                             ["arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"])
+
     def test_sem_violacoes_do_t003(self):
         self.assertEqual(plano.violacoes(self.doc), [])
 
