@@ -44,7 +44,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/nucleo/{main.tf,variables.tf,outputs.tf}`, `modules/nucleo/tests/kms.tftest.hcl`.
   - **Aceite:** testes verdes; o T003 continua verde; ADR-0001 cumprido item a item.
   - **Depende de:** T001.
-- [ ] T011 [engenheiro-terraform] Módulo `nucleo`: tópico SNS dos alarmes e assinaturas · Art. IV, RNF-001, RNF-003 · TT-S02 (SNS), TT-S04
+- [x] T011 [engenheiro-terraform] Módulo `nucleo`: tópico SNS dos alarmes e assinaturas · Art. IV, RNF-001, RNF-003 · TT-S02 (SNS), TT-S04
   - **Teste vermelho:** `modules/nucleo/tests/sns.tftest.hcl` afirma o tópico `00-plataforma-agentes-alarmes` com `kms_master_key_id` da chave do T010, política que nega `aws:SecureTransport = false` e só aceita `sns:Publish` do `cloudwatch.amazonaws.com` da conta, e uma assinatura `email` por endereço de `data "aws_ssm_parameter"` `/00-conta/alertas/emails` (mock com dois endereços sintéticos).
   - **Teste vermelho do TT-S06 (análise 1, A06; ADR-0008):** `plataforma/agentes/tests/plan/test_dados_pessoais.py` lê o `terraform show -json` do plan com mock. Ele reprova se `after_sensitive.endpoint` de alguma `aws_sns_topic_subscription` não for `true`. A fixture com o valor lido de `insecure_value`, ou com `nonsensitive()` em volta da lista, precisa reprovar.
   - **Arquivos:** `modules/nucleo/sns.tf`, `modules/nucleo/tests/sns.tftest.hcl`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`, `plataforma/agentes/tests/plan/fixtures/`.
