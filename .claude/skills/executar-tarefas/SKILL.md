@@ -16,7 +16,7 @@ Você é o coordenador desta execução. **Não escreve o código da tarefa:** d
 Repita até a fase atual do `tasks.md` terminar:
 
 1. **Escolha:** a primeira tarefa sem `[x]` cujas dependências estejam feitas. Pule tarefas `[DONO]` e `[BLOQUEADO: ...]`; elas entram no relatório.
-2. **Delegue ao especialista da tarefa,** o que está entre colchetes no `tasks.md`. O briefing começa com `Projeto: <chave>` e traz:
+2. **Delegue ao especialista da tarefa,** o que está entre colchetes no `tasks.md`. Se a tarefa for só mecânica (texto, renomeação ou alinhamento, sem decisão), dispare com `model: sonnet` (D-058). O briefing começa com `Projeto: <chave>` e traz:
    - o texto inteiro da tarefa: teste vermelho, arquivos, aceite e dependências;
    - o requisito citado;
    - as restrições de custo e segurança.
@@ -36,6 +36,7 @@ Repita até a fase atual do `tasks.md` terminar:
 6. Acrescente uma linha em `harness/progresso.md`.
 
 ## Ao fechar a fase
+0. Comite o registro de uso da sessão (`harness/uso/<sessao>.json`, que o hook grava somando os subagentes). Quando houver só o total informado por um subagente, lance com `python3 scripts/uso/uso.py manual --fonte medido-total --total N` (D-058).
 1. Faça push do branch, sem `--force` e nunca no `main`.
 2. Abra o PR para o `main`, ou atualize o que foi aberto nesta execução. O corpo traz:
    - as tarefas feitas, cada uma com o veredito da revisão;
