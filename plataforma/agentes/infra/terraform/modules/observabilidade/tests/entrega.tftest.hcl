@@ -42,6 +42,17 @@ variables {
   gateway_id  = "00-plataforma-agentes-gateway-sintetico"
   gateway_arn = "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/00-plataforma-agentes-gateway-sintetico"
   kms_key_arn = "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001"
+
+  # Entradas dos alarmes (T017), obrigatórias no módulo; as regras delas estão no alarmes.tftest.hcl.
+  policy_engine_id   = "p00_plataforma_agentes-sintetico"
+  topico_alarmes_arn = "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+  nomes_dos_alarmes = [
+    "00-plataforma-agentes-gateway-system-errors",
+    "00-plataforma-agentes-gateway-throttles",
+    "00-plataforma-agentes-gateway-user-errors",
+    "00-plataforma-agentes-motor-system-errors",
+    "00-plataforma-agentes-motor-deny-decisions",
+  ]
 }
 
 run "logs_de_aplicacao_do_gateway" {
@@ -176,10 +187,12 @@ run "traces_do_gateway_para_o_xray" {
     condition     = aws_cloudwatch_log_delivery.traces_gateway.delivery_destination_arn == aws_cloudwatch_log_delivery_destination.traces_xray.arn
     error_message = "A entrega de traces vai para o destino X-Ray."
   }
-  # O único grupo do módulo é o do gateway; o aws/spans não nasce aqui.
+  # O grupo do módulo é o do gateway, não o aws/spans. Que ele é o ÚNICO grupo do módulo é conferido
+  # no plan em JSON, pelo test_grupos_com_retencao_e_chave_e_sem_spans de
+  # plataforma/agentes/tests/plan/test_observabilidade.py (o HCL só enxerga recursos pelo nome).
   assert {
-    condition     = length(aws_cloudwatch_log_group.gateway[*]) == 1 && aws_cloudwatch_log_group.gateway.name != "aws/spans"
-    error_message = "O módulo cria só o grupo dos logs do gateway; o aws/spans é da conta (infra/conta)."
+    condition     = aws_cloudwatch_log_group.gateway.name != "aws/spans" && startswith(aws_cloudwatch_log_group.gateway.name, "/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/")
+    error_message = "O grupo do módulo é o dos logs do gateway; o aws/spans é da conta (infra/conta)."
   }
 }
 

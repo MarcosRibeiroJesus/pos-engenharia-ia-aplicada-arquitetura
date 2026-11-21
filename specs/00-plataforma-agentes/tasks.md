@@ -86,7 +86,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/{entrega.tf,variables.tf,outputs.tf}`, `modules/observabilidade/tests/entrega.tftest.hcl`.
   - **Aceite:** todos os recursos entram no destroy; o grupo `aws/spans` não é criado aqui (é da conta, `infra/conta`).
   - **Depende de:** T010, T013.
-- [ ] T017 [engenheiro-terraform] Módulo `observabilidade`: cinco alarmes da plataforma · RNF-003, Art. VI · TT-O03
+- [x] T017 [engenheiro-terraform] Módulo `observabilidade`: cinco alarmes da plataforma · RNF-003, Art. VI · TT-O03
   - **Teste vermelho:** `modules/observabilidade/tests/alarmes.tftest.hcl` afirma os cinco alarmes do RNF-003 (`SystemErrors` ≥ 1, `Throttles` ≥ 1 e `UserErrors` ≥ 3 do gateway; `SystemErrors` do motor ≥ 1; `DenyDecisions` ≥ 5 só em `Mode = ENFORCE`), todos com período de 300 s, 1 avaliação, `Sum`, `treat_missing_data = "notBreaching"` e ação no tópico do T011.
   - **Dimensões (análise 1, A05; [ADR-0013](adr/0013-alarmes-sem-dimensoes-publicadas.md)):** um alarme comum só casa com a série que tem exatamente o mesmo conjunto de dimensões.
     - **Métrica com conjunto de dimensões publicado:** o assert fixa o conjunto completo, com o link da página e a data da consulta num comentário do teste.

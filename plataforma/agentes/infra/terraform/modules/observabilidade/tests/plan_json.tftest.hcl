@@ -31,6 +31,17 @@ variables {
   gateway_id  = "00-plataforma-agentes-gateway-sintetico"
   gateway_arn = "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/00-plataforma-agentes-gateway-sintetico"
   kms_key_arn = "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001"
+
+  # Entradas dos alarmes (T017).
+  policy_engine_id   = "p00_plataforma_agentes-sintetico"
+  topico_alarmes_arn = "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+  nomes_dos_alarmes = [
+    "00-plataforma-agentes-gateway-system-errors",
+    "00-plataforma-agentes-gateway-throttles",
+    "00-plataforma-agentes-gateway-user-errors",
+    "00-plataforma-agentes-motor-system-errors",
+    "00-plataforma-agentes-motor-deny-decisions",
+  ]
 }
 
 run "plano_para_regras" {
