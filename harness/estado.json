@@ -22,7 +22,7 @@
         "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"
       ],
       "specs": "specs/01-recomendacao/",
-      "fase": "analisar",
+      "fase": "implementar",
       "retroativo": true,
       "pr": 1,
       "cloud": "gcp",
