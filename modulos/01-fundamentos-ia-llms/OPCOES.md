@@ -1,6 +1,6 @@
 # Disciplina 01 · Opções de projeto por unidade
 
-Proposta de projetos para as unidades 02 e 04 a 10 de **Fundamentos de IA e LLMs para Programadores**. Nada foi implementado. A unidade 03 (recomendação) tem sessão própria (PR #1) e fica fora deste documento; a unidade 01 é introdução e não tem conteúdo técnico.
+Proposta de projetos para as unidades 02 e 04 a 10 de **Fundamentos de IA e LLMs para Programadores**. Nada foi implementado. **Status (decisão do dono, nesta revisão):** catálogo de referência. Só o Doom (unidade 04) será implementado nesta disciplina; as opções das demais unidades não estão escolhidas nem serão implementadas agora. A unidade 03 (recomendação) tem sessão própria (PR #1) e fica fora deste documento; a unidade 01 é introdução e não tem conteúdo técnico.
 
 Data da pesquisa: 2026-11-18. Unidade 04 revisada em 2026-11-21, com o resumo das aulas 15 a 19.
 
@@ -379,6 +379,8 @@ A troca: a aula inteira trata de inferência no cliente, que sai de graça para 
 | Floci | Alto: ECS com contêiner real (Ollama real é viável), Lambda, DynamoDB, Comprehend (listado, 5 operações; detecção de PII a confirmar) |
 | Custo lab | `$` com modelo pequeno em CPU |
 | Fonte | Composição da 09-A (gateway) com os princípios de entrada segura em [Capability 2: secure access to generative AI RAG techniques](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/gen-ai-rag.html) (Prescriptive Guidance, mesmo uso de filtragem e controle de dados); a regra de residência é decisão minha |
+
+**Escolha do dono nesta revisão (exceção à regra de lab):** modelo de 20B ou 30B, como na aula. Exige ADR com motivo e teto diário, com GPU ligada só durante a demonstração. O contrato continua testado no Floci com modelo pequeno.
 
 **Recomendação: 09-C.** "Aberto vs. fechado" na vida real raramente é questão de benchmark; é questão de *que dados podem sair*. A 09-C faz a aula virar política executável e testável: dado sensível nunca chega ao provedor externo, mesmo no fallback, e isso é uma propriedade verificável por teste. Usa o Ollama da aula de verdade (o ECS do Floci roda contêiner) e o OpenRouter vira a discussão de ADR (gateway pronto vs. código próprio). A 09-A é a referência oficial e fica como alternativa; adoto só a versão mínima por causa do custo fixo (ALB, banco, cache). Se você quiser mais fidelidade às fontes oficiais que à prova, escolha a 09-A.
 
