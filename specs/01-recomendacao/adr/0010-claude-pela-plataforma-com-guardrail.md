@@ -29,8 +29,9 @@ Fatos que moldam a decisão (consulta em 2026-11-20):
    - cabeçalhos de guardrail por requisição;
    - `X-Amzn-Bedrock-Trace` ausente, para o trace (sem máscara) não voltar e não ir para log.
 4. **IAM fecha o caminho sem guardrail:**
-   - a role só tem `bedrock:InvokeModel` no perfil e nos modelos de origem dele, com as condições `bedrock:InferenceProfileArn` e `bedrock:GuardrailIdentifier`;
-   - tem `bedrock:ApplyGuardrail` só no próprio guardrail;
+   - a task role é a do agente que o módulo `registro-produto` cria, e o ECS não acrescenta ação do Bedrock;
+   - as ações do Bedrock ficam só em `bedrock:InvokeModel` (a ação de IAM que também autoriza o `Converse`, [pré-requisitos de inferência](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-prereq.html), consulta em 2026-11-20) no perfil e nos modelos de origem dele, com as condições `bedrock:InferenceProfileArn` e `bedrock:GuardrailIdentifier`, e em `bedrock:ApplyGuardrail` só no próprio guardrail;
+   - o módulo também concede `bedrock-agentcore:InvokeGateway` no gateway e `ssm:GetParameter` no contrato, que ficam como risco residual do R9, sem rota na VPC da base (linha E do STRIDE do plano, emenda 1);
    - uma chamada sem o guardrail recebe 403, não retentável.
 5. **Entrada marcada:** só os campos de catálogo (título e categoria) vão entre as marcas de entrada do guardrail, com sufixo aleatório por requisição, porque são o ponto de injeção indireta.
 6. **Leitura da resposta:**

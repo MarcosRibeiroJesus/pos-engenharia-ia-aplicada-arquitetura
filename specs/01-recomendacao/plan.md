@@ -19,7 +19,7 @@
 - **Re-ranker que a AWS aceita.** Serverless Inference sem isolamento de rede, porque o serviço não suporta isolamento. O container é o nativo do XGBoost, sem código nosso, e o artefato é gravado em formato nativo, sem pickle (ADR-0009).
 - **Claude pela plataforma (D-053, E1).** Perfil de inferência e guardrail vêm do contrato v1. O guardrail vai nos cabeçalhos do InvokeModel, imposto por IAM. Um `ApplyGuardrail` revisa o texto final, porque o guardrail do modelo não lê os parâmetros de tool. Não há gateway MCP (ADR-0010).
 - **Correções de segurança e de verdade:** categoria por lista de caracteres permitidos, vetor da sessão no lugar do vetor de zeros, falha de dependência visível e regra dos 30 dias ligada no serviço real (ADR-0011 e ADR-0012).
-- **Teto diário: US$ 7,10** (aprovado pelo dono, D-056), sobre uma estimativa de US$ 6,43 (seção "Custo do lab"). Somado ao teto da plataforma (US$ 1,20), um dia de demonstração cabe em 42% do limite mensal de US$ 20. O valor de 7,10 é proposta e depende da resposta à P01-P5.
+- **Teto diário: US$ 7,10** (aprovado pelo dono, D-056), sobre uma estimativa de US$ 6,43 (seção "Custo do lab"). Somado ao teto da plataforma (US$ 1,20), um dia de demonstração cabe em 42% do limite mensal de US$ 20.
 
 ## Verificação da constituição
 | Artigo | Como o plano cumpre | Risco |
@@ -276,7 +276,7 @@ Curso Skilljar de cada ADR: Claude with Amazon Bedrock e Building with the Claud
 | I: dado de outro usuário na explicação | F3, F4 | o prompt só tem itens do próprio usuário; os ids da resposta precisam ser exatamente os do pedido | VT existentes do explicador |
 | D: `sessionItemIds` enorme ou `limit` alto | F2 | até 10 ids; `limit` de 1 a 50; disjuntores e timeouts | VT-04, VT existentes |
 | D: custo esquecido ligado | F1 | prazo de 24 h na base e de até 3 h na janela, destroy em cascata, Budgets diário, mensal da conta | TH-01, TH-02, TT-K01 |
-| E: role do serviço amplia acesso ao Bedrock | F4 | só `InvokeModel` no ARN do perfil, com condição de guardrail; só `ApplyGuardrail` no próprio guardrail | TT-B01 |
+| E: role do serviço amplia acesso ao Bedrock | F4 | a task role é a `01-recomendacao-agente-explicador` do módulo `registro-produto`, e o ECS não acrescenta nenhuma ação do Bedrock (só DynamoDB, MemoryDB e SageMaker). Do módulo vêm: `bedrock:InvokeModel` (a ação de IAM que também autoriza o `Converse`) só no ARN do perfil do contrato e nos modelos de origem dele, porque o perfil `us.` roteia entre regiões (condição `bedrock:InferenceProfileArn`), sempre com a condição `bedrock:GuardrailIdentifier`; e `bedrock:ApplyGuardrail` só no próprio guardrail. Também vêm do módulo, como risco residual do R9: `bedrock-agentcore:InvokeGateway` no ARN do gateway, negado pelo Cedar sem `permit` e sem rota, porque a VPC da base não tem endpoint do AgentCore nem NAT; e `ssm:GetParameter` no `comum` e no parâmetro do produto, que não guardam segredo e também ficam sem rota (sem endpoint `ssm`) | TT-B01 (ações e recursos da role composta); TT-K02 (só os 5 endpoints da base, sem NAT) |
 | E: endpoint Serverless sem isolamento de rede | F3 | container nativo sem código nosso; role sem escrita em S3; payload só com scores e flags | TT-E02; ADR-0009 |
 
 ### Fronteiras específicas de LLM
@@ -328,7 +328,7 @@ Ids: VT (Vitest), PY (unittest do lote), TT (`terraform test`), ST (`static_rule
 | Art. III · cobertura | TH (existente, matriz) | todo RF e RNF aparece em `matriz.md` com teste |
 | Art. IV · nada público | TT existentes `rede_privada_por_padrao`, `rede_api_publica_exige_opt_in`, `s3_golden_dataset` | ALB interno, sem IP público, buckets bloqueados |
 | Art. IV · criptografia | TT existentes `kms_chave_da_plataforma`, `memorydb_tls`; TT-K03 | KMS em tudo, inclusive na janela; TLS no MemoryDB; `aws:SecureTransport` |
-| Art. IV · menor privilégio | TT existentes; TT-B01, TT-E02, TT-J01, TT-I01 | sem `*` com `*`; Bedrock só no perfil; endpoint só lê o artefato; MWAA só nos jobs do projeto; deploy com ABAC |
+| Art. IV · menor privilégio | TT existentes; TT-B01, TT-E02, TT-J01, TT-I01 | sem `*` com `*`; ações do Bedrock só no perfil do contrato, nos modelos de origem dele e no próprio guardrail, com a condição de guardrail, e nenhuma ação do Bedrock acrescentada pelo ECS; endpoint só lê o artefato; MWAA só nos jobs do projeto; deploy com ABAC |
 | Art. IV · segredos fora | ES (gitleaks); ST-06 | nenhum segredo nem ARN do Bedrock escrito à mão |
 | Art. IV · achado alto bloqueia | ES | checkov, tflint, Trivy, Semgrep e zizmor sem alto |
 | Art. V · sem custo fixo ocioso | TT-K02, ST-07 | sem NAT; endpoints da base só os 5 da lista; nenhum MWAA na base |
@@ -365,7 +365,7 @@ Ids: VT (Vitest), PY (unittest do lote), TT (`terraform test`), ST (`static_rule
 | RF-107 · lote coerente | PY-01, TT-G01, TT-G02 | nenhum nome fixo; todo `job_name` do DAG tem `aws_glue_job`; publicações em Python shell |
 | RF-108 · roteiro | DM-01 a DM-05; TT-R01 | quatro passos com `requestId`; p95 sem explicação; task definition do roteiro sem permissão extra |
 | RF-109 · re-ranker aceito | TT-E01, TT-E03; DM-06 | Serverless com isolamento reprova; `model_data_url` aponta para a semente; `InService` |
-| RF-110 · plataforma | TT-B01, TT-B02, ST-06, VT-10 a VT-12, VT-17; DM-08 | role só no perfil e no guardrail do contrato; nada escrito à mão; intervenção vira `guardrail` sem retentativa |
+| RF-110 · plataforma | TT-B01, TT-B02, ST-06, VT-10 a VT-12, VT-17; DM-08 | ações do Bedrock da role só no perfil do contrato, nos modelos de origem dele e no guardrail, com a condição de guardrail; nada escrito à mão; intervenção vira `guardrail` sem retentativa |
 | RF-111 · proveniência das gravadas | VT-13 | gravação sem `proveniencia` reprova |
 | RNF-001 · segurança | itens do Art. IV | — |
 | RNF-002 · custo | itens do Art. V | — |
@@ -526,7 +526,7 @@ Região `us-east-1`. Consultas de preço em 2026-11-20. Sem camada gratuita, que
 | **Subtotal da janela** | **1,864** (com 2 h: 1,284) | |
 | **Total estimado do dia** | **6,428** | |
 
-- **Teto diário: US$ 7,10** (o total mais cerca de 10%, como na plataforma), aprovado pelo dono (P01-P5, D-056). Gravado em `teto_diario_usd` no `harness/estado.json`. Ele vai para o README e para o `aws_budgets_budget` diário na implementação, e só vale com a aprovação do plano e a resposta à P01-P5.
+- **Teto diário: US$ 7,10** (o total mais cerca de 10%, como na plataforma), aprovado pelo dono (P01-P5, D-056). Gravado em `teto_diario_usd` no `harness/estado.json`. Ele vai para o README e para o `aws_budgets_budget` diário na implementação.
   - A alternativa sem margem é US$ 6,50, o total arredondado para a dezena de centavo seguinte, com 1% de folga. Com ela, o Budgets diário avisaria por ruído, porque os volumes são premissas.
   - O Budgets diário filtra pela tag `user:project`. O Claude é cobrado pelo AWS Marketplace, sob o provedor do modelo ([model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html)), e pode não aparecer no filtro da tag (R7). O limite mensal da conta cobre esse caso.
 - **Peso no mês (D-022):**
@@ -614,3 +614,13 @@ Além das fontes da spec (seção "Proveniência"):
 | Fargate por segundo, com mínimo de 1 minuto | [Fargate pricing](https://aws.amazon.com/fargate/pricing/) | sem data | confirmado |
 | ALB a US$ 0,0225/h e US$ 0,008 por LCU-hora; endpoint de interface a US$ 0,01/h por ENI | [ELB pricing](https://aws.amazon.com/elasticloadbalancing/pricing/); [PrivateLink pricing](https://aws.amazon.com/privatelink/pricing/) | sem data | confirmado pelos exemplos |
 | Floci: MWAA real ou mock, sem `InvokeRestApi`; MemoryDB em Valkey 8; Bedrock com guardrails e perfis no controle; Runtime com `InvokeModel` sempre em stub e guardrail fora de escopo | [MWAA](https://floci.io/floci/services/mwaa/), [MemoryDB](https://floci.io/floci/services/memorydb/), [Bedrock](https://floci.io/floci/services/bedrock/), [Bedrock Runtime](https://floci.io/floci/services/bedrock-runtime/) | sem data | confirmado |
+
+## Emenda 1 (2026-11-20)
+Autorizada pelo dono no chat em 2026-11-20 (BRT), na pergunta D01-P6 (emenda de texto do plano da recomendação): "Pode emendar e já aprovo". A emenda fecha só os achados A01 (permissões do Bedrock na task role) e A06 (teto ainda como "proposta") da rodada 1 da análise (`analise.md`), que eram os furos F1 e F7 do `tasks.md`. Não muda desenho, serviço, custo nem a lista de testes: o TT-K02, citado a mais no STRIDE, já existe na matriz. O registro da nova aprovação no `harness/estado.json` (`estado.py aprovar-plano`) e na memória fica com a orquestração. Cada linha diz o trecho, o que mudou, a boa prática que guia a mudança e o erro comum que ela evita (D-036).
+
+| Achado | Trecho e o que mudou | Boa prática e erro comum |
+|---|---|---|
+| A01 · permissões do Bedrock na task role | **STRIDE, linha "E: role do serviço amplia acesso ao Bedrock":** sai "só `InvokeModel` no ARN do perfil". Entra a permissão que a composição concede: a role é a do módulo `registro-produto`; o ECS não acrescenta ação do Bedrock; `bedrock:InvokeModel` (que autoriza também o `Converse`, [pré-requisitos de inferência](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-prereq.html), consulta em 2026-11-20) no perfil e nos modelos de origem, com `bedrock:InferenceProfileArn` e `bedrock:GuardrailIdentifier`; `bedrock:ApplyGuardrail` no próprio guardrail; `InvokeGateway` e `ssm:GetParameter` como risco residual do R9, sem rota na VPC. A coluna de teste ganha o TT-K02, que prova a falta de rota. **Matriz, linhas "Art. IV · menor privilégio" e "RF-110 · plataforma":** "Bedrock só no perfil" e "role só no perfil e no guardrail" passam ao mesmo texto. É a leitura que o TT-B01 da T053 já testa | **A afirmação de segurança é a mesma em todos os artefatos e testável como está escrita.** O arquiteto escreve no modelo de ameaças a permissão que a composição realmente concede, com o porquê de cada ação a mais, e o teste afirma esse texto. O erro comum é aprovar uma garantia mais forte que a real, e o revisor do modelo de ameaças conferir uma promessa que ninguém implementa, ou reprovar a composição correta (1.4, 4.1, 4.6) |
+| A06 · teto ainda como "proposta" | **Resumo:** sai "O valor de 7,10 é proposta e depende da resposta à P01-P5". **Custo do lab:** sai "e só vale com a aprovação do plano e a resposta à P01-P5". Nos dois lugares, o teto de US$ 7,10 fica só como aprovado pelo dono (D-056) | **O estado do documento é igual ao registro.** O arquiteto mantém o status do plano igual ao do `estado.json` e da memória. O erro comum é o leitor tomar como pendente o que já foi decidido e reabrir a decisão com o dono (5.1) |
+
+Fora da emenda, nada mudou: arquitetura, serviços, ADRs, custo, riscos e as demais linhas da matriz e do STRIDE.

@@ -27,7 +27,7 @@ A arquitetura é inspirada no post do AWS Big Data Blog em que o time Everyday E
 
 **Deu certo quando** (verificado na fase verificar):
 1. **Harness verde:** o `estado.py validar` aprova o projeto na fase `verificar`, e os testes do harness passam sem as duas falhas de hoje (RNF-106).
-2. **Demonstração de um dia:** o roteiro de demonstração (RF-108) roda no stack real, dentro do teto (`teto_diario_usd`, calculado no plano), e o destroy termina com zero recurso com a tag `project=01-recomendacao`. A única exceção é a chave KMS com exclusão agendada (`PendingDeletion`), que não gera custo.
+2. **Demonstração de um dia:** o roteiro de demonstração (RF-108) roda no stack real, dentro do teto (`teto_diario_usd`, calculado no plano), e o destroy termina com zero recurso com a tag `project=01-recomendacao`. As únicas exceções são a chave KMS com exclusão agendada (`PendingDeletion`), que não gera custo, e o serviço ECS que não está `ACTIVE` nem `DRAINING`, que fica `INACTIVE` e continua no índice de tags por um tempo depois de apagado, sem custo (regra do ADR-0006, a mesma do RNF-101).
 3. **Cobertura:** todo RF e RNF desta spec tem teste na matriz regra → teste do plano.
 
 ## Histórias de usuário
@@ -341,16 +341,16 @@ Cada item abaixo é **lacuna (retroativo)**: a constituição ou uma decisão em
   - **registro:** a D01 entra no catálogo da `00-plataforma-agentes` como produto que chama o Claude;
   - **inferência:** passa pelo perfil de inferência de aplicação dela, com a tag `project=01-recomendacao`, e pelo guardrail dela, na versão numerada publicada no contrato v1 (RF-004, RF-005 e RF-007 da spec da plataforma);
   - **contrato:** o ARN do perfil e o id e a versão do guardrail vêm do parâmetro SSM do contrato, nunca escritos à mão;
-  - **IAM:** a task role só invoca o próprio perfil;
+  - **IAM:** a task role é a do agente que o módulo `registro-produto` da plataforma cria, e o ECS não acrescenta nenhuma ação do Bedrock. As ações do Bedrock ficam só no ARN do perfil do contrato, nos modelos de origem dele (o perfil `us.` roteia entre regiões, condição `bedrock:InferenceProfileArn`) e no próprio guardrail; a invocação exige a condição `bedrock:GuardrailIdentifier`. O `InvokeGateway` e o `ssm:GetParameter` que o módulo também concede ficam como risco residual, sem rota na VPC da base (R9 e linha E do STRIDE do plano);
   - **fallback:** uma intervenção do guardrail vira a categoria `guardrail` no explicador, não retentável, com o fallback do RF-007;
   - **gateway MCP:** a D01 não registra alvo no gateway, porque não tem tool de ação (E1).
 
   Os tópicos negados do guardrail da D01 (recomendação) ficam definidos pela D-053: nenhum tópico extra, porque o código já barra preço, desconto e frete; o guardrail fica com a defesa de injeção e dados sensíveis da plataforma. O mecanismo para aplicar o guardrail no caminho InvokeModel do `AnthropicBedrock` fica no plano (incerto, E9).
   - **Aceite:**
-    - TT: a task role só tem `bedrock:InvokeModel` no ARN do perfil vindo do contrato;
+    - TT: o ECS não acrescenta ação do Bedrock à task role; toda ação do Bedrock da role composta (módulo mais ECS) tem recurso só no ARN do perfil vindo do contrato, nos modelos de origem dele e no próprio guardrail, e a de invocação tem a condição `bedrock:GuardrailIdentifier`;
     - VT: com uma resposta gravada de intervenção do guardrail, o explicador devolve `unavailable` com a categoria `guardrail`, sem retentar;
     - busca por `arn:aws:bedrock` sem ocorrência fora de testes (TT e grep).
-- **RF-111: respostas gravadas com proveniência.** Lacuna (retroativo). As respostas usadas nos testes do explicador são sintéticas, escritas à mão. Cada uma DEVE trazer `proveniencia: sintetica`, e as de formato confirmado pela documentação, `proveniencia: documentacao`. Na primeira demonstração, uma captura real de cada caminho (sucesso, retentativa por validação e intervenção do guardrail) DEVE substituir a sintética, sem dado pessoal. O comportamento real do modelo continua sem validação em CI (D-006), e isso fica dito no ADR-0004.
+- **RF-111: respostas gravadas com proveniência.** Lacuna (retroativo). As respostas usadas nos testes do explicador são sintéticas, escritas à mão. Cada uma DEVE trazer `proveniencia: sintetica`, e as de formato confirmado pela documentação, `proveniencia: documentacao`. Na primeira demonstração, uma captura real de cada caminho (sucesso, retentativa por validação e intervenção do guardrail) DEVE substituir a sintética, sem dado pessoal, com `proveniencia: captura`. O comportamento real do modelo continua sem validação em CI (D-006), e isso fica dito no ADR-0004.
   - **Aceite:** um teste reprova uma resposta gravada sem o campo `proveniencia`. (VT)
 
 ### Proveniência, privacidade e fonte única (Art. VIII; prática da hierarquia de CLAUDE.md)
@@ -475,6 +475,8 @@ Todo componente de `U/` e os arquivos do PR #1 fora da unidade aparecem em pelo 
 Cada linha diz o que mudou na spec para seguir o `plan.md` aprovado, a boa prática que guia a mudança e o erro comum que ela evita (D-036). Os ids das tarefas da prova vêm no fim, entre parênteses.
 
 - **2026-11-20 · RNF-101, RNF-002 e RNF-102: janela do MWAA em stack próprio no lugar do input `enable_mwaa`** (D-052, ADR-0007). A spec citava um input `enable_mwaa` no apply da base; o plano pôs o MWAA numa raiz própria, com prazo de até 3 h, destroy sem aprovação e destroy em cascata a partir da base. **Boa prática: workflow com gate programático e ordem garantida pelo código.** O arquiteto põe o prazo, a ordem e o desligamento da parte cara em regras que o harness aplica sozinho, e a spec descreve o mesmo ciclo que o plano. **Erro comum:** desligar a parte cara por um novo apply com uma flag, que fica esperando aprovação, ou deixar a spec e o plano descreverem mecanismos diferentes, e a análise e os testes seguirem um texto que o código não implementa (1.4, 1.6, 5.3).
+- **2026-11-20 · RF-110: permissões do Bedrock da task role iguais às do STRIDE emendado e do TT-B01** (achado A01 da análise 1, emenda 1 do plano). O item "IAM" e o aceite TT diziam "só `bedrock:InvokeModel` no ARN do perfil", mas a task role nasce no módulo `registro-produto`, que concede a invocação no perfil e nos modelos de origem dele, o `ApplyGuardrail` no guardrail, o `InvokeGateway` e o `ssm:GetParameter`. **Boa prática: a afirmação de segurança é a mesma em todos os artefatos e testável como está escrita.** O arquiteto escreve a permissão que a composição concede, com o porquê de cada ação a mais, e o teste afirma esse texto. **Erro comum:** uma garantia mais forte que a real na spec, que reprova a composição correta ou faz a revisão conferir uma promessa que ninguém implementa (1.4, 4.1, 4.6).
+- **2026-11-20 · critério 2 de "Deu certo quando" e RF-111: exceção do ECS `INACTIVE` e valor `captura`** (achado A08 da análise 1; furo F8 do `tasks.md`). O critério 2 citava só a chave KMS como exceção da verificação de sobras, mas o RNF-101, o ADR-0006 e a T056 também ignoram o serviço ECS que não está `ACTIVE` nem `DRAINING`. O RF-111 não dava o valor da captura real, que a T080 fixou como `captura`. **Boa prática: a spec acompanha o que as tarefas testam.** O arquiteto alinha a spec quando a fase seguinte resolve um furo. **Erro comum:** a verificação final ler o critério antigo da spec e reprovar uma exceção que as tarefas aceitam (5.1).
 
 ## Perguntas ao dono
 | id | pergunta | bloqueia | opções | recomendação |

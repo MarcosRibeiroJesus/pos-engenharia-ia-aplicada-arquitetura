@@ -33,7 +33,12 @@ Três obstáculos:
    - **passos 1 e 2:** contra o ALB interno; o passo 2 registra as tentativas;
    - **passo 3:** um servidor do próprio serviço, dentro da tarefa, com `EXPLANATION_TIMEOUT_MS=1`, o que dá `unavailable/timeout` pelo caminho real;
    - **passo 4:** um servidor dentro da tarefa com `MEMORYDB_CLUSTER_ENDPOINT` apontando para uma porta fechada da VPC, o que dá `degradedMode: true` e `MemoryDbFallbackCount` pelo adaptador real (RF-106);
-   - **evidência:** cada passo grava o `requestId`. A tarefa calcula a latência p95 sem explicação sobre 200 chamadas e lê as métricas do namespace.
+   - **evidência:** cada passo grava o `requestId`. A tarefa calcula a latência p95 sem explicação sobre 200 chamadas e escreve o relatório dos passos (`requestId`, status e latências, sem prompt nem texto do modelo) em stdout, numa única linha JSON marcada, que o `awslogs` leva ao log group do serviço.
+   - **leitura no runner (correção da análise 1, A02):** a tarefa não chama nenhuma API de controle. Ela roda na subnet privada, sem NAT e sem endpoint `monitoring` na base (ADR-0013), e quando o roteiro `servico` roda a janela, que tem esse endpoint, já foi destruída; a task role também não tem `cloudwatch:GetMetricData`, e a role do roteiro não pode ter permissão que a task role não tenha (TT-R01). Por isso o job do workflow, no runner, com a role de deploy:
+     - espera o fim da tarefa (`ecs:DescribeTasks`) e reprova se o código de saída não for 0;
+     - lê a linha marcada do stream `prefixo/contêiner/id-da-tarefa` (`logs:GetLogEvents`; formato do stream no [LogConfiguration do ECS](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html), consulta em 2026-11-20) e reprova se ela faltar;
+     - lê as métricas do namespace por `GetMetricData`, com a janela de tempo da tarefa;
+     - junta tudo no relatório, que sai como artefato de 1 dia.
 4. **O serviço no ar não é alterado:** nenhum cabeçalho, flag ou rota de teste em produção.
 
 ## Alternativas rejeitadas
@@ -48,6 +53,7 @@ Três obstáculos:
 ## Trade-offs
 - Os passos 3 e 4 rodam numa instância do serviço dentro da tarefa, não no serviço atrás do ALB. Eles provam o código e a rede reais, não o balanceamento.
 - O workflow precisa de `iam:PassRole` para as roles da tarefa, limitado às roles `01-recomendacao-*` (ADR-0015).
+- A role de deploy ganha `ecs:DescribeTasks` nas tarefas do cluster do projeto e `logs:GetLogEvents` nos streams do log group `01-recomendacao-*` (T031). O relatório depende do log: no modo `non-blocking` do `awslogs`, que é o padrão, uma linha pode se perder, e por isso relatório ausente é falha do roteiro, não sucesso.
 
 ## Custo
 4 tarefas de 2 minutos: cerca de US$ 0,003. A chamada ao `InvokeRestApi` não tem custo próprio documentado.

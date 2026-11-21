@@ -13,7 +13,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - Cada tarefa cita os requisitos que cobre (RF, RNF ou artigo) e os ids de teste da matriz do plano.
 - Entre colchetes, depois do id, fica o especialista dono (`harness/especialistas.json`). `[DONO]` é tarefa do Marcos: nenhum agente a executa.
 - **Ids de teste:** VT = Vitest do serviço; PY = unittest do lote; TT = `terraform test` com mock provider; ST = `U/infra/terraform/tests/static_rules.py`; TH = testes do harness; FL = Floci; DM = demonstração real; ES = esteira `seguranca.yml`.
-- **Ids novos desta fase** (furos F5, F6 e F2, no fim): TT-J02, VT-20, TH-07 e TH-08. Os demais vêm da matriz do plano.
+- **Ids novos desta fase** (furos F5, F6 e F2, no fim): TT-J02, VT-20, TH-07 e TH-08. **Ids novos da análise 1:** TH-09 (concorrência dos workflows de state, A04) e TH-10 (unidade do arquivo de uso e linhas não cobertas, A05). Os demais vêm da matriz do plano.
 - **Regra de teste vermelho para verificadores:** quando o teste é uma regra transversal (por exemplo, "todo nome com o prefixo"), o vermelho é uma fixture que viola a regra e precisa reprovar. Uma regra que passa sem nada para checar não conta como teste.
 - **Terraform roda na máquina do dono (D-042).** Toda tarefa com TT ou ST sobre `.tf` é executada pela sessão local do Claude Code; a sessão de nuvem devolve a tarefa à orquestração em vez de escrever Terraform sem rodar o teste (skill `terraform-tdd`). As tarefas só de Python, TypeScript ou documentação rodam em qualquer sessão.
 - **Testes do harness** vão em `harness/testes/test_<assunto>.py`, um arquivo por assunto, nunca no `harness/test_harness.py` (D-043). Os testes do gate de custo ficam em `.github/ia/testes/test_gate_custo.py`, onde já estão.
@@ -26,7 +26,8 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Aceite:**
     - o conteúdo dos ADRs fica só em `U/adr/`, ao lado dos ADRs 0001 a 0006;
     - os links do `plan.md` continuam resolvendo pelos redirecionamentos, sem editar o `plan.md` (mudar o plano derruba a aprovação, D-033);
-    - o status de cada ADR movido passa de "proposto (plano da D01 aguardando a aprovação do dono)" para "aceito (plano aprovado pelo dono em 2026-11-20, D-056)", porque os ADRs não entram no hash do plano (furo F7).
+    - o status de cada ADR movido passa de "proposto (plano da D01 aguardando a aprovação do dono)" para "aceito (plano aprovado pelo dono em 2026-11-20, D-056)", porque os ADRs não entram no hash do plano (furo F7);
+    - no ADR-0013, sai também "o valor do teto depende da P01-P5": o teto de US$ 7,10 foi aprovado (D-056), como no plano depois da emenda 1 (A06 da análise 1).
   - **Depende de:** fase `implementar` (o `gate_sdd.py` bloqueia `U/` antes dela).
 
 ## Fase R · Já existe e está testado (retroativo)
@@ -57,6 +58,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - os workflows usam `${{ vars.FLOCI_IMAGE || 'floci/floci:latest' }}` (D-013) e nunca `floci/floci:latest` escrito direto;
     - o CI continua rodando lint, build e testes do serviço e do lote, `fmt`, `validate`, `tflint`, `checkov`, `terraform test` e as regras estáticas; o gate de custo do PR passa a ser só o de `seguranca.yml` (RNF-103);
     - as extensões do apply e do destroy (build, duas passadas, cascata, requisitos da plataforma) ficam para a T056 e a T057; aqui os arquivos são o modelo preenchido.
+  - **Nota sobre o TH-07 (A11 da análise 1):** o TH-07 compara os workflows da D01 com o modelo do harness de hoje. Quando a plataforma T043 (prazo registrado antes do apply) e a T048 (filtro da chave KMS no destroy) entrarem no `main`, o TH-07 da D01 fica vermelho até a T055 e a T056 regenerarem os arquivos a partir do modelo novo. Esse vermelho é esperado e não é defeito da D01: a correção é regenerar, nunca afrouxar o teste para passar.
   - **Depende de:** T000.
 - [ ] T011 [engenheiro-terraform] Tags no padrão da política em todo recurso da base · RNF-107, RNF-003, Art. VI · TT-T01
   - **Teste vermelho:** `U/infra/terraform/tests/tags.tftest.hcl`, copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "01-recomendacao"`, iterando sobre todos os recursos tagueáveis do root (output de teste com as tags efetivas, como na plataforma). Hoje reprova com `project = "recsys"` e `module` com barra.
@@ -79,13 +81,14 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T011.
 - [ ] T013 [P] [engenheiro-terraform] AWS Budgets diário com o teto nos três lugares · RNF-102, RNF-002, Art. V · TT-K01, TH-06
   - **Teste vermelho:**
-    - TT-K01 no `regras_base.tftest.hcl` (ou num `budgets.tftest.hcl`): `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd`, filtro `user:project$01-recomendacao`, e nenhum `aws_budgets_budget` com `time_unit = "MONTHLY"` no stack;
+    - TT-K01 no `regras_base.tftest.hcl` (ou num `budgets.tftest.hcl`): `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd`, filtro `user:project$01-recomendacao`, nenhum `aws_budgets_budget` com `time_unit = "MONTHLY"` no stack e, no Budgets diário, só notificações com `notification_type = "ACTUAL"`; fixture vermelha: o Budgets diário com a notificação `FORECASTED` que o módulo `cloudwatch_monitoring` tem hoje (A09 da análise 1);
     - TH-06 em `harness/testes/test_teto_01_recomendacao.py`: o padrão de `teto_diario_usd` em `U/infra/terraform/variables.tf`, o valor citado no `U/README.md` e o `teto_diario_usd` do `harness/estado.json` (7,1) são iguais; mudar um só precisa reprovar.
   - **Arquivos:** `U/infra/terraform/modules/cloudwatch_monitoring/main.tf` (Budgets), `U/infra/terraform/variables.tf`, a linha de custo do `U/README.md`, o teste do harness.
   - **Aceite:**
     - o Budgets mensal de US$ 10 sai do stack; o limite mensal da conta fica só no `infra/conta` (D-022);
     - o README diz que o filtro por tag só enxerga custo depois da ativação da tag `project` na conta (D-039) e que o custo do Claude, cobrado pelo AWS Marketplace, pode não aparecer no filtro (R7);
-    - os destinatários do alerta não aparecem em output nem em log público (mesma regra do TT-S06 da plataforma).
+    - os destinatários do alerta não aparecem em output nem em log público (mesma regra do TT-S06 da plataforma);
+    - **por que só `ACTUAL` (A09, incerto):** o anúncio do orçamento diário diz que ele ainda não aceitava alerta de previsão e que a conversão para diário remove esses alertas ([Launch: daily cost and usage budgets](https://aws.amazon.com/blogs/aws-cost-management/launch-daily-cost-and-usage-budgets), 2020-09-16, consulta em 2026-11-20); o guia de boas práticas diz que a previsão precisa de cerca de 5 semanas de uso ([Best practices for AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-best-practices.html), sem data, consulta em 2026-11-20). Não achei fonte atual que diga se o diário aceita previsão hoje, então o suporte fica **incerto** e vai para a T102. A regra do teste vale nos dois casos: num stack de um dia, a previsão nunca dispararia.
   - **Depende de:** T011.
 - [ ] T014 [engenheiro-terraform] Sem custo fixo ocioso na base: 5 endpoints, sem `monitoring`, sem MWAA, sem snapshot · RNF-002, Art. V · TT-K02, ST-07
   - **Teste vermelho:**
@@ -124,24 +127,28 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - `registrar <chave> --componente janela-mwaa` sem a base registrada é recusado;
     - o prazo do componente é o menor entre `prazo_maximo_horas`, o `prazo_horas` pedido e o prazo da base menos 1 hora; pedido acima disso é recusado com a mensagem do limite;
     - `estender --componente` respeita o mesmo limite;
-    - o padrão do `prazo_horas` da janela é 2.
+    - o padrão do `prazo_horas` da janela é 2;
+    - **prazo útil mínimo (A10 da análise 1):** se o prazo resultante ficar abaixo de 1 hora, o registro é recusado antes do apply, com a mensagem de que a base pode ser estendida com `infra.py estender 01-recomendacao`; um caso com a base a 1 h 30 min do vencimento (prazo resultante de 30 min) precisa ser recusado.
   - **Arquivos:** `harness/infra.py`, o teste, `harness/VERSAO.md`.
-  - **Aceite:** o registro da base continua com o limite de 24 h e com o limite do consumidor da plataforma (plataforma T041); os testes existentes de `TestPrazoDaInfra` seguem verdes.
+  - **Aceite:** o registro da base continua com o limite de 24 h e com o limite do consumidor da plataforma (plataforma T041); os testes existentes de `TestPrazoDaInfra` seguem verdes; o mínimo de 1 hora é um campo do componente (`prazo_minimo_horas`, padrão 1), não um número da D01 no código (skill `evolucao-do-harness`, regra 4), porque a criação e a remoção do MWAA levam dezenas de minutos cada uma (ADR-0007) e o agendador roda de hora em hora.
   - **Depende de:** T021; plataforma T041.
 - [ ] T023 [engenheiro-terraform] `vencidos` e `remover --componente`, com o destroy em cascata · ADR-0007, Art. V · TH-02
   - **Teste vermelho:** em `harness/testes/test_componentes.py`:
     - um componente vencido gera o disparo do destroy dele, com o `confirm_stack` do componente;
-    - a base vencida com o componente ainda registrado gera primeiro o destroy do componente e, depois, o da base;
+    - a base vencida com o componente ainda registrado gera **só** o destroy da base, que já derruba o componente antes (T056); o destroy do componente sozinho sai só quando só o componente venceu (A04 da análise 1); uma fixture que gera os dois disparos precisa reprovar;
     - `remover <chave>` sem `--componente` remove também o registro do componente;
     - `remover --componente` remove só o componente.
   - **Arquivos:** `harness/infra.py`, `.github/workflows/expirar-infra.yml` (se o disparo precisar do workflow do componente), o teste, `harness/VERSAO.md`.
-  - **Aceite:** a ordem é janela, base e, depois, plataforma (com a espera da plataforma T042); `expirar-infra.yml` continua sem aprovação, no `aws-lab-destroy` (D-024).
+  - **Aceite:** a ordem é janela, base e, depois, plataforma (com a espera da plataforma T042), garantida por um só disparo por nível; `expirar-infra.yml` continua sem aprovação, no `aws-lab-destroy` (D-024).
   - **Depende de:** T022; plataforma T042.
 - [ ] T024 [P] [engenheiro-terraform] Gate de custo soma as raízes do projeto e pesa o componente · RNF-002, RNF-103, ADR-0013, Art. V · TH-04
   - **Teste vermelho:** em `.github/ia/testes/test_gate_custo.py`: um Infracost sintético com a raiz da base (US$ 4,56 por dia) e a da janela (US$ 14,91 por dia, se ficasse 24 h) dá US$ 4,56 + 14,91 × 3/24 e passa no teto de 7,10; sem o peso, o mesmo JSON reprova (fixture vermelha); duas raízes do mesmo projeto são somadas numa linha só.
   - **Arquivos:** `.github/ia/gate_custo.py`, `.github/ia/testes/test_gate_custo.py`, `harness/VERSAO.md`.
-  - **Aceite:** a raiz é ligada ao componente pelo caminho (`pastas` do projeto mais o diretório do `stack` do componente); projetos sem componente têm o mesmo resultado de hoje.
-  - **Depende de:** T021.
+  - **Aceite:**
+    - a raiz é ligada ao componente pelo caminho (`pastas` do projeto mais o diretório do `stack` do componente); projetos sem componente têm o mesmo resultado de hoje;
+    - **um só lugar para o peso da janela (A05 da análise 1):** o gate é o único que pesa a raiz do componente por `prazo_maximo_horas/24`; o arquivo de uso do Infracost não reduz as horas do MWAA (T096). Um caso do teste com um arquivo de uso que também reduz as horas precisa dar o peso uma vez só;
+    - **linhas não cobertas:** o gate adota a mesma regra da plataforma T073 (A09 da análise da plataforma): por projeto, um arquivo versionado com as linhas que o Infracost não estima (Claude e guardrail, na D01) e o valor do plano, somado ao total antes da comparação com o teto. Um só gate para os dois projetos; se a plataforma T073 ainda não tiver entrado, esta tarefa espera por ela em vez de criar uma segunda regra.
+  - **Depende de:** T021; plataforma T073.
 
 ## Fase 3 · Identidade de deploy por projeto no `infra/conta` (ADR-0015)
 - [ ] T030 [engenheiro-terraform] Provedor OIDC e bucket de state no `infra/conta` · RNF-105, Art. IV, Art. VI · TT em `infra/conta/tests/`
@@ -160,6 +167,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Aceite:**
     - a lista inicial é a do ADR-0015 (`iam:PassRole` para `01-recomendacao-*`, `Describe*` e `List*` do plan, `ecr:GetAuthorizationToken`, S3 no prefixo do state da chave, `ssm:GetParameter` no contrato da plataforma, `ce:ListCostAllocationTags`), conferida na referência de autorização de cada serviço;
     - **acréscimos que o roteiro exige (furo F3):** `airflow:InvokeRestApi` e `airflow:CreateWebLoginToken` no ARN da role do Airflow do ambiente `p01-recomendacao-lab-mwaa`; `ecs:RunTask` no task definition `01-recomendacao-*` com a condição de tag; `cloudwatch:GetMetricData` para a evidência, que não aceita recurso; cada um com a fonte e a data da consulta;
+    - **acréscimos para ler o relatório do roteiro no runner (A02 da análise 1):** `ecs:DescribeTasks` em `task/01-recomendacao-*/*`, com a condição `ecs:cluster` no cluster do projeto, para esperar o fim da tarefa e ler o código de saída; `logs:GetLogEvents` no `log-group:01-recomendacao-*:log-stream:*`, porque o nome do stream do `awslogs` é conhecido a partir do id da tarefa. Fontes, consulta em 2026-11-20: a [referência de autorização do ECS](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelasticcontainerservice.html) (`DescribeTasks` exige o recurso `task`, no formato `task/<cluster>/<id>`, e aceita `ecs:cluster`); a [referência do CloudWatch Logs](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazoncloudwatchlogs.html) (`GetLogEvents` exige o recurso `log-stream`; `FilterLogEvents` exige `log-group` e não é necessária); o [LogConfiguration do ECS](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html) (o stream fica `prefixo/contêiner/id-da-tarefa`). A task role não ganha nenhuma dessas permissões (TT-R01);
     - a `01-recomendacao-plan` só lê e só acessa o state da chave, confiada ao subject de `pull_request`;
     - checkov sem achado alto; onde a referência só aceitar `*`, exceção do checkov com justificativa no próprio recurso.
   - **Depende de:** T030.
@@ -187,12 +195,18 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T042 [engenheiro-ml] Treino do re-ranker XGBoost determinístico em formato nativo · RF-014, RF-109, ADR-0008 · PY-03
   - **Teste vermelho:** `U/tests/unit/test_train_reranker.py`: com `xgboost==1.7.6`, a mesma semente e `nthread = 1`, duas execuções dão predições iguais (tolerância 0) num conjunto fixo; o artefato é gravado por `Booster.save_model` (não é pickle: o teste reprova um arquivo que `pickle.load` abre); o `model.tar.gz` tem o arquivo no nome que o container nativo 1.7-1 espera.
   - **Arquivos:** `U/src/batch/sagemaker/train_reranker.py` (3 features: `batchScore`, `vectorScore`, `hibrido`; `binary:logistic`; rótulo sintético por regra conhecida com ruído), o teste; remoção de `U/src/batch/sagemaker/train_model.py` (vetores aleatórios).
-  - **Aceite:** o script roda igual no runner do apply (semente) e no SageMaker Training (candidato); `xgboost` fixado com hash no arquivo de requisitos do build.
+  - **Aceite:**
+    - o script roda igual no runner do apply (semente) e no SageMaker Training (candidato); `xgboost` fixado com hash no arquivo de requisitos do build;
+    - **mesmas entradas que o candidato (A03 da análise 1):** a semente treina sobre o CSV de treino que a função pura da T043 monta a partir dos dados sintéticos do T040, com a mesma semente e o mesmo volume que o lote do dia lê; o `sha256` desse CSV é publicado ao lado do artefato (`reranker/publicado/<hash>/treino.sha256`) e entra no relatório do roteiro;
+    - **mesmos hiperparâmetros:** `nthread = 1`, `seed` e os demais hiperparâmetros ficam num só arquivo de configuração, lido pelo script e pelo DAG (T046);
+    - **mesma versão:** a versão fixada no build é a do container 1.7-1 que a T102 confirmar; se a T102 achar outra versão que não a 1.7.6, esta fixação muda para ela (o PY-03 continua com tolerância 0 na mesma versão).
   - **Depende de:** T040.
 - [ ] T043 [engenheiro-ml] Job de features grava as três saídas · RF-013, RF-011, RF-104, ADR-0012 · PY existente `test_glue_transformations` (estendido)
   - **Teste vermelho:** o `test_glue_transformations.py` ganha casos para as três saídas: o CSV de treino com `batchScore`, `vectorScore`, `hibrido` e o rótulo; o top-N por usuário com `inStock` e as compras dos últimos 30 dias (até 100); os vetores de 128 dimensões, sintéticos e determinísticos.
   - **Arquivos:** `U/src/batch/glue/feature_engineering.py`, `U/src/batch/athena/extract_curated_features.sql` (se mudar a projeção), o teste.
-  - **Aceite:** os pesos por evento e a poda de partição do RF-013 continuam iguais; a documentação da unidade diz que os vetores são sintéticos, sem aprendizado de embeddings.
+  - **Aceite:**
+    - os pesos por evento e a poda de partição do RF-013 continuam iguais; a documentação da unidade diz que os vetores são sintéticos, sem aprendizado de embeddings;
+    - **CSV de treino determinístico (A03 da análise 1):** a montagem do CSV de treino é uma função pura de Python, sem Spark, chamada pelo job do Glue sobre os dados já coletados (volume do lab, de KB a MB) e pelo runner do apply (T042); a saída é um só objeto, com as linhas ordenadas por `userId` e `itemId` e números em formato fixo; um caso do teste afirma bytes iguais em duas execuções e o `sha256` do arquivo no log do job.
   - **Depende de:** T040, T041.
 - [ ] T044 [P] [engenheiro-ml] Publicação no DynamoDB com compras recentes e estoque · RF-011, RF-104, ADR-0012 · PY-04
   - **Teste vermelho:** `U/tests/contract/test_dynamodb_publish_contract.py` ganha o caso: um item por usuário com `userId`, `generatedAt`, `ttlTimestamp` (agora + 604.800 s), `recommendations` com `inStock` em cada uma e `recentPurchases` (item e data, até 100, só dos últimos 30 dias).
@@ -207,7 +221,10 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T046 [engenheiro-ml] DAG no Airflow 2.11 com o candidato e a configuração por arquivo · RF-010, RF-107, RF-014, D-052 · PY-06
   - **Teste vermelho:** `U/tests/unit/test_airflow_dag_validation.py` passa a carregar o DAG com o Airflow 2.11 (sem rede) e afirma: `@daily`, sem `catchup`, 1 retentativa; a ordem sensor → Athena → Glue de features → treino do XGBoost (Spot, `MaxWaitTimeInSeconds` 7200, saída em `reranker/candidatos/<ds>/`) → as duas publicações em paralelo; todos os nomes lidos de `dags/config/01-recomendacao.json`; nenhuma tarefa cria modelo, endpoint ou endpoint config.
   - **Arquivos:** `U/src/batch/airflow/dags/daily_hybrid_recommendation_pipeline.py`, um `config` de exemplo sintético para o teste, o requirements do Airflow fixado na linha 2.11, o teste.
-  - **Aceite:** o candidato nunca é promovido pelo DAG (ADR-0008); os `job_name` do DAG batem com os nomes que a T050 cria (TT-G01 lê a mesma lista).
+  - **Aceite:**
+    - o candidato nunca é promovido pelo DAG (ADR-0008); os `job_name` do DAG batem com os nomes que a T050 cria (TT-G01 lê a mesma lista);
+    - **hiperparâmetros iguais aos da semente (A03 da análise 1):** o job de treino recebe `nthread = 1`, `seed` e os demais valores do mesmo arquivo de configuração da T042; os dois existem como hiperparâmetros do XGBoost do SageMaker ([hiperparâmetros](https://docs.aws.amazon.com/sagemaker/latest/dg/xgboost_hyperparameters.html), consulta em 2026-11-20; o padrão do `nthread` é o máximo de threads, por isso ele precisa ir explícito); o PY-06 reprova um DAG sem os dois;
+    - o DAG registra o `sha256` do CSV de treino que o candidato usou, para o DM-07 conferir a pré-condição.
   - **Depende de:** T041, T042.
 
 ## Fase 5 · Núcleo: stack base
@@ -234,7 +251,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T053 [engenheiro-terraform] Consumo da plataforma: registro do produto, task role e contrato no task definition · RF-110, RNF-001, ADR-0010, E1 · TT-B01, TT-B02, ST-06
   - **Teste vermelho:**
     - TT-B02: o root chama o módulo `registro-produto` por caminho relativo, com chave `01-recomendacao`, modelo de origem `us.anthropic.claude-haiku-5-5`, tópicos negados vazios (D-053), um agente `explicador` assumido por `ecs-tasks.amazonaws.com`, nenhum alvo e nenhuma tool; o task definition recebe `BEDROCK_PERFIL_ARN`, `GUARDRAIL_ID` e `GUARDRAIL_VERSAO` do `data "aws_ssm_parameter"` do contrato `produtos/01-recomendacao` (mock);
-    - TT-B01 (furo F1): o ECS não acrescenta nenhuma ação `bedrock:*` à task role; toda ação `bedrock:*` da role composta (módulo mais ECS) tem recurso só no ARN do perfil do contrato, nos modelos de origem dele e no próprio guardrail, e a de invocação tem a condição `bedrock:GuardrailIdentifier`; a task role é a `01-recomendacao-agente-explicador` do módulo, e o ECS só acrescenta DynamoDB, MemoryDB e SageMaker; fixture vermelha: uma política do ECS com `bedrock:InvokeModel` em `foundation-model/*`;
+    - TT-B01 (furo F1): o ECS não acrescenta nenhuma ação `bedrock:*` à task role; toda ação `bedrock:*` da role composta (módulo mais ECS) tem recurso só no ARN do perfil do contrato, nos modelos de origem dele e no próprio guardrail, e a de invocação tem a condição `bedrock:GuardrailIdentifier`; a task role é a `01-recomendacao-agente-explicador` do módulo, e o ECS só acrescenta DynamoDB, MemoryDB e SageMaker; as ações de fora do Bedrock que vêm do módulo são só `bedrock-agentcore:InvokeGateway` no ARN do gateway e `ssm:GetParameter` no `comum` e no parâmetro do produto, como diz a linha E do STRIDE do plano depois da emenda 1 (A01 da análise 1); fixture vermelha: uma política do ECS com `bedrock:InvokeModel` em `foundation-model/*`;
     - ST-06 em `static_rules.py`: nenhum `arn:aws:bedrock` nem id de modelo escrito à mão fora de `tests/` e do catálogo do produto.
   - **Arquivos:** `U/infra/terraform/main.tf` (ou `plataforma.tf`), `modules/ecs_service/` (task role vinda de fora, variáveis do task definition), `variables.tf` (sai `bedrock_model_id`), os testes.
   - **Aceite:**
@@ -290,10 +307,13 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/infra/janela-mwaa/{iam.tf,dags.tf}`, os testes.
   - **Aceite:** o DAG e os scripts não têm nenhum nome escrito (PY-01 verde); o checkov passa sem `*` com `*`.
   - **Depende de:** T046, T061.
-- [ ] T064 [engenheiro-terraform] Workflows de apply e destroy da janela · RNF-101, ADR-0007, D-024, D-052 · TH-03, TH-08, `estado.py validar`
+- [ ] T064 [engenheiro-terraform] Workflows de apply e destroy da janela · RNF-101, ADR-0007, D-024, D-052 · TH-03, TH-08, TH-09 (novo), `estado.py validar`
   - **Teste vermelho:** com o componente registrado (T021), o `estado.py validar` em `verificar` reprova os dois workflows ausentes; o TH-07 passa a exigir no apply da janela `prazo_horas` com padrão 2 e máximo 3, a recusa se a base não está no ar e `infra.py registrar --componente janela-mwaa`; e no destroy da janela `confirm_stack = 01-recomendacao-janela-mwaa`, ambiente `aws-lab-destroy` e sobras por `project=01-recomendacao` e `module=orquestracao-mwaa` juntos.
   - **Arquivos:** `.github/workflows/01-recomendacao-janela-mwaa-apply.yml`, `01-recomendacao-janela-mwaa-destroy.yml`, `harness/testes/test_workflows_01_recomendacao.py`.
-  - **Aceite:** mesmos SHAs dos modelos; `id-token: write` só nos jobs; a exceção do CKV_GHA_7 só por estarem registrados como componente (TH-08).
+  - **Teste vermelho (A04 da análise 1):** TH-09, um caso em `harness/testes/test_workflows_01_recomendacao.py` afirma que os quatro workflows de apply e destroy (base e janela) têm o mesmo `concurrency.group: 01-recomendacao-state`, com `cancel-in-progress: false`; uma fixture com a janela em outro grupo precisa reprovar. O TH-07 compara jobs e passos, não o bloco `concurrency`, por isso o caso é próprio.
+  - **Aceite:** mesmos SHAs dos modelos; `id-token: write` só nos jobs; a exceção do CKV_GHA_7 só por estarem registrados como componente (TH-08);
+    - **um só grupo serializa os destroys:** com o mesmo grupo, o destroy da janela dentro do destroy da base nunca disputa o lock do state com outro destroy da janela, e o `-lock-timeout=120s` do modelo deixa de ser o árbitro;
+    - **execução pendente substituída:** pela documentação do GitHub, uma execução nova no mesmo grupo cancela a que estava pendente, e a opção `queue: max` mantém até 100 pendentes ([concorrência](https://docs.github.com/en/actions/using-jobs/using-concurrency), consulta em 2026-11-20). Um apply da janela enfileirado poderia cancelar um destroy pendente. Os quatro workflows usam `queue: max` se o `actionlint` e o `zizmor` da esteira aceitarem a chave; se não aceitarem, a tarefa para e devolve o achado ao `operador-harness`, porque a mudança é do modelo do harness, e não da D01.
   - **Depende de:** T021, T022, T023, T032, T061.
 
 ## Fase 7 · Núcleo: serviço
@@ -374,20 +394,20 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T090 [engenheiro-terraform] Workflow do roteiro de demonstração · RF-108, ADR-0016, RNF-001 · TT-R01, TH-08 (extensão)
   - **Teste vermelho:**
     - TT-R01: o roteiro usa o mesmo task definition do serviço (`aws ecs run-task` com `overrides` de comando e de variáveis), e a role do roteiro não tem permissão que a task role não tenha;
-    - TH-08: o `01-recomendacao-roteiro.yml` tem só `workflow_dispatch` com o input `parte` (`lote` ou `servico`), ambiente `aws-lab`, `permissions` com `id-token: write` só no job e `contents: read`, e upload do relatório com `retention-days: 1`; a exceção do CKV_GHA_7 vale para ele porque ele está registrado no campo `workflows_operacao` do projeto no `harness/estado.json` (furo F2); um workflow sintético com o input e sem registro precisa reprovar.
+    - TH-08: o `01-recomendacao-roteiro.yml` tem, no job da parte `servico`, os passos de esperar a tarefa, ler o relatório do log e ler as métricas, nessa ordem, e uma fixture sem a leitura das métricas precisa reprovar (A02); tem só `workflow_dispatch` com o input `parte` (`lote` ou `servico`), ambiente `aws-lab`, `permissions` com `id-token: write` só no job e `contents: read`, e upload do relatório com `retention-days: 1`; a exceção do CKV_GHA_7 vale para ele porque ele está registrado no campo `workflows_operacao` do projeto no `harness/estado.json` (furo F2); um workflow sintético com o input e sem registro precisa reprovar.
   - **Arquivos:** `.github/workflows/01-recomendacao-roteiro.yml`, `harness/estado.py` (campo `workflows_operacao`, validado como o `componentes`), `harness/estado.json`, `harness/testes/test_workflows.py` e `test_workflows_01_recomendacao.py`, `U/infra/terraform/tests/` (TT-R01).
   - **Aceite:**
     - parte `lote`: liga e dispara o DAG pelo `InvokeRestApi`, consulta o estado em intervalos (timeout de 10 s por chamada) e registra o `dag_run_id` e o caminho do candidato;
-    - parte `servico`: roda a tarefa da T091 e baixa o relatório dela;
+    - parte `servico` (A02 da análise 1): roda a tarefa da T091 com `aws ecs run-task`; espera o fim com `aws ecs wait tasks-stopped` (`ecs:DescribeTasks`) e reprova se o código de saída do contêiner não for 0; lê do log da tarefa, no runner, a linha JSON marcada do relatório (`logs:GetLogEvents` no stream `prefixo/contêiner/id-da-tarefa`), e reprova se ela faltar (o modo `non-blocking` do `awslogs` pode perder linhas, e relatório ausente é falha, não sucesso); depois lê as métricas do namespace `Ecommerce/Recommendations` por `GetMetricData`, também no runner, com a janela de tempo da tarefa e uma espera pela chegada das métricas EMF; junta os dois no relatório. Nada disso roda dentro da tarefa, que não tem rota para a API do CloudWatch (sem endpoint `monitoring` na base, TT-K02) nem permissão (TT-R01);
     - o serviço no ar não é alterado (nenhum cabeçalho, flag ou rota de teste);
     - o relatório nunca entra em commit pelo workflow; o dono revisa antes (5.5);
     - se a plataforma T068 já tiver criado um mecanismo de registro de workflow de operação, ele é reusado no lugar do `workflows_operacao`.
   - **Depende de:** T031, T032, T064, T091.
 - [ ] T091 [engenheiro-ml] Script do roteiro dentro da tarefa ECS · RF-108, RNF-004, ADR-0016 · VT-20 (novo)
-  - **Teste vermelho:** VT-20 em `U/tests/integration/roteiro.test.ts`, com o servidor e as dependências simuladas: o roteiro produz os quatro passos do RF-108 (híbrida; explicação aceita na primeira tentativa; `unavailable/timeout` com `EXPLANATION_TIMEOUT_MS=1`; `degradedMode: true` com o MemoryDB numa porta fechada), cada um com o `requestId`; calcula o p95 sem explicação sobre 200 chamadas; registra o aquecimento do re-ranker e o cold start.
+  - **Teste vermelho:** VT-20 em `U/tests/integration/roteiro.test.ts`, com o servidor e as dependências simuladas: o roteiro produz os quatro passos do RF-108 (híbrida; explicação aceita na primeira tentativa; `unavailable/timeout` com `EXPLANATION_TIMEOUT_MS=1`; `degradedMode: true` com o MemoryDB numa porta fechada), cada um com o `requestId`; calcula o p95 sem explicação sobre 200 chamadas; registra o aquecimento do re-ranker e o cold start; escreve o relatório em stdout numa única linha JSON marcada (`"tipo": "relatorio-roteiro"`), que o teste lê e valida; e não importa nenhum cliente do CloudWatch nem chama API de controle (A02 da análise 1).
   - **Arquivos:** `U/src/serving/src/roteiro.ts` (compilado em `dist/roteiro.js`), o teste.
-  - **Aceite:** o relatório é JSON com `requestId`, status, latências e as métricas lidas do namespace, sem dado pessoal; o passo 2 registra as tentativas como dado, não como falha.
-  - **Depende de:** T072, T073, T074, T084.
+  - **Aceite:** o relatório é JSON com `requestId`, status e latências, sem dado pessoal, sem prompt e sem texto do modelo (a linha respeita a lista permitida do logger, T085); as métricas do namespace não são lidas aqui, e sim pelo workflow no runner (T090); o passo 2 registra as tentativas como dado, não como falha.
+  - **Depende de:** T072, T073, T074, T084, T085.
 - [ ] T092 [engenheiro-ml] Contratos em `U/contratos/` e spec legada removida · RNF-110, RNF-008, E14 · ST-03 (parte)
   - **Teste vermelho:** o ST-03 reprova se `U/specs/001-aws-recommendation-platform/` existir, ou se algum teste ler contrato fora de `U/contratos/`.
   - **Arquivos:** `git mv` dos contratos usados (`recommendations-api.yaml`, `dynamodb-batch-recs-contract.json`, `memorydb-vector-contract.md`) para `U/contratos/`; remoção do resto da spec legada; os caminhos nos testes; `static_rules.py`.
@@ -408,13 +428,16 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `site/projetos/01-03-recomendacao.html`, `site/posts/`, `site/index.html`, `static_rules.py`.
   - **Aceite:** a página continua com status "Em revisão"; a publicação é a T110 e a T111.
   - **Depende de:** T000.
-- [ ] T096 [finops-demonstracao] Custo do PR contra o teto, com as raízes somadas · Art. V, RNF-002, RNF-102, R6 · ES (Infracost), TH-04
+- [ ] T096 [finops-demonstracao] Custo do PR contra o teto, com as raízes somadas · Art. V, RNF-002, RNF-102, R6 · ES (Infracost), TH-04, TH-10 (novo)
   - **Teste vermelho:** o comentário do gate de custo no PR mostra a base e a janela numa linha só do projeto, com a janela pesada por 3/24; um valor acima de US$ 7,10 reprova.
-  - **Arquivos:** comentário de revisão no PR; se houver, um `infracost-usage.yml` da unidade com as premissas do plano (requisições, tokens, unidades de guardrail, horas do MWAA), como a T073 da plataforma.
+  - **Teste vermelho (A05 da análise 1):** TH-10 em `harness/testes/test_custo_01_recomendacao.py` lê o `infracost-usage.yml` da unidade e reprova se faltar uma premissa do plano, se uma quantidade não for a premissa diária × 730/24 (a unidade que o Infracost lê é mensal), se houver horas do MWAA no arquivo (o peso da janela é só do gate, T024), ou se o arquivo de linhas não cobertas não tiver o Claude e o guardrail com o valor do plano.
+  - **Arquivos:** comentário de revisão no PR; o `infracost-usage.yml` da unidade com as premissas do plano (requisições e invocações), cada valor com um comentário que o liga à linha da tabela "Custo do lab", como a T073 da plataforma; o arquivo de linhas não cobertas (T024); o teste.
   - **Aceite:**
     - confere os três preços sem tabela (R6): MemoryDB `db.t4g.small`, `mw1.micro` e treino `ml.m5.large`, cada um com a fonte e a data;
     - se o dia passar de US$ 7,10, a tarefa para e leva a pergunta ao dono com o número medido; o teto nunca sobe sozinho (skill `custo-diario`);
-    - separa as linhas cobertas pelo Infracost das que ele não estima (Claude, guardrail), somando as duas no total.
+    - separa as linhas cobertas pelo Infracost das que ele não estima (Claude, guardrail), somando as duas no total;
+    - **o gate fecha com a tabela:** com o Infracost real do PR, o valor diário calculado pelo gate é igual ao da tabela "Custo do lab", dentro de 1 centavo, mais a correção da A07 abaixo; diferença maior vira achado com as linhas que divergem;
+    - **guardrail no pior caso com a retentativa (A07 da análise 1):** o arquivo de linhas não cobertas usa 16 unidades por explicação (6 × 2 na entrada e 1 × 2 na saída do InvokeModel, mais 2 no `ApplyGuardrail`), e não 9: a linha vai de US$ 0,45 para 0,80 e o dia, de US$ 6,43 para 6,78, ainda abaixo do teto de US$ 7,10. O teto não muda.
   - **Depende de:** T024, T050, T051, T053, T054, T061, T062.
 - [ ] T097 [engenheiro-seguranca] Modelo de ameaças contra os testes e esteira limpa · Art. IV, RNF-001 · ES
   - **Teste vermelho:** cada linha do STRIDE e das fronteiras de LLM do plano precisa apontar para um teste verde com tarefa `[x]`; linha sem prova reprova a revisão.
@@ -438,18 +461,20 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Aceite:** instância diferente de quem escreveu (4.6); achados com severidade, local e correção sugerida, no formato da D-036.
   - **Depende de:** T096, T097, T100.
 - [ ] T102 [pesquisador] Disponibilidade e preços antes do primeiro apply real · R6, R12, E16, RNF-002
-  - **Teste vermelho:** tabela de achados com uma linha por item, em `us-east-1`: Airflow 2.11.2 e `mw1.micro` no MWAA; Haiku 5.5 pelo perfil `us.` e o preço dele no Bedrock; guardrail no `bedrock-runtime` para o modelo; Serverless Inference com XGBoost 1.7-1; preço do MemoryDB `db.t4g.small`; item sem fonte oficial datada reprova.
+  - **Teste vermelho:** tabela de achados com uma linha por item, em `us-east-1`: Airflow 2.11.2 e `mw1.micro` no MWAA; Haiku 5.5 pelo perfil `us.` e o preço dele no Bedrock; guardrail no `bedrock-runtime` para o modelo; Serverless Inference com XGBoost 1.7-1; preço do MemoryDB `db.t4g.small`; item sem fonte oficial datada reprova. Mais duas linhas da análise 1:
+    - **versão exata do XGBoost no container 1.7-1 (A03):** a [página do algoritmo](https://docs.aws.amazon.com/sagemaker/latest/dg/xgboost.html) diz só que a versão se baseia na 1.7, e o [README do container](https://github.com/aws/sagemaker-xgboost-container/blob/master/README.rst) não traz a versão de correção (consulta em 2026-11-20); hoje é **incerto** se é a 1.7.6. A linha procura a fonte da versão exata (por exemplo, o arquivo de dependências do container no repositório oficial, na tag da 1.7-1); sem fonte, o DM-07 registra a pré-condição de versão como não confirmada;
+    - **alerta de previsão no Budgets diário (A09):** a fonte de 2020 diz que o diário não aceitava previsão, e não achei fonte atual (T013); a linha confirma o estado de hoje, com fonte e data.
   - **Arquivos:** relatório para a orquestração; se algo mudou, ADR de implementação em `U/adr/` (nunca edição do plano sem nova aprovação).
   - **Aceite:** fonte, data da fonte, data da consulta e certeza em cada linha (5.6); diferença que muda custo ou escopo vira pergunta ao dono.
 - [ ] T103 [DONO] Caso de uso da Anthropic no Bedrock · D-034, E16
   - O plano registra que o Haiku 5.5 é posterior ao Claude Opus 4.7, então o envio não é exigido. Confirmar no console que o modelo responde antes da demonstração; se pedir o formulário, o envio é à mão pelo dono, nunca por agente.
   - **Aceite:** o modelo responde no console pelo perfil `us.`, ou o envio foi feito.
 - [ ] T104 [DONO] Dia da demonstração · RF-108, RF-109, RF-110, RF-111, RNF-004, Art. V · DM-01 a DM-09
-  - **Ordem (ADR-0016):** apply da plataforma; apply da base (registra o produto); apply da janela; roteiro `lote` (DM-07: o DAG roda ponta a ponta e o candidato prediz igual à semente, dentro de 1e-6); destroy da janela; roteiro `servico` (DM-01 a DM-05: os quatro passos com `requestId` e o p95; DM-06: endpoint `InService`; DM-08: resposta real com `amazon-bedrock-guardrailAction` e uma intervenção provocada); coleta de evidências; destroy da base e, depois, da plataforma (DM-09: zero recurso com a tag, fora a chave KMS em `PendingDeletion`).
+  - **Ordem (ADR-0016):** apply da plataforma; apply da base (registra o produto); apply da janela; roteiro `lote` (DM-07: o DAG roda ponta a ponta e o candidato prediz igual à semente, dentro de 1e-6, sobre o conjunto fixo de avaliação; antes da comparação, o roteiro confere as três pré-condições da A03 da análise 1, que são o mesmo `sha256` do CSV de treino (T042 e T046), os mesmos hiperparâmetros (`nthread = 1` e `seed`) e a mesma versão do XGBoost (T102); pré-condição que falha é registrada como tal, com o valor encontrado, e não como defeito do modelo); destroy da janela; roteiro `servico` (DM-01 a DM-05: os quatro passos com `requestId` e o p95; DM-06: endpoint `InService`; DM-08: resposta real com `amazon-bedrock-guardrailAction` e uma intervenção provocada); coleta de evidências; destroy da base e, depois, da plataforma (DM-09: zero recurso com a tag, fora a chave KMS em `PendingDeletion`).
   - **R1:** se o DM-05 mostrar o p95 quente do re-ranker acima de 35 ms, a escolha entre concorrência provisionada, endpoint em instância ou timeout maior volta ao dono como pergunta, com o número medido.
   - **Depende de:** T033, T100, T101, T102, T103; plataforma T053 (tag `project` ativa, D-039), T083 e T084.
 - [ ] T105 [finops-demonstracao] Custo real do dia contra o teto · Art. V, RNF-102, R7 · DM-10
-  - **Teste vermelho:** a comparação reprova se o custo real da D01 passar de US$ 7,10, se um item cobrado não tiver linha na tabela "Custo do lab" do plano, ou se uma linha não disser como se mede (pela tag, ou pelo serviço e tipo de uso no dia e na região, como "sem tag").
+  - **Teste vermelho:** a comparação reprova se o custo real da D01 passar de US$ 7,10, se um item cobrado não tiver linha na tabela "Custo do lab" do plano, ou se uma linha não disser como se mede (pela tag, ou pelo serviço e tipo de uso no dia e na região, como "sem tag"). A linha do guardrail é comparada com o pior caso de 16 unidades por explicação, e não 9 (A07 da análise 1).
   - **Arquivos:** comentário no PR de verificação; nenhum número estimado no lugar de medido (`nao-medido` quando faltar).
   - **Aceite:** o dono lê o Cost Explorer depois da latência dos dados e entrega os números; o especialista não chama a AWS. O Claude, cobrado pelo AWS Marketplace, entra como "sem tag" (R7).
   - **Depende de:** T104.
@@ -477,20 +502,37 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T110.
 
 ## Furos do plano encontrados na fase tarefas
-Nenhum furo muda o desenho aprovado. F1 e F7 pedem uma emenda só de texto do `plan.md`, que exige nova aprovação do dono (D-033); até lá, as tarefas seguem a leitura descrita aqui. Os outros foram resolvidos nas tarefas, sem mudar o plano.
+Nenhum furo muda o desenho aprovado. F1 e F7 pediam uma emenda só de texto do `plan.md`, que exige nova aprovação do dono (D-033); a emenda 1 do plano (2026-11-20) fez as duas (achados A01 e A06 da análise 1). Os outros foram resolvidos nas tarefas, sem mudar o plano.
 
 | id | Furo | Onde | Efeito | Situação |
 |---|---|---|---|---|
-| F1 | O plano diz que a role do serviço tem "só `InvokeModel` no ARN do perfil" (STRIDE, linha E), mas a task role nasce no módulo `registro-produto`, que dá `InvokeModel` e `Converse`, `InvokeGateway` e `ssm:GetParameter` (plano da plataforma, "Cria") | plano, STRIDE e "Stack base" | o TT-B01 escrito ao pé da letra reprova a composição correta | resolvido na T053 pela leitura segura: o ECS não acrescenta ação do Bedrock, e toda ação do Bedrock fica no perfil, nos modelos de origem e no guardrail, com a condição de guardrail. **Exige emenda de texto** do STRIDE |
+| F1 | O plano diz que a role do serviço tem "só `InvokeModel` no ARN do perfil" (STRIDE, linha E), mas a task role nasce no módulo `registro-produto`, que dá `InvokeModel` e `Converse`, `InvokeGateway` e `ssm:GetParameter` (plano da plataforma, "Cria") | plano, STRIDE e "Stack base" | o TT-B01 escrito ao pé da letra reprova a composição correta | resolvido na T053 pela leitura segura: o ECS não acrescenta ação do Bedrock, e toda ação do Bedrock fica no perfil, nos modelos de origem e no guardrail, com a condição de guardrail. Texto do STRIDE e da matriz alinhado na emenda 1 do plano (A01) |
 | F2 | Os workflows da janela e o do roteiro têm inputs de `workflow_dispatch`, e o teste do harness só aceita a exceção do CKV_GHA_7 em apply e destroy registrados. A seção "Harness" do plano não cita isso | plano, "Harness" e "Workflows" | o primeiro PR com esses workflows reprova no harness | resolvido nas T021 (componentes) e T090 (`workflows_operacao`), com o TH-08, novo |
 | F3 | A lista inicial do ADR-0015 não tem as ações que o roteiro usa: `airflow:InvokeRestApi`, `airflow:CreateWebLoginToken`, `ecs:RunTask` e `cloudwatch:GetMetricData` | ADR-0015 e ADR-0016 | o roteiro falharia com `AccessDenied` no dia da demonstração | resolvido na T031: o ADR-0015 já manda conferir a lista na tarefa |
 | F4 | O plano não diz como o contrato da plataforma (`comum` e `produtos/01-recomendacao`) existe no Floci, e o plan da base lê os dois por data source | plano, "Estratégia de testes" (FL) | o FL-01 não teria como fazer o plan | resolvido na T100: a integração aplica a composição da plataforma no Floci (plataforma T080) e usa a variável de separação (plataforma T038) |
 | F5 | O parâmetro `/01-recomendacao/lab/janela/entradas` não tem teste na matriz do plano | plano, "Stack base" | regra sem teste (Art. III) | resolvido na T052 com o TT-J02, novo |
 | F6 | O script do roteiro (`node dist/roteiro.js`) não tem teste unitário na matriz; só o DM prova | plano, "Estratégia de testes" e ADR-0016 | código sem teste vermelho, que só falharia na AWS real | resolvido na T091 com o VT-20, novo |
-| F7 | O plano diz em dois lugares que o teto "é proposta e depende da resposta à P01-P5" e "só vale com a aprovação do plano" (Resumo e Custo do lab), e os ADRs 0007 a 0016 dizem "proposto, aguardando a aprovação", embora a D-056 tenha aprovado os dois | plano, "Resumo" e "Custo do lab"; cabeçalho dos ADRs | cosmético; o leitor pode tomar o teto como pendente | ADRs corrigidos na T000 (não entram no hash do plano). **Exige emenda de texto** do plano |
+| F7 | O plano diz em dois lugares que o teto "é proposta e depende da resposta à P01-P5" e "só vale com a aprovação do plano" (Resumo e Custo do lab), e os ADRs 0007 a 0016 dizem "proposto, aguardando a aprovação", embora a D-056 tenha aprovado os dois | plano, "Resumo" e "Custo do lab"; cabeçalho dos ADRs | cosmético; o leitor pode tomar o teto como pendente | ADRs corrigidos na T000 (não entram no hash do plano). Plano alinhado na emenda 1 (A06) |
 | F8 | A spec define `proveniencia` como `sintetica` ou `documentacao`, mas o RF-111 pede a troca por captura real sem dar o valor | spec, RF-111 | o VT-13 não saberia aceitar a captura | resolvido na T080 com o valor `captura` |
 
 **Divergência entre spec e plano (resolvida em `d846805`: o RNF-101 da spec agora descreve a janela do MWAA em stack próprio):** o RNF-101 da spec cita o input `enable_mwaa` no apply da base, e o plano trocou esse input pela janela em stack próprio (ADR-0007, D-052). As tarefas seguem o plano aprovado; o texto da spec precisa ser alinhado.
 
 ## Perguntas ao dono
-Nenhuma aberta. As emendas de texto de F1 e F7 vão à orquestração, que decide quando levar ao dono, junto com outra emenda ou sozinhas.
+Nenhuma aberta. As emendas de texto de F1 e F7 entraram na emenda 1 do plano, autorizada pelo dono na D01-P6 (emenda de texto do plano da recomendação); o registro da nova aprovação é da orquestração.
+
+## Correções da análise 1
+Achados da rodada 1 da análise (`analise.md`, 2026-11-20) e onde cada um foi corrigido. A01 e A06 entraram na emenda 1 do `plan.md`, autorizada pelo dono na D01-P6 (emenda de texto do plano da recomendação); os demais só mudam tarefas, matriz, spec e ADRs, que não entram no hash do plano. Cada linha traz a boa prática e o erro comum que ela evita (D-036).
+
+| Achado | Onde foi corrigido | Boa prática e erro comum |
+|---|---|---|
+| A01 · permissões do Bedrock na task role (bloqueante) | `plan.md` (emenda 1: STRIDE linha E, matriz Art. IV e RF-110); `spec.md` (RF-110, item IAM e aceite TT); T053 (TT-B01 passa a afirmar também as ações de fora do Bedrock que o módulo dá); ADR-0010 (item 4); linha F1 dos furos | **A afirmação de segurança é a mesma em todos os artefatos e testável como está escrita.** Erro comum: uma garantia mais forte que a real, que a revisão confere sem que ninguém a implemente |
+| A02 · roteiro lendo métricas de dentro da tarefa | ADR-0016 (item 3 e trade-offs); T090 (espera, log e métricas no runner; TH-08 com os três passos); T091 (relatório numa linha JSON marcada em stdout, sem API de controle); T031 (`ecs:DescribeTasks` e `logs:GetLogEvents`, com fonte) | **Cada passo roda onde tem rede e permissão.** Erro comum: descobrir no apply real que a tarefa não alcança a API, com o relógio do teto correndo |
+| A03 · DM-07 sem entradas fixadas | T042 (mesmo CSV, hash publicado, uma configuração de hiperparâmetros, versão do container); T043 (CSV de treino por função pura e ordem fixa); T046 (`nthread = 1` e `seed` no job, com fonte); T102 (versão exata do XGBoost, hoje incerta); T104 (pré-condições do DM-07) | **Igualdade numérica só com as entradas fixadas.** Erro comum: um critério preciso sobre entradas que ninguém garante, que reprova por ruído |
+| A04 · destroys concorrentes no mesmo state | T023 (com a base vencida, só o destroy da base); T064 (TH-09: um só grupo de concorrência nos quatro workflows; `queue: max` com fonte, ou devolução ao `operador-harness`) | **Destroy em cascata serializado por construção.** Erro comum: confiar na ordem de dois disparos assíncronos e deixar o lock decidir |
+| A05 · peso duplo e unidade do arquivo de uso | T024 (peso só no gate; linhas não cobertas pela regra da plataforma T073); T096 (TH-10: quantidades mensais equivalentes, sem horas do MWAA; gate igual à tabela dentro de 1 centavo) | **Uma conversão por lugar, com a unidade escrita e testada.** Erro comum: aplicar a mesma redução duas vezes e o gate passar com um número que ninguém calculou |
+| A06 · teto como "proposta" (menor) | `plan.md` (emenda 1: Resumo e Custo do lab); T000 (também a frase do ADR-0013 sobre a P01-P5); linha F7 dos furos | **Estado do documento igual ao registro.** Erro comum: reabrir com o dono uma decisão já tomada |
+| A07 · guardrail sem a retentativa (menor) | T096 e T105 (16 unidades no pior caso: US$ 0,80 na linha e US$ 6,78 no dia, abaixo do teto de US$ 7,10, que não muda) | **A mesma premissa de pior caso em todas as linhas que ela afeta.** Erro comum: dobrar uma linha e esquecer a vizinha |
+| A08 · spec atrás das tarefas (menor) | `spec.md` (critério 2 com a exceção do ECS `INACTIVE`; RF-111 com `captura`; duas entradas em "Alinhamento com o plano aprovado") | **A spec acompanha o que as tarefas testam.** Erro comum: a verificação final reprovar uma exceção que as tarefas aceitam |
+| A09 · previsão no Budgets diário (menor, incerto) | T013 (TT-K01 só com `ACTUAL`, com a fonte de 2020 e o guia de boas práticas); T102 (confirmar o estado atual). Continua **incerto**: não achei fonte atual | **Afirmação de serviço só com fonte; a dúvida vira item de conferência.** Erro comum: levar uma configuração do recurso antigo para o novo sem conferir |
+| A10 · janela com prazo menor que a criação (menor) | T022 (prazo útil mínimo de 1 hora, como campo do componente; recusa com a sugestão de `infra.py estender`) | **Recusar cedo o que não tem tempo de dar certo.** Erro comum: pagar a criação de um recurso que é destruído antes de servir |
+| A11 · TH-07 vermelho pela mudança do modelo (menor) | T010 (nota com a causa e as tarefas que devolvem o verde) | **Dependência entre branches escrita onde o teste falha.** Erro comum: afrouxar o teste para passar e perder a regra |
