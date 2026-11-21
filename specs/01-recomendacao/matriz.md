@@ -107,7 +107,7 @@ Nenhum. Todo id da lista "Testes novos" do plano tem tarefa: VT-01 a VT-19, PY-0
 | VT-19 | T076 | PY-03 | T042 | TH-07 (novo) | T010, T032, T055, T056, T064 |
 | VT-20 (novo) | T091 | PY-04 | T044 | TH-08 (novo) | T021, T064, T090 |
 | FL-01 a FL-05 | T100 | PY-05 | T045 | DM-01 a DM-09 | T104 |
-| TH-09 (análise 1) | T064 | TH-10 (análise 1) | T096 | | |
+| TH-09 (análise 1) | T064 | TH-10 (análise 1; A18 da análise 2: valor do guardrail da A07 e linha do treino) | T096 | | |
 | ES | T096, T097 | PY-06 | T046 | DM-10 | T105 |
 | | | PY-07 | T040 | | |
 
@@ -117,7 +117,7 @@ Nenhum. Todo id da lista "Testes novos" do plano tem tarefa: VT-01 a VT-19, PY-0
 | T020 | T040, T043 | campo `consome` e comandos `requisitos` e `dependentes` |
 | T022 | T041 | limite do consumidor no `registrar` e no `estender` |
 | T023 | T042 | ordem de destroy dos consumidores antes da plataforma |
-| T024 | T073 | regra única do gate para as linhas que o Infracost não cobre (A05 da análise 1) |
+| T096 | T073 | só o `usage_file` no `seguranca.yml` (A17 da análise 2: a T024 não depende mais da plataforma, porque a regra das linhas que o Infracost não cobre é criada na própria T024) |
 | T053 | T030, T032, T033, T034, T036, T037, T038 | módulo `registro-produto` completo: catálogo, roles, guardrail, perfil, Cedar, alarme, parâmetro e separação |
 | T055 | T043 | `infra.py requisitos` e prazo registrado antes do apply no modelo |
 | T056 | T048 | filtro da chave KMS em `PendingDeletion` no modelo de destroy |
