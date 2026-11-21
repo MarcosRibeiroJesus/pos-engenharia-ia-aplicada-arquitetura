@@ -136,7 +136,7 @@ Cada requisito traz o critério de aceite e como ele é verificado. Na coluna de
 
 ## Requisitos não funcionais
 - **RNF-001** (segurança, Art. IV):
-  - **Nada público:** o gateway só aceita chamadas assinadas por IAM; nenhum recurso tem política com `Principal: "*"` sem condição de conta.
+  - **Nada público:** o gateway só aceita chamadas assinadas por IAM; nenhum recurso tem política com `Principal: "*"`, nem com condição; valores de condição de conta sem curinga.
   - **Criptografia:** em repouso com KMS nos recursos que aceitam chave (logs, SNS, parâmetros do contrato quando o tipo exigir); em trânsito só TLS. O tipo de chave (do cliente ou gerenciada pela AWS) e o custo dela vão para o plano, com ADR.
   - **Menor privilégio:** a role do produto só invoca o gateway e o próprio perfil de inferência e só lê o próprio parâmetro de produto e o `comum`. Nenhuma ação `*` em recurso `*`.
   - **Isolamento:** prefixo e tag `project` com ABAC (D-029). O compartilhamento entre produtos existe só no gateway e no motor de política, e a separação ali é feita pelo Cedar (RF-002).

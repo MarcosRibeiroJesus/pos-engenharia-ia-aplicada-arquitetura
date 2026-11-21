@@ -48,11 +48,20 @@ class TestDelegacaoNoPlanoAprovado(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t:
             raiz, est = repo_com_plano(Path(t))
             estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
-            for fase in ("especificar", "planejar", "publicar"):
+            est["projetos"][0]["fase"] = "publicar"
+            ok, motivo = estado.pode_delegar(est, "p", raiz)
+            self.assertFalse(ok)
+            self.assertIn("publicar", motivo)
+
+    def test_especificar_e_planejar_saem_sem_aprovacao_por_disparo(self):
+        # D-055: o dono pediu para não ser mais perguntado sobre esses disparos; o plano continua com ele.
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            for fase in ("especificar", "esclarecer", "planejar"):
                 est["projetos"][0]["fase"] = fase
-                ok, motivo = estado.pode_delegar(est, "p", raiz)
-                self.assertFalse(ok, fase)
-                self.assertIn(fase, motivo)
+                self.assertEqual(estado.pode_delegar(est, "p", raiz), (True, ""), fase)
+            est["projetos"][0]["fase"] = "tarefas"
+            self.assertFalse(estado.pode_delegar(est, "p", raiz)[0], "tarefas sem plano aprovado")
 
     def test_plano_alterado_depois_da_aprovacao_exige_nova_aprovacao(self):
         with tempfile.TemporaryDirectory() as t:
@@ -62,6 +71,16 @@ class TestDelegacaoNoPlanoAprovado(unittest.TestCase):
             ok, motivo = estado.pode_delegar(est, "p", raiz)
             self.assertFalse(ok)
             self.assertIn("mudou", motivo)
+
+    def test_fim_de_linha_do_windows_nao_muda_o_hash_do_plano(self):
+        # Checkout com autocrlf no Windows grava o plano com CRLF; o conteúdo é o mesmo que foi aprovado.
+        with tempfile.TemporaryDirectory() as t:
+            raiz, est = repo_com_plano(Path(t))
+            plano = raiz / "specs" / "p" / "plan.md"
+            plano.write_bytes(b"# Plano\nlinha\n")
+            estado.aprovar_plano(est, "p", "Marcos no chat", "2026-11-20", raiz)
+            plano.write_bytes(b"# Plano\r\nlinha\r\n")
+            self.assertEqual(estado.pode_delegar(est, "p", raiz), (True, ""))
 
     def test_aprovar_exige_plano_escrito_e_fonte(self):
         with tempfile.TemporaryDirectory() as t:

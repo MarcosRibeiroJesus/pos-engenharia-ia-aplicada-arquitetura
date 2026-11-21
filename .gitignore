@@ -30,3 +30,6 @@ node_modules/
 .vscode/
 !.env.example
 .claude/.memoria-estado.json
+
+# checkout da base usado pelos agentes da esteira (seguranca.yml)
+.base/

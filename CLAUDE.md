@@ -28,7 +28,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
 - O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.
 - O gate `.claude/hooks/gate_entrega.py` nega push e abertura de PR enquanto a sessão não tiver recebido a versão mais recente da memória.
-- Só a conversa de orquestração escreve nesse branch, e só decisões que eu tomei ou que estão delegadas (seção abaixo). Pendências ficam como pendências.
+- **Quem grava** (D-046): a sessão em que eu tomei a decisão, seja a orquestração na nuvem ou a sessão local, e só decisões minhas ou delegadas (seção abaixo). Pendências ficam como pendências.
+  - Fluxo de escrita: `git fetch` → edição sobre o topo atual → commit → push sem `--force`.
+  - Se o push for recusado, busque de novo e refaça a edição sobre o novo topo. Nunca reenvie o arquivo inteiro calculado sobre a versão velha, porque isso apaga a decisão gravada por outra sessão.
+  - A orquestração na nuvem audita (`memoria.py auditar`) e mantém o Monday.
 
 ## Boas práticas da certificação (decisões delegadas)
 - Decisões técnicas e de processo sobre como construir com Claude são suas: hooks, gates, contexto e memória, sessões, design de tools e MCP, prompts e saída estruturada, CI com Claude Code, revisão e escalonamento. Tome sempre a melhor decisão segundo as boas práticas da prova CCAR-F, na ordem que a prova recomenda, sem pedir minha aprovação. Registre a decisão na memória compartilhada (fonte: "delegada").
@@ -38,6 +41,12 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - o erro comum que ela evita.
   
   Os ids das tarefas ficam só nos ADRs e na memória, ao lado do nome, para rastreio.
+- **Códigos sempre com nome** (D-050): ao citar um código para mim, escreva junto um nome curto do que ele é. Exemplos:
+  - "D01 (recomendação)" ou "D03 (MCP do CDB)";
+  - "P00-P3 (primeiro consumidor da plataforma)";
+  - "T041 (prazo no infra.py)".
+  
+  Isso vale para disciplinas, projetos, perguntas, tarefas e decisões.
 - Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
 
 ## Retomada de sessão
@@ -68,6 +77,10 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
   O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
 - **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
+- **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
+  - **Como trabalha:** delega cada tarefa ao especialista, manda um revisor independente conferir cada tarefa (nunca quem implementou, no máximo 2 rodadas de correção) e comita só o que foi aprovado.
+  - **Comandos:** os necessários ficam liberados em `.claude/settings.json`. O hook `.claude/hooks/gate_execucao.py` (com shlex) e o `.githooks/pre-push` (`harness/push_seguro.py`) negam push com força, push no `main`, merge e apply ou destroy fora do Floci. Os agentes da esteira rodam com `--setting-sources user`, e os scripts deles vêm da base, nunca do PR.
+  - **Quando me interrompe:** só por critério explícito (tarefa `[DONO]`, mudança de plano, falha repetida, ação irreversível), com o contexto pronto, pelo Monday, notificação e `## Bloqueios` do PR.
 - **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
 - **Skills por fase:** `sdd-especificar`, `sdd-planejar`, `sdd-tarefas`, `sdd-analisar` (gate em subagente independente) e `sdd-implementar`.
 - **Agentes especialistas:** um por tarefa fim, definidos em `harness/especialistas.json` e gerados em `.claude/agents/` e `.github/agents/` (catálogo em `harness/AGENTES.md`).
@@ -75,6 +88,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - **Cada especialista tem** o modelo do nível da tarefa, só as skills dela (pré-carregadas) e nenhuma ferramenta para criar subagentes. O `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` reforça isso.
   - **Nunca edite os arquivos gerados:** mude o JSON e rode `python3 harness/sincronizar_agentes.py`. O CI confere.
 - **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
+  - Os marketplaces de terceiros (HashiCorp, Trail of Bits, promptfoo e Google) foram confirmados por mim (D-049).
+  - Marketplace novo só entra com a minha confirmação. Um teste reprova marketplace fora da lista.
 - **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
 
 ## Estrutura
@@ -186,7 +201,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Delegação dentro do plano aprovado** (D-033):
   - eu aprovo o `plan.md` de cada projeto, e a aprovação é registrada com `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`;
   - com o plano aprovado, os disparos das fases tarefas, analisar, implementar e verificar saem sem pedir minha aprovação a cada um;
-  - fora disso (plano não aprovado, plano alterado depois da aprovação, fases especificar, planejar e publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
+  - os disparos das fases especificar, esclarecer e planejar também saem sem me perguntar (D-055). O plano escrito volta para eu aprovar;
+  - fora disso (plano não aprovado ou alterado depois da aprovação nas fases seguintes, fase publicar, ou tarefa fora de projeto), mostre o plano de disparo e espere minha aprovação;
   - o briefing traz `Projeto: <chave>` e, quando eu aprovar um disparo avulso, `Aprovação do dono: <minhas palavras e quando>`. O hook `.claude/hooks/gate_delegacao.py` nega o disparo que não cumprir isso;
   - o gate `sdd-analisar`, o merge e a publicação continuam comigo.
 
@@ -217,6 +233,13 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Haiku**: tarefas mecânicas e verificáveis, como formatação, renomeações, atualização de índices e do registro de uso, e checagens de links.
 - **Fable (camada Mythos)**: só com a minha aprovação, para uma segunda opinião em decisão cara de reverter.
 - Na dúvida entre dois modelos, use o mais capaz para decidir e o mais barato para executar o que já foi decidido.
+- **Economia de tokens** (D-058):
+  - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
+  - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
+  - **Uso registrado de tudo:**
+    - o hook de uso soma também os transcripts dos subagentes;
+    - o executor comita `harness/uso/` ao fechar cada fase;
+    - o total que um subagente informa ao terminar, quando não há transcript, entra no ledger como `medido-total`, com `uso.py manual --total`.
 
 ## Registro de uso de IA
 - O registro físico é `docs/uso/uso-tokens.csv`, com uma linha por sessão e modelo. Toda sessão registra o próprio uso ao terminar uma entrega, com `scripts/uso/uso.py registrar` (lê o transcript do Claude Code) ou `manual` quando só houver a medição da conversa, e roda `uso.py painel`.

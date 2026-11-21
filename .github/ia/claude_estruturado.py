@@ -18,7 +18,9 @@ schema = json.load(open(schema_path, encoding="utf-8"))
 def rodar(texto):
     proc = subprocess.run(
         ["claude", "-p", texto, "--model", os.environ.get("MODELO_CLAUDE", "sonnet"), "--output-format", "json", "--json-schema", json.dumps(schema),
-         "--allowedTools", ferramentas, "--max-turns", "20"],
+         "--allowedTools", ferramentas, "--max-turns", "20",
+         # a configuração do projeto vem do PR (não confiável): só a do usuário vale aqui
+         "--setting-sources", "user", "--disallowedTools", "Bash,Edit,Write,WebFetch,WebSearch"],
         capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr[-2000:])

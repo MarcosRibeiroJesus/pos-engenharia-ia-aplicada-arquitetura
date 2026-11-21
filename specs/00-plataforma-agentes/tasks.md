@@ -15,25 +15,25 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - **Furos do plano:** os furos F1 a F5 apontados na fase tarefas (no fim deste arquivo) foram resolvidos pela emenda 1 do plano (2026-11-20), e os `[BLOQUEADO: Fn]` saíram. As partes afetadas citam "emenda 1".
 
 ## Fase 0 · Preparação
-- [ ] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
+- [x] T000 [operador-harness] Mover os ADRs para `plataforma/agentes/adr/` · Art. I, Art. VII
   - **Teste vermelho:** um teste em `harness/testes/test_<assunto>.py` afirma que `plataforma/agentes/adr/0001-*.md` a `0013-*.md` existem (os ADRs 0011 a 0013 vêm das correções da análise 1) e que todo link `adr/...` do `spec.md` e do `plan.md` resolve para um arquivo.
   - **Arquivos:** `git mv specs/00-plataforma-agentes/adr/*.md plataforma/agentes/adr/`; um arquivo de redirecionamento por ADR em `specs/00-plataforma-agentes/adr/` (mesmo nome, só o título e o link para o novo local).
   - **Aceite:** o conteúdo dos ADRs fica só em `plataforma/agentes/adr/`; os links do `plan.md` continuam resolvendo, pelos redirecionamentos, sem editar o `plan.md` (mudar o plano derruba a aprovação, D-033); o hash do `plan.md` segue igual ao de `plano_aprovado`.
   - **Depende de:** fase `implementar`.
 
 ## Fase 1 · Regras da constituição como testes
-- [ ] T001 [engenheiro-terraform] Esqueleto do stack com tags, região e state remoto · Art. VI, RNF-003, RNF-006 · TT-T01, TT-T03, TH-08
+- [x] T001 [engenheiro-terraform] Esqueleto do stack com tags, região e state remoto · Art. VI, RNF-003, RNF-006 · TT-T01, TT-T03, TH-08
   - **Teste vermelho:** `tests/tags.tftest.hcl` copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "00-plataforma-agentes"` e o assert iterando sobre o output `tags_dos_recursos`; `tests/regiao.tftest.hcl` com `var.regiao` padrão `us-east-1`; TH-08 em `harness/testes/test_<assunto>.py` lê `versions.tf` e exige `backend "s3" {}` parcial e `use_lockfile`.
   - **Arquivos:** `plataforma/agentes/infra/terraform/{versions.tf,providers.tf,variables.tf,outputs.tf,terraform.tfvars.example}`, `tests/tags.tftest.hcl`, `tests/regiao.tftest.hcl`.
   - **Aceite:** `default_tags` com `project = "00-plataforma-agentes"` e `managed-by = "terraform"`; `module` vem do `local.tags` de cada módulo (D-031); versão mínima do `hashicorp/aws` fixada depois de `terraform init` confirmar `aws_bedrockagentcore_gateway`, `_gateway_target`, `_policy`, `_policy_engine` e `aws_bedrock_guardrail` com `tier_config` (plano, seção Provider); `fmt`, `validate`, `tflint` e `checkov` limpos.
-- [ ] T002 [engenheiro-terraform] Workflow de CI do projeto · Art. III, RNF-005, RNF-007 · TH-12 (novo, desta fase)
+- [x] T002 [engenheiro-terraform] Workflow de CI do projeto · Art. III, RNF-005, RNF-007 · TH-12 (novo, desta fase)
   - **Teste vermelho:** teste do harness reprova se `.github/workflows/00-plataforma-agentes-ci.yml` não existe ou não roda `terraform fmt -check`, `terraform validate` e `terraform test` no root e em cada módulo com `tests/`, e `python3 -m unittest discover -s plataforma/agentes/tests`.
   - **Arquivos:** `.github/workflows/00-plataforma-agentes-ci.yml`, `harness/testes/test_<assunto>.py`.
   - **Aceite:** gatilho em `pull_request` com filtro de caminho `plataforma/agentes/**`, `infra/conta/**` e `harness/**`; `permissions: contents: read`; actions fixadas por SHA (`TestVersoesDasActions`); sem OIDC e sem credencial da AWS; o texto do workflow não cita `bedrock` nem `Converse` (TH-11). O job do Floci entra no T080.
   - **Depende de:** T001.
 
-- [ ] T003 [P] [engenheiro-seguranca] Regras transversais de segurança e custo sobre o plan · Art. IV, Art. V, RNF-001, RNF-002, RNF-004 · TT-S01, TT-S03, TT-S05, TT-K02, TT-K03
-  - **Teste vermelho:** para cada regra, uma fixture em `plataforma/agentes/tests/plan/fixtures/` que viola a regra (política com `Principal "*"` sem condição de conta; declaração com ação `*` e recurso `*`; credencial em variável, output, tag ou SSM; `aws_nat_gateway`; `aws_vpc_endpoint` do tipo `Interface`; `aws_organizations_account`) e precisa reprovar.
+- [x] T003 [P] [engenheiro-seguranca] Regras transversais de segurança e custo sobre o plan · Art. IV, Art. V, RNF-001, RNF-002, RNF-004 · TT-S01, TT-S03, TT-S05, TT-K02, TT-K03
+  - **Teste vermelho:** para cada regra, uma fixture em `plataforma/agentes/tests/plan/fixtures/` que viola a regra (política com `Principal "*"`, nem com condição; valores de condição de conta sem curinga; declaração com ação `*` e recurso `*`; credencial em variável, output, tag ou SSM; `aws_nat_gateway`; `aws_vpc_endpoint` do tipo `Interface`; `aws_organizations_account`) e precisa reprovar.
   - **Arquivos:** `plataforma/agentes/tests/plan/test_regras_plan.py` (lê `terraform show -json` do plan com mock provider do root e do módulo), `plataforma/agentes/tests/plan/fixtures/`.
   - **Aceite:** as seis fixtures reprovam com uma mensagem que cita o recurso, e o root do T001 passa. O teste roda no workflow de CI do projeto (T002), sem credencial da AWS.
     - O módulo `registro-produto` ainda não existe aqui: ele entra no teste na T030, e a T032 confirma de novo (análise 1, A14).

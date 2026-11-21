@@ -63,3 +63,12 @@ class TestOndeRodaOTerraform(unittest.TestCase):
             self.assertIn("D-042", texto, arq)
             self.assertIn(frase, texto, arq)
 
+
+class TestQuemGravaAMemoria(unittest.TestCase):
+    """D-046: a sessão onde o dono decidiu grava, com escrita otimista (sem --force, refaz sobre o topo)."""
+
+    def test_regra_no_claude_md(self):
+        texto = (AQUI.parent / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertIn("D-046", texto)
+        self.assertIn("push sem `--force`", texto)
+

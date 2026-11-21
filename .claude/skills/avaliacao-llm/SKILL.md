@@ -5,6 +5,14 @@ description: Avaliações e red team de componentes com LLM (D02 assistente de a
 
 # Avaliação de LLM
 
+## Onde roda a avaliação da D02, o assistente de agendamento (D-048)
+- **Gate no CI:** respostas gravadas e critérios explícitos. É o que bloqueia o merge.
+- **Traces:** vão para o **Langfuse Cloud, plano Hobby** (gratuito, 50 mil unidades por mês, 30 dias de dados), e não para um Langfuse na AWS.
+  - Só dados sintéticos, porque os traces saem da AWS.
+  - Chaves `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` e `LANGFUSE_HOST` no ambiente ou nos secrets. Quem cria é o dono.
+  - **Fallback seguro:** sem as chaves, o tracing fica desligado e o gate do CI continua valendo.
+- Langfuse hospedado na AWS fica fora, por custo: cerca de US$ 12 por dia de demonstração, mais da metade do limite mensal.
+
 ## Golden set
 - Arquivo versionado com casos: entrada, saída esperada (ou critérios) e categoria. As categorias são: feliz, limite, ambíguo, adversarial e fora de escopo.
 - **Critérios mensuráveis** (4.1): campo correto, ação correta, recusa correta, latência e custo. Nada de "parece bom".

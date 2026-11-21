@@ -328,7 +328,7 @@ Ids de teste: TT-* (`terraform test`), TS-* (schema), RG-* (gravadas), TH-* (har
 |---|---|---|
 | Art. I · código só depois de implementar | TH (existente: `gate_sdd`, `pre-commit`) | arquivo em `plataforma/agentes/` bloqueado antes de implementar |
 | Art. III · cobertura | TH-07 | todo RF e RNF da spec aparece em `matriz.md` com pelo menos um teste |
-| Art. IV · nada público | TT-G01, TT-S01 | `authorizer_type == "AWS_IAM"`; nenhuma política de recurso com `Principal "*"` sem condição de conta |
+| Art. IV · nada público | TT-G01, TT-S01 | `authorizer_type == "AWS_IAM"`; nenhuma política de recurso com `Principal "*"`, nem com condição; valores de condição de conta sem curinga |
 | Art. IV · criptografia em repouso | TT-S02 | KMS em log groups, tópico SNS, gateway (`kms_key_arn`) e motor (`encryption_key_arn`); chave com rotação |
 | Art. IV · criptografia em trânsito | TT-S04 | política do tópico nega `aws:SecureTransport = false` |
 | Art. IV · menor privilégio | TT-S03, TT-R09, TT-O05 | nenhuma declaração com ação `*` e recurso `*`; role de fumaça só com `InvokeGateway` no ARN do gateway; role de evidências só com as ações de leitura e `Evaluate` listadas, confiada só pela role de deploy |

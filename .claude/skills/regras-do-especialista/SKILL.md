@@ -21,6 +21,7 @@ Você recebeu **uma** tarefa de quem orquestra. Faça só ela e devolva um relat
   - o erro comum que ela evita.
 
   No relatório, os ids da prova CCAR-F vão no fim, entre parênteses, só para rastreio. Nos ADRs, ficam ao lado do nome.
+- **Códigos com nome** (D-050): ao citar disciplina, projeto, pergunta, tarefa ou decisão (D01, P00-P3, T041, D-033), escreva junto um nome curto do que é.
 - **Não crie subagentes.** Se a tarefa precisa de outra especialidade, diga qual no relatório.
 - **Privacidade:** use só fontes públicas e dados sintéticos. Nada do curso, do aluno ou das empresas em que o dono trabalha. Segredo nunca entra em arquivo.
 
