@@ -6,6 +6,14 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-21 · D-066 · Uma sessão por vez, aberta pelo dono no ambiente pos-arquitetura · fonte: Marcos
+As sessões agendadas pela orquestração em 21/11 cedo falharam: a D02 e a D03 por limite de uso (três em paralelo esgotaram o limite de 5 horas em 25 minutos, sem push), e a D01 porque herdou a rede da conversa de orquestração, que bloqueia o Terraform e o Floci. O Marcos escolheu: ele abre cada sessão no ambiente pos-arquitetura com o prompt da orquestração, uma por vez, na ordem D02, D03 e D01, com push ao fim de cada fase. Substitui a parte "em paralelo" da D-065.
+
+**Aplicado em:**
+- `CLAUDE.md` (Sessões), PR #39;
+- teste `harness/testes/test_regras_do_dono.py` (TestUmaSessaoPorVez);
+- prompts das sessões em `docs/orquestracao/prompts-sessoes-2026-11-21.md`, entregues ao Marcos.
+
 ### 2026-11-21 · D-065 · Âncoras dos três projetos AWS e uma sessão por projeto · fonte: Marcos
 O Marcos aceitou as três arquiteturas âncora ("Aceito as três"), abertas e conferidas em 2026-11-21:
 - D01 (recomendação): https://aws.amazon.com/blogs/big-data/building-a-scalable-personalized-recommendation-system-on-aws-from-batch-to-real-time/ (27/07/2026);
