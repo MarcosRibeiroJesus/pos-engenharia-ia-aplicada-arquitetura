@@ -103,6 +103,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Sessões independentes por projeto:** cada projeto pode ter a sua sessão de implementação, em paralelo com as outras, desde que:
   - cada sessão esteja no seu próprio worktree (`git worktree add`), no branch `modulo/NN-slug/<projeto>` ou `plataforma/<projeto>-impl`, com PR para `main`;
   - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
+  - **por ora, uma sessão por vez** (D-066, depois de três em paralelo esgotarem o limite de 5 horas em 25 minutos): ordem D02, D03 e D01. Eu abro cada sessão no ambiente pos-arquitetura com o prompt da orquestração, e a sessão faz commit e push ao fim de cada fase, para um limite de uso não apagar o trabalho;
   - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
   - o merge é meu: eu reviso o PR quando estiver pronto e mergeio. Não peça aprovação formal de PR; avise quando estiver pronto (D-062).
   - Projeto com Terraform também roda em sessão de nuvem, com um agente por projeto em paralelo (D-063, substitui a D-042), sem Bedrock.

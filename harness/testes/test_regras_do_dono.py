@@ -93,3 +93,12 @@ class TestRespostasDoDonoD062(unittest.TestCase):
 
     def test_merge_e_do_dono_sem_aprovacao_formal(self):
         self.assertIn("Não peça aprovação formal de PR", self._texto("CLAUDE.md"))
+
+
+class TestUmaSessaoPorVez(unittest.TestCase):
+    """D-066: uma sessão por vez, aberta pelo dono no ambiente certo, com push ao fim de cada fase."""
+
+    def test_regra_no_claude_md(self):
+        texto = (AQUI.parent / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertIn("D-066", texto)
+        self.assertIn("push ao fim de cada fase", texto)
