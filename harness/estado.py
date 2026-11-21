@@ -33,7 +33,9 @@ FASES_DELEGAVEIS = ("tarefas", "analisar", "implementar", "verificar")
 # continua precisando da aprovação do dono, que libera as fases de FASES_DELEGAVEIS.
 FASES_ANTES_DO_PLANO = ("especificar", "esclarecer", "planejar")
 CAMPOS_APROVACAO = {"data", "fonte", "sha256"}
-CAMPOS_PAUSA = {"data", "fonte"}  # D-060: pausa decidida pelo dono, com as palavras dele
+CAMPOS_PAUSA = {"data", "fonte"}
+CAMPOS_ANCORA = {"url", "titulo", "data", "fonte"}  # D-065: arquitetura âncora escolhida pelo dono
+DOMINIOS_AWS = ("https://aws.amazon.com/", "https://docs.aws.amazon.com/")  # D-060: pausa decidida pelo dono, com as palavras dele
 
 
 def carregar(arquivo: Path = ARQUIVO) -> dict:
@@ -77,6 +79,7 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
             if not (raiz / p["specs"] / arq).exists():
                 erros.append(f"{p['chave']}: fase '{p['fase']}' exige {p['specs']}{arq}")
         erros += problemas_infra(estado, p, raiz)
+        erros += problemas_ancora(p)
         pausa = p.get("pausado")
         if pausa is not None and (not isinstance(pausa, dict) or CAMPOS_PAUSA - pausa.keys()):
             erros.append(f"{p['chave']}: pausado precisa de {sorted(CAMPOS_PAUSA)} (a data e as palavras do dono)")
@@ -85,6 +88,20 @@ def problemas(estado: dict, raiz: Path = RAIZ) -> list[str]:
             erros.append(f"{p['chave']}: plano_aprovado precisa de {sorted(CAMPOS_APROVACAO)} "
                          "(registre com `estado.py aprovar-plano`)")
     return erros
+
+
+def problemas_ancora(p: dict) -> list[str]:
+    """D-065: projeto de arquitetura depois do planejar precisa da âncora oficial da AWS escolhida pelo dono."""
+    anc = p.get("ancora")
+    if anc is None:
+        if p.get("tipo") == "arquitetura" and p["fase"] not in FASES_ANTES_DO_PLANO:
+            return [f"{p['chave']}: arquitetura na fase '{p['fase']}' sem ancora (url, titulo, data e fonte do dono)"]
+        return []
+    if not isinstance(anc, dict) or CAMPOS_ANCORA - anc.keys() or not all(str(anc.get(k, "")).strip() for k in CAMPOS_ANCORA):
+        return [f"{p['chave']}: ancora precisa de {sorted(CAMPOS_ANCORA)} preenchidos"]
+    if not str(anc["url"]).startswith(DOMINIOS_AWS):
+        return [f"{p['chave']}: ancora fora de site oficial da AWS ({anc['url']})"]
+    return []
 
 
 def hash_do_plano(raiz: Path, p: dict) -> str | None:
