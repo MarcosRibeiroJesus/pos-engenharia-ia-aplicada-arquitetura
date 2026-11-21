@@ -1,0 +1,60 @@
+{
+ "_descricao": "Viola TT-K02: custo fixo ocioso: endpoint de interface. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-K02",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_vpc_endpoint.bedrock",
+    "mode": "managed",
+    "type": "aws_vpc_endpoint",
+    "name": "bedrock",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "service_name": "com.amazonaws.us-east-1.bedrock-runtime",
+      "vpc_endpoint_type": "Interface",
+      "vpc_id": "vpc-00000000000000000"
+     },
+     "after_unknown": {
+      "arn": true,
+      "cidr_blocks": true,
+      "dns_entry": true,
+      "dns_options": [],
+      "id": true,
+      "ip_address_type": true,
+      "network_interface_ids": true,
+      "owner_id": true,
+      "policy": true,
+      "prefix_list_id": true,
+      "private_dns_enabled": true,
+      "region": true,
+      "requester_managed": true,
+      "route_table_ids": true,
+      "security_group_ids": true,
+      "service_region": true,
+      "state": true,
+      "subnet_configuration": [],
+      "subnet_ids": true,
+      "tags_all": true
+     },
+     "after_sensitive": {
+      "cidr_blocks": [],
+      "dns_entry": [],
+      "dns_options": [],
+      "network_interface_ids": [],
+      "route_table_ids": [],
+      "security_group_ids": [],
+      "subnet_configuration": [],
+      "subnet_ids": [],
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

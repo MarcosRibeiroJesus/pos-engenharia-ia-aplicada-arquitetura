@@ -1,0 +1,24 @@
+{
+  "name": "pos-painel-ia",
+  "version": "0.1.0",
+  "description": "Painel local, em tempo real, de uso de tokens por modelo, tarefas e projetos a partir das sessões do Claude Code.",
+  "type": "module",
+  "bin": {
+    "pos-painel-ia": "bin/pos-painel-ia.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "public",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node bin/pos-painel-ia.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "license": "MIT",
+  "private": true
+}
