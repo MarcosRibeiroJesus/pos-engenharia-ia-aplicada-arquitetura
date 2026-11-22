@@ -1,0 +1,28 @@
+# Sobe o painel em http://localhost:4317 (porta publicada só na interface local).
+# Ajuste CLAUDE_PROJECTS_DIR no arquivo .env (veja .env.example).
+services:
+  painel:
+    build: .
+    image: pos-painel-ia:local
+    ports:
+      - "127.0.0.1:4317:4317"
+    environment:
+      REGISTRO_CSV: /registro/uso-tokens.csv
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ${CLAUDE_PROJECTS_DIR:?defina CLAUDE_PROJECTS_DIR no .env}:/transcripts:ro
+      - ../../docs/uso:/registro:ro
+      - painel-dados:/dados
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  painel-dados:

@@ -1,6 +1,6 @@
-# Pós-graduação: Engenharia de IA Aplicada e Arquitetura
+# Engenharia de IA Aplicada e Arquitetura
 
-Projetos de arquitetura construídos a partir dos módulos da pós: uma arquitetura principal na AWS, implementada em Terraform e testada localmente no [Floci](https://floci.io/), e uma arquitetura comparativa em outra cloud, documentada. Cada módulo vira também um post.
+Arquiteturas AWS de nível enterprise e projetos de IA aplicada, implementados em Terraform, testados localmente no [Floci](https://floci.io/) e com uma versão equivalente em outra cloud. Cada projeto vira um post.
 
 Site: https://marcosribeirojesus.github.io/pos-engenharia-ia-aplicada-arquitetura/
 
@@ -9,7 +9,7 @@ Site: https://marcosribeirojesus.github.io/pos-engenharia-ia-aplicada-arquitetur
 | Pasta | Conteúdo |
 |---|---|
 | `modulos/NN-slug/` | Notas, Terraform, testes, ADRs, design doc e post de cada módulo |
-| `docs/curso/PROGRESSO.md` | Andamento do curso e projetos escolhidos |
+| `docs/curso/PROGRESSO.md` | Status dos projetos |
 | `site/` | Site estático publicado no GitHub Pages |
 | `testing/` | Harness de teste contra emulador AWS e relatórios |
 | `scripts/setup-ambiente.sh` | Setup do ambiente (Terraform, checkov, Floci) |
