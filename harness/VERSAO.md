@@ -17,6 +17,8 @@
 ## Histórico
 - **0.6.2:**
   - rtk em todas as sessões por um wrapper que não amplia permissões e headroom só local, com telemetria desligada (D-067, ADR 0004).
+- **0.6.1:**
+  - gate no CI para branch sem o harness atual da base (`branch_defasado.py`), depois do PR #8, que saiu de um main anterior ao harness e passou por fora dos gates locais. Critério 2 (gates estáveis) afetado: o gate que dependia só do hook local agora também vale no CI.
 - **0.5.1:**
   - padrão de tags (D-031);
   - trava de branch mergeado (D-032);

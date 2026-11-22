@@ -1,7 +1,7 @@
 name: harness
 
 # Gates do harness que valem para qualquer agente (Claude Code, Antigravity, Copilot):
-# estado SDD válido, nenhum código de projeto antes da fase implementar (Artigo I)
+# branch com o harness atual da base, estado SDD válido, nenhum código de projeto antes da fase implementar (Artigo I)
 # skills e especialistas gerados em dia e decisão do dono aplicada em regra ou skill (D-025).
 on:
   pull_request:
@@ -19,6 +19,11 @@ jobs:
           fetch-depth: 0
       - name: Testes do harness
         run: python3 -m unittest harness/test_harness.py
+      - name: Branch com o harness atual da base
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD_PR: ${{ github.event.pull_request.head.sha }}
+        run: python3 harness/branch_defasado.py "$BASE" "$HEAD_PR"
       - name: Estado SDD válido
         run: python3 harness/estado.py validar
       - name: Código só na fase implementar
