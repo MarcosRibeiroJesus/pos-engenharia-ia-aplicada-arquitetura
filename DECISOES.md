@@ -7,13 +7,15 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | Disciplina | Arquitetura AWS | IA aplicada | Cloud comparativa | Teto (custo de 1 dia) |
 |---|---|---|---|---|
 | D01 Fundamentos | Recomendação de e-commerce (PR #1), em desenvolvimento (D-064) | Doom, opção 04-C (D-059): calibrador do limiar com gate humano sobre YOLO em TF.js num Web Worker; rótulos pelo motor do jogo; não é aprendizado por reforço | GCP | calcular no plano |
-| D02 APIs de IA generativa | Assistente de agendamento completo | pendente | GCP | calcular no plano |
+| D02 APIs de IA generativa | Assistente de agendamento completo: plano aprovado (D-070), tarefas pendentes | pendente | GCP | US$ 0,85 por dia (D-070) |
 | D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
 - **Respostas da rodada anterior** (D-062): GCP como cloud comparativa da D04 à D07; uma rodada real paga por projeto, só com teto por execução aprovado pelo Marcos; sem teto por disciplina; ele revisa e mergeia, sem aprovação formal de PR.
 - **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje nenhum projeto está pausado (D-064).
+- **Links de sessão do Claude nunca no repositório** (D-069): repositório público; o rodapé `claude.com/claude-code` segue permitido. Teste `harness/testes/test_links_de_sessao.py`.
+- **D02 (assistente de agendamento): plano aprovado** (D-070): teto diário US$ 0,85, cota de 400.000 tokens, Langfuse Cloud por produto (`https://cloud.langfuse.com`), consumo parcial da plataforma (opção A). Tarefas só com a sessão do D02.
 - **Rodada real paga** (D-068): teto de US$ 20 por execução, valor do Marcos; o limite mensal da conta (US$ 20, D-022) continua por cima.
 - **Economia de tokens** (D-067): rtk 1.2.1 em todas as sessões (wrapper só para leitura e teste simples, sem ampliar permissão); headroom 0.44.0 só na máquina do Marcos, com telemetria desligada. PR #40.
 - **Âncoras e sessões** (D-065): âncora oficial da AWS de cada projeto no `harness/estado.json` (D01 Big Data Blog, D02 Natera, D03 MCP sem estado); o `estado.py validar` exige âncora depois do planejar. Sessões: uma por vez, abertas pelo Marcos no ambiente pos-arquitetura, na ordem D02, D03 e D01, com push ao fim de cada fase (D-066, substitui o paralelo).
@@ -100,7 +102,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
-- D02 (assistente de agendamento): a 2ª pergunta aberta na sessão D02. A 1ª foi respondida pela D-048.
+- D02: a 2ª pergunta da sessão D02 não foi localizada; o dono a dispensou em 2026-11-21, sem decisão (ver D-070).
 - Configuração da conta do Marcos para o destroy automático (D-024):
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
   - incluir o subject `repo:<dono>/<repo>:environment:aws-lab-destroy` na confiança OIDC da role de deploy na AWS.
