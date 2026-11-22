@@ -98,6 +98,7 @@ Resumo dos temas, com palavras próprias, para orientar as propostas. Introduç�
 ## Projetos em andamento
 
 ### 01.03 · Plataforma híbrida de recomendação na AWS (arquitetura AWS)
+Pausado e retomado pelo dono em 2026-11-21 (D-060 e D-064): é um dos três projetos AWS em desenvolvimento, com a D02 e a D03.
 Em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`, PR #1 (em revisão).
 
 | Entregável | Status |
@@ -111,7 +112,7 @@ Em `modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/`, PR #1 (em revisã
 | Teto do lab | US$ 10/mês, respondido pelo dono na sessão da unidade em 2026-11-18 |
 
 ### 01.04 · IA que vence Doom (IA aplicada)
-"Vencer Doom" é uma escada de cenários do ViZDoom (`basic` → `defend_the_center` → `deadly_corridor` → mapa completo), com assets Freedoom. Variantes em `modulos/01-fundamentos-ia-llms/OPCOES.md` (PR #8); a recomendada é treino em escala na nuvem com promoção por avaliação e demonstração no navegador.
+Opção 04-C escolhida (D-059): calibrador do limiar de confiança com gate humano, sobre o jogo fiel à aula, um detector YOLO pronto em TensorFlow.js rodando num Web Worker. O jogo é Doom (assets Freedoom), com rótulos gerados pelo motor do jogo para ajustar o YOLO; esse ajuste fica fora do que a aula ensina. As variantes antigas com ViZDoom e treino por reforço foram descartadas, porque a aula não as ensina. Opções em `modulos/01-fundamentos-ia-llms/OPCOES.md` (PR #8). Fase: especificar.
 
 ### Post já rascunhado
 "Recomendação em escala: do batch ao LLM". Referências:
