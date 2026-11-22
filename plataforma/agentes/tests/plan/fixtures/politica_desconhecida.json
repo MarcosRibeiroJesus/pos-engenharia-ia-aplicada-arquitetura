@@ -1,0 +1,63 @@
+{
+ "_descricao": "Viola TT-S01/TT-S03: política que o plan não conhece (falta mock_resource com arn). Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S01/TT-S03",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_sns_topic.alarmes",
+    "mode": "managed",
+    "type": "aws_sns_topic",
+    "name": "alarmes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "name": "00-plataforma-agentes-alarmes"
+     },
+     "after_unknown": {
+      "arn": true,
+      "beginning_archive_time": true,
+      "fifo_throughput_scope": true,
+      "id": true,
+      "maximum_message_size": true,
+      "name_prefix": true,
+      "owner": true,
+      "policy": true,
+      "region": true,
+      "signature_version": true,
+      "tags_all": true,
+      "tracing_config": true
+     },
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   },
+   {
+    "address": "aws_sns_topic_policy.sem_mock",
+    "mode": "managed",
+    "type": "aws_sns_topic_policy",
+    "name": "sem_mock",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {},
+     "after_unknown": {
+      "arn": true,
+      "id": true,
+      "owner": true,
+      "policy": true,
+      "region": true
+     },
+     "after_sensitive": {}
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

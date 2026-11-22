@@ -1,0 +1,18 @@
+{
+ "_descricao": "Viola TT-S05: credencial em output. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S05",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [],
+  "output_changes": {
+   "token_de_acesso": {
+    "actions": [
+     "create"
+    ],
+    "after": "valor-sintetico",
+    "after_unknown": false,
+    "after_sensitive": true
+   }
+  }
+ }
+}
