@@ -1,0 +1,52 @@
+{
+ "_descricao": "Viola TT-K02: custo fixo ocioso: NAT Gateway. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-K02",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_nat_gateway.saida",
+    "mode": "managed",
+    "type": "aws_nat_gateway",
+    "name": "saida",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "subnet_id": "subnet-00000000000000000"
+     },
+     "after_unknown": {
+      "association_id": true,
+      "auto_provision_zones": true,
+      "auto_scaling_ips": true,
+      "availability_mode": true,
+      "availability_zone_address": [],
+      "id": true,
+      "network_interface_id": true,
+      "private_ip": true,
+      "public_ip": true,
+      "region": true,
+      "regional_nat_gateway_address": true,
+      "regional_nat_gateway_auto_mode": true,
+      "route_table_id": true,
+      "secondary_allocation_ids": true,
+      "secondary_private_ip_address_count": true,
+      "secondary_private_ip_addresses": true,
+      "tags_all": true,
+      "vpc_id": true
+     },
+     "after_sensitive": {
+      "availability_zone_address": [],
+      "regional_nat_gateway_address": [],
+      "secondary_allocation_ids": [],
+      "secondary_private_ip_addresses": [],
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}
