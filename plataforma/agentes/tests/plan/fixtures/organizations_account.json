@@ -1,0 +1,40 @@
+{
+ "_descricao": "Viola TT-K03: conta nova no Organizations. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-K03",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_organizations_account.lab",
+    "mode": "managed",
+    "type": "aws_organizations_account",
+    "name": "lab",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "email": "lab@example.com",
+      "name": "00-plataforma-agentes-lab"
+     },
+     "after_unknown": {
+      "arn": true,
+      "govcloud_id": true,
+      "id": true,
+      "joined_method": true,
+      "joined_timestamp": true,
+      "parent_id": true,
+      "state": true,
+      "status": true,
+      "tags_all": true
+     },
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}
