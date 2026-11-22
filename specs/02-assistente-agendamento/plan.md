@@ -312,5 +312,5 @@ Todas as divergências do PR #44 foram revisadas pelo dono, por múltipla escolh
 | DV-12 imagem do Floci | `${FLOCI_IMAGE:-floci/floci:2.5.0}` |
 | Langfuse por produto | um projeto Langfuse por produto, com chaves próprias |
 
-Consequências para os artefatos seguintes: o ADR-0006 precisa refletir o Langfuse por produto; o parâmetro SSM do D02 é `/02-assistente-agendamento/langfuse/public-key`, `/secret-key` e `/host`, criados pelo dono com `aws ssm put-parameter` (`SecureString`, sem tag `project`).
+Consequências: o ADR-0006 já reflete o Langfuse por produto e o host `https://cloud.langfuse.com`; o parâmetro SSM do D02 é `/02-assistente-agendamento/langfuse/public-key`, `/secret-key` e `/host`, criados pelo dono com `aws ssm put-parameter` (`SecureString`, sem tag `project`).
 
