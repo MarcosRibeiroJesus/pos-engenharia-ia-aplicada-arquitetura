@@ -98,13 +98,18 @@
       "nota": "142 testes antes do SDD; spec retroativa antes da camada 6 (avaliações, pendente do dono).",
       "infra_real": true,
       "destroy_workflow": ".github/workflows/02-assistente-agendamento-destroy.yml",
-      "teto_diario_usd": null,
+      "teto_diario_usd": 0.85,
       "apply_workflow": ".github/workflows/02-assistente-agendamento-apply.yml",
       "ancora": {
         "url": "https://aws.amazon.com/blogs/machine-learning/nateras-intelligent-appointment-scheduling-with-amazon-bedrock-agentcore/",
         "titulo": "Natera's intelligent appointment scheduling with Amazon Bedrock AgentCore (AWS ML Blog)",
         "data": "2026-08-26",
         "fonte": "Marcos no chat em 2026-11-21: \"Aceito as três\" (D-065)"
+      },
+      "plano_aprovado": {
+        "data": "2026-11-22",
+        "fonte": "Dono (Marcos), 2026-11-22, 'Confirmo!' após revisar DV-01 a DV-12 e D02-P2 a D02-P4 por múltipla escolha; decisões em plan.md, seção 'Decisões do dono (2026-11-22)'",
+        "sha256": "f8c333a118f9e1609b6c9bd73360a1d9842950d6d1b22578be21663fb8d5eee6"
       }
     },
     {
