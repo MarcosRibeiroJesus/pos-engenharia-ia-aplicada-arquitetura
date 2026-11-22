@@ -306,7 +306,7 @@
       "papel": "Cada valor tem fonte e data (página oficial de preços ou Infracost). Aponte custo fixo ocioso sem ADR, recurso fora do destroy e o que continua cobrando depois. Você calcula e propõe; teto e orçamento são aprovados pelo dono."
     },
     "arquiteto-cloud-comparativa": {
-      "descricao": "Faz a arquitetura comparativa na cloud definida pelo dono (GCP na D01 e D02, Azure na D03): mapeamento serviço a serviço, design doc e diagrama.",
+      "descricao": "Faz a arquitetura comparativa na cloud definida pelo dono (GCP na D01, na D02 e da D04 à D07, Azure na D03): mapeamento serviço a serviço, design doc e diagrama.",
       "modelo": "sonnet",
       "tarefas": [
         "cloud-comparativa"
