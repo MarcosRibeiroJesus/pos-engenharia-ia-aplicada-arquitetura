@@ -122,7 +122,7 @@
         "modulos/03-mcp/arquitetura/"
       ],
       "specs": "specs/03-mcp-regras-cdb/",
-      "fase": "especificar",
+      "fase": "esclarecer",
       "retroativo": true,
       "pr": null,
       "cloud": "azure",
@@ -133,9 +133,13 @@
         "D-011",
         "D-021",
         "D-022",
+        "D-024",
+        "D-029",
+        "D-031",
+        "D-034",
         "D-065"
       ],
-      "nota": "Pouca implementação antes do SDD.",
+      "nota": "Nada implementado antes do SDD: não há código da D03 no repositório; a spec retroativa parte do contrato da plataforma, das decisões do dono e da âncora.",
       "infra_real": true,
       "destroy_workflow": ".github/workflows/03-mcp-regras-cdb-destroy.yml",
       "teto_diario_usd": null,
