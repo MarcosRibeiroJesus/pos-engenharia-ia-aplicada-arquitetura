@@ -250,6 +250,7 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - Acompanhamento ao vivo e histórico até o fim da pós: o app `apps/painel-ia` (npm ou Docker) lê os transcripts, guarda tudo em SQLite e exporta o relatório final (ADR 0002).
 
 ## Privacidade
+- Links de sessão do Claude (URL do claude.ai cujo caminho tenha `session_` ou comece com `chat/`) nunca entram no repositório, nem em PR, commit, issue ou comentário: o repositório é público e o link dá acesso à conversa inteira. O rodapé de atribuição `claude.com/claude-code` é permitido. Teste: `harness/testes/test_links_de_sessao.py`.
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
 - Segredos nunca entram no repositório.
