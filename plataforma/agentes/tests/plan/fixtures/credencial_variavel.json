@@ -1,0 +1,15 @@
+{
+ "_descricao": "Viola TT-S05: credencial em variável. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S05",
+ "variaveis": {
+  "senha_do_alvo": {
+   "arquivo": "main.tf",
+   "default": "valor-sintetico",
+   "sensitive": true
+  }
+ },
+ "plano": {
+  "resource_changes": [],
+  "output_changes": {}
+ }
+}

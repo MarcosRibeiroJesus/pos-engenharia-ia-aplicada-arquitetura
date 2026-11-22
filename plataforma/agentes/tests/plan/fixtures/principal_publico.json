@@ -1,0 +1,62 @@
+{
+ "_descricao": "Viola TT-S01: política de recurso com Principal \"*\" sem condição de conta. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S01",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_sns_topic.alarmes",
+    "mode": "managed",
+    "type": "aws_sns_topic",
+    "name": "alarmes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "beginning_archive_time": "o0jxwa84",
+      "fifo_throughput_scope": "7764kag5",
+      "id": "phgzvczr",
+      "maximum_message_size": 0,
+      "name": "00-plataforma-agentes-alarmes",
+      "name_prefix": "6lbrxxo6",
+      "owner": "wc23gxrk",
+      "policy": "o6eis07u",
+      "region": "fthnygrj",
+      "signature_version": 0,
+      "tracing_config": "sjovavcl"
+     },
+     "after_unknown": {},
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   },
+   {
+    "address": "aws_sns_topic_policy.aberta",
+    "mode": "managed",
+    "type": "aws_sns_topic_policy",
+    "name": "aberta",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+      "policy": "{\"Statement\":[{\"Action\":\"sns:Publish\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Resource\":\"arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes\"}],\"Version\":\"2012-10-17\"}"
+     },
+     "after_unknown": {
+      "id": true,
+      "owner": true,
+      "region": true
+     },
+     "after_sensitive": {}
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

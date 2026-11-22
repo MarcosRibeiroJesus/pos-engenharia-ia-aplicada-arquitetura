@@ -1,0 +1,44 @@
+{
+ "_descricao": "Viola TT-S05: credencial em parâmetro SSM. Gerada do plan com mock de um root sintético (T003).",
+ "_regra": "TT-S05",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_ssm_parameter.alvo",
+    "mode": "managed",
+    "type": "aws_ssm_parameter",
+    "name": "alvo",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "name": "/00-plataforma-agentes/alvos/externo/senha",
+      "type": "SecureString",
+      "value": "valor-sintetico"
+     },
+     "after_unknown": {
+      "arn": true,
+      "data_type": true,
+      "has_value_wo": true,
+      "id": true,
+      "insecure_value": true,
+      "key_id": true,
+      "region": true,
+      "tags_all": true,
+      "tier": true,
+      "version": true
+     },
+     "after_sensitive": {
+      "tags_all": {},
+      "value": true,
+      "value_wo": true
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

@@ -1,0 +1,31 @@
+name: harness
+
+# Gates do harness que valem para qualquer agente (Claude Code, Antigravity, Copilot):
+# estado SDD válido, nenhum código de projeto antes da fase implementar (Artigo I)
+# skills e especialistas gerados em dia e decisão do dono aplicada em regra ou skill (D-025).
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Testes do harness
+        run: python3 -m unittest harness/test_harness.py
+      - name: Estado SDD válido
+        run: python3 harness/estado.py validar
+      - name: Código só na fase implementar
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: git diff --name-only --diff-filter=ACMR "$BASE"...HEAD | python3 harness/estado.py checar-arquivos
+      - name: Skills e especialistas sincronizados (Claude Code, Copilot, Antigravity)
+        run: python3 harness/sincronizar_agentes.py --verificar
+      - name: Decisões do dono aplicadas em regra ou skill (D-025)
+        run: python3 harness/memoria.py auditar
