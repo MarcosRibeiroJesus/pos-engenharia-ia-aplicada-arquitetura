@@ -1,3 +1,14 @@
+### 2026-11-22 · D-069 · Nunca incluir links de sessão do Claude no repositório · fonte: Marcos
+O repositório é público, e um link de sessão dá acesso à conversa inteira. Os links já publicados nos corpos de 18 PRs foram removidos.
+
+**Aplicado em:** `AGENTS.md` (seção 2), `CLAUDE.md` (Privacidade), `harness/testes/test_links_de_sessao.py` (PR #45).
+
+### 2026-11-22 · D-070 · D02 (assistente de agendamento): plano aprovado com as decisões de DV-01 a DV-12 · fonte: Marcos
+O dono revisou por múltipla escolha as divergências do PR #44 e aceitou as opções recomendadas. Aprovou o plano (D-033) e decidiu: teto diário de US$ 0,85 com cota de 400.000 tokens e alarme de custo de tokens em US$ 0,40; consumo parcial da plataforma (opção A); Langfuse Cloud na demonstração, um projeto por produto, host `https://cloud.langfuse.com`. DV-04 foi respondido com texto livre ("definir conforme o tipo de projeto e gasto estimado por dia") e convertido em orçamento diário pelo gasto estimado.
+A 2ª pergunta da sessão D02 (D02-P1) não foi localizada e foi dispensada pelo dono, sem decisão.
+
+**Aplicado em:** `specs/02-assistente-agendamento/plan.md` (seção "Decisões do dono"), `specs/02-assistente-agendamento/adr/0006-avaliacao-e-observabilidade.md`, `harness/estado.json` (`plano_aprovado` e `teto_diario_usd`, branch do PR #44).
+
 # Memória compartilhada: histórico de decisões
 
 Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e fonte:
