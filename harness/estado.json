@@ -68,7 +68,7 @@
         "modulos/02-apis-ia-generativa/arquitetura/"
       ],
       "specs": "specs/02-assistente-agendamento/",
-      "fase": "esclarecer",
+      "fase": "planejar",
       "retroativo": true,
       "pr": null,
       "cloud": "gcp",
