@@ -28,3 +28,8 @@ node_modules/
 .DS_Store
 .idea/
 .vscode/
+!.env.example
+.claude/.memoria-estado.json
+
+# checkout da base usado pelos agentes da esteira (seguranca.yml)
+.base/

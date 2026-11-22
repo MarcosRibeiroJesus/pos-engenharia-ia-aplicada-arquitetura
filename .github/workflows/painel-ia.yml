@@ -1,0 +1,76 @@
+name: Painel de IA
+
+on:
+  pull_request:
+    paths: ["apps/painel-ia/**", ".github/workflows/painel-ia.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/painel-ia/**", ".github/workflows/painel-ia.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: painel-ia-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["22", "24"]
+    defaults:
+      run:
+        working-directory: apps/painel-ia
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm test
+      - name: Pacote npm instala e responde
+        run: |
+          npm pack
+          npm install -g ./pos-painel-ia-*.tgz
+          mkdir -p "$RUNNER_TEMP/transcripts"
+          CLAUDE_PROJECTS_DIR="$RUNNER_TEMP/transcripts" DADOS_DIR="$RUNNER_TEMP/dados" pos-painel-ia &
+          for _ in $(seq 1 20); do curl -fsS http://127.0.0.1:4317/healthz && exit 0; sleep 1; done
+          exit 1
+
+  imagem:
+    name: Imagem Docker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/painel-ia
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        run: docker build -t pos-painel-ia:ci .
+      - name: Sobe com o mesmo endurecimento do compose e confere saúde, cabeçalhos e persistência
+        run: |
+          mkdir -p "$RUNNER_TEMP/transcripts/proj"
+          printf '%s\n' '{"type":"assistant","sessionId":"s1","timestamp":"2026-11-18T22:00:00Z","gitBranch":"modulo/03-mcp/05-legado","message":{"id":"m1","model":"claude-opus-5-5","usage":{"input_tokens":1,"output_tokens":10}}}' > "$RUNNER_TEMP/transcripts/proj/s1.jsonl"
+          docker volume create painel-dados
+          subir() {
+            docker run -d --name painel -p 127.0.0.1:4317:4317 --read-only --tmpfs /tmp --cap-drop ALL \
+              --security-opt no-new-privileges:true -v "$RUNNER_TEMP/transcripts:/transcripts:ro" -v painel-dados:/dados pos-painel-ia:ci
+            for _ in $(seq 1 30); do curl -fsS http://127.0.0.1:4317/healthz >/dev/null && return 0; sleep 1; done
+            docker logs painel; return 1
+          }
+          subir
+          curl -fsSI http://127.0.0.1:4317/ | grep -i "content-security-policy: default-src 'none'"
+          test "$(docker inspect -f '{{.Config.User}}' painel)" = node
+          sleep 3
+          curl -fsS http://127.0.0.1:4317/api/estado | grep -q '"output":10'
+          # o histórico sobrevive à troca do contêiner e à perda dos transcripts
+          docker rm -f painel && rm -rf "$RUNNER_TEMP/transcripts/proj"
+          subir
+          curl -fsS http://127.0.0.1:4317/api/estado | grep -q '"output":10'
+          docker rm -f painel

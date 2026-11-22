@@ -1,0 +1,188 @@
+{
+  "versao": 1,
+  "fases": [
+    "especificar",
+    "esclarecer",
+    "planejar",
+    "tarefas",
+    "analisar",
+    "implementar",
+    "verificar",
+    "publicar",
+    "concluido"
+  ],
+  "projetos": [
+    {
+      "chave": "01-recomendacao",
+      "disciplina": "01",
+      "tipo": "arquitetura",
+      "titulo": "Recomendação de e-commerce",
+      "branch": "modulo/01-fundamentos-ia-llms/03-recomendacao",
+      "pastas": [
+        "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/"
+      ],
+      "specs": "specs/01-recomendacao/",
+      "fase": "especificar",
+      "retroativo": true,
+      "pr": 1,
+      "cloud": "gcp",
+      "decisoes": [
+        "D-007",
+        "D-008",
+        "D-021",
+        "D-022",
+        "D-064",
+        "D-065"
+      ],
+      "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml",
+      "ancora": {
+        "url": "https://aws.amazon.com/blogs/big-data/building-a-scalable-personalized-recommendation-system-on-aws-from-batch-to-real-time/",
+        "titulo": "Building a scalable personalized recommendation system on AWS: From batch to real-time (AWS Big Data Blog)",
+        "data": "2026-07-27",
+        "fonte": "Marcos no chat em 2026-11-21: \"Aceito as três\" (D-065)"
+      }
+    },
+    {
+      "chave": "01-doom",
+      "disciplina": "01",
+      "tipo": "ia-aplicada",
+      "titulo": "Doom com detecção YOLO no navegador",
+      "branch": "modulo/01-fundamentos-ia-llms/doom",
+      "pastas": [
+        "modulos/01-fundamentos-ia-llms/ia-aplicada/"
+      ],
+      "specs": "specs/01-doom/",
+      "fase": "especificar",
+      "retroativo": false,
+      "pr": null,
+      "cloud": "gcp",
+      "decisoes": [
+        "D-010",
+        "D-007",
+        "D-059",
+        "D-060"
+      ],
+      "nota": "Opção 04-C escolhida pelo dono (D-059): calibrador do limiar de confiança com gate humano, sobre o jogo fiel à aula (YOLO em TF.js num Web Worker). Doom com rótulos gerados pelo motor do jogo e ajuste do YOLO fora da aula. Tem parte na AWS (site privado, telemetria e gate); o ciclo de demonstração entra no plano.",
+      "infra_real": true,
+      "apply_workflow": ".github/workflows/01-doom-apply.yml",
+      "destroy_workflow": ".github/workflows/01-doom-destroy.yml",
+      "teto_diario_usd": null
+    },
+    {
+      "chave": "02-assistente-agendamento",
+      "disciplina": "02",
+      "tipo": "arquitetura",
+      "titulo": "Assistente de agendamento completo",
+      "branch": "modulo/02-apis-ia-generativa/assistente-agendamento",
+      "pastas": [
+        "modulos/02-apis-ia-generativa/arquitetura/"
+      ],
+      "specs": "specs/02-assistente-agendamento/",
+      "fase": "especificar",
+      "retroativo": true,
+      "pr": null,
+      "cloud": "gcp",
+      "decisoes": [
+        "D-006",
+        "D-007",
+        "D-008",
+        "D-021",
+        "D-022",
+        "D-048",
+        "D-065"
+      ],
+      "nota": "142 testes antes do SDD; spec retroativa antes da camada 6 (avaliações, pendente do dono).",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/02-assistente-agendamento-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/02-assistente-agendamento-apply.yml",
+      "ancora": {
+        "url": "https://aws.amazon.com/blogs/machine-learning/nateras-intelligent-appointment-scheduling-with-amazon-bedrock-agentcore/",
+        "titulo": "Natera's intelligent appointment scheduling with Amazon Bedrock AgentCore (AWS ML Blog)",
+        "data": "2026-08-26",
+        "fonte": "Marcos no chat em 2026-11-21: \"Aceito as três\" (D-065)"
+      }
+    },
+    {
+      "chave": "03-mcp-regras-cdb",
+      "disciplina": "03",
+      "tipo": "arquitetura",
+      "titulo": "MCP de regras do CDB com liquidez diária",
+      "branch": "modulo/03-mcp/mcp-regras-cdb",
+      "pastas": [
+        "modulos/03-mcp/arquitetura/"
+      ],
+      "specs": "specs/03-mcp-regras-cdb/",
+      "fase": "especificar",
+      "retroativo": true,
+      "pr": null,
+      "cloud": "azure",
+      "decisoes": [
+        "D-006",
+        "D-007",
+        "D-008",
+        "D-011",
+        "D-021",
+        "D-022",
+        "D-065"
+      ],
+      "nota": "Pouca implementação antes do SDD.",
+      "infra_real": true,
+      "destroy_workflow": ".github/workflows/03-mcp-regras-cdb-destroy.yml",
+      "teto_diario_usd": null,
+      "apply_workflow": ".github/workflows/03-mcp-regras-cdb-apply.yml",
+      "ancora": {
+        "url": "https://aws.amazon.com/blogs/architecture/mcp-went-stateless-is-your-aws-mcp-server-deployment-well-architected",
+        "titulo": "MCP went stateless: Is your AWS MCP server deployment well-architected? (AWS Architecture Blog)",
+        "data": "2026-09-01",
+        "fonte": "Marcos no chat em 2026-11-21: \"Aceito as três\" (D-065)"
+      }
+    },
+    {
+      "chave": "00-plataforma-agentes",
+      "disciplina": "00",
+      "tipo": "plataforma",
+      "titulo": "Plataforma de agentes compartilhada na AWS",
+      "branch": "plataforma/00-plataforma-agentes-impl",
+      "pastas": [
+        "plataforma/agentes/"
+      ],
+      "specs": "specs/00-plataforma-agentes/",
+      "fase": "implementar",
+      "retroativo": false,
+      "pr": null,
+      "cloud": null,
+      "decisoes": [
+        "D-021",
+        "D-022",
+        "D-024",
+        "D-027",
+        "D-028",
+        "D-029",
+        "D-030",
+        "D-033",
+        "D-034",
+        "D-035",
+        "D-036",
+        "D-037",
+        "D-038",
+        "D-039",
+        "D-040"
+      ],
+      "nota": "Primeiro projeto criado pelo caminho padrão. Plataforma compartilhada consumida pelos produtos; sobe e desce com as demonstrações.",
+      "infra_real": true,
+      "apply_workflow": ".github/workflows/00-plataforma-agentes-apply.yml",
+      "destroy_workflow": ".github/workflows/00-plataforma-agentes-destroy.yml",
+      "teto_diario_usd": 1.2,
+      "plano_aprovado": {
+        "data": "2026-11-20",
+        "fonte": "Marcos no chat em 2026-11-20, em resposta à pergunta sobre o endurecimento da policy (TT-S01): \"2 aprovo\" (sem Principal curinga e sem curinga em condição de conta; ADR-0014)",
+        "sha256": "6fc3b049aa7fb6ea9a3300b6ba38448a1ca50bef5ee6b95819aa7c5d944cb411"
+      }
+    }
+  ]
+}
