@@ -122,7 +122,7 @@
         "modulos/03-mcp/arquitetura/"
       ],
       "specs": "specs/03-mcp-regras-cdb/",
-      "fase": "analisar",
+      "fase": "implementar",
       "retroativo": true,
       "pr": null,
       "cloud": "azure",

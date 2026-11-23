@@ -26,11 +26,11 @@ A D03 compartilha a conta AWS única do laboratório (D-029) com a plataforma `0
 - **Criar tópico SNS próprio na D03:** rejeitado pela própria `spec.md` (`RNF-001` e `RF-025`), que determina reutilizar o tópico de alarmes publicado no contrato `comum` da plataforma.
 
 ## Trade-offs
-- **Ganho:** custo diário estimado do stack da D03 em **US$ 0,39** (teto proposto **US$ 0,50/dia**, apenas 2,5% do limite mensal de US$ 20 da conta), zero sobra cobrada após o destroy e separação limpa entre falha real e lacuna do Floci.
+- **Ganho:** custo diário estimado do stack da D03 em **US$ 0,39** (teto aprovado **US$ 0,50/dia** (D-073), apenas 2,5% do limite mensal de US$ 20 da conta), zero sobra cobrada após o destroy e separação limpa entre falha real e lacuna do Floci.
 - **Perda:** o caminho completo passando pelo AgentCore Gateway e pelo Policy Engine só roda na demonstração real (`DM`), enquanto no CI cada metade do contrato é provada por `TT` + `CT` + `RG`.
 
 ## Custo
-Estimativa de 24 h da D03: **US$ 0,39**; teto proposto: **US$ 0,50/dia** (`D03-P7`, sujeito à aprovação do dono).
+Estimativa de 24 h da D03: **US$ 0,39**; teto aprovado: **US$ 0,50/dia** (`D03-P7 = A`, D-073).
 
 ## Risco
 - **R5 da spec:** diferença entre o comportamento simulado no `RG`/`FL` e o plano de dados real do AgentCore Gateway. Mitigado pelos passos `DM-01` a `DM-06` do roteiro de demonstração e pela verificação estática do contrato `v1.1.0`.

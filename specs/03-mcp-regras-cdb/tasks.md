@@ -190,3 +190,11 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Depende de:** T070.
 - [ ] T072 [DONO] Aprovar a publicação e fazer o merge do PR da D03 · Art. II, D-032, D-062
   - **Depende de:** T071.
+
+## Correções da análise 1 (2026-11-22, `analise.md` APROVADO na 1ª rodada)
+- **A01 (`T033`, `T054`):** na `T033`, o EMF declara `Namespace = "03-mcp-regras-cdb/Servidor"` e duas listas de dimensões (`[["Projeto", "Categoria"], ["Projeto", "Tool", "Categoria"]]`); na `T054`, os 3 alarmes de aplicação usam `namespace = "03-mcp-regras-cdb/Servidor"` e `dimensions = { Projeto = "03-mcp-regras-cdb", Categoria = "<categoria>" }`, e o 4º alarme (`erro-execucao-lambda`) usa `AWS/Lambda`, `Errors` e `FunctionName = "03-mcp-regras-cdb-servidor"`.
+- **A02 (`T002`, `T010`):** na `T002`, se o merge da `00-plataforma-agentes` ainda não estiver no `main`, incluir a validação de `consome` em `harness/infra.py`; na `T010`, o passo de verificação de sobras de `03-mcp-regras-cdb-destroy.yml` filtra chaves KMS com `KeyState == "PendingDeletion"`.
+- **A03 (`T055`):** o `TH-COST-01` valida também `M/infra/terraform/infracost-usage.yml` com as premissas diárias do plano convertidas para a base mensal (`× 730/24`).
+- **A04 (`T001`):** ao mover `azure.md` para `M/docs/azure.md`, atualizar a referência `T000` → `T001` e registrar nos redirecionamentos que a `T001` cumpre o movimento descrito no plano, mantendo o `plan.md` intacto.
+- **A05 (`ADR-0006`):** texto residual de "teto proposto" atualizado para "teto aprovado (D-073)" no `ADR-0006`.
+- **A06 (`T011`, `T042`, `T055`):** `TH-COST-01` cresce incrementalmente (`variables.tf` na `T011`, `README.md` e `infracost-usage.yml` na `T055`); na `T042`, o acumulador da cota de 300.000 tokens fica em memória na Lambda do agente com store/relógio injetável nos testes `RG`.
