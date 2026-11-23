@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
-# Gate SDD para qualquer agente (Claude Code, Antigravity, Copilot): constituição, Artigo I.
+# Gates de commit para qualquer agente (Claude Code, Antigravity, Copilot).
 cd "$(git rev-parse --show-toplevel)" || exit 0
+
+# 1. Registro de uso em todo commit (D-074): os arquivos novos ou modificados de harness/uso/
+#    entram no commit sozinhos, para o registro não se perder se a sessão acabar antes.
+#    Só git e bash, sem Python (roda também no Git Bash do Windows). Nunca bloqueia o commit.
+#    Em `git commit -- caminho` (ou --only) o git usa um índice temporário (next-index-*.lock);
+#    adicionar ali deixaria o índice real diferente do HEAD, então o trecho pula em silêncio.
+case "${GIT_INDEX_FILE:-index}" in
+  index|*/index|*\\index|index.lock|*/index.lock|*\\index.lock)
+    git ls-files -z -m -o --exclude-standard -- harness/uso 2>/dev/null |
+      while IFS= read -r -d '' arq; do
+        # -m também lista o apagado do disco; apagar registro de uso não entra sozinho.
+        [ -f "$arq" ] && git add -- "$arq" >/dev/null 2>&1
+      done
+    ;;
+esac
+
+# 2. Gate SDD (constituição, Artigo I).
 PY=$(command -v python3 || command -v python) || exit 0
 git diff --cached --name-only --diff-filter=ACMR | "$PY" harness/estado.py checar-arquivos || {
   echo "Commit bloqueado pelo SDD. Use as skills sdd-* (ou AGENTS.md, seção SDD) e avance a fase com harness/estado.py."; exit 1; }

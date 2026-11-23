@@ -90,7 +90,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
   - Os marketplaces de terceiros (HashiCorp, Trail of Bits, promptfoo e Google) foram confirmados por mim (D-049).
   - Marketplace novo só entra com a minha confirmação. Um teste reprova marketplace fora da lista.
-- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
+- **Uso de tokens:** registrado sozinho a cada resposta pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. O registro entra em **todo commit criado por `git commit`** (D-074), para não se perder se a sessão ou o container acabar: o `.githooks/pre-commit` inclui sozinho os arquivos novos ou modificados de `harness/uso/`, inclusive os de outras sessões, também no fim de merge, cherry-pick e revert com conflito (`--continue`) e com `-a`, `--amend` ou `--allow-empty`. Exceções, em que o registro entra no próximo commit: os commits que o git cria sem passar por `git commit` (merge, rebase, cherry-pick e revert sem conflito; `git am`; `git pull`, que é merge ou rebase), `git rebase --continue`, `--no-verify` e o commit com caminhos explícitos (`-- caminho` ou `--only`). Sem os hooks do git ativos (o `harness/init.sh` ativa), inclua `harness/uso/` no commit por conta própria.
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
