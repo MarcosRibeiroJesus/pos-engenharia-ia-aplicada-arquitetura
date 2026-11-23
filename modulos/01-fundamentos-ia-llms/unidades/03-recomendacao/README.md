@@ -28,6 +28,8 @@ flowchart LR
 
 Fluxo de uma requisição: o serviço busca em paralelo os candidatos do lote (DynamoDB) e da busca vetorial (MemoryDB), junta e deduplica, aplica as regras de negócio (sem item fora de estoque nem comprado nos últimos 30 dias), pede o score ao SageMaker e devolve o top-N. Cada dependência tem fallback (heurística, só lote, só tempo real ou catálogo curado), e a API não responde 500 por falha de dependência.
 
+O estoque (`inStock`) e as compras dos últimos 30 dias (`recentPurchases`) vêm dos dados do lote, no mesmo GetItem do DynamoDB e no mesmo FT.SEARCH do MemoryDB, sem chamada nova no caminho da requisição. Por isso o frescor é o do lote, diário: uma compra ou um esgotamento de hoje só some das recomendações no lote seguinte. Se uma das fontes diz que o item está sem estoque, ele não aparece. Com o DynamoDB fora, não se sabe o que o usuário comprou: a resposta segue com `degradedMode: true` (ADR-0012).
+
 Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída estruturada via tool_use, valida (ids, tamanho, sinais com lastro nos dados, nada de preço ou desconto), tenta de novo uma vez devolvendo o erro ao modelo e, se ainda falhar, responde as mesmas recomendações sem explicação. Detalhes no [ADR-0004](adr/0004-explicacao-com-claude-no-bedrock.md).
 
 ## Decisões (ADRs)

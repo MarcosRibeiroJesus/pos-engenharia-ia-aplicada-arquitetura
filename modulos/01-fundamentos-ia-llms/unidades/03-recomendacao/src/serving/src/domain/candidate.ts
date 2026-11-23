@@ -70,6 +70,8 @@ export interface BatchCandidate {
   category?: string;
   priceCents?: number;
   title?: string;
+  /** Estoque publicado pelo lote em cada recomendação (ADR-0012); ausente = sem informação. */
+  inStock?: boolean;
 }
 
 export interface SemanticCandidate {

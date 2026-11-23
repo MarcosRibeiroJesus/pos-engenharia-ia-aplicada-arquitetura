@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
-import { RecommendedItem, LimitSchema, UserIdSchema, MergedCandidate } from '../domain/candidate';
+import { RecommendedItem, LimitSchema, UserIdSchema, MergedCandidate, BatchCandidate } from '../domain/candidate';
+import { RecentPurchase } from '../domain/filter-rule';
 import { IDynamoDbBatchRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
 import { IMemoryDbVectorRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
 import { ISageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
@@ -100,8 +101,14 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
     // categoria não passa pelo `assertValidCategory` do repositório porque não chega ao Redis (o
     // controlador já a validou antes, RNF-104).
     const sessionItemIds = params.sessionItemIds ?? [];
+    // RF-104 (ADR-0012): quando o adaptador sabe, candidatos e compras recentes vêm do mesmo GetItem.
+    const batchRepo = this.batchRepo;
+    const batchFetch: Promise<{ candidates: BatchCandidate[]; recentPurchases?: RecentPurchase[] }> =
+      batchRepo.getBatchUserData
+        ? batchRepo.getBatchUserData(params.userId)
+        : batchRepo.getBatchCandidates(params.userId).then((candidates) => ({ candidates }));
     const [batchResult, vectorResult] = await Promise.allSettled([
-      this.batchRepo.getBatchCandidates(params.userId),
+      batchFetch,
       sessionItemIds.length > 0
         ? this.vectorRepo.searchBySession(sessionItemIds, params.category, 50)
         : Promise.resolve([]),
@@ -115,7 +122,10 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
       }
     }
 
-    const batchCandidates = batchResult.status === 'fulfilled' ? batchResult.value : [];
+    const batchCandidates = batchResult.status === 'fulfilled' ? batchResult.value.candidates : [];
+    // Com o DynamoDB fora, não se sabe o que o usuário comprou (ADR-0012): fica indefinido, e o modo
+    // degradado já é ligado pela falha do DynamoDB logo abaixo.
+    const batchRecentPurchases = batchResult.status === 'fulfilled' ? batchResult.value.recentPurchases : undefined;
     const vectorCandidates = vectorResult.status === 'fulfilled' ? vectorResult.value : [];
 
     // RF-106 (ADR-0011): os adaptadores reais lançam DependencyError; a degradação é decidida aqui.
@@ -146,33 +156,41 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
     const filterTimer = new StageTimer(logger, 'business-filtering');
     let filteredCandidates: MergedCandidate[] = mergedCandidates;
 
+    let recentPurchases: RecentPurchase[] | undefined = batchRecentPurchases;
     if (this.inventoryRepo && mergedCandidates.length > 0) {
       const itemIds = mergedCandidates.map((c) => c.itemId);
-      const [stockMap, recentPurchases] = await Promise.all([
-        this.inventoryRepo.checkStock(itemIds),
-        this.inventoryRepo.getRecentPurchases(params.userId),
-      ]);
+      const snapshot = { candidates: mergedCandidates, recentPurchases: batchRecentPurchases };
+      try {
+        const [stockMap, purchases] = await Promise.all([
+          this.inventoryRepo.checkStock(itemIds, snapshot),
+          this.inventoryRepo.getRecentPurchases(params.userId, snapshot),
+        ]);
 
-      // Enrich candidates with real-time stock status
-      for (const candidate of mergedCandidates) {
-        if (stockMap.has(candidate.itemId)) {
-          candidate.inStock = stockMap.get(candidate.itemId);
+        // Estoque: qualquer fonte que diga false prevalece (o repositório não "devolve" estoque a
+        // um item que o lote marcou como esgotado).
+        for (const candidate of mergedCandidates) {
+          if (stockMap.has(candidate.itemId)) {
+            candidate.inStock = candidate.inStock !== false && stockMap.get(candidate.itemId) !== false;
+          }
         }
+        recentPurchases = purchases;
+      } catch (error) {
+        // Erro de validação é entrada recusada, não queda (mesma regra da T073).
+        if (isValidationError(error)) throw error;
+        // VT-08 (RF-006, ADR-0012): falha da fonte de elegibilidade vira degradação, nunca 500. O
+        // estoque que veio no candidato continua filtrando; a supressão usa só o que o lote trouxe.
+        degradedMode = true;
+        void this.metricsPublisher?.publishDegradedMode();
+        logger.warn({ err: error, ...dependencyFields(error) }, 'Inventory eligibility lookup failed; filtering with batch data only');
       }
-
-      const filterResult = this.filterEngine.filter(mergedCandidates, {
-        userId: params.userId,
-        userCountry: params.userCountry,
-        recentPurchases,
-      });
-      filteredCandidates = filterResult.candidates;
-    } else {
-      const filterResult = this.filterEngine.filter(mergedCandidates, {
-        userId: params.userId,
-        userCountry: params.userCountry,
-      });
-      filteredCandidates = filterResult.candidates;
     }
+
+    const filterResult = this.filterEngine.filter(mergedCandidates, {
+      userId: params.userId,
+      userCountry: params.userCountry,
+      recentPurchases,
+    });
+    filteredCandidates = filterResult.candidates;
     filterTimer.end({
       beforeCount: mergedCandidates.length,
       afterCount: filteredCandidates.length,

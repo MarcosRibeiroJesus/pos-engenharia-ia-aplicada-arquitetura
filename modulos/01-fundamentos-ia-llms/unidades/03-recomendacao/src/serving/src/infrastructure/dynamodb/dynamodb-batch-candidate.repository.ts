@@ -2,11 +2,40 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { BatchCandidate, InvalidUserIdError, UserIdSchema } from '../../domain/candidate';
 import { DependencyError } from '../../domain/dependency-error';
+import { RecentPurchase } from '../../domain/filter-rule';
 import { env } from '../../config/env';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
+import { baseLogger } from '../logging/logger';
+
+/** Limite de compras lidas por usuário, o mesmo da publicação (risco de 400 KB do ADR-0012). */
+export const MAX_RECENT_PURCHASES = 100;
+
+/**
+ * Tolerância de relógio para `purchasedAt` no futuro (segundos). Acima de agora mais isto, a entrada
+ * é descartada: pega a data gravada em milissegundos por engano (cerca de 1000 vezes maior).
+ */
+export const PURCHASE_FUTURE_TOLERANCE_S = 300;
+
+/**
+ * Tudo o que o lote publica no item do usuário e o serviço usa (RF-104, ADR-0012): os candidatos,
+ * com `inStock` em cada um, e as compras dos últimos 30 dias. Vem de um único GetItem.
+ *
+ * Contrato de leitura de `recentPurchases`: lista de `{ itemId: string, purchasedAt: number }`, com
+ * `purchasedAt` em segundos desde a época (a mesma unidade de `generatedAt`). Entradas fora disso são
+ * descartadas e contadas em `discardedPurchases` (ADR-0012, nota de 2026-11-23). O frescor é o do
+ * lote (diário): uma compra de hoje só some no lote seguinte.
+ */
+export interface BatchUserData {
+  candidates: BatchCandidate[];
+  recentPurchases: RecentPurchase[];
+  /** Entradas de `recentPurchases` fora do contrato de leitura, descartadas. */
+  discardedPurchases?: number;
+}
 
 export interface IDynamoDbBatchRepository {
   getBatchCandidates(userId: string): Promise<BatchCandidate[]>;
+  /** Candidatos e compras recentes no mesmo GetItem. Opcional para os dublês que só têm candidatos. */
+  getBatchUserData?(userId: string): Promise<BatchUserData>;
 }
 
 export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepository {
@@ -34,7 +63,7 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
     );
   }
 
-  private async fetchFromDynamo(userId: string): Promise<BatchCandidate[]> {
+  private async fetchFromDynamo(userId: string): Promise<BatchUserData> {
     const response = await this.docClient.send(
       new GetCommand({
         TableName: this.tableName,
@@ -42,11 +71,13 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
       })
     );
 
-    if (!response.Item || !Array.isArray(response.Item.recommendations)) {
-      return [];
+    const item = response.Item;
+    const { purchases: recentPurchases, discarded: discardedPurchases } = parseRecentPurchases(item?.recentPurchases);
+    if (!item || !Array.isArray(item.recommendations)) {
+      return { candidates: [], recentPurchases, discardedPurchases };
     }
 
-    const rawRecs = response.Item.recommendations;
+    const rawRecs = item.recommendations;
     const candidates: BatchCandidate[] = rawRecs.slice(0, 50).map((r: Record<string, unknown>) => ({
       itemId: String(r.itemId),
       score: typeof r.score === 'number' ? r.score : 0,
@@ -55,12 +86,18 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
       category: typeof r.category === 'string' ? r.category : undefined,
       priceCents: typeof r.priceCents === 'number' ? r.priceCents : undefined,
       title: typeof r.title === 'string' ? r.title : undefined,
+      // Só booleano vira estoque; o resto fica indefinido (não inventa estoque).
+      inStock: typeof r.inStock === 'boolean' ? r.inStock : undefined,
     }));
 
-    return candidates;
+    return { candidates, recentPurchases, discardedPurchases };
   }
 
   public async getBatchCandidates(userId: string): Promise<BatchCandidate[]> {
+    return (await this.getBatchUserData(userId)).candidates;
+  }
+
+  public async getBatchUserData(userId: string): Promise<BatchUserData> {
     const parseResult = UserIdSchema.safeParse(userId);
     if (!parseResult.success) {
       // Fora do disjuntor e sem eco da entrada: erro de validação estruturado, não queda.
@@ -70,10 +107,50 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
     // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. Lista vazia
     // fica só para "sem dados" (item ausente), que não liga o modo degradado.
     try {
-      const result = await this.breaker.fire(userId);
-      return (result as BatchCandidate[]) || [];
+      const result = (await this.breaker.fire(userId)) as BatchUserData | undefined;
+      return result ?? { candidates: [], recentPurchases: [] };
     } catch (error) {
       throw DependencyError.fromBreaker('dynamodb', error);
     }
   }
+}
+
+/**
+ * Contrato de leitura de `recentPurchases` (ADR-0012, nota de 2026-11-23): `itemId` texto não vazio e
+ * `purchasedAt` número finito em segundos, não maior que agora mais a tolerância. Fora disso, a
+ * entrada é descartada e contada; o log leva só as contagens, sem userId nem itemId.
+ */
+function parseRecentPurchases(raw: unknown): { purchases: RecentPurchase[]; discarded: number } {
+  if (!Array.isArray(raw)) return { purchases: [], discarded: 0 };
+  const maxPurchasedAt = Date.now() / 1000 + PURCHASE_FUTURE_TOLERANCE_S;
+  const purchases: RecentPurchase[] = [];
+  let discarded = 0;
+  let truncated = 0;
+  for (const entry of raw) {
+    const e = entry as { itemId?: unknown; purchasedAt?: unknown } | null;
+    const valid =
+      !!e &&
+      typeof e.itemId === 'string' &&
+      e.itemId.length > 0 &&
+      typeof e.purchasedAt === 'number' &&
+      Number.isFinite(e.purchasedAt) &&
+      e.purchasedAt >= 0 &&
+      e.purchasedAt <= maxPurchasedAt;
+    if (!valid) {
+      discarded++;
+      continue;
+    }
+    if (purchases.length >= MAX_RECENT_PURCHASES) {
+      truncated++;
+      continue;
+    }
+    purchases.push({ itemId: e!.itemId as string, purchaseTimestamp: (e!.purchasedAt as number) * 1000 });
+  }
+  if (discarded > 0 || truncated > 0) {
+    baseLogger.warn(
+      { descartadas: discarded, acimaDoLimite: truncated, limite: MAX_RECENT_PURCHASES },
+      'recentPurchases fora do contrato de leitura; entradas descartadas'
+    );
+  }
+  return { purchases, discarded };
 }

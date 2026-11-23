@@ -357,7 +357,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** os dois adaptadores (lançam `DependencyError {dependencia, categoria, retentavel}`), o caso de uso, `U/src/serving/src/domain/` (tipo do erro), os testes.
   - **Aceite:** os quatro testes de fallback existentes (T005) seguem verdes; o disjuntor conta a falha propagada.
   - **Depende de:** T000.
-- [ ] T074 [engenheiro-ml] Compras recentes e estoque pelo lote no serviço real · RF-104, RF-004, RF-006, E7, ADR-0012 · VT-07, VT-08
+- [x] T074 [engenheiro-ml] Compras recentes e estoque pelo lote no serviço real · RF-104, RF-004, RF-006, E7, ADR-0012 · VT-07, VT-08
   - **Teste vermelho:** com o `buildDefaultUseCase` e os clientes simulados: VT-07, um item comprado há 10 dias (em `recentPurchases` do item do DynamoDB) não aparece, e um com `inStock: false` não aparece; VT-08, com a fonte fora do ar ou o repositório de elegibilidade lançando, a resposta é 200 com `degradedMode: true`, nunca 500.
   - **Arquivos:** `U/src/serving/src/presentation/server.ts` (`buildDefaultUseCase`), `U/src/serving/src/infrastructure/cache/inventory-eligibility.repository.ts`, o adaptador do DynamoDB (lê `recentPurchases` no mesmo GetItem), os testes.
   - **Aceite:** nenhuma chamada nova no caminho de 60 ms; a documentação diz que o frescor é o do lote (diário).

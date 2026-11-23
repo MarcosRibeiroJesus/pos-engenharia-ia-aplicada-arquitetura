@@ -7,8 +7,11 @@ import { RecommendationController } from './controllers/recommendation.controlle
 import { IGetRecommendationsUseCase, GetRecommendationsUseCase } from '../application/get-recommendations.use-case';
 import { DynamoDbBatchCandidateRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
 import { MemoryDbVectorCandidateRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
-import { SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
-import { EmfMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { ISageMakerScoringClient, SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
+import { EmfMetricsPublisher, ICloudWatchMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { BatchDataEligibilityRepository } from '../infrastructure/cache/inventory-eligibility.repository';
+import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import type Redis from 'ioredis';
 import { BedrockClaudeClient } from '../infrastructure/bedrock/bedrock-claude.client';
 import { RecommendationExplainer } from '../application/recommendation-explainer';
 
@@ -97,25 +100,39 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
   return app;
 }
 
-function buildDefaultUseCase(): IGetRecommendationsUseCase {
-  const metricsPublisher = new EmfMetricsPublisher();
+/**
+ * Clientes de baixo nível que o teste pode trocar por dublês. A composição (adaptadores, filtros e
+ * repositório de elegibilidade) é sempre a de produção: o teste prova o que roda no contêiner
+ * (E7, ADR-0012).
+ */
+export interface DefaultUseCaseClients {
+  dynamoDocClient?: DynamoDBDocumentClient;
+  redis?: Redis;
+  scoringClient?: ISageMakerScoringClient;
+  metricsPublisher?: ICloudWatchMetricsPublisher;
+}
+
+export function buildDefaultUseCase(clients: DefaultUseCaseClients = {}): IGetRecommendationsUseCase {
+  const metricsPublisher = clients.metricsPublisher ?? new EmfMetricsPublisher();
   const explainer = env.EXPLANATIONS_ENABLED
     ? new RecommendationExplainer(new BedrockClaudeClient(), {
         modelId: env.BEDROCK_MODEL_ID,
         timeoutMs: env.EXPLANATION_TIMEOUT_MS,
         metrics: {
-          publishExplanationRetry: () => metricsPublisher.publishExplanationRetry(),
-          publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback(c),
+          publishExplanationRetry: () => metricsPublisher.publishExplanationRetry?.(),
+          publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback?.(c),
         },
       })
     : undefined;
 
   return new GetRecommendationsUseCase({
-    batchRepo: new DynamoDbBatchCandidateRepository(),
-    vectorRepo: new MemoryDbVectorCandidateRepository(),
-    scoringClient: new SageMakerScoringClient(),
+    batchRepo: new DynamoDbBatchCandidateRepository(clients.dynamoDocClient),
+    vectorRepo: new MemoryDbVectorCandidateRepository(clients.redis),
+    scoringClient: clients.scoringClient ?? new SageMakerScoringClient(),
     metricsPublisher,
     explainer,
+    // RF-104 (ADR-0012): compras recentes e estoque pelo lote, sem chamada nova; frescor diário.
+    inventoryRepo: new BatchDataEligibilityRepository(),
   });
 }
 

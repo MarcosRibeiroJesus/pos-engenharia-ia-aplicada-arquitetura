@@ -17,7 +17,7 @@ export function mergeCandidates(
       category: batch.category,
       priceCents: batch.priceCents,
       title: batch.title || `Product ${batch.itemId}`,
-      inStock: true,
+      inStock: batch.inStock !== false,
     });
   }
 
@@ -31,6 +31,8 @@ export function mergeCandidates(
       existing.initialCombinedScore = 0.5 * (existing.batchScore ?? 0) + 0.5 * sem.vectorScore;
       if (!existing.title && sem.title) existing.title = sem.title;
       if (!existing.category && sem.category) existing.category = sem.category;
+      // Estoque (VT-07, ADR-0012): basta uma fonte dizer false para o item ficar inelegível.
+      existing.inStock = existing.inStock !== false && sem.inStock !== false;
       if (existing.priceCents === undefined && sem.priceCents !== undefined) {
         existing.priceCents = sem.priceCents;
       }
@@ -44,7 +46,7 @@ export function mergeCandidates(
         category: sem.category,
         priceCents: sem.priceCents,
         title: sem.title || `Product ${sem.itemId}`,
-        inStock: true,
+        inStock: sem.inStock !== false,
       });
     }
   }
