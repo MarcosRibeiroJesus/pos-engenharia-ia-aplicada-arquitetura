@@ -60,7 +60,7 @@ export class EmfMetricsPublisher implements ICloudWatchMetricsPublisher {
       this.write(`${line}\n`);
     } catch (err) {
       // Falha ao publicar métrica nunca derruba a requisição de recomendação.
-      baseLogger.warn({ err, metricName }, `Failed to emit EMF metric: ${metricName}`);
+      baseLogger.warn({ erro: err instanceof Error ? err.name : 'desconhecido', metricName }, 'Failed to emit EMF metric');
     }
   }
 

@@ -86,7 +86,8 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
   public async execute(params: RecommendationRequestParams): Promise<RecommendationResponse> {
     const startTime = process.hrtime.bigint();
     const requestId = params.requestId || `req-${randomUUID()}`;
-    const logger = baseLogger.child({ requestId, userId: params.userId });
+    // Só o requestId no logger da requisição: o userId fica fora do log (lista permitida, T085).
+    const logger = baseLogger.child({ requestId });
 
     // 1. Validation
     UserIdSchema.parse(params.userId);
@@ -132,13 +133,13 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
     if (batchResult.status === 'rejected') {
       degradedMode = true;
       void this.metricsPublisher?.publishDynamoDbFallback();
-      logger.warn({ err: batchResult.reason, ...dependencyFields(batchResult.reason) }, 'DynamoDB batch candidate retrieval failed');
+      logger.warn({ erro: nomeDoErro(batchResult.reason), ...dependencyFields(batchResult.reason) }, 'DynamoDB batch candidate retrieval failed');
     }
 
     if (vectorResult.status === 'rejected') {
       degradedMode = true;
       void this.metricsPublisher?.publishMemoryDbFallback();
-      logger.warn({ err: vectorResult.reason, ...dependencyFields(vectorResult.reason) }, 'MemoryDB vector search failed');
+      logger.warn({ erro: nomeDoErro(vectorResult.reason), ...dependencyFields(vectorResult.reason) }, 'MemoryDB vector search failed');
     }
 
     retrievalTimer.end({
@@ -181,7 +182,7 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
         // estoque que veio no candidato continua filtrando; a supressão usa só o que o lote trouxe.
         degradedMode = true;
         void this.metricsPublisher?.publishDegradedMode();
-        logger.warn({ err: error, ...dependencyFields(error) }, 'Inventory eligibility lookup failed; filtering with batch data only');
+        logger.warn({ erro: nomeDoErro(error), ...dependencyFields(error) }, 'Inventory eligibility lookup failed; filtering with batch data only');
       }
     }
 
@@ -228,7 +229,7 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
         }
         void this.metricsPublisher?.publishDegradedMode();
         logger.warn(
-          { err: error, ...dependencyFields(error), origem: origemFeature ? 'feature' : 'endpoint' },
+          { erro: nomeDoErro(error), ...dependencyFields(error), origem: origemFeature ? 'feature' : 'endpoint' },
           'SageMaker scoring unavailable or timed out; activating weighted heuristic fallback'
         );
 
@@ -268,8 +269,16 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
             }),
           });
         } catch (err) {
-          logger.error({ err }, 'Explainer lançou exceção; respondendo sem explicação');
-          outcome = { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: String(err) };
+          // Só o nome da classe do erro: a mensagem pode trazer texto do modelo ou do provedor (sem eco).
+          const erro = err instanceof Error ? err.name : 'desconhecido';
+          logger.error({ erro, categoria: 'internal_error', retentavel: false }, 'Explainer lançou exceção; respondendo sem explicação');
+          outcome = {
+            status: 'unavailable',
+            attempts: 0,
+            errorCategory: 'internal_error',
+            retryable: false,
+            detail: `o explicador lançou ${erro}; mensagem omitida`,
+          };
         }
       }
 
@@ -281,7 +290,12 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
         });
         explanation = { status: 'ok', modelId: outcome.modelId, attempts: outcome.attempts };
       } else {
-        logger.warn({ category: outcome.errorCategory, detail: outcome.detail }, 'Explicação indisponível; resposta segue sem explicação');
+        // O `detail` não vai ao log: na validação ele traz trechos da saída do modelo (itemId
+        // inventado, contagens, sinais). O log leva só a categoria, o retentável e as tentativas.
+        logger.warn(
+          { categoria: outcome.errorCategory, retentavel: outcome.retryable, tentativas: outcome.attempts },
+          'Explicação indisponível; resposta segue sem explicação'
+        );
         explanation = { status: 'unavailable', reason: outcome.errorCategory, attempts: outcome.attempts };
       }
       explainTimer.end({ status: explanation.status });
@@ -308,4 +322,9 @@ function dependencyFields(reason: unknown): Record<string, unknown> {
   return r && typeof r === 'object'
     ? { dependencia: r.dependencia, categoria: r.categoria, retentavel: r.retentavel }
     : {};
+}
+
+/** Só o nome da classe do erro para o log: a mensagem pode trazer ARN ou texto do provedor (T085). */
+function nomeDoErro(reason: unknown): string {
+  return reason instanceof Error ? reason.name : 'desconhecido';
 }

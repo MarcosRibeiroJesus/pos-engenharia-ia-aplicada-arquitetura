@@ -39,12 +39,12 @@ export class BusinessFilterEngine {
 
     baseLogger.info(
       {
-        userId: context.userId,
+        // Sem userId: identificador do cliente fica fora do log (lista permitida, T085).
         totalBefore,
         totalAfter,
         filteredOutCount,
       },
-      `Business filtering completed: ${filteredOutCount} candidates excluded (${totalAfter}/${totalBefore} retained)`
+      'Business filtering completed' // contagens nos campos totalBefore, totalAfter e filteredOutCount
     );
 
     return {

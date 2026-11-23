@@ -352,5 +352,11 @@ describe('VT-12 · no fluxo de recomendação: sem explicação, nunca 500, log 
     expect(res.explanation).toMatchObject({ status: 'unavailable', reason });
     const log = JSON.stringify(linhas);
     for (const p of proibidos) expect(log).not.toContain(p);
+    // T085: as frases do modelo revisadas pelo guardrail também não vão ao log.
+    const frases = mensagemGravada('sucesso')
+      .content.flatMap((b) => (b.type === 'tool_use' ? ((b.input as { explanations: Array<{ reason: string }> }).explanations) : []))
+      .map((e) => e.reason);
+    expect(frases.length).toBeGreaterThan(0);
+    for (const f of frases) expect(log).not.toContain(f);
   });
 });

@@ -349,8 +349,8 @@ function classificarFalhaDoGuardrail(err: unknown, aborted: boolean): TerminalFa
 }
 
 /**
- * Detalhe do erro HTTP do provedor só com o status, nunca com a mensagem dele: o `detail` vai para o
- * log, e a mensagem de um 403 do IAM costuma trazer o ARN do chamador e do recurso, com a conta
+ * Detalhe do erro HTTP do provedor só com o status, nunca com a mensagem dele: o `detail` não vai
+ * mais para o log (lista permitida, T085), mas fica no resultado, e a mensagem de um 403 do IAM costuma trazer o ARN do chamador e do recurso, com a conta
  * (achado A5 da revisão da T081). Formato real da mensagem a confirmar na captura da T107.
  */
 function detalheHttp(status: number | undefined): string {
@@ -376,7 +376,9 @@ function classify(err: unknown, aborted: boolean): TerminalFailure {
     const retryable = typeof err.status === 'number' && (err.status === 408 || err.status === 409 || err.status >= 500);
     return new TerminalFailure('model_error', retryable, detalheHttp(err.status));
   }
-  return new TerminalFailure('internal_error', false, err instanceof Error ? err.message : String(err));
+  // Só o nome da classe: a mensagem de um erro inesperado pode trazer texto do prompt ou do provedor.
+  const nome = err instanceof Error ? err.name : 'desconhecido';
+  return new TerminalFailure('internal_error', false, `falha inesperada na chamada ao modelo (${nome}); mensagem omitida`);
 }
 
 // ---------------------------------------------------------------- explainer

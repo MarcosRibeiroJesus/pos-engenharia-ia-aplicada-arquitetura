@@ -48,16 +48,12 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     ...fastifyOptions,
   });
 
-  // Request & response logging hooks
+  // Request & response logging hooks. A rota vai como o padrão registrado (sem query string): a
+  // query traz o userId e os itens da sessão, que ficam fora do log (lista permitida, T085).
+  const rotaDe = (req: { routeOptions?: { url?: string } }): string => req.routeOptions?.url ?? 'sem-rota';
+
   app.addHook('onRequest', async (req) => {
-    baseLogger.info(
-      {
-        requestId: req.id,
-        method: req.method,
-        url: req.url,
-      },
-      `Incoming request ${req.method} ${req.url}`
-    );
+    baseLogger.info({ requestId: req.id, method: req.method, rota: rotaDe(req) }, 'Incoming request');
   });
 
   app.addHook('onResponse', async (req, reply) => {
@@ -65,25 +61,19 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
       {
         requestId: req.id,
         method: req.method,
-        url: req.url,
+        rota: rotaDe(req),
         statusCode: reply.statusCode,
         responseTimeMs: reply.elapsedTime,
       },
-      `Request completed ${req.method} ${req.url} with ${reply.statusCode}`
+      'Request completed'
     );
   });
 
   // Global Error Handler conforming to OpenAPI ErrorResponse
   app.setErrorHandler((error, req, reply) => {
-    baseLogger.error(
-      {
-        requestId: req.id,
-        error: error.name,
-        message: error.message,
-        stack: error.stack,
-      },
-      `Request error: ${error.message}`
-    );
+    // Só o nome da classe do erro: a mensagem e a pilha podem trazer entrada do cliente ou texto do
+    // provedor (sem eco no log).
+    baseLogger.error({ requestId: req.id, erro: error.name }, 'Request error');
 
     const statusCode = error.statusCode && error.statusCode >= 400 && error.statusCode < 500
       ? error.statusCode
@@ -192,7 +182,7 @@ export async function startServer(): Promise<FastifyInstance> {
       port: env.PORT,
       host: '0.0.0.0',
     });
-    baseLogger.info(`Recommendation Service listening on ${address}`);
+    baseLogger.info({ rota: address }, 'Recommendation Service listening');
     return server;
   } catch (err) {
     baseLogger.error(err, 'Failed to start server');

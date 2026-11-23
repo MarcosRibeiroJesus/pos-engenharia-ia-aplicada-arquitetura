@@ -404,7 +404,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** um cliente do `ApplyGuardrail` atrás de uma porta, `recommendation-explainer.ts`, os testes.
   - **Aceite:** nenhuma frase chega à resposta sem passar na validação e no `ApplyGuardrail`.
   - **Depende de:** T082.
-- [ ] T085 [P] [engenheiro-seguranca] Logger sem prompt nem texto do modelo · RNF-001, Art. IV, Art. VIII · VT-18
+- [x] T085 [P] [engenheiro-seguranca] Logger sem prompt nem texto do modelo · RNF-001, Art. IV, Art. VIII · VT-18
   - **Teste vermelho:** VT-18: com o logger real, uma requisição com `explain=true` (sucesso, retentativa e intervenção) não grava prompt, texto do modelo nem título de catálogo; só os campos da lista permitida (`requestId`, status, duração, etapa, categoria do erro).
   - **Arquivos:** `U/src/serving/src/infrastructure/logging/logger.ts`, os testes.
   - **Aceite:** a lista permitida fica numa constante; um campo novo no log exige mudar a lista e o teste.
