@@ -149,6 +149,10 @@ resource "aws_glue_job" "feature_engineering" {
     "--enable-metrics"                   = "true"
     "--enable-continuous-cloudwatch-log" = "true"
     "--continuous-log-logGroup"          = aws_cloudwatch_log_group.glue.name
+    # RF-107 (T041): o script lê os caminhos por getResolvedOptions; nenhum nome fica no script.
+    "--caminho_interacoes" = "s3://${var.s3_scripts_bucket}/${var.prefixos.interacoes}/"
+    "--caminho_catalogo"   = "s3://${var.s3_scripts_bucket}/${var.prefixos.catalogo}/"
+    "--caminho_features"   = "s3://${var.s3_scripts_bucket}/${var.prefixos.features}/"
   }
 
   tags = merge(local.tags, {

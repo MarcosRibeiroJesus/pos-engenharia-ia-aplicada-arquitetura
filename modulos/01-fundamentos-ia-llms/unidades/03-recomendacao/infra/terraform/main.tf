@@ -12,6 +12,18 @@ locals {
   # Banco do Glue Data Catalog: exceção p01_recomendacao_ do ADR-0014 (o Athena não aceita hífen no
   # nome do banco). Um só lugar para o lake_formation, o glue_pipeline e o athena_queries.
   nome_do_banco = "p${replace(var.project_name, "-", "_")}_${var.environment}_golden"
+
+  # Tabelas do lote no banco acima e prefixos no golden dataset (RF-107, T041): um só lugar para o SQL
+  # do Athena (templatefile), os argumentos dos jobs do Glue e a configuração do DAG (T063).
+  tabelas_do_lote = {
+    interacoes = "interactions"
+    catalogo   = "catalog"
+  }
+  prefixos_do_lote = {
+    interacoes = "interactions"
+    catalogo   = "catalog"
+    features   = "user_features"
+  }
 }
 
 provider "aws" {
@@ -112,6 +124,7 @@ module "athena_queries" {
   environment      = var.environment
   s3_output_bucket = module.s3_golden_dataset.bucket_name
   database_name    = module.lake_formation.database_name
+  tabelas          = local.tabelas_do_lote
   kms_key_arn      = module.kms.key_arn
   force_destroy    = var.force_destroy
 }
@@ -126,6 +139,7 @@ module "glue_pipeline" {
   kms_key_arn        = module.kms.key_arn
   log_retention_days = var.log_retention_days
   database_name      = local.nome_do_banco
+  prefixos           = local.prefixos_do_lote
 }
 
 module "sagemaker_training" {

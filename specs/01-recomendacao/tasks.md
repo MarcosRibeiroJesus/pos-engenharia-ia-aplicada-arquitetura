@@ -194,7 +194,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/batch/gerar_dados_sinteticos.py` (usuários, itens, estoque e interações), o teste.
   - **Aceite:** o gerador recebe destino e volume por argumento; nenhum nome de recurso fixo (PY-01).
   - **Depende de:** T000.
-- [ ] T041 [P] [engenheiro-ml] Nenhum nome de recurso fixo nos scripts do lote · RF-107 · PY-01
+- [x] T041 [P] [engenheiro-ml] Nenhum nome de recurso fixo nos scripts do lote · RF-107 · PY-01
   - **Teste vermelho:** `U/tests/unit/test_nomes_fixos.py` varre `U/src/batch/**/*.py` e o DAG e reprova literais de bucket, tabela, job, cluster ou workgroup (`s3://`, `ecommerce-`, `recsys-`, `01-recomendacao-`); uma fixture com `s3://ecommerce-golden/` precisa reprovar.
   - **Arquivos:** `U/src/batch/glue/*.py`, `U/src/batch/athena/`, `U/src/batch/airflow/dags/`, o teste.
   - **Aceite:** todos os nomes chegam por argumento do job ou do DAG (`getResolvedOptions` no Glue); os contratos existentes (T007) seguem verdes.

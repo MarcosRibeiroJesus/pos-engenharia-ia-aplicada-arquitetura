@@ -1,6 +1,8 @@
 -- Athena Curated Features Extraction Query
 -- Partition pruning enforced: year, month, day
 -- Cost Control: Scanning bounded Parquet columns only (Cost Posture: Principle I)
+-- Nomes por marcadores (RF-107, PY-01): banco e tabelas vêm da configuração do lote. O Terraform
+-- preenche com templatefile (named query) e o DAG com string.Template, com os mesmos valores.
 
 SELECT
     i.user_id,
@@ -20,9 +22,9 @@ SELECT
     COUNT(*) AS total_interactions,
     MAX(i.timestamp) AS last_interaction_epoch
 FROM
-    ecommerce_golden_db.interactions i
+    ${banco}.${tabela_interacoes} i
 INNER JOIN
-    ecommerce_golden_db.catalog c
+    ${banco}.${tabela_catalogo} c
     ON i.item_id = c.item_id
 WHERE
     -- Enforce partition pruning to cap scanned bytes (< 100 MB per run)

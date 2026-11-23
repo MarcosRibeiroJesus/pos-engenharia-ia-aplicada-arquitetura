@@ -452,6 +452,7 @@ run "glue_criptografado_e_com_logs" {
     s3_scripts_bucket  = "01-recomendacao-lab-golden"
     s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
     dynamodb_table_arn = "arn:aws:dynamodb:us-east-1:123456789012:table/01-recomendacao-lab-user_recommendations"
+    prefixos           = { interacoes = "interactions", catalogo = "catalog", features = "user_features" }
   }
 
   assert {
@@ -462,6 +463,15 @@ run "glue_criptografado_e_com_logs" {
     condition     = aws_glue_job.feature_engineering.default_arguments["--continuous-log-logGroup"] == aws_cloudwatch_log_group.glue.name
     error_message = "R6/R7: logs do Glue em log group gerenciado pelo Terraform."
   }
+  # PY-01 do lado do Terraform (RF-107, T041): o script lê os caminhos por getResolvedOptions.
+  assert {
+    condition = alltrue([
+      aws_glue_job.feature_engineering.default_arguments["--caminho_interacoes"] == "s3://01-recomendacao-lab-golden/interactions/",
+      aws_glue_job.feature_engineering.default_arguments["--caminho_catalogo"] == "s3://01-recomendacao-lab-golden/catalog/",
+      aws_glue_job.feature_engineering.default_arguments["--caminho_features"] == "s3://01-recomendacao-lab-golden/user_features/",
+    ])
+    error_message = "RF-107: o job de features recebe por argumento os caminhos no bucket do stack."
+  }
 }
 
 run "athena_resultados_kms" {
@@ -471,11 +481,53 @@ run "athena_resultados_kms" {
   }
   variables {
     s3_output_bucket = "01-recomendacao-lab-golden"
+    tabelas          = { interacoes = "interactions", catalogo = "catalog" }
   }
 
   assert {
     condition     = one(one(one(aws_athena_workgroup.analytics.configuration).result_configuration).encryption_configuration).encryption_option == "SSE_KMS"
     error_message = "R2: resultados do Athena com SSE-KMS."
+  }
+}
+
+# RF-107 (T041): prefixos e tabelas do lote num só lugar do root, que alimenta o glue_pipeline e o
+# athena_queries (e, na T063, a configuração do DAG).
+run "raiz_prefixos_do_lote" {
+  command = plan
+
+  assert {
+    condition     = local.prefixos_do_lote == { interacoes = "interactions", catalogo = "catalog", features = "user_features" }
+    error_message = "RF-107: local.prefixos_do_lote no root com os prefixos do golden dataset."
+  }
+  assert {
+    condition     = local.tabelas_do_lote == { interacoes = "interactions", catalogo = "catalog" }
+    error_message = "RF-107: local.tabelas_do_lote no root com as tabelas do banco do stack."
+  }
+}
+
+# PY-01 do lado do Terraform (RF-107, T041, A13): a named query recebe banco e tabelas do stack pelos
+# marcadores do SQL (templatefile), sem nome fixo e sem marcador sobrando.
+run "athena_sql_com_banco_e_tabelas_do_stack" {
+  command = plan
+  module {
+    source = "./modules/athena_queries"
+  }
+  variables {
+    s3_output_bucket = "01-recomendacao-lab-golden"
+    tabelas          = { interacoes = "interactions", catalogo = "catalog" }
+  }
+
+  assert {
+    condition     = strcontains(aws_athena_named_query.extract_curated_features.query, "p01_recomendacao_lab_golden.interactions i")
+    error_message = "RF-107: o SQL cita a tabela de interações no banco do stack."
+  }
+  assert {
+    condition     = strcontains(aws_athena_named_query.extract_curated_features.query, "p01_recomendacao_lab_golden.catalog c")
+    error_message = "RF-107: o SQL cita a tabela do catálogo no banco do stack."
+  }
+  assert {
+    condition     = !strcontains(aws_athena_named_query.extract_curated_features.query, "$") && !strcontains(aws_athena_named_query.extract_curated_features.query, "_golden_db")
+    error_message = "RF-107: nenhum marcador sem valor e nenhum banco fixo no SQL da named query."
   }
 }
 

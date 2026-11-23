@@ -33,5 +33,10 @@ resource "aws_athena_named_query" "extract_curated_features" {
   name      = "${var.project_name}-${var.environment}-extract-features"
   workgroup = aws_athena_workgroup.analytics.id
   database  = var.database_name
-  query     = file("${path.module}/../../../../src/batch/athena/extract_curated_features.sql")
+  # RF-107 (T041): banco e tabelas pelos marcadores do SQL, os mesmos que o DAG preenche.
+  query = templatefile("${path.module}/../../../../src/batch/athena/extract_curated_features.sql", {
+    banco             = var.database_name
+    tabela_interacoes = var.tabelas.interacoes
+    tabela_catalogo   = var.tabelas.catalogo
+  })
 }
