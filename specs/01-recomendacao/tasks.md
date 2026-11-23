@@ -211,7 +211,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Análise 2 (A21):** a tarefa depende da T043, de onde vem a função pura do CSV de treino, e da linha da versão do XGBoost da T102, antecipada como passo de pesquisa antes desta tarefa; o PY-03 fixa a versão confirmada desde o início, sem reabrir tarefa fechada.
   - **Análise 2 (A03 e A12):** a semente treina sobre as mesmas linhas de entrada que o candidato recebe no DAG (as da data de partição fixa da T055), para o `sha256` do CSV fechar.
   - **Depende de:** T040, T043.
-- [ ] T043 [engenheiro-ml] Job de features grava as três saídas · RF-013, RF-011, RF-104, ADR-0012 · PY existente `test_glue_transformations` (estendido)
+- [ ] T043 [BLOQUEADO: perguntas ao dono D01-P34 a D01-P37 (mudança do RF-013 e do plano); T042, T044, T045 e T046 seguem em cadeia] [engenheiro-ml] Job de features grava as três saídas · RF-013, RF-011, RF-104, ADR-0012 · PY existente `test_glue_transformations` (estendido)
   - **Teste vermelho:** o `test_glue_transformations.py` ganha casos para as três saídas: o CSV de treino com `batchScore`, `vectorScore`, `hibrido` e o rótulo; o top-N por usuário com `inStock` e as compras dos últimos 30 dias (até 100); os vetores de 128 dimensões, sintéticos e determinísticos.
   - **Arquivos:** `U/src/batch/glue/feature_engineering.py`, `U/src/batch/athena/extract_curated_features.sql` (se mudar a projeção), o teste.
   - **Aceite:**
