@@ -103,7 +103,8 @@ def st04_excecoes_de_nome(dados: dict, adrs: set) -> list:
             falhas.append(f"ST-04: exceção {rotulo} precisa valer para um tipo de recurso aws_* só")
         padrao = str(e.get("padrao", ""))
         # Ancorado no início e com a chave: uma exceção não pode virar curinga (".*") nem servir a outro projeto.
-        if padrao and not (padrao.startswith("^") and re.search(r"01[-_]recomendacao[-_]", padrao)):
+        # Depois da chave vem hífen, sublinhado ou a barra da hierarquia do SSM (/01-recomendacao/, T052).
+        if padrao and not (padrao.startswith("^") and re.search(r"01[-_]recomendacao[-_/]", padrao)):
             falhas.append(f"ST-04: exceção {rotulo} com padrão '{padrao}' fora da chave ou sem âncora '^'")
         adr = str(e.get("adr", ""))
         if adr and adr not in adrs:

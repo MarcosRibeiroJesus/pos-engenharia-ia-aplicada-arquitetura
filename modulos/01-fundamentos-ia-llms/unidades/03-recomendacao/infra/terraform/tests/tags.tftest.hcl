@@ -75,6 +75,7 @@ variables {
     athena_queries        = "consultas"
     glue_pipeline         = "pipeline-glue"
     cloudwatch_monitoring = "monitoramento"
+    entradas_janela       = "entradas-janela"
   }
 }
 
@@ -100,7 +101,7 @@ run "tags_no_padrao_da_politica" {
   # Todo módulo do root contribui com os seus recursos.
   assert {
     condition     = toset([for k, _ in output.tags_dos_recursos : split(".", k)[0]]) == toset(keys(var.modulos_esperados))
-    error_message = "tags_dos_recursos precisa trazer os recursos de cada um dos 12 módulos do root."
+    error_message = "tags_dos_recursos precisa trazer os recursos de cada um dos 13 módulos do root."
   }
   assert {
     condition = alltrue([for t in values(output.tags_dos_recursos) :

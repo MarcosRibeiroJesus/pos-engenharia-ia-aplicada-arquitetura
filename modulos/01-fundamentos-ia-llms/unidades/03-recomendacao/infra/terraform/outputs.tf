@@ -80,6 +80,7 @@ locals {
     athena_queries        = module.athena_queries.tags_dos_recursos
     glue_pipeline         = module.glue_pipeline.tags_dos_recursos
     cloudwatch_monitoring = module.cloudwatch_monitoring.tags_dos_recursos
+    entradas_janela       = module.entradas_janela.tags_dos_recursos
     } : { for endereco, tags in recursos : "${m}.${endereco}" => merge(local.tags_padrao, tags) }
   ]...)
 }
@@ -116,6 +117,7 @@ locals {
     athena_queries        = module.athena_queries.nomes_dos_recursos
     glue_pipeline         = module.glue_pipeline.nomes_dos_recursos
     cloudwatch_monitoring = module.cloudwatch_monitoring.nomes_dos_recursos
+    entradas_janela       = module.entradas_janela.nomes_dos_recursos
     } : { for endereco, nome in recursos : "${m}.${endereco}" => nome }
   ]...)
 }
@@ -139,3 +141,11 @@ output "custo_fixo_da_base" {
     ecs_tarefas                       = module.ecs_service.desired_count
   }
 }
+
+# Parâmetro das entradas da janela do MWAA (T052, ADR-0007): a raiz da janela (T060) lê pelo nome,
+# com data "aws_ssm_parameter"; o output serve ao TT-J02 e ao harness de integração.
+output "entradas_da_janela" {
+  description = "Nome, ARN, tipo, tier e valor (JSON) do parâmetro /01-recomendacao/lab/janela/entradas."
+  value       = module.entradas_janela.parametro
+}
+

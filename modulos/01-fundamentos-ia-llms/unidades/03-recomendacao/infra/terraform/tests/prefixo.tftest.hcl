@@ -66,13 +66,13 @@ run "nomes_do_root" {
     certificate_arn     = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
   }
 
-  # Regra que passa sem nada para checar não conta como teste: os 12 módulos contribuem com nomes.
+  # Regra que passa sem nada para checar não conta como teste: os 13 módulos contribuem com nomes.
   assert {
     condition = toset([for k, _ in output.nomes_dos_recursos : split(".", k)[0]]) == toset([
       "networking", "kms", "s3_golden_dataset", "lake_formation", "dynamodb_table", "memorydb_cluster",
       "sagemaker_endpoint", "sagemaker_training", "ecs_service", "athena_queries", "glue_pipeline",
-    "cloudwatch_monitoring"])
-    error_message = "nomes_dos_recursos precisa trazer os recursos nomeados de cada um dos 12 módulos do root."
+    "cloudwatch_monitoring", "entradas_janela"])
+    error_message = "nomes_dos_recursos precisa trazer os recursos nomeados de cada um dos 13 módulos do root."
   }
   # O prefixo dos nomes é a chave do projeto (D-029), o mesmo que o harness de integração lê.
   assert {

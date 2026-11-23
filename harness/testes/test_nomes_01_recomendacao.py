@@ -65,6 +65,15 @@ class TestST04ExcecoesDeNome(unittest.TestCase):
     def test_padrao_sem_ancora_reprova(self):
         self.assertTrue(self.sr.st04_excecoes_de_nome(_excecao(padrao="p01-recomendacao-"), self.adrs))
 
+    def test_padrao_de_hierarquia_ssm_na_chave_passa(self):
+        # T052 (ADR-0007): o parâmetro /01-recomendacao/lab/janela/entradas usa a hierarquia do SSM.
+        dados = _excecao(recurso="aws_ssm_parameter", padrao="^/01-recomendacao/", adr="ADR-0007")
+        self.assertEqual(self.sr.st04_excecoes_de_nome(dados, self.adrs), [])
+
+    def test_padrao_de_hierarquia_de_outro_projeto_reprova(self):
+        dados = _excecao(recurso="aws_ssm_parameter", padrao="^/01-recomendacaox/", adr="ADR-0007")
+        self.assertTrue(self.sr.st04_excecoes_de_nome(dados, self.adrs))
+
     def test_excecao_sem_tipo_de_recurso_reprova(self):
         self.assertTrue(self.sr.st04_excecoes_de_nome(_excecao(recurso="*"), self.adrs))
 

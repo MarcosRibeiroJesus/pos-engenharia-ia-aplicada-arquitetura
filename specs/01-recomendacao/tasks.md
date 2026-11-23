@@ -259,7 +259,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/infra/terraform/modules/sagemaker_endpoint/`, `modules/s3_golden_dataset/` (prefixos), `variables.tf` (caminho do artefato de build), fixture do `model.tar.gz` para o teste, os testes.
   - **Aceite:** imagem nativa XGBoost 1.7-1 da região; escrita em `reranker/publicado/` só pela role de deploy; o treino (`modules/sagemaker_training/`) só escreve em `reranker/candidatos/`.
   - **Depende de:** T012, T042.
-- [ ] T052 [P] [engenheiro-terraform] Saídas da base para a janela · ADR-0007, RF-107 · TT-J02 (novo)
+- [ ] T052 [PARCIAL: faltam jobs_glue.publicar_* (T050) e treino.imagem (T051); a T050 e a T051 acrescentam os campos ao módulo, ao janela.tf e ao TT-J02] [P] [engenheiro-terraform] Saídas da base para a janela · ADR-0007, RF-107 · TT-J02 (novo)
   - **Teste vermelho:** TT-J02 afirma um `aws_ssm_parameter` `/01-recomendacao/lab/janela/entradas`, `type = "String"`, `tier = "Standard"`, com até 4 KB e exatamente os campos que a janela lê (VPC, subnets privadas, chave KMS, bucket, nomes dos jobs, role e imagem do treino, workgroup do Athena e tabela); uma fixture sem o workgroup precisa reprovar; nenhum campo com segredo.
   - **Arquivos:** `U/infra/terraform/main.tf` (ou `janela.tf`), `outputs.tf`, o teste.
   - **Aceite:** a janela não lê o state da base (furo F5).
@@ -430,7 +430,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/roteiro.ts` (compilado em `dist/roteiro.js`), o teste.
   - **Aceite:** o relatório é JSON com `requestId`, status e latências, sem dado pessoal, sem prompt e sem texto do modelo (a linha respeita a lista permitida do logger, T085); as métricas do namespace não são lidas aqui, e sim pelo workflow no runner (T090); o passo 2 registra as tentativas como dado, não como falha.
   - **Depende de:** T072, T073, T074, T084, T085.
-- [ ] T092 [engenheiro-ml] Contratos em `U/contratos/` e spec legada removida · RNF-110, RNF-008, E14 · ST-03 (parte)
+- [ ] T092 [BLOQUEADO: depende da T044 e da T045, bloqueadas em cadeia pela T043 (D01-P34 a D01-P37); proposta D01-P38] [engenheiro-ml] Contratos em `U/contratos/` e spec legada removida · RNF-110, RNF-008, E14 · ST-03 (parte)
   - **Teste vermelho:** o ST-03 reprova se `U/specs/001-aws-recommendation-platform/` existir, ou se algum teste ler contrato fora de `U/contratos/`.
   - **Arquivos:** `git mv` dos contratos usados (`recommendations-api.yaml`, `dynamodb-batch-recs-contract.json`, `memorydb-vector-contract.md`) para `U/contratos/`; remoção do resto da spec legada; os caminhos nos testes; `static_rules.py`.
   - **Aceite:** Vitest e unittest do lote verdes com os caminhos novos.

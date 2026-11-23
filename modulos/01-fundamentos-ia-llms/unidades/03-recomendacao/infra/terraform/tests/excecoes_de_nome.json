@@ -65,6 +65,14 @@
       "motivo": "O SageMaker grava os logs do endpoint no log group '/aws/sagemaker/Endpoints/<nome-do-endpoint>', nome imposto pelo serviço. O Terraform cria o grupo com esse nome para ter KMS, retenção e destroy; o nome do endpoint leva o prefixo do projeto.",
       "fonte": "https://docs.aws.amazon.com/sagemaker/latest/dg/logging-cloudwatch.html (log group dos endpoints). Achado A19 da análise 2.",
       "adr": "ADR-0014"
+    },
+    {
+      "id": "ssm-entradas-da-janela",
+      "recurso": "aws_ssm_parameter",
+      "padrao": "^/01-recomendacao/",
+      "motivo": "O parâmetro das entradas da janela usa a hierarquia do Parameter Store, cujo nome começa por '/'. O nome /01-recomendacao/lab/janela/entradas é fixado pelo plano e pelo ADR-0007; o primeiro nível da hierarquia é a chave do projeto, o que mantém o isolamento por prefixo (D-029) no ARN parameter/01-recomendacao/*.",
+      "fonte": "https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-hierarchies.html (hierarquias de parâmetros). A página não foi aberta nesta tarefa (sem acesso à documentação na sessão da T052); a conferência fica com a T102. O nome do parâmetro vem do ADR-0007.",
+      "adr": "ADR-0014"
     }
   ]
 }

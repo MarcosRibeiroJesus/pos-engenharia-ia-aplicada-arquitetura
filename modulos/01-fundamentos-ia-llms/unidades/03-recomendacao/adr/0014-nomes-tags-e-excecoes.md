@@ -18,7 +18,7 @@ Os bancos do Glue Data Catalog usados pelo Athena seguem a regra de nomes do Ath
 ## Decisão
 1. **Tags:**
    - `project = "01-recomendacao"` e `managed-by = "terraform"` no `default_tags` das duas raízes;
-   - `module` em kebab no `local.tags` de cada módulo: `rede`, `chave-kms`, `dados`, `catalogo`, `recomendacoes-lote`, `busca-vetorial`, `re-ranker`, `treino`, `servico`, `consultas`, `pipeline-glue`, `monitoramento` e, na janela, `orquestracao-mwaa`;
+   - `module` em kebab no `local.tags` de cada módulo: `rede`, `chave-kms`, `dados`, `catalogo`, `recomendacoes-lote`, `busca-vetorial`, `re-ranker`, `treino`, `servico`, `consultas`, `pipeline-glue`, `monitoramento`, `entradas-janela` (o parâmetro SSM que a base publica para a janela, T052; fica fora de `orquestracao-mwaa` porque continua no ar quando a janela é destruída) e, na janela, `orquestracao-mwaa`;
    - os recursos do módulo da plataforma usam a tag `module` que o módulo define;
    - `environment` sai do `default_tags`, porque não faz parte da política e só ampliaria a superfície.
 2. **Prefixo:** todo nome começa por `01-recomendacao-`.
@@ -27,6 +27,7 @@ Os bancos do Glue Data Catalog usados pelo Athena seguem a regra de nomes do Ath
    - `p01-recomendacao-` no ambiente do MWAA. Entrou na T012, porque o módulo do MWAA ainda está na base até a T014; a T014 mantém a exceção, usada pela raiz da janela, e a T061 atualiza a fonte e acrescenta os log groups do Airflow;
    - `p01_recomendacao_` no banco do Glue Data Catalog (`p01_recomendacao_lab_golden`) e nas tabelas (T050). A página de nomes do Athena não foi aberta na T012 (sem acesso à documentação na sessão); a conferência fica com a T102;
    - `alias/01-recomendacao-` no alias do KMS, porque a API exige o prefixo `alias/` (o validador do provider reprova sem ele);
+   - `/01-recomendacao/` no parâmetro SSM das entradas da janela (`/01-recomendacao/lab/janela/entradas`, ADR-0007, T052), porque o nome hierárquico do Parameter Store começa por `/`; o primeiro nível é a chave do projeto. A página de hierarquias do SSM não foi aberta na T052; a conferência fica com a T102. O ST-04 aceita `/` logo depois da chave;
    - `/aws/sagemaker/Endpoints/01-recomendacao-` no log group do endpoint, porque o SageMaker impõe o nome `/aws/sagemaker/Endpoints/<endpoint>` ([logs do SageMaker](https://docs.aws.amazon.com/sagemaker/latest/dg/logging-cloudwatch.html), achado A19 da análise 2). O Terraform cria o grupo com esse nome para ter KMS, retenção e destroy.
 
    Os log groups que o projeto nomeia livremente seguem o prefixo (A19): o do serviço é `01-recomendacao-lab-servico`, o que casa com o padrão `log-group:01-recomendacao-*` da T031; o do Glue é `01-recomendacao-lab-glue-feature-engineering`, apontado pelo `--continuous-log-logGroup`; o dos flow logs é `01-recomendacao-lab-flow-logs`.
