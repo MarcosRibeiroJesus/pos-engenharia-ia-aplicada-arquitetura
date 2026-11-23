@@ -8,10 +8,11 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 |---|---|---|---|---|
 | D01 Fundamentos | Recomendação de e-commerce (PR #1), em desenvolvimento (D-064) | Doom, opção 04-C (D-059): calibrador do limiar com gate humano sobre YOLO em TF.js num Web Worker; rótulos pelo motor do jogo; não é aprendizado por reforço | GCP | calcular no plano |
 | D02 APIs de IA generativa | Assistente de agendamento completo: plano aprovado (D-070), tarefas pendentes | pendente | GCP | US$ 0,85 por dia (D-070) |
-| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade em 2025-11-25 (D-072); spec esclarecida (D-071), fase planejar | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
+| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane em 2025-11-25 (D-072); plano aprovado (D-073), fase tarefas | pendente | Azure | US$ 0,50 por dia (D-073) |
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **D03 (MCP de regras do CDB): plano aprovado e teto diário de US$ 0,50** (D-073): teto diário `teto_diario_usd = 0.50` com cota dura de 300.000 tokens no agente (D03-P7 = A); `plan.md`, ADRs 0001 a 0006 e `azure.md` aprovados pelo Marcos (D03-P11 = A, D-033); fase avançada para `tarefas`, com delegação liberada.
 - **D03 (MCP de regras do CDB): respostas da spec e lane de compatibilidade** (D-071, D-072):
   - sem ingestão assistida por Claude nesta entrega; regras entram como dados versionados revisados no PR (D03-P1 = B);
   - inclui dados sintéticos de aplicações em JSON versionado validado por schema (`sintetico: true`, sem PII, cobrindo fronteiras de IOF, IR, cliente sem aplicação e teste de isolamento) e a tool `consultar_aplicacoes_cliente` (`dado_privado`), com `cliente_id` injetado pelo contexto autenticado do atendente (D03-P2 = A);
