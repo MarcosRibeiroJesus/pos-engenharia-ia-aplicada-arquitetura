@@ -111,7 +111,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name              = "/ecs/${local.name}"
+  name              = "${local.name}-servico" # A19: no prefixo, casa com log-group:01-recomendacao-* da T031
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = local.tags

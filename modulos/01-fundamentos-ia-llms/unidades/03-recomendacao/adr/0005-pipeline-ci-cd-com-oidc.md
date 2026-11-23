@@ -3,6 +3,7 @@
 - Status: aceito
 - Data: 2026-11-18
 - Unidade: 01.03 (recomendação)
+- Atualização (T010 e T012): os workflows passaram a `01-recomendacao-{ci,apply,destroy}.yml`, nascidos dos modelos do harness, com o grupo de concorrência `01-recomendacao-state`; o nome do stack digitado no destroy é `01-recomendacao-lab` (prefixo do ADR-0014). Os nomes `recsys-*` abaixo são o registro da decisão original.
 
 ## Contexto
 

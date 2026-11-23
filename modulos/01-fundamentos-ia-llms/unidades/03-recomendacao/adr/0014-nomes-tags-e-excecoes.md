@@ -23,10 +23,15 @@ Os bancos do Glue Data Catalog usados pelo Athena seguem a regra de nomes do Ath
    - `environment` sai do `default_tags`, porque não faz parte da política e só ampliaria a superfície.
 2. **Prefixo:** todo nome começa por `01-recomendacao-`.
 3. **Exceções, num arquivo só** (`U/infra/terraform/tests/excecoes_de_nome.json`), cada uma com o motivo, a fonte e este ADR:
-   - `p01-recomendacao-` no cluster, no subnet group e no parameter group do MemoryDB. O subnet group e o parameter group entram por precaução e são confirmados pelo erro de validação na primeira tarefa; sem confirmação, saem da lista;
-   - `p01-recomendacao-` no ambiente do MWAA e nos log groups dele;
-   - `p01_recomendacao_` no banco do Glue Data Catalog e nas tabelas.
-4. **Teste:** começa pelo `harness/modelos/tags.tftest.hcl`. O TT-T02 reprova um nome fora do prefixo e fora da lista, e o ST-04 reprova uma exceção sem ADR.
+   - `p01-recomendacao-` no cluster do MemoryDB (a documentação exige letra inicial) e, **por precaução**, no subnet group e no parameter group. Na T012, o validador do provider aws 6.73.0 aceitou dígito inicial nos dois grupos, mas aceitou também no cluster, que a documentação proíbe: o validador não implementa a regra da letra inicial e por isso não serve de prova. Os dois grupos só saem da lista com uma fonte que trate da regra de nome deles em si (linha da T102); um teste ou erro de validação do provider não basta;
+   - `p01-recomendacao-` no ambiente do MWAA. Entrou na T012, porque o módulo do MWAA ainda está na base até a T014; a T014 mantém a exceção, usada pela raiz da janela, e a T061 atualiza a fonte e acrescenta os log groups do Airflow;
+   - `p01_recomendacao_` no banco do Glue Data Catalog (`p01_recomendacao_lab_golden`) e nas tabelas (T050). A página de nomes do Athena não foi aberta na T012 (sem acesso à documentação na sessão); a conferência fica com a T102;
+   - `alias/01-recomendacao-` no alias do KMS, porque a API exige o prefixo `alias/` (o validador do provider reprova sem ele);
+   - `/aws/sagemaker/Endpoints/01-recomendacao-` no log group do endpoint, porque o SageMaker impõe o nome `/aws/sagemaker/Endpoints/<endpoint>` ([logs do SageMaker](https://docs.aws.amazon.com/sagemaker/latest/dg/logging-cloudwatch.html), achado A19 da análise 2). O Terraform cria o grupo com esse nome para ter KMS, retenção e destroy.
+
+   Os log groups que o projeto nomeia livremente seguem o prefixo (A19): o do serviço é `01-recomendacao-lab-servico`, o que casa com o padrão `log-group:01-recomendacao-*` da T031; o do Glue é `01-recomendacao-lab-glue-feature-engineering`, apontado pelo `--continuous-log-logGroup`; o dos flow logs é `01-recomendacao-lab-flow-logs`.
+4. **Teste:** começa pelo `harness/modelos/tags.tftest.hcl`. O TT-T02 (`tests/prefixo.tftest.hcl`) reprova um nome fora do prefixo e fora da lista, e uma exceção usada em outro tipo de recurso; o ST-04 (`static_rules.py`) reprova uma exceção sem motivo, fonte ou ADR, ou com padrão sem âncora na chave, e um item que saiu da lista sem link da fonte; o ST-T02 (`static_rules.py`) reprova recurso nomeado de `modules/` que falta no output `nomes_dos_recursos`, porque o TT-T02 só confere o que está nesse output.
+5. **O prefixo não se troca por input:** a variável `project_name` só aceita `01-recomendacao`, e os nomes ficam `01-recomendacao-<environment>-<componente>`.
 
 ## Alternativas rejeitadas
 | Alternativa | Por que não |

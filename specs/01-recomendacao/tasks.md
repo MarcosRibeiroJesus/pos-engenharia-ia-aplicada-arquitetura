@@ -69,14 +69,14 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - nenhum `recsys` em `terraform.tfvars.example`, `backend.hcl.example` e no harness do Floci; a chave do state passa a `01-recomendacao/lab.tfstate`;
     - antes do vermelho, a suíte TT existente (`regras_base.tftest.hcl`) roda verde na máquina do dono como linha de base, e continua verde no fim; `fmt`, `validate`, `tflint` e `checkov` limpos.
   - **Depende de:** T000.
-- [ ] T012 [engenheiro-terraform] Prefixo `01-recomendacao-` com exceções versionadas · RNF-108, Art. VI · TT-T02, ST-04
+- [x] T012 [engenheiro-terraform] Prefixo `01-recomendacao-` com exceções versionadas · RNF-108, Art. VI · TT-T02, ST-04
   - **Teste vermelho:**
     - TT-T02 em `U/infra/terraform/tests/prefixo.tftest.hcl`: todo nome começa por `01-recomendacao-` ou casa com uma exceção de `U/infra/terraform/tests/excecoes_de_nome.json`; um recurso sintético com nome fora do prefixo e fora da lista precisa reprovar;
     - ST-04 em `static_rules.py`: reprova uma exceção do JSON sem `motivo`, `fonte` e `adr` (fixture vermelha).
   - **Arquivos:** os nomes dos 13 módulos, `tests/excecoes_de_nome.json`, `tests/prefixo.tftest.hcl`, `static_rules.py`.
   - **Aceite:**
     - exceções do ADR-0014: `p01-recomendacao-` no cluster do MemoryDB (confirmado) e, por precaução, no subnet group e no parameter group; `p01_recomendacao_` no banco do Glue Data Catalog e nas tabelas. As do MWAA entram na T061;
-    - **confirmação das duas exceções por precaução:** se o validador do provider ou a documentação do serviço aceitar dígito inicial no subnet group e no parameter group, eles saem da lista e voltam ao prefixo normal, com a fonte no JSON (ADR-0014);
+    - **confirmação das duas exceções por precaução:** os dois ficam na lista por precaução e só saem, voltando ao prefixo normal, com uma fonte da documentação que trate da regra do subnet group e do parameter group em si, registrada no JSON (ADR-0014, T102). O validador do provider não vale como prova, porque não implementa a regra nem para o cluster;
     - a tag `project` continua `01-recomendacao` em todos os recursos (T011 verde).
   - **Análise 2 (A19):** o log group do serviço e o do Glue passam ao prefixo (`01-recomendacao-servico` e `01-recomendacao-glue-…`, com o `--continuous-log-logGroup` apontando para ele); o do endpoint, de nome imposto pelo SageMaker, entra no `excecoes_de_nome.json` e no ADR-0014 com motivo, fonte e ADR (ST-04).
   - **Depende de:** T011.
@@ -98,6 +98,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/infra/terraform/modules/networking/`, `U/infra/terraform/main.tf` (sai o módulo `mwaa_orchestration` e o `enable_mwaa`), `modules/memorydb_cluster/`, `modules/ecs_service/` (sai `cloudwatch:PutMetricData` da task role), os testes.
   - **Aceite:**
     - os testes TT existentes do MWAA (`mwaa_ligado_privado`, `mwaa_desligado_por_padrao`) saem da base e são reescritos na raiz da janela (T061);
+    - **prefixo (revisão da T012):** o assert dos 13 módulos do `prefixo.tftest.hcl` (e o do `tags.tftest.hcl`) passa a listar os módulos que ficam na base; a exceção `mwaa-ambiente` do `excecoes_de_nome.json` continua, porque a raiz da janela a usa;
     - a task role não tem `cloudwatch:PutMetricData`, porque as métricas vão por EMF (ADR-0013);
     - custo fixo da base igual ao da tabela do plano (5 endpoints, 1 ALB, 1 nó do MemoryDB, 1 task).
   - **Depende de:** T011, T015.
@@ -309,7 +310,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T011, T052.
 - [ ] T061 [engenheiro-terraform] Ambiente MWAA `mw1.micro` com log groups do Terraform · RF-010, RNF-001, D-052, ADR-0014 · TT-K03, TT-T02 (janela)
   - **Teste vermelho:** `U/infra/janela-mwaa/tests/mwaa.tftest.hcl` afirma o ambiente `p01-recomendacao-lab-mwaa` com `environment_class = "mw1.micro"`, `airflow_version = "2.11.2"`, `webserver_access_mode = "PRIVATE_ONLY"`, `kms_key` da base; os log groups `airflow-p01-recomendacao-lab-mwaa-*` criados no Terraform com KMS e retenção de 7 dias; o TT-T02 da janela aceita `p01-recomendacao-` só pelo `excecoes_de_nome.json`; TT-K03: tudo da janela usa a chave KMS da base, e o bucket nega `aws:SecureTransport = false`.
-  - **Arquivos:** `U/infra/janela-mwaa/mwaa.tf`, os testes reescritos a partir dos TT `mwaa_ligado_privado` e `mwaa_desligado_por_padrao` da base, `U/infra/terraform/tests/excecoes_de_nome.json` (as exceções do MWAA, com a fonte do `CreateEnvironment`).
+  - **Arquivos:** `U/infra/janela-mwaa/mwaa.tf`, os testes reescritos a partir dos TT `mwaa_ligado_privado` e `mwaa_desligado_por_padrao` da base, `U/infra/terraform/tests/excecoes_de_nome.json` (atualiza a fonte da exceção `mwaa-ambiente`, do `CreateEnvironment`, e acrescenta os log groups do Airflow).
   - **Aceite:** o módulo `mwaa_orchestration` sai da base e passa a ser usado só por esta raiz.
   - **Depende de:** T014, T060.
 - [ ] T062 [P] [engenheiro-terraform] Nove endpoints da janela em 1 AZ · RNF-002, Art. V · TT-K02 (janela), ST-07 (janela)
@@ -481,9 +482,10 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Aceite:** instância diferente de quem escreveu (4.6); achados com severidade, local e correção sugerida, no formato da D-036.
   - **Depende de:** T096, T097, T100.
 - [ ] T102 [pesquisador] Disponibilidade e preços antes do primeiro apply real · R6, R12, E16, RNF-002
-  - **Teste vermelho:** tabela de achados com uma linha por item, em `us-east-1`: Airflow 2.11.2 e `mw1.micro` no MWAA; Haiku 5.5 pelo perfil `us.` e o preço dele no Bedrock; guardrail no `bedrock-runtime` para o modelo; Serverless Inference com XGBoost 1.7-1; preço do MemoryDB `db.t4g.small`; item sem fonte oficial datada reprova. Mais duas linhas da análise 1:
+  - **Teste vermelho:** tabela de achados com uma linha por item, em `us-east-1`: Airflow 2.11.2 e `mw1.micro` no MWAA; Haiku 5.5 pelo perfil `us.` e o preço dele no Bedrock; guardrail no `bedrock-runtime` para o modelo; Serverless Inference com XGBoost 1.7-1; preço do MemoryDB `db.t4g.small`; item sem fonte oficial datada reprova. Mais três linhas (duas da análise 1 e uma da revisão da T012):
     - **versão exata do XGBoost no container 1.7-1 (A03):** a [página do algoritmo](https://docs.aws.amazon.com/sagemaker/latest/dg/xgboost.html) diz só que a versão se baseia na 1.7, e o [README do container](https://github.com/aws/sagemaker-xgboost-container/blob/master/README.rst) não traz a versão de correção (consulta em 2026-11-20); hoje é **incerto** se é a 1.7.6. A linha procura a fonte da versão exata (por exemplo, o arquivo de dependências do container no repositório oficial, na tag da 1.7-1); sem fonte, o DM-07 registra a pré-condição de versão como não confirmada;
     - **alerta de previsão no Budgets diário (A09):** a fonte de 2020 diz que o diário não aceitava previsão, e não achei fonte atual (T013); a linha confirma o estado de hoje, com fonte e data.
+    - **nomes com dígito inicial (revisão da T012):** uma linha por regra de nome ainda sem fonte que trate da regra em si: letra inicial no subnet group e no parameter group do MemoryDB (exceções por precaução do ADR-0014; o validador do provider não implementa a regra nem para o cluster, então não serve de prova) e a regra de nomes de banco e tabela do Athena; a exceção só sai do `excecoes_de_nome.json` com fonte que trate da regra, e o log group do endpoint do SageMaker tem o nome imposto conferido na página de logs;
   - **Arquivos:** relatório para a orquestração; se algo mudou, ADR de implementação em `U/adr/` (nunca edição do plano sem nova aprovação).
   - **Aceite:** fonte, data da fonte, data da consulta e certeza em cada linha (5.6); diferença que muda custo ou escopo vira pergunta ao dono.
   - **Análise 2 (A21):** a linha da versão exata do XGBoost roda antes da T042 (passo de pesquisa antecipado), para a T042 fixar a versão confirmada.

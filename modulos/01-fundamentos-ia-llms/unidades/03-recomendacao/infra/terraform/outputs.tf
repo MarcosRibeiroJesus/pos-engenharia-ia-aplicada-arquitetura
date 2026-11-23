@@ -85,3 +85,31 @@ output "prefixo_dos_nomes" {
   description = "Prefixo dos nomes dos recursos, lido pelo harness de integração no Floci."
   value       = "${var.project_name}-${var.environment}"
 }
+
+output "memorydb_cluster_name" {
+  description = "Nome do cluster do MemoryDB (exceção p01-recomendacao- do ADR-0014), lido pelo harness de integração."
+  value       = module.memorydb_cluster.cluster_name
+}
+
+# Nome de cada recurso nomeado do root, pelo endereço <modulo>.<tipo>.<recurso>. O
+# tests/prefixo.tftest.hcl (TT-T02) aplica a regra de prefixo com as exceções de
+# tests/excecoes_de_nome.json; cada módulo novo entra aqui com o output nomes_dos_recursos dele.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do root, para o teste de prefixo (TT-T02)."
+  value = merge([for m, recursos in {
+    networking            = module.networking.nomes_dos_recursos
+    kms                   = module.kms.nomes_dos_recursos
+    s3_golden_dataset     = module.s3_golden_dataset.nomes_dos_recursos
+    lake_formation        = module.lake_formation.nomes_dos_recursos
+    dynamodb_table        = module.dynamodb_table.nomes_dos_recursos
+    memorydb_cluster      = module.memorydb_cluster.nomes_dos_recursos
+    sagemaker_endpoint    = module.sagemaker_endpoint.nomes_dos_recursos
+    sagemaker_training    = module.sagemaker_training.nomes_dos_recursos
+    ecs_service           = module.ecs_service.nomes_dos_recursos
+    athena_queries        = module.athena_queries.nomes_dos_recursos
+    glue_pipeline         = module.glue_pipeline.nomes_dos_recursos
+    cloudwatch_monitoring = module.cloudwatch_monitoring.nomes_dos_recursos
+    mwaa_orchestration    = module.mwaa_orchestration.nomes_dos_recursos
+    } : { for endereco, nome in recursos : "${m}.${endereco}" => nome }
+  ]...)
+}

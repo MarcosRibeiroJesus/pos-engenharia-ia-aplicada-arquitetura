@@ -16,3 +16,15 @@ output "tags_dos_recursos" {
     { "aws_budgets_budget.monthly" = aws_budgets_budget.monthly.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { "aws_sns_topic.alerts" = aws_sns_topic.alerts.name },
+    { for k, r in aws_cloudwatch_metric_alarm.this : "aws_cloudwatch_metric_alarm.this[${k}]" => r.alarm_name },
+    { "aws_budgets_budget.monthly" = aws_budgets_budget.monthly.name },
+    { "aws_cloudwatch_dashboard.platform" = aws_cloudwatch_dashboard.platform.dashboard_name },
+  )
+}

@@ -116,7 +116,7 @@ resource "aws_glue_security_configuration" "main" {
 # R7: log group do job criado aqui, para o destroy não deixar /aws-glue/* para trás.
 resource "aws_cloudwatch_log_group" "glue" {
   #checkov:skip=CKV_AWS_338:Lab retém 14 dias; retenção longa custa armazenamento sem uso (README, FinOps)
-  name              = "/aws-glue/jobs/${local.name}-feature-engineering"
+  name              = "${local.name}-glue-feature-engineering" # A19: no prefixo; o job aponta para ele no --continuous-log-logGroup
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = local.tags

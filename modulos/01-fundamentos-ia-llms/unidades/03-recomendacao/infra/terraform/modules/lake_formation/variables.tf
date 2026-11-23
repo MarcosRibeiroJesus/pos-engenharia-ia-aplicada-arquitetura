@@ -15,8 +15,7 @@ variable "s3_bucket_arn" {
 
 variable "database_name" {
   type        = string
-  default     = "ecommerce_golden_db"
-  description = "Glue Catalog Database Name"
+  description = "Banco do Glue Data Catalog, com a exceção p01_recomendacao_ do ADR-0014 (vem do root)."
 }
 
 variable "glue_role_arn" {

@@ -31,6 +31,9 @@ REPORTS = REPO / "testing/reports"
 ENDPOINT = os.environ.get("AWS_ENDPOINT_URL", "http://localhost:4566")
 EMULATOR = os.environ.get("EMULATOR_NAME", "Floci")
 PROJECT, ENVIRONMENT = "01-recomendacao", "lab"  # PROJECT é a tag project (D-031); os nomes vêm do output prefixo_dos_nomes
+# Prefixo real dos nomes, lido do output prefixo_dos_nomes depois do apply (T012); o cabeçalho do
+# relatório mostra este valor, não uma montagem local de PROJECT e ENVIRONMENT.
+STACK_LIDO = {"prefixo": ""}
 STATE_BUCKET = "01-recomendacao-tfstate-floci"
 STATE_KEY = "01-recomendacao/lab.tfstate"  # mesma chave dos workflows (STATE_KEY)
 RUN_ID = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -237,9 +240,11 @@ def outputs():
 def assertions(o):
     bucket = o.get("s3_golden_dataset_bucket", {}).get("value", "")
     table = o.get("dynamodb_table_name", {}).get("value", "")
-    # Prefixo dos nomes lido do próprio stack: a tag project (PROJECT) e o prefixo dos nomes são
-    # coisas diferentes até a T012, e o harness não repete a regra de nomes do Terraform.
+    # Prefixo dos nomes lido do próprio stack (01-recomendacao-<environment>, ADR-0014): o harness não
+    # repete a regra de nomes do Terraform. O cluster do MemoryDB tem a exceção p01- e vem do output dele.
     nome = o.get("prefixo_dos_nomes", {}).get("value", "")
+    STACK_LIDO["prefixo"] = nome
+    memdb = o.get("memorydb_cluster_name", {}).get("value", "")
 
     def s3_kms():
         d, raw = aws("s3api", "get-bucket-encryption", "--bucket", bucket)
@@ -268,7 +273,7 @@ def assertions(o):
     check("DynamoDB: SSE com KMS", ddb_sse, rule="R2", expected="KMS / ENABLED")
 
     def memdb_tls():
-        d, raw = aws("memorydb", "describe-clusters", "--cluster-name", f"{nome}-vec")
+        d, raw = aws("memorydb", "describe-clusters", "--cluster-name", memdb)
         c = (d or {}).get("Clusters", [{}])[0]
         return c.get("TLSEnabled"), c.get("TLSEnabled") is True, raw
     check("MemoryDB: TLS em trânsito", memdb_tls, rule="R2", expected=True,
@@ -586,7 +591,7 @@ def write_report():
 <body><main>
   <div class="verdict {vcls}">{verdict}</div>
   <h1>Integração · plataforma de recomendação</h1>
-  <div class="sub">Execução {RUN_ID} · stack <code>{PROJECT}-{ENVIRONMENT}</code> · emulador {html.escape(EMULATOR)} · endpoint <code>{html.escape(ENDPOINT)}</code></div>
+  <div class="sub">Execução {RUN_ID} · stack <code>{html.escape(STACK_LIDO['prefixo'] or 'não lido (sem outputs do apply)')}</code> · emulador {html.escape(EMULATOR)} · endpoint <code>{html.escape(ENDPOINT)}</code></div>
   <div class="cards">
     <div class="card">Passos<b>{total}</b></div>
     <div class="card">Passaram<b style="color:var(--ok)">{n['ok']}</b></div>

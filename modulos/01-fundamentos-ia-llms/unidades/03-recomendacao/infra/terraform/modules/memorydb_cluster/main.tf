@@ -6,14 +6,14 @@ locals {
 }
 
 resource "aws_memorydb_subnet_group" "main" {
-  name        = "${var.project_name}-${var.environment}-memdb-subnets"
+  name        = "p${var.project_name}-${var.environment}-memdb-subnets" # exceção por precaução (ADR-0014)
   subnet_ids  = var.subnet_ids
   description = "MemoryDB subnet group across private subnets"
   tags        = local.tags
 }
 
 resource "aws_memorydb_parameter_group" "redis7" {
-  name   = "${var.project_name}-${var.environment}-memdb-params"
+  name   = "p${var.project_name}-${var.environment}-memdb-params" # exceção por precaução (ADR-0014)
   family = "memorydb_redis7"
 
   parameter {
@@ -24,7 +24,8 @@ resource "aws_memorydb_parameter_group" "redis7" {
 }
 
 resource "aws_memorydb_cluster" "vector_cluster" {
-  name = "${var.project_name}-${var.environment}-vec"
+  # Exceção do ADR-0014 (tests/excecoes_de_nome.json): o nome do cluster precisa começar por letra.
+  name = "p${var.project_name}-${var.environment}-vec"
   # open-access + TLS + SG que só aceita as tasks. Autenticação IAM por usuário é o
   # próximo passo de produção (ver ADR-0003).
   acl_name                   = "open-access"

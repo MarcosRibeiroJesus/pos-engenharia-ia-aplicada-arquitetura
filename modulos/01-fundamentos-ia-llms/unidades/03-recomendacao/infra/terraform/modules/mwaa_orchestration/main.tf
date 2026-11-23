@@ -10,7 +10,10 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
 locals {
-  name      = "${var.project_name}-${var.environment}-mwaa"
+  name = "${var.project_name}-${var.environment}-mwaa"
+  # Exceção do ADR-0014 (tests/excecoes_de_nome.json): o nome do ambiente do MWAA começa por letra.
+  # A role e o security group seguem o prefixo normal.
+  env_name  = "p${local.name}"
   region    = data.aws_region.current.region
   account   = data.aws_caller_identity.current.account_id
   partition = data.aws_partition.current.partition
@@ -45,7 +48,7 @@ resource "aws_iam_role_policy" "mwaa_execution" {
         Sid      = "PublishMetrics"
         Effect   = "Allow"
         Action   = ["airflow:PublishMetrics"]
-        Resource = "arn:${local.partition}:airflow:${local.region}:${local.account}:environment/${local.name}"
+        Resource = "arn:${local.partition}:airflow:${local.region}:${local.account}:environment/${local.env_name}"
       },
       {
         Sid      = "ReadDagsBucket"
@@ -57,7 +60,7 @@ resource "aws_iam_role_policy" "mwaa_execution" {
         Sid      = "WriteLogs"
         Effect   = "Allow"
         Action   = ["logs:CreateLogStream", "logs:CreateLogGroup", "logs:PutLogEvents", "logs:GetLogEvents", "logs:GetLogRecord", "logs:GetLogGroupFields", "logs:GetQueryResults", "logs:DescribeLogGroups"]
-        Resource = "arn:${local.partition}:logs:${local.region}:${local.account}:log-group:airflow-${local.name}-*"
+        Resource = "arn:${local.partition}:logs:${local.region}:${local.account}:log-group:airflow-${local.env_name}-*"
       },
       {
         Sid      = "PublishAirflowMetrics"
@@ -121,7 +124,7 @@ resource "aws_s3_object" "pipeline_dag" {
 
 resource "aws_mwaa_environment" "pipeline" {
   count                 = var.enable_mwaa ? 1 : 0
-  name                  = local.name
+  name                  = local.env_name
   airflow_version       = "2.8.1"
   environment_class     = "mw1.small"
   execution_role_arn    = aws_iam_role.mwaa_execution_role[0].arn
@@ -161,6 +164,6 @@ resource "aws_mwaa_environment" "pipeline" {
   }
 
   tags = merge(local.tags, {
-    Name = local.name
+    Name = local.env_name
   })
 }

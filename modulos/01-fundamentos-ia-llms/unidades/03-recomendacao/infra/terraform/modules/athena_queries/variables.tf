@@ -15,8 +15,7 @@ variable "s3_output_bucket" {
 
 variable "database_name" {
   type        = string
-  default     = "ecommerce_golden_db"
-  description = "Banco do Glue Catalog."
+  description = "Banco do Glue Data Catalog, com a exceção p01_recomendacao_ do ADR-0014 (vem do root)."
 }
 
 variable "kms_key_arn" {

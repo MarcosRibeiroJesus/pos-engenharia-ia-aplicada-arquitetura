@@ -65,7 +65,7 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 2. State remoto, uma vez por conta: `cd infra/bootstrap && terraform init && terraform apply -var github_repository=owner/repo`.
 3. Configuração: copie `infra/terraform/backend.hcl.example` para `backend.hcl` e `terraform.tfvars.example` para `terraform.tfvars`, com o bucket do passo 2 e o seu e-mail de alerta.
 4. Deploy: rode o workflow `01.03 recomendação · apply` (ambiente protegido `aws-lab`) ou, localmente, `terraform init -backend-config=backend.hcl && terraform apply`. Publique a imagem do serviço no repositório ECR da saída `ecr_repository_url` com a tag `lab`.
-5. Destroy ao terminar: workflow `01.03 recomendação · destroy`, digitando `recsys-lab`. Ele falha se sobrar recurso com a tag `project`.
+5. Destroy ao terminar: workflow `01.03 recomendação · destroy`, digitando `01-recomendacao-lab`. Ele falha se sobrar recurso com a tag `project`.
 
 ## Testes
 

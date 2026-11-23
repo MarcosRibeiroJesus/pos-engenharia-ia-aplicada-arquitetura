@@ -64,3 +64,25 @@ output "tags_dos_recursos" {
     { for i, r in aws_flow_log.vpc : "aws_flow_log.vpc[${i}]" => r.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { "aws_vpc.main" = aws_vpc.main.tags["Name"] },
+    { for i, r in aws_subnet.private : "aws_subnet.private[${i}]" => r.tags["Name"] },
+    { "aws_route_table.private" = aws_route_table.private.tags["Name"] },
+    { for i, r in aws_internet_gateway.gw : "aws_internet_gateway.gw[${i}]" => r.tags["Name"] },
+    { for i, r in aws_subnet.public : "aws_subnet.public[${i}]" => r.tags["Name"] },
+    { for i, r in aws_route_table.public : "aws_route_table.public[${i}]" => r.tags["Name"] },
+    { for k, r in aws_vpc_endpoint.gateway : "aws_vpc_endpoint.gateway[${k}]" => r.tags["Name"] },
+    { for k, r in aws_vpc_endpoint.interface : "aws_vpc_endpoint.interface[${k}]" => r.tags["Name"] },
+    { "aws_security_group.alb" = aws_security_group.alb.name },
+    { "aws_security_group.ecs" = aws_security_group.ecs.name },
+    { "aws_security_group.endpoints" = aws_security_group.endpoints.name },
+    { "aws_security_group.internal" = aws_security_group.internal.name },
+    { for i, r in aws_cloudwatch_log_group.flow_logs : "aws_cloudwatch_log_group.flow_logs[${i}]" => r.name },
+    { for i, r in aws_iam_role.flow_logs : "aws_iam_role.flow_logs[${i}]" => r.name },
+  )
+}

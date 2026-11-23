@@ -45,3 +45,21 @@ output "tags_dos_recursos" {
     { "aws_ecs_service.app" = aws_ecs_service.app.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { "aws_ecr_repository.app" = aws_ecr_repository.app.name },
+    { "aws_ecs_cluster.main" = aws_ecs_cluster.main.name },
+    { "aws_cloudwatch_log_group.ecs" = aws_cloudwatch_log_group.ecs.name },
+    { "aws_iam_role.ecs_execution_role" = aws_iam_role.ecs_execution_role.name },
+    { "aws_iam_role.ecs_task_role" = aws_iam_role.ecs_task_role.name },
+    { "aws_iam_policy.ecs_task_policy" = aws_iam_policy.ecs_task_policy.name },
+    { "aws_lb.alb" = aws_lb.alb.name },
+    { "aws_lb_target_group.app" = aws_lb_target_group.app.name },
+    { "aws_ecs_task_definition.app" = aws_ecs_task_definition.app.family },
+    { "aws_ecs_service.app" = aws_ecs_service.app.name },
+  )
+}

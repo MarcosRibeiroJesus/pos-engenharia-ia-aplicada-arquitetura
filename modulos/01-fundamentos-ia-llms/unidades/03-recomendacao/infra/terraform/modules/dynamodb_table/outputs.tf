@@ -12,3 +12,12 @@ output "tags_dos_recursos" {
     { "aws_dynamodb_table.user_recommendations" = aws_dynamodb_table.user_recommendations.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { "aws_dynamodb_table.user_recommendations" = aws_dynamodb_table.user_recommendations.name },
+  )
+}

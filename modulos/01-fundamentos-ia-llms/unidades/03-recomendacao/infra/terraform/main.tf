@@ -8,6 +8,10 @@ locals {
   }
 
   bedrock_model_id = var.bedrock_model_id
+
+  # Banco do Glue Data Catalog: exceção p01_recomendacao_ do ADR-0014 (o Athena não aceita hífen no
+  # nome do banco). Um só lugar para o lake_formation, o glue_pipeline e o athena_queries.
+  nome_do_banco = "p${replace(var.project_name, "-", "_")}_${var.environment}_golden"
 }
 
 provider "aws" {
@@ -50,6 +54,7 @@ module "lake_formation" {
   environment   = var.environment
   s3_bucket_arn = module.s3_golden_dataset.bucket_arn
   glue_role_arn = module.glue_pipeline.glue_role_arn
+  database_name = local.nome_do_banco
 }
 
 module "dynamodb_table" {
@@ -121,6 +126,7 @@ module "glue_pipeline" {
   dynamodb_table_arn = module.dynamodb_table.table_arn
   kms_key_arn        = module.kms.key_arn
   log_retention_days = var.log_retention_days
+  database_name      = local.nome_do_banco
 }
 
 module "sagemaker_training" {

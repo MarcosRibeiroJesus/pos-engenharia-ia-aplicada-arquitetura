@@ -19,3 +19,13 @@ output "tags_dos_recursos" {
     { "aws_athena_workgroup.analytics" = aws_athena_workgroup.analytics.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { "aws_athena_workgroup.analytics" = aws_athena_workgroup.analytics.name },
+    { "aws_athena_named_query.extract_curated_features" = aws_athena_named_query.extract_curated_features.name },
+  )
+}

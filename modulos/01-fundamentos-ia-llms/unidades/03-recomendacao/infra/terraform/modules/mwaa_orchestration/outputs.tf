@@ -17,3 +17,14 @@ output "tags_dos_recursos" {
     { for i, r in aws_mwaa_environment.pipeline : "aws_mwaa_environment.pipeline[${i}]" => r.tags },
   )
 }
+
+# Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02, ADR-0014). Recursos sem
+# atributo de nome entram pela tag Name; nomes de policy inline (escopo da role) não entram.
+output "nomes_dos_recursos" {
+  description = "Nome de cada recurso nomeado do módulo, para o teste de prefixo (TT-T02)."
+  value = merge(
+    { for i, r in aws_iam_role.mwaa_execution_role : "aws_iam_role.mwaa_execution_role[${i}]" => r.name },
+    { for i, r in aws_security_group.mwaa : "aws_security_group.mwaa[${i}]" => r.name },
+    { for i, r in aws_mwaa_environment.pipeline : "aws_mwaa_environment.pipeline[${i}]" => r.name },
+  )
+}

@@ -255,7 +255,7 @@ resource "aws_security_group" "internal" {
 resource "aws_cloudwatch_log_group" "flow_logs" {
   #checkov:skip=CKV_AWS_338:Lab retém 14 dias; retenção longa custa armazenamento sem uso (README, FinOps)
   count             = var.enable_flow_logs ? 1 : 0
-  name              = "/vpc/${local.name}/flow-logs"
+  name              = "${local.name}-flow-logs"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
   tags              = local.tags

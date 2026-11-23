@@ -6,9 +6,17 @@ R8: state remoto em S3 com lock nativo.
 ADR-0005: workflows com OIDC, ambiente protegido, confirmação e verificação de sobras.
 ST-01 (RNF-103): nenhum workflow cujo filtro de caminho cobre a unidade roda Infracost; o gate de
 custo do PR é só o de seguranca.yml (gate_custo.py, teto diário do harness/estado.json).
+ST-04 (RNF-108, ADR-0014): toda exceção de tests/excecoes_de_nome.json tem motivo, fonte e um ADR que
+existe em adr/, vale para um tipo de recurso e tem padrão ancorado na chave do projeto.
+ST-T01 (RNF-107, achado A1 da revisão da T011): todo recurso de modules/ com atributo tags usa o
+local.tags do módulo e aparece no output tags_dos_recursos dele.
+ST-T02 (RNF-108, revisão da T012): todo recurso de modules/ com atributo de nome próprio aparece no
+output nomes_dos_recursos dele (o TT-T02 só confere o que está nesse output).
 Roda sem rede e sem credenciais: `python3 tests/static_rules.py`. Importável (os testes do harness
-usam `st01_infracost` com fixtures); a verificação só roda no `__main__`.
+usam `st01_infracost`, `st04_excecoes_de_nome`, `st_t01_tags_dos_modulos` e `st_t02_nomes_dos_modulos` com
+fixtures); a verificação só roda no `__main__`.
 """
+import json
 import pathlib
 import re
 import sys
@@ -68,8 +76,136 @@ def st01_infracost(workflows: dict) -> list:
     return falhas
 
 
+EXCECOES = ROOT / "tests" / "excecoes_de_nome.json"
+
+
+def st04_excecoes_de_nome(dados: dict, adrs: set) -> list:
+    """ST-04: conteúdo de excecoes_de_nome.json -> falhas. `adrs` são os ids existentes (ex.: 'ADR-0014')."""
+    falhas = []
+    if dados.get("prefixo") != f"{CHAVE}-":
+        falhas.append(f"ST-04: o prefixo da lista precisa ser '{CHAVE}-'")
+    ids = []
+    for i, e in enumerate(dados.get("excecoes", [])):
+        rotulo = e.get("id") or f"#{i}"
+        ids.append(e.get("id"))
+        for campo in ("id", "recurso", "padrao", "motivo", "fonte", "adr"):
+            if not str(e.get(campo, "")).strip():
+                falhas.append(f"ST-04: exceção {rotulo} sem '{campo}'")
+        if e.get("recurso") and not re.fullmatch(r"aws_[a-z0-9_]+", e["recurso"]):
+            falhas.append(f"ST-04: exceção {rotulo} precisa valer para um tipo de recurso aws_* só")
+        padrao = str(e.get("padrao", ""))
+        # Ancorado no início e com a chave: uma exceção não pode virar curinga (".*") nem servir a outro projeto.
+        if padrao and not (padrao.startswith("^") and re.search(r"01[-_]recomendacao[-_]", padrao)):
+            falhas.append(f"ST-04: exceção {rotulo} com padrão '{padrao}' fora da chave ou sem âncora '^'")
+        adr = str(e.get("adr", ""))
+        if adr and adr not in adrs:
+            falhas.append(f"ST-04: exceção {rotulo} cita {adr}, que não existe em adr/")
+        if e.get("fonte") and "http" not in e["fonte"]:
+            falhas.append(f"ST-04: exceção {rotulo} sem link da fonte")
+    if len([i for i in ids if i]) != len(set(i for i in ids if i)):
+        falhas.append("ST-04: ids de exceção repetidos")
+    # Item que saiu da lista precisa de fonte com link que trate da regra em si (revisão da T012).
+    for v in dados.get("verificados_sem_excecao", []):
+        if "http" not in str(v.get("fonte", "")):
+            falhas.append(f"ST-04: verificação de {v.get('recurso', '?')} sem link da fonte")
+    return falhas
+
+
+def adrs_existentes() -> set:
+    return {f"ADR-{m.group(1)}" for p in (UNIT / "adr").glob("*.md")
+            if (m := re.match(r"(\d{4})-", p.name))}
+
+
+def blocos_de_recurso(texto: str) -> list:
+    """[(tipo, nome, corpo)] de cada bloco `resource` (casando chaves, fora de strings simples)."""
+    blocos = []
+    for m in re.finditer(r'^resource\s+"([a-z0-9_]+)"\s+"([A-Za-z0-9_-]+)"\s*\{', texto, flags=re.M):
+        nivel, i = 1, m.end()
+        while i < len(texto) and nivel:
+            nivel += {"{": 1, "}": -1}.get(texto[i], 0)
+            i += 1
+        blocos.append((m.group(1), m.group(2), texto[m.end():i - 1]))
+    return blocos
+
+
+def st_t01_tags_dos_modulos(modulos: dict) -> list:
+    """ST-T01: {modulo: {"main": texto dos .tf de recursos, "outputs": texto do outputs.tf}} -> falhas.
+
+    Todo recurso com atributo `tags` de primeiro nível usa `local.tags` (direto ou num merge) e aparece
+    no output `tags_dos_recursos` do módulo, para o TT-T01 não deixar recurso de fora em silêncio.
+    """
+    falhas = []
+    for modulo, textos in sorted(modulos.items()):
+        saida = textos.get("outputs", "")
+        bloco = saida.split('output "tags_dos_recursos"', 1)
+        tags_out = bloco[1].split("\noutput ", 1)[0] if len(bloco) == 2 else ""
+        for tipo, nome, corpo in blocos_de_recurso(textos.get("main", "")):
+            m = re.search(r"^  tags\s*=\s*(.+)$", corpo, flags=re.M)
+            if not m:
+                continue
+            if not re.match(r"(local\.tags\s*$|merge\(\s*local\.tags\b)", m.group(1).strip()):
+                falhas.append(f"ST-T01: {modulo}/{tipo}.{nome} tem tags sem local.tags")
+            if not re.search(rf'"{tipo}\.{nome}(\[|")', tags_out):
+                falhas.append(f"ST-T01: {modulo}/{tipo}.{nome} tem tags e falta em tags_dos_recursos")
+    return falhas
+
+
+# Atributos de primeiro nível que dão nome ao próprio recurso.
+ATRIBUTOS_DE_NOME = ("name", "name_prefix", "bucket", "bucket_prefix", "family", "alarm_name",
+                     "dashboard_name", "function_name", "identifier", "cluster_name", "role_name",
+                     "repository_name", "topic_name", "table_name", "workgroup", "domain_name")
+# (tipo, atributo) cujo valor não é nome no escopo da conta e por isso fica fora do TT-T02.
+# Cada item diz o porquê; nenhum outro recurso nomeado pode faltar no nomes_dos_recursos.
+FORA_DO_TT_T02 = {
+    ("aws_iam_role_policy", "name"): "policy inline: o nome vale só dentro da role, sem ARN próprio",
+    ("aws_s3_object", "bucket"): "bucket de destino do objeto, não o nome do objeto",
+}
+
+
+def st_t02_nomes_dos_modulos(modulos: dict) -> list:
+    """ST-T02: {modulo: {"main", "outputs"}} -> falhas.
+
+    Todo recurso com atributo de nome de primeiro nível cujo valor não é referência a outro recurso
+    (aws_*, data.*) aparece no output `nomes_dos_recursos` do módulo, para o TT-T02 não deixar recurso
+    esquecido de fora. Vale também para recurso sem `tags` (tabela do Glue, consulta do Athena).
+    """
+    falhas = []
+    for modulo, textos in sorted(modulos.items()):
+        bloco = textos.get("outputs", "").split('output "nomes_dos_recursos"', 1)
+        nomes_out = bloco[1].split("\noutput ", 1)[0] if len(bloco) == 2 else ""
+        for tipo, nome, corpo in blocos_de_recurso(textos.get("main", "")):
+            for m in re.finditer(r"^  ([a-z_]+)\s*=\s*(.+)$", corpo, flags=re.M):
+                attr, valor = m.group(1), m.group(2).strip()
+                if attr not in ATRIBUTOS_DE_NOME or (tipo, attr) in FORA_DO_TT_T02:
+                    continue
+                if re.match(r"(aws_[a-z0-9_]+|data)\.", valor):
+                    continue   # referência a outro recurso: o nome é do outro, que já é conferido
+                if not re.search(rf'"{tipo}\.{nome}(\[|")', nomes_out):
+                    falhas.append(f"ST-T02: {modulo}/{tipo}.{nome} tem {attr} e falta em nomes_dos_recursos")
+                break
+    return falhas
+
+
+def modulos_do_stack() -> dict:
+    modulos = {}
+    for d in sorted((ROOT / "modules").iterdir()):
+        if not d.is_dir():
+            continue
+        main = "\n".join(p.read_text(encoding="utf-8") for p in sorted(d.glob("*.tf"))
+                         if p.name not in ("outputs.tf", "variables.tf", "versions.tf"))
+        out = (d / "outputs.tf").read_text(encoding="utf-8") if (d / "outputs.tf").exists() else ""
+        modulos[d.name] = {"main": main, "outputs": out}
+    return modulos
+
+
 def regras_terraform() -> list:
     failures = []
+    if not EXCECOES.exists():
+        failures.append("ST-04: falta tests/excecoes_de_nome.json (RNF-108, ADR-0014)")
+    else:
+        failures += st04_excecoes_de_nome(json.loads(EXCECOES.read_text(encoding="utf-8")), adrs_existentes())
+    failures += st_t01_tags_dos_modulos(modulos_do_stack())
+    failures += st_t02_nomes_dos_modulos(modulos_do_stack())
     adr_text = "\n".join(p.read_text(encoding="utf-8") for p in (UNIT / "adr").glob("*.md"))
     tf_files = [p for p in ROOT.rglob("*.tf") if ".terraform" not in p.parts]
     declared = set()

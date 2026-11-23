@@ -13,12 +13,12 @@ mock_provider "aws" {
 
   mock_resource "aws_s3_bucket" {
     defaults = {
-      arn = "arn:aws:s3:::recsys-lab-golden-123456789012"
+      arn = "arn:aws:s3:::01-recomendacao-lab-golden-123456789012"
     }
   }
   mock_resource "aws_sns_topic" {
     defaults = {
-      arn = "arn:aws:sns:us-east-1:123456789012:recsys-lab-alerts"
+      arn = "arn:aws:sns:us-east-1:123456789012:01-recomendacao-lab-alerts"
     }
   }
   mock_resource "aws_cloudwatch_log_group" {
@@ -28,8 +28,8 @@ mock_provider "aws" {
   }
   mock_resource "aws_ecr_repository" {
     defaults = {
-      arn            = "arn:aws:ecr:us-east-1:123456789012:repository/recsys-lab/recommendation-service"
-      repository_url = "123456789012.dkr.ecr.us-east-1.amazonaws.com/recsys-lab/recommendation-service"
+      arn            = "arn:aws:ecr:us-east-1:123456789012:repository/01-recomendacao-lab/recommendation-service"
+      repository_url = "123456789012.dkr.ecr.us-east-1.amazonaws.com/01-recomendacao-lab/recommendation-service"
     }
   }
   mock_data "aws_availability_zones" {
@@ -62,9 +62,10 @@ mock_provider "aws" {
 }
 
 variables {
-  project_name = "recsys"
-  environment  = "lab"
-  kms_key_arn  = "arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000"
+  project_name  = "01-recomendacao"
+  database_name = "p01_recomendacao_lab_golden"
+  environment   = "lab"
+  kms_key_arn   = "arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000"
 }
 
 # ---------------------------------------------------------------- R4 (R8 em tests/static_rules.py)
@@ -298,11 +299,11 @@ run "ecs_menor_privilegio_e_privado" {
     private_subnet_ids        = ["subnet-a", "subnet-b"]
     alb_security_group_id     = "sg-alb"
     ecs_security_group_id     = "sg-ecs"
-    dynamodb_table_name       = "recsys-lab-user_recommendations"
-    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/recsys-lab-user_recommendations"
-    memorydb_cluster_endpoint = "clustercfg.recsys.memorydb.us-east-1.amazonaws.com:6379"
-    sagemaker_endpoint_name   = "recsys-lab-reranker"
-    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/recsys-lab-reranker"
+    dynamodb_table_name       = "01-recomendacao-lab-user_recommendations"
+    dynamodb_table_arn        = "arn:aws:dynamodb:us-east-1:123456789012:table/01-recomendacao-lab-user_recommendations"
+    memorydb_cluster_endpoint = "clustercfg.p01-recomendacao-lab-vec.memorydb.us-east-1.amazonaws.com:6379"
+    sagemaker_endpoint_name   = "01-recomendacao-lab-reranker"
+    sagemaker_endpoint_arn    = "arn:aws:sagemaker:us-east-1:123456789012:endpoint/01-recomendacao-lab-reranker"
     bedrock_model_id          = "anthropic.claude-haiku-5-5"
   }
 
@@ -439,7 +440,7 @@ run "sagemaker_sem_full_access" {
     error_message = "R5: Serverless Inference sem concorrência provisionada (custo zero ocioso)."
   }
   assert {
-    condition     = aws_cloudwatch_log_group.endpoint.name == "/aws/sagemaker/Endpoints/recsys-lab-reranker"
+    condition     = aws_cloudwatch_log_group.endpoint.name == "/aws/sagemaker/Endpoints/01-recomendacao-lab-reranker"
     error_message = "R7: o log group do endpoint é criado pelo Terraform para o destroy removê-lo."
   }
 }
@@ -454,8 +455,8 @@ run "mwaa_desligado_por_padrao" {
     vpc_id             = "vpc-123"
     vpc_cidr           = "10.0.0.0/16"
     private_subnet_ids = ["subnet-a", "subnet-b"]
-    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
-    s3_bucket_name     = "recsys-lab-golden"
+    s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
+    s3_bucket_name     = "01-recomendacao-lab-golden"
   }
 
   assert {
@@ -473,8 +474,8 @@ run "mwaa_ligado_privado" {
     vpc_id             = "vpc-123"
     vpc_cidr           = "10.0.0.0/16"
     private_subnet_ids = ["subnet-a", "subnet-b"]
-    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
-    s3_bucket_name     = "recsys-lab-golden"
+    s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
+    s3_bucket_name     = "01-recomendacao-lab-golden"
     enable_mwaa        = true
   }
 
@@ -503,9 +504,9 @@ run "glue_criptografado_e_com_logs" {
     source = "./modules/glue_pipeline"
   }
   variables {
-    s3_scripts_bucket  = "recsys-lab-golden"
-    s3_bucket_arn      = "arn:aws:s3:::recsys-lab-golden"
-    dynamodb_table_arn = "arn:aws:dynamodb:us-east-1:123456789012:table/recsys-lab-user_recommendations"
+    s3_scripts_bucket  = "01-recomendacao-lab-golden"
+    s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
+    dynamodb_table_arn = "arn:aws:dynamodb:us-east-1:123456789012:table/01-recomendacao-lab-user_recommendations"
   }
 
   assert {
@@ -524,7 +525,7 @@ run "athena_resultados_kms" {
     source = "./modules/athena_queries"
   }
   variables {
-    s3_output_bucket = "recsys-lab-golden"
+    s3_output_bucket = "01-recomendacao-lab-golden"
   }
 
   assert {
@@ -540,11 +541,11 @@ run "monitoramento_e_orcamento" {
     source = "./modules/cloudwatch_monitoring"
   }
   variables {
-    ecs_service_name        = "recsys-lab-service"
-    ecs_cluster_name        = "recsys-lab-cluster"
-    alb_arn_suffix          = "app/recsys-lab-alb/123"
-    target_group_arn_suffix = "targetgroup/recsys-lab-tg/456"
-    sagemaker_endpoint_name = "recsys-lab-reranker"
+    ecs_service_name        = "01-recomendacao-lab-service"
+    ecs_cluster_name        = "01-recomendacao-lab-cluster"
+    alb_arn_suffix          = "app/01-recomendacao-lab-alb/123"
+    target_group_arn_suffix = "targetgroup/01-recomendacao-lab-tg/456"
+    sagemaker_endpoint_name = "01-recomendacao-lab-reranker"
     monthly_budget_usd      = 10
   }
 
@@ -582,8 +583,8 @@ run "lake_formation_concede_a_role_do_glue" {
     source = "./modules/lake_formation"
   }
   variables {
-    s3_bucket_arn = "arn:aws:s3:::recsys-lab-golden"
-    glue_role_arn = "arn:aws:iam::123456789012:role/recsys-lab-glue-role"
+    s3_bucket_arn = "arn:aws:s3:::01-recomendacao-lab-golden"
+    glue_role_arn = "arn:aws:iam::123456789012:role/01-recomendacao-lab-glue-role"
   }
 
   assert {

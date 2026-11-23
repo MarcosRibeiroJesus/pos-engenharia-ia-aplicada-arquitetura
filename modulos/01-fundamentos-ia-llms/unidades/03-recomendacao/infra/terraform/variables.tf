@@ -16,13 +16,15 @@ variable "environment" {
 }
 
 variable "project_name" {
-  description = "Prefixo dos nomes dos recursos (o prefixo 01-recomendacao- entra na T012). Não define a tag project, que é fixa no local.tags_padrao (D-031)."
+  description = "Prefixo dos nomes dos recursos: a chave do projeto (D-029, RNF-108, ADR-0014). Não define a tag project, que é fixa no local.tags_padrao (D-031)."
   type        = string
-  default     = "recsys"
+  default     = "01-recomendacao"
 
+  # O prefixo é a chave do projeto e não se troca por input: as policies por ARN (ABAC, D-029) e o
+  # TT-T02 dependem dele. Exceções de nome ficam só em tests/excecoes_de_nome.json.
   validation {
-    condition     = can(regex("^[a-z0-9-]{3,20}$", var.project_name))
-    error_message = "project_name: 3 a 20 caracteres [a-z0-9-] (limites de nome do ALB e do MemoryDB)."
+    condition     = var.project_name == "01-recomendacao"
+    error_message = "project_name é a chave do projeto, 01-recomendacao (D-029, ADR-0014)."
   }
 }
 
