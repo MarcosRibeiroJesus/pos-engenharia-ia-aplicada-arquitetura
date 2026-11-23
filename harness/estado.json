@@ -48,9 +48,9 @@
       ],
       "nota": "Implementação avançada antes do SDD: spec, plano e tarefas são escritos a partir do que existe, antes de novas mudanças.",
       "infra_real": true,
-      "destroy_workflow": ".github/workflows/recsys-01-03-destroy.yml",
+      "destroy_workflow": ".github/workflows/01-recomendacao-destroy.yml",
       "teto_diario_usd": 7.1,
-      "apply_workflow": ".github/workflows/recsys-01-03-apply.yml",
+      "apply_workflow": ".github/workflows/01-recomendacao-apply.yml",
       "plano_aprovado": {
         "data": "2026-11-20",
         "fonte": "Marcos no chat em 2026-11-20 (BRT): \"Pode emendar e já aprovo\" (D01-P6, emenda 1 só de texto: A01 permissões do Bedrock na task role e A06 teto sem \"proposta\"). Diff conferido pela orquestração antes do registro.",

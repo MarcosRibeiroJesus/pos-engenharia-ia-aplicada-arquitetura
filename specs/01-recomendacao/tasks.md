@@ -42,7 +42,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [x] T008 [engenheiro-ml] Suíte local sem nuvem (`npm ci && npm test`) · RF-016, RNF-005 · VT (a própria suíte)
 
 ## Fase 1 · Regras da constituição como testes e migração para o harness
-- [ ] T010 [engenheiro-terraform] Workflows da D01 a partir dos modelos, com SHAs únicos e `id-token` só no job · RNF-101, RNF-103, RNF-106, RNF-006, Art. V · TH-05, ST-01, TH-07 (novo)
+- [x] T010 [engenheiro-terraform] Workflows da D01 a partir dos modelos, com SHAs únicos e `id-token` só no job · RNF-101, RNF-103, RNF-106, RNF-006, Art. V · TH-05, ST-01, TH-07 (novo)
   - **Teste vermelho:**
     - TH-05: os testes `test_um_sha_por_action` e `test_token_oidc_nunca_no_nivel_do_workflow` (`harness/testes/test_workflows.py`) já estão vermelhos hoje por causa dos `recsys-01-03-*.yml`; eles são o vermelho desta tarefa;
     - ST-01 em `static_rules.py`: reprova se algum workflow cujo filtro de caminho cobre `U/` roda `infracost` (fixture com um job `infracost` precisa reprovar);
