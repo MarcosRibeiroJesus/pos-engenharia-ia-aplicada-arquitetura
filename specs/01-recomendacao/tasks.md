@@ -372,7 +372,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/presentation/server.ts`, `controllers/health.controller.ts`, o teste.
   - **Aceite:** o health check do ALB continua usando um caminho que só prova o processo, para uma dependência fora não derrubar a task (a resposta 200 do RF-006 depende da task no ar); a decisão fica num comentário do teste.
   - **Depende de:** T000.
-- [ ] T077 [P] [engenheiro-ml] Catálogo curado com nomes fictícios · RNF-109, Art. VIII · VT-14
+- [x] T077 [P] [engenheiro-ml] Catálogo curado com nomes fictícios · RNF-109, Art. VIII · VT-14
   - **Teste vermelho:** VT-14 confere cada título do catálogo curado de fallback e do `U/scripts/seed-local.ts` contra `U/tests/fixtures/nomes-ficticios.json`; um título com marca real precisa reprovar.
   - **Arquivos:** `U/src/serving/src/infrastructure/fallback/curated-fallback.provider.ts`, `U/scripts/seed-local.ts`, a lista de nomes, o teste.
   - **Aceite:** o gerador do lote usa a mesma lista (PY-07).

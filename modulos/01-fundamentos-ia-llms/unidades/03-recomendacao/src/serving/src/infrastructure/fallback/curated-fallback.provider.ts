@@ -1,17 +1,20 @@
 import { RecommendedItem } from '../../domain/candidate';
 import { fallbackItemsCache } from '../cache/lru-cache.provider';
 
+// Catálogo curado do fallback (RF-006): produtos fictícios, sem marca real (RNF-109, Art. VIII).
+// Título e categoria vêm de `tests/fixtures/nomes-ficticios.json`, a mesma lista do gerador do
+// lote; o VT-14 (`tests/unit/catalogo-ficticio.test.ts`) reprova qualquer par fora dela.
 export const STATIC_CURATED_CATALOG: Omit<RecommendedItem, 'rank' | 'score' | 'provenance'>[] = [
-  { itemId: 'SKU-FALLBACK-01', title: 'Amazon Echo Dot (5th Gen) Smart Speaker', priceCents: 4999, category: 'Electronics' },
-  { itemId: 'SKU-FALLBACK-02', title: 'Kindle Paperwhite 16 GB', priceCents: 14999, category: 'Electronics' },
-  { itemId: 'SKU-FALLBACK-03', title: 'Fire TV Stick 4K Streaming Device', priceCents: 3999, category: 'Electronics' },
-  { itemId: 'SKU-FALLBACK-04', title: 'Apple AirPods Pro (2nd Generation)', priceCents: 24999, category: 'Electronics' },
-  { itemId: 'SKU-FALLBACK-05', title: 'Stanley Quencher H2.0 FlowState Tumbler', priceCents: 3500, category: 'Home & Kitchen' },
-  { itemId: 'SKU-FALLBACK-06', title: 'Instant Pot Duo 7-in-1 Electric Pressure Cooker', priceCents: 7999, category: 'Home & Kitchen' },
-  { itemId: 'SKU-FALLBACK-07', title: 'Anker Portable Charger 20,000mAh Power Bank', priceCents: 3999, category: 'Accessories' },
-  { itemId: 'SKU-FALLBACK-08', title: 'Sony WH-1000XM5 Wireless Noise Canceling Headphones', priceCents: 39999, category: 'Electronics' },
-  { itemId: 'SKU-FALLBACK-09', title: 'Logitech MX Master 3S Wireless Mouse', priceCents: 9999, category: 'Computers' },
-  { itemId: 'SKU-FALLBACK-10', title: 'Bose QuietComfort 45 Bluetooth Wireless Headphones', priceCents: 32900, category: 'Electronics' },
+  { itemId: 'SKU-FALLBACK-01', title: 'Caixa de Som Portatil', priceCents: 4999, category: 'Eletronicos' },
+  { itemId: 'SKU-FALLBACK-02', title: 'Romance de Ficcao Cientifica', priceCents: 5990, category: 'Livros' },
+  { itemId: 'SKU-FALLBACK-03', title: 'Monitor de 24 Polegadas', priceCents: 89900, category: 'Informatica' },
+  { itemId: 'SKU-FALLBACK-04', title: 'Fone Intra-auricular Esportivo', priceCents: 24999, category: 'Eletronicos' },
+  { itemId: 'SKU-FALLBACK-05', title: 'Garrafa Termica de Aco 750 ml', priceCents: 3500, category: 'Cozinha' },
+  { itemId: 'SKU-FALLBACK-06', title: 'Jogo de Panelas Antiaderentes', priceCents: 7999, category: 'Cozinha' },
+  { itemId: 'SKU-FALLBACK-07', title: 'Carregador de Parede 30 W', priceCents: 3999, category: 'Acessorios' },
+  { itemId: 'SKU-FALLBACK-08', title: 'Fone de Ouvido com Cancelamento de Ruido', priceCents: 39999, category: 'Eletronicos' },
+  { itemId: 'SKU-FALLBACK-09', title: 'Mouse Sem Fio Silencioso', priceCents: 9999, category: 'Informatica' },
+  { itemId: 'SKU-FALLBACK-10', title: 'Tapete de Yoga Antiderrapante', priceCents: 12900, category: 'Esporte' },
 ];
 
 export interface ICuratedFallbackProvider {

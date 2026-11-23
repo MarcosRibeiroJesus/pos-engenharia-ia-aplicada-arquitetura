@@ -1,66 +1,262 @@
 {
-  "descricao": "Lista única de títulos de produto fictícios, sem marca real (Art. VIII, RNF-109). Fonte de verdade do gerador do lote (T040, PY-07) e do VT-14 (T077). Todo título é genérico e descritivo; acrescente aqui, nunca no código.",
+  "descricao": "Lista única de produtos fictícios, sem marca real (Art. VIII, RNF-109). Fonte de verdade do gerador do lote (T040, PY-07), do catálogo curado de fallback e da semente local, conferidos pelo VT-14 (T077). Cada título é genérico e descritivo e tem uma categoria fixa, do vocabulário em 'categorias' (padrão ^[A-Za-z0-9_]{1,40}$ do RNF-104). Acrescente aqui, nunca no código.",
   "proveniencia": "sintetica",
-  "titulos": [
-    "Teclado Ergonomico Compacto",
-    "Teclado Mecanico de Mesa",
-    "Mouse Sem Fio Silencioso",
-    "Mouse Vertical Ergonomico",
-    "Cabo USB-C Trancado 1 m",
-    "Cabo USB-C Trancado 2 m",
-    "Carregador de Parede 30 W",
-    "Hub USB de Quatro Portas",
-    "Fone de Ouvido com Cancelamento de Ruido",
-    "Fone Intra-auricular Esportivo",
-    "Caixa de Som Portatil",
-    "Suporte Ajustavel para Notebook",
-    "Monitor de 24 Polegadas",
-    "Webcam de Alta Definicao",
-    "Mochila para Notebook 15 Polegadas",
-    "Luminaria de Mesa com Dimmer",
-    "Garrafa Termica de Aco 750 ml",
-    "Caneca de Ceramica Fosca",
-    "Jogo de Panelas Antiaderentes",
-    "Frigideira de Ferro Fundido",
-    "Faca de Chef 20 cm",
-    "Tabua de Corte de Bambu",
-    "Cafeteira de Prensa Francesa",
-    "Moedor de Cafe Manual",
-    "Toalha de Banho de Algodao",
-    "Jogo de Lencol Casal",
-    "Travesseiro de Espuma Viscoelastica",
-    "Cesto Organizador Dobravel",
-    "Vaso de Ceramica Pequeno",
-    "Regador de Jardim 5 L",
-    "Tesoura de Poda",
-    "Kit de Sementes de Ervas",
-    "Tapete de Yoga Antiderrapante",
-    "Par de Halteres 2 kg",
-    "Corda de Pular Ajustavel",
-    "Garrafa Esportiva 1 L",
-    "Tenis de Corrida Leve",
-    "Meia Esportiva Cano Curto",
-    "Camiseta de Algodao Basica",
-    "Jaqueta Corta-vento",
-    "Bone de Aba Curva",
-    "Livro de Receitas Vegetarianas",
-    "Livro de Introducao a Estatistica",
-    "Romance de Ficcao Cientifica",
-    "Caderno Pautado A5",
-    "Kit de Canetas Coloridas",
-    "Agenda Semanal",
-    "Quebra-cabeca de 1000 Pecas",
-    "Jogo de Tabuleiro de Estrategia",
-    "Blocos de Montar Infantis",
-    "Pelucia de Urso",
-    "Escova de Dentes Eletrica",
-    "Secador de Cabelo Compacto",
-    "Kit de Ferramentas Basico",
-    "Furadeira Sem Fio",
-    "Trena de 5 m",
-    "Lanterna de LED Recarregavel",
-    "Coleira Ajustavel para Cachorro",
-    "Cama para Gato",
-    "Comedouro Duplo para Pet"
+  "categorias": [
+    "Eletronicos",
+    "Informatica",
+    "Acessorios",
+    "Cozinha",
+    "Casa",
+    "Jardim",
+    "Esporte",
+    "Vestuario",
+    "Livros",
+    "Papelaria",
+    "Brinquedos",
+    "Beleza",
+    "Ferramentas",
+    "Pet"
+  ],
+  "itens": [
+    {
+      "titulo": "Teclado Ergonomico Compacto",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Teclado Mecanico de Mesa",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Mouse Sem Fio Silencioso",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Mouse Vertical Ergonomico",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Cabo USB-C Trancado 1 m",
+      "categoria": "Acessorios"
+    },
+    {
+      "titulo": "Cabo USB-C Trancado 2 m",
+      "categoria": "Acessorios"
+    },
+    {
+      "titulo": "Carregador de Parede 30 W",
+      "categoria": "Acessorios"
+    },
+    {
+      "titulo": "Hub USB de Quatro Portas",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Fone de Ouvido com Cancelamento de Ruido",
+      "categoria": "Eletronicos"
+    },
+    {
+      "titulo": "Fone Intra-auricular Esportivo",
+      "categoria": "Eletronicos"
+    },
+    {
+      "titulo": "Caixa de Som Portatil",
+      "categoria": "Eletronicos"
+    },
+    {
+      "titulo": "Suporte Ajustavel para Notebook",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Monitor de 24 Polegadas",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Webcam de Alta Definicao",
+      "categoria": "Informatica"
+    },
+    {
+      "titulo": "Mochila para Notebook 15 Polegadas",
+      "categoria": "Acessorios"
+    },
+    {
+      "titulo": "Luminaria de Mesa com Dimmer",
+      "categoria": "Casa"
+    },
+    {
+      "titulo": "Garrafa Termica de Aco 750 ml",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Caneca de Ceramica Fosca",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Jogo de Panelas Antiaderentes",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Frigideira de Ferro Fundido",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Faca de Chef 20 cm",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Tabua de Corte de Bambu",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Cafeteira de Prensa Francesa",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Moedor de Cafe Manual",
+      "categoria": "Cozinha"
+    },
+    {
+      "titulo": "Toalha de Banho de Algodao",
+      "categoria": "Casa"
+    },
+    {
+      "titulo": "Jogo de Lencol Casal",
+      "categoria": "Casa"
+    },
+    {
+      "titulo": "Travesseiro de Espuma Viscoelastica",
+      "categoria": "Casa"
+    },
+    {
+      "titulo": "Cesto Organizador Dobravel",
+      "categoria": "Casa"
+    },
+    {
+      "titulo": "Vaso de Ceramica Pequeno",
+      "categoria": "Jardim"
+    },
+    {
+      "titulo": "Regador de Jardim 5 L",
+      "categoria": "Jardim"
+    },
+    {
+      "titulo": "Tesoura de Poda",
+      "categoria": "Jardim"
+    },
+    {
+      "titulo": "Kit de Sementes de Ervas",
+      "categoria": "Jardim"
+    },
+    {
+      "titulo": "Tapete de Yoga Antiderrapante",
+      "categoria": "Esporte"
+    },
+    {
+      "titulo": "Par de Halteres 2 kg",
+      "categoria": "Esporte"
+    },
+    {
+      "titulo": "Corda de Pular Ajustavel",
+      "categoria": "Esporte"
+    },
+    {
+      "titulo": "Garrafa Esportiva 1 L",
+      "categoria": "Esporte"
+    },
+    {
+      "titulo": "Tenis de Corrida Leve",
+      "categoria": "Vestuario"
+    },
+    {
+      "titulo": "Meia Esportiva Cano Curto",
+      "categoria": "Vestuario"
+    },
+    {
+      "titulo": "Camiseta de Algodao Basica",
+      "categoria": "Vestuario"
+    },
+    {
+      "titulo": "Jaqueta Corta-vento",
+      "categoria": "Vestuario"
+    },
+    {
+      "titulo": "Bone de Aba Curva",
+      "categoria": "Vestuario"
+    },
+    {
+      "titulo": "Livro de Receitas Vegetarianas",
+      "categoria": "Livros"
+    },
+    {
+      "titulo": "Livro de Introducao a Estatistica",
+      "categoria": "Livros"
+    },
+    {
+      "titulo": "Romance de Ficcao Cientifica",
+      "categoria": "Livros"
+    },
+    {
+      "titulo": "Caderno Pautado A5",
+      "categoria": "Papelaria"
+    },
+    {
+      "titulo": "Kit de Canetas Coloridas",
+      "categoria": "Papelaria"
+    },
+    {
+      "titulo": "Agenda Semanal",
+      "categoria": "Papelaria"
+    },
+    {
+      "titulo": "Quebra-cabeca de 1000 Pecas",
+      "categoria": "Brinquedos"
+    },
+    {
+      "titulo": "Jogo de Tabuleiro de Estrategia",
+      "categoria": "Brinquedos"
+    },
+    {
+      "titulo": "Blocos de Montar Infantis",
+      "categoria": "Brinquedos"
+    },
+    {
+      "titulo": "Pelucia de Urso",
+      "categoria": "Brinquedos"
+    },
+    {
+      "titulo": "Escova de Dentes Eletrica",
+      "categoria": "Beleza"
+    },
+    {
+      "titulo": "Secador de Cabelo Compacto",
+      "categoria": "Beleza"
+    },
+    {
+      "titulo": "Kit de Ferramentas Basico",
+      "categoria": "Ferramentas"
+    },
+    {
+      "titulo": "Furadeira Sem Fio",
+      "categoria": "Ferramentas"
+    },
+    {
+      "titulo": "Trena de 5 m",
+      "categoria": "Ferramentas"
+    },
+    {
+      "titulo": "Lanterna de LED Recarregavel",
+      "categoria": "Ferramentas"
+    },
+    {
+      "titulo": "Coleira Ajustavel para Cachorro",
+      "categoria": "Pet"
+    },
+    {
+      "titulo": "Cama para Gato",
+      "categoria": "Pet"
+    },
+    {
+      "titulo": "Comedouro Duplo para Pet",
+      "categoria": "Pet"
+    }
   ]
 }
