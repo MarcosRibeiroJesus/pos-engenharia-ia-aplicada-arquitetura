@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { IGetRecommendationsUseCase } from '../../application/get-recommendations.use-case';
 import { CATEGORY_PATTERN, CATEGORY_PATTERN_SOURCE } from '../../domain/category';
+import { isValidationError } from '../../domain/dependency-error';
 
 const QuerySchema = z.object({
   userId: z
@@ -65,6 +66,15 @@ export class RecommendationController {
 
       reply.status(200).send(response);
     } catch (err: unknown) {
+      // Erro de validação vindo de uma camada interna é entrada recusada: 400, não 500 (RF-106).
+      if (isValidationError(err)) {
+        reply.status(400).send({
+          error: 'Bad Request',
+          message: err instanceof Error ? err.message : 'Validation error',
+          requestId: req.id,
+        });
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Internal error processing recommendations';
       reply.status(500).send({
         error: 'Internal Server Error',

@@ -13,6 +13,7 @@ import { SageMakerReranker } from './reranker';
 import { HeuristicReranker } from './heuristic-reranker';
 import { baseLogger, StageTimer } from '../infrastructure/logging/logger';
 import { IRecommendationExplainer, ExplanationOutcome } from './recommendation-explainer';
+import { isValidationError } from '../domain/dependency-error';
 
 export interface RecommendationRequestParams {
   userId: string;
@@ -99,19 +100,28 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
       this.vectorRepo.searchSimilarItems(new Float32Array(128), params.category, 50),
     ]);
 
+    // Erro de validação (categoria `validacao`, não retentável) é entrada recusada, não queda:
+    // sai do caso de uso sem ligar o modo degradado nem publicar a métrica da dependência.
+    for (const result of [batchResult, vectorResult]) {
+      if (result.status === 'rejected' && isValidationError(result.reason)) {
+        throw result.reason;
+      }
+    }
+
     const batchCandidates = batchResult.status === 'fulfilled' ? batchResult.value : [];
     const vectorCandidates = vectorResult.status === 'fulfilled' ? vectorResult.value : [];
 
+    // RF-106 (ADR-0011): os adaptadores reais lançam DependencyError; a degradação é decidida aqui.
     if (batchResult.status === 'rejected') {
       degradedMode = true;
       void this.metricsPublisher?.publishDynamoDbFallback();
-      logger.warn({ err: batchResult.reason }, 'DynamoDB batch candidate retrieval failed');
+      logger.warn({ err: batchResult.reason, ...dependencyFields(batchResult.reason) }, 'DynamoDB batch candidate retrieval failed');
     }
 
     if (vectorResult.status === 'rejected') {
       degradedMode = true;
       void this.metricsPublisher?.publishMemoryDbFallback();
-      logger.warn({ err: vectorResult.reason }, 'MemoryDB vector search failed');
+      logger.warn({ err: vectorResult.reason, ...dependencyFields(vectorResult.reason) }, 'MemoryDB vector search failed');
     }
 
     retrievalTimer.end({
@@ -256,4 +266,12 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
       explanation,
     };
   }
+}
+
+/** Campos estruturados do DependencyError para o log (dependência, categoria, retentável). */
+function dependencyFields(reason: unknown): Record<string, unknown> {
+  const r = reason as { dependencia?: unknown; categoria?: unknown; retentavel?: unknown } | null;
+  return r && typeof r === 'object'
+    ? { dependencia: r.dependencia, categoria: r.categoria, retentavel: r.retentavel }
+    : {};
 }

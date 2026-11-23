@@ -1,8 +1,8 @@
 import Redis from 'ioredis';
 import { SemanticCandidate } from '../../domain/candidate';
 import { assertValidCategory } from '../../domain/category';
+import { DependencyError } from '../../domain/dependency-error';
 import { env } from '../../config/env';
-import { baseLogger } from '../logging/logger';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
 
 export interface IMemoryDbVectorRepository {
@@ -135,15 +135,13 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       }
     }
 
+    // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. A validação da
+    // categoria acontece antes, fora do disjuntor, para entrada ruim não contar como queda.
     try {
       const result = await this.breaker.fire(buffer, category, limit);
       return (result as SemanticCandidate[]) || [];
     } catch (error) {
-      baseLogger.warn(
-        { error, category },
-        `MemoryDB vector search failed or timed out. Returning empty list.`
-      );
-      return [];
+      throw DependencyError.fromBreaker('memorydb', error);
     }
   }
 }

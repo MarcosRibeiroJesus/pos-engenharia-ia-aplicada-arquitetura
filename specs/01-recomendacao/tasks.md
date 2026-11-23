@@ -352,7 +352,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** controlador, caso de uso (`get-recommendations.use-case.ts`), repositório do MemoryDB, os testes.
   - **Aceite:** leitura e busca dividem o orçamento de 15 ms; o `new Float32Array(128)` de zeros sai do código.
   - **Depende de:** T071.
-- [ ] T073 [P] [engenheiro-ml] Falha de dependência propagada pelos adaptadores reais · RF-106, RF-006, E4, ADR-0011 · VT-05, VT-06
+- [x] T073 [P] [engenheiro-ml] Falha de dependência propagada pelos adaptadores reais · RF-106, RF-006, E4, ADR-0011 · VT-05, VT-06
   - **Teste vermelho:** VT-05 e VT-06 em `U/tests/integration/fallback-real-adapters.test.ts`, com o adaptador real sobre o cliente simulado (DynamoDB `send` e Redis `call` que lançam): o caso de uso real devolve 200, `degradedMode: true` e publica `DynamoDbFallbackCount` ou `MemoryDbFallbackCount`; "sem dados" (item ausente) continua lista vazia, sem degradação.
   - **Arquivos:** os dois adaptadores (lançam `DependencyError {dependencia, categoria, retentavel}`), o caso de uso, `U/src/serving/src/domain/` (tipo do erro), os testes.
   - **Aceite:** os quatro testes de fallback existentes (T005) seguem verdes; o disjuntor conta a falha propagada.
