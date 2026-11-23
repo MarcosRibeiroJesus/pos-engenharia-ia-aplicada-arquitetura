@@ -34,12 +34,13 @@ export async function iniciar(cfg = configuracao(), log = console) {
     prs: { ativo: !!cfg.github, itens: [], erro: null, atualizado: null },
     fontes: { transcripts: cfg.transcripts, arquivos: 0, linhasInvalidas: 0, registro: cfg.registro || null, banco: cfg.banco, salvoEm: null },
   };
-  const leitor = new LeitorTranscripts(cfg.transcripts, (ev) => agregador.ingerir(ev));
+  const leitor = new LeitorTranscripts(cfg.transcripts, (ev, meta) => agregador.ingerir(ev, meta));
   const estado = () => ({ ...agregador.estado(), ...externos,
     fontes: { ...externos.fontes, arquivos: leitor.arquivos, linhasInvalidas: leitor.erros } });
 
   const srv = criarServidor({
     estado,
+    detalheSessao: (id) => agregador.detalheSessao(id),
     hostsPermitidos: cfg.hostsPermitidos,
     extras: {
       '/api/relatorio.md': () => [relatorio(banco, { formato: 'md' }), 'text/markdown; charset=utf-8', 'relatorio-uso-ia.md'],

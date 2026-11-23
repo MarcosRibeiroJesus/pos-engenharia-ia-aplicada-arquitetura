@@ -1,5 +1,7 @@
 // Agrega eventos dos transcripts do Claude Code em métricas por modelo, projeto, sessão e tarefa.
 
+import { AnalisadorConsumo } from './consumo.js';
+
 const CAMPOS = ['input', 'cache_write', 'cache_read', 'output'];
 const PESOS = { input: 1, cache_write: 2, cache_read: 0.1, output: 5 };
 const MINUTO = 60_000;
@@ -40,6 +42,7 @@ export class Agregador {
     this.mensagens = new Map(); // id -> uso já contado
     this.modelos = new Map();
     this.projetos = new Map();
+    this.dias = new Map(); // YYYY-MM-DD -> uso
     this.sessoes = new Map();
     this.tarefas = new Map(); // `${sessao}:${id}` -> tarefa
     this.criacoesPendentes = new Map(); // tool_use_id -> {sessao, subject, ...}
@@ -47,16 +50,19 @@ export class Agregador {
     this.minutos = new Map(); // minuto (epoch/60000) -> equivalente
     this.recentes = [];
     this.registro = { linhas: [], naoMedidos: 0 };
+    this.consumo = new AnalisadorConsumo();
     this.versao = 0;
     // Para a persistência: o que mudou desde o último salvamento.
     this.sujos = { mensagens: new Set(), tarefas: new Set(), sessoes: new Set(), status: [] };
   }
 
   /** Processa um evento (linha) de transcript. */
-  ingerir(ev) {
+  ingerir(ev, meta = {}) {
     if (!ev || typeof ev !== 'object') return;
-    const sessaoId = ev.sessionId || 'sem-sessao';
+    const sessaoId = meta.isSubagente && meta.sessaoPai ? meta.sessaoPai : (ev.sessionId || meta.sessaoPai || 'sem-sessao');
     const sessao = this.#sessao(sessaoId, ev);
+    this.consumo.ingerir(ev, meta, this.agora());
+
     const msg = ev.message;
     if (!msg) return;
     const conteudo = Array.isArray(msg.content) ? msg.content : [];
@@ -92,7 +98,13 @@ export class Agregador {
     const sessao = this.sessoes.get(reg.sessao);
     const req = nova ? 1 : 0;
     const tarefa = reg.tarefa && this.tarefas.get(reg.tarefa);
-    const alvos = [this.#grupo(this.modelos, reg.modelo), this.#grupo(this.projetos, sessao.projeto), sessao.uso];
+    const diaChave = new Date(reg.quando).toISOString().slice(0, 10);
+    const alvos = [
+      this.#grupo(this.modelos, reg.modelo),
+      this.#grupo(this.projetos, sessao.projeto),
+      this.#grupo(this.dias, diaChave),
+      sessao.uso,
+    ];
     if (tarefa) alvos.push(tarefa.uso);
     for (const a of alvos) { somar(a, delta); a.requisicoes += req; }
     const eq = equivalente(delta);
@@ -111,8 +123,8 @@ export class Agregador {
     this.versao++;
   }
 
-  /** Reconstrói o estado a partir do que foi persistido (sessões, tarefas e mensagens). */
-  restaurar({ sessoes = [], tarefas = [], mensagens = [] }) {
+  /** Reconstrói o estado a partir do que foi persistido (sessões, tarefas, mensagens e fatos de consumo). */
+  restaurar({ sessoes = [], tarefas = [], mensagens = [], requisicoes = [], chamadas = [], leituras = [] }) {
     for (const s of sessoes) {
       this.sessoes.set(s.id, { id: s.id, projeto: s.projeto, branch: s.branch || '', ultimo: 0, primeiro: undefined, uso: vazio(), modelos: new Set() });
       if (s.tarefaAtiva) this.ativa.set(s.id, s.tarefaAtiva);
@@ -128,6 +140,7 @@ export class Agregador {
       this.mensagens.set(m.id, reg);
       this.#contar(reg, reg.uso, true);
     }
+    this.consumo.restaurar({ requisicoes, chamadas, leituras });
   }
 
   /** Linhas do registro CSV: entram as medições manuais; as de transcript já vêm ao vivo. */
@@ -139,6 +152,11 @@ export class Agregador {
       this.registro.linhas.push(l);
     }
     this.versao++;
+  }
+
+  /** Detalhe aprofundado (timeline, atribuição, subagentes e economia) de uma sessão. */
+  detalheSessao(sessaoId) {
+    return this.consumo.analisarSessao(sessaoId);
   }
 
   #sessao(id, ev) {
@@ -231,6 +249,16 @@ export class Agregador {
     const totais = vazio();
     for (const m of listaModelos) { somar(totais, m); totais.requisicoes += m.requisicoes; }
 
+    const eqTotal = equivalente(totais) || 1;
+    const porTipo = [
+      { tipo: 'cache_read', rotulo: 'Cache lido (×0,1)', tokens: totais.cache_read, equivalente: Math.round(totais.cache_read * PESOS.cache_read), pct: Number(((100 * totais.cache_read * PESOS.cache_read) / eqTotal).toFixed(1)) },
+      { tipo: 'cache_write', rotulo: 'Cache escrito (×2)', tokens: totais.cache_write, equivalente: Math.round(totais.cache_write * PESOS.cache_write), pct: Number(((100 * totais.cache_write * PESOS.cache_write) / eqTotal).toFixed(1)) },
+      { tipo: 'output', rotulo: 'Saída (×5)', tokens: totais.output, equivalente: Math.round(totais.output * PESOS.output), pct: Number(((100 * totais.output * PESOS.output) / eqTotal).toFixed(1)) },
+      { tipo: 'input', rotulo: 'Entrada nova (×1)', tokens: totais.input, equivalente: Math.round(totais.input * PESOS.input), pct: Number(((100 * totais.input * PESOS.input) / eqTotal).toFixed(1)) },
+    ].sort((a, b) => b.equivalente - a.equivalente);
+
+    const porDia = lista(this.dias).sort((a, b) => a.nome.localeCompare(b.nome));
+
     const minutoAtual = Math.floor(agora / MINUTO);
     const linhaDoTempo = Array.from({ length: 60 }, (_, i) => {
       const minuto = minutoAtual - 59 + i;
@@ -247,7 +275,7 @@ export class Agregador {
 
     const sessoes = [...this.sessoes.values()]
       .filter((s) => s.uso.requisicoes > 0)
-      .map((s) => ({ id: s.id.slice(0, 8), projeto: s.projeto, branch: s.branch, ultimo: s.ultimo,
+      .map((s) => ({ id: s.id.slice(0, 8), idCompleto: s.id, projeto: s.projeto, branch: s.branch, ultimo: s.ultimo,
         ativa: agora - s.ultimo < JANELA_ATIVA, modelos: [...s.modelos], ...s.uso,
         equivalente: Math.round(equivalente(s.uso)), tarefaAtiva: this.tarefas.get(this.ativa.get(s.id))?.titulo || null }))
       .sort((a, b) => b.ultimo - a.ultimo);
@@ -256,6 +284,8 @@ export class Agregador {
       geradoEm: agora,
       totais: { ...totais, equivalente: Math.round(equivalente(totais)), porMinuto5: Math.round(ultimos5 / 5),
         sessoesAtivas: sessoes.filter((s) => s.ativa).length, naoMedidos: this.registro.naoMedidos },
+      porTipo,
+      porDia,
       modelos: listaModelos,
       projetos: ordenar(lista(projetos)),
       tarefas,
@@ -263,6 +293,7 @@ export class Agregador {
       sessoes,
       linhaDoTempo,
       recentes: this.recentes,
+      consumo: this.consumo.resumoGlobal(),
     };
   }
 }
