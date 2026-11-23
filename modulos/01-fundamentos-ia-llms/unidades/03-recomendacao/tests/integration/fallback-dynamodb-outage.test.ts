@@ -12,7 +12,7 @@ describe('Fallback DynamoDB Outage or Empty Profile (Integration)', () => {
     };
 
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockResolvedValue([
+      searchBySession: vi.fn().mockResolvedValue([
         { itemId: 'VEC-1', vectorScore: 0.92, title: 'Vector Item 1', priceCents: 1999 },
         { itemId: 'VEC-2', vectorScore: 0.81, title: 'Vector Item 2', priceCents: 2999 },
       ]),
@@ -36,6 +36,7 @@ describe('Fallback DynamoDB Outage or Empty Profile (Integration)', () => {
     const response = await useCase.execute({
       userId: 'u-cold-start-999',
       limit: 2,
+      sessionItemIds: ['SESSAO-1'],
     });
 
     expect(response.degradedMode).toBe(true);

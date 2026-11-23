@@ -10,7 +10,7 @@ const batchRepo = {
   ]),
 };
 const vectorRepo = {
-  searchSimilarItems: vi.fn().mockResolvedValue([{ itemId: 'SKU-1', vectorScore: 0.9, title: 'Fone', priceCents: 1000 }]),
+  searchBySession: vi.fn().mockResolvedValue([{ itemId: 'SKU-1', vectorScore: 0.9, title: 'Fone', priceCents: 1000 }]),
 };
 const scoringClient = {
   scoreCandidates: vi.fn().mockResolvedValue([
@@ -44,7 +44,7 @@ describe('Explicações no fluxo de recomendação', () => {
         ],
       }),
     };
-    const res = await useCaseWith(explainer).execute({ userId: 'u-1', limit: 2, explain: true });
+    const res = await useCaseWith(explainer).execute({ userId: 'u-1', limit: 2, explain: true, sessionItemIds: ['SKU-9'] });
 
     expect(res.explanation).toMatchObject({ status: 'ok', modelId: 'anthropic.claude-haiku-5-5', attempts: 1 });
     expect(res.recommendations[0].explanation).toMatchObject({ source: 'claude', signals: ['purchase_history', 'similar_items'] });

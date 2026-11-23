@@ -15,7 +15,7 @@ describe('Fallback MemoryDB Outage (Integration)', () => {
 
     // MemoryDB fails with connection timeout / error
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockRejectedValue(new Error('Connection to MemoryDB Redis refused')),
+      searchBySession: vi.fn().mockRejectedValue(new Error('Connection to MemoryDB Redis refused')),
     };
 
     const mockSageMakerClient: ISageMakerScoringClient = {
@@ -36,6 +36,7 @@ describe('Fallback MemoryDB Outage (Integration)', () => {
     const response = await useCase.execute({
       userId: 'u-12345',
       limit: 2,
+      sessionItemIds: ['SESSAO-1'],
     });
 
     expect(response.degradedMode).toBe(true);

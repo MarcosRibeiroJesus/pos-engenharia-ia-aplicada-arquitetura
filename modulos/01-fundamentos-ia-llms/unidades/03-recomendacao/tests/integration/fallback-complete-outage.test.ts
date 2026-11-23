@@ -11,7 +11,7 @@ describe('Fallback Complete Downstream Outage (Integration)', () => {
     };
 
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockRejectedValue(new Error('MemoryDB Unreachable')),
+      searchBySession: vi.fn().mockRejectedValue(new Error('MemoryDB Unreachable')),
     };
 
     const mockSageMakerClient: ISageMakerScoringClient = {
@@ -27,6 +27,7 @@ describe('Fallback Complete Downstream Outage (Integration)', () => {
     const response = await useCase.execute({
       userId: 'u-12345',
       limit: 5,
+      sessionItemIds: ['SESSAO-1'],
     });
 
     expect(response.degradedMode).toBe(true);

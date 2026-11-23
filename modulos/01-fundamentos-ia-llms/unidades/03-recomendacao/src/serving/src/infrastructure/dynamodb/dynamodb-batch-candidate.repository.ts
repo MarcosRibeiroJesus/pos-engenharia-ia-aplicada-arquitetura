@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
-import { BatchCandidate, UserIdSchema } from '../../domain/candidate';
+import { BatchCandidate, InvalidUserIdError, UserIdSchema } from '../../domain/candidate';
 import { DependencyError } from '../../domain/dependency-error';
 import { env } from '../../config/env';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
@@ -63,7 +63,8 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
   public async getBatchCandidates(userId: string): Promise<BatchCandidate[]> {
     const parseResult = UserIdSchema.safeParse(userId);
     if (!parseResult.success) {
-      throw new Error(`Invalid userId format: ${userId}`);
+      // Fora do disjuntor e sem eco da entrada: erro de validação estruturado, não queda.
+      throw new InvalidUserIdError();
     }
 
     // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. Lista vazia

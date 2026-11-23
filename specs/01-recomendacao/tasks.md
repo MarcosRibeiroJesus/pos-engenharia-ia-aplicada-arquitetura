@@ -347,7 +347,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository.ts`, `U/tests/unit/memorydb-vector-candidate.repository.test.ts`.
   - **Aceite:** o serviço recebe até 50 candidatos vetoriais, e não mais 10; o `inStock` do `RETURN` chega ao candidato.
   - **Depende de:** T070.
-- [ ] T072 [engenheiro-ml] Vetor da busca pelos itens da sessão · RF-105, E5, ADR-0011 · VT-04
+- [x] T072 [engenheiro-ml] Vetor da busca pelos itens da sessão · RF-105, E5, ADR-0011 · VT-04
   - **Teste vermelho:** VT-04: com dois `sessionItemIds`, um único pipeline `HGET item:<id> v` é feito e o vetor da consulta é a média normalizada em L2 dos dois (diferente de zero); id ausente é ignorado; sem sessão ou sem nenhum vetor, o repositório vetorial não é chamado e `degradedMode` fica `false`; mais de 10 ids ou id fora do padrão do `userId` dá 400.
   - **Arquivos:** controlador, caso de uso (`get-recommendations.use-case.ts`), repositório do MemoryDB, os testes.
   - **Aceite:** leitura e busca dividem o orçamento de 15 ms; o `new Float32Array(128)` de zeros sai do código.

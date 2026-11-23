@@ -2,11 +2,22 @@ import Redis from 'ioredis';
 import { SemanticCandidate } from '../../domain/candidate';
 import { assertValidCategory } from '../../domain/category';
 import { DependencyError } from '../../domain/dependency-error';
+import { assertValidSessionItems } from '../../domain/session';
 import { env } from '../../config/env';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
 
+/** Dimensão dos vetores `v` publicados no índice `item_idx` (FLOAT32, 128 posições). */
+export const VECTOR_DIM = 128;
+const VECTOR_BYTES = VECTOR_DIM * 4;
+
 export interface IMemoryDbVectorRepository {
-  searchSimilarItems(vector: Float32Array | Buffer, category?: string, limit?: number): Promise<SemanticCandidate[]>;
+  /**
+   * RF-105 (ADR-0011): busca KNN com o vetor derivado dos itens da sessão. Lê os vetores num único
+   * pipeline `HGET item:<id> v` e, se houver ao menos um, consulta com a média normalizada em L2.
+   * Sem nenhum vetor, devolve lista vazia sem rodar o FT.SEARCH (não é falha). Leitura e busca
+   * dividem o mesmo orçamento do disjuntor (15 ms).
+   */
+  searchBySession(sessionItemIds: string[], category?: string, limit?: number): Promise<SemanticCandidate[]>;
 }
 
 export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorRepository {
@@ -30,8 +41,10 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       });
     }
 
+    // Um disjuntor só para o MemoryDB: a operação inteira (leitura da sessão e FT.SEARCH) roda
+    // dentro de um único `fire`, então as duas dividem o mesmo orçamento de 15 ms (ADR-0011).
     this.breaker = createCircuitBreaker(
-      async (buf: Buffer, cat?: string, lim?: number) => this.executeVectorSearch(buf, cat, lim),
+      async (op: () => Promise<SemanticCandidate[]>) => op(),
       {
         timeout: 15, // 15ms timeout deadline per spec
         errorThresholdPercentage: 20,
@@ -39,6 +52,52 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
         name: 'memorydb-vector-repo',
       }
     );
+  }
+
+  /**
+   * Lê os vetores `v` dos itens da sessão num único pipeline e devolve a média normalizada em L2.
+   * Item ausente, vetor de tamanho errado ou com valor não finito é ignorado. Sem vetor útil (ou
+   * com média de norma zero), devolve `null`: a busca não roda.
+   */
+  private async readSessionVector(sessionItemIds: string[]): Promise<Buffer | null> {
+    const pipeline = this.redis.pipeline();
+    for (const id of sessionItemIds) {
+      pipeline.hgetBuffer(`item:${id}`, 'v');
+    }
+    const replies = await pipeline.exec();
+    if (!replies) {
+      throw new Error('MemoryDB pipeline aborted');
+    }
+
+    const sum = new Float64Array(VECTOR_DIM);
+    let found = 0;
+    for (const [err, value] of replies) {
+      if (err) throw err;
+      if (!Buffer.isBuffer(value) || value.byteLength !== VECTOR_BYTES) continue;
+      const item = new Float64Array(VECTOR_DIM);
+      let finite = true;
+      for (let i = 0; i < VECTOR_DIM; i++) {
+        item[i] = value.readFloatLE(i * 4);
+        if (!Number.isFinite(item[i])) {
+          finite = false;
+          break;
+        }
+      }
+      if (!finite) continue;
+      for (let i = 0; i < VECTOR_DIM; i++) sum[i] += item[i];
+      found++;
+    }
+    if (found === 0) return null;
+
+    // A média e a soma têm a mesma direção; normalizar em L2 dispensa dividir por `found`.
+    let norm = 0;
+    for (let i = 0; i < VECTOR_DIM; i++) norm += sum[i] * sum[i];
+    norm = Math.sqrt(norm);
+    if (!(norm > 1e-12)) return null;
+
+    const out = Buffer.alloc(VECTOR_BYTES);
+    for (let i = 0; i < VECTOR_DIM; i++) out.writeFloatLE(sum[i] / norm, i * 4);
+    return out;
   }
 
   private async executeVectorSearch(
@@ -138,7 +197,33 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
     // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. A validação da
     // categoria acontece antes, fora do disjuntor, para entrada ruim não contar como queda.
     try {
-      const result = await this.breaker.fire(buffer, category, limit);
+      const result = await this.breaker.fire(() => this.executeVectorSearch(buffer, category, limit));
+      return (result as SemanticCandidate[]) || [];
+    } catch (error) {
+      throw DependencyError.fromBreaker('memorydb', error);
+    }
+  }
+
+  public async searchBySession(
+    sessionItemIds: string[],
+    category?: string,
+    limit = 50
+  ): Promise<SemanticCandidate[]> {
+    // Validação fora do disjuntor: entrada recusada não conta como queda (RNF-104, RF-105).
+    if (category !== undefined) {
+      assertValidCategory(category);
+    }
+    assertValidSessionItems(sessionItemIds);
+    const ids = [...new Set(sessionItemIds)];
+    if (ids.length === 0) {
+      return [];
+    }
+
+    try {
+      const result = await this.breaker.fire(async () => {
+        const vector = await this.readSessionVector(ids);
+        return vector ? this.executeVectorSearch(vector, category, limit) : [];
+      });
       return (result as SemanticCandidate[]) || [];
     } catch (error) {
       throw DependencyError.fromBreaker('memorydb', error);

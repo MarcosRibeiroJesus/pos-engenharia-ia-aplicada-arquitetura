@@ -95,9 +95,16 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
 
     // 2. Parallel candidate retrieval
     const retrievalTimer = new StageTimer(logger, 'parallel-retrieval');
+    // RF-105 (ADR-0011, E5): a busca em tempo real usa o vetor derivado dos itens da sessão. Sem
+    // sessão, ela não roda e os candidatos vêm só do lote, sem ligar o modo degradado. Nesse caso a
+    // categoria não passa pelo `assertValidCategory` do repositório porque não chega ao Redis (o
+    // controlador já a validou antes, RNF-104).
+    const sessionItemIds = params.sessionItemIds ?? [];
     const [batchResult, vectorResult] = await Promise.allSettled([
       this.batchRepo.getBatchCandidates(params.userId),
-      this.vectorRepo.searchSimilarItems(new Float32Array(128), params.category, 50),
+      sessionItemIds.length > 0
+        ? this.vectorRepo.searchBySession(sessionItemIds, params.category, 50)
+        : Promise.resolve([]),
     ]);
 
     // Erro de validação (categoria `validacao`, não retentável) é entrada recusada, não queda:
