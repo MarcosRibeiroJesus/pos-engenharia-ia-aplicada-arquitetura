@@ -8,7 +8,7 @@ import { IGetRecommendationsUseCase, GetRecommendationsUseCase } from '../applic
 import { DynamoDbBatchCandidateRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
 import { MemoryDbVectorCandidateRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
 import { SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
-import { CloudWatchMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { EmfMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
 import { BedrockClaudeClient } from '../infrastructure/bedrock/bedrock-claude.client';
 import { RecommendationExplainer } from '../application/recommendation-explainer';
 
@@ -98,7 +98,7 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
 }
 
 function buildDefaultUseCase(): IGetRecommendationsUseCase {
-  const metricsPublisher = new CloudWatchMetricsPublisher();
+  const metricsPublisher = new EmfMetricsPublisher();
   const explainer = env.EXPLANATIONS_ENABLED
     ? new RecommendationExplainer(new BedrockClaudeClient(), {
         modelId: env.BEDROCK_MODEL_ID,

@@ -102,7 +102,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - a task role não tem `cloudwatch:PutMetricData`, porque as métricas vão por EMF (ADR-0013);
     - custo fixo da base igual ao da tabela do plano (5 endpoints, 1 ALB, 1 nó do MemoryDB, 1 task).
   - **Depende de:** T011, T015.
-- [ ] T015 [P] [engenheiro-ml] Métricas do serviço por EMF · RF-009, RNF-003, Art. VI · VT-15
+- [x] T015 [P] [engenheiro-ml] Métricas do serviço por EMF · RF-009, RNF-003, Art. VI · VT-15
   - **Teste vermelho:** `U/tests/unit/metrics-emf.test.ts` afirma que cada contagem (`DegradedModeCount`, `SageMakerFallbackCount`, `MemoryDbFallbackCount`, `DynamoDbFallbackCount`, `ExplanationRetryCount`, `ExplanationFallbackCount`) sai como uma linha JSON no formato Embedded Metric Format, com `_aws.CloudWatchMetrics[0].Namespace = "Ecommerce/Recommendations"`, a unidade `Count` e sem chamada ao `PutMetricData`.
   - **Arquivos:** `U/src/serving/src/infrastructure/monitoring/cloudwatch-metrics.ts` (ou um publicador EMF novo atrás da mesma interface), o teste.
   - **Aceite:** os nomes e o namespace não mudam, então os 7 alarmes continuam iguais; a linha EMF não leva `userId`, prompt nem texto do modelo; os 39 testes existentes seguem verdes.

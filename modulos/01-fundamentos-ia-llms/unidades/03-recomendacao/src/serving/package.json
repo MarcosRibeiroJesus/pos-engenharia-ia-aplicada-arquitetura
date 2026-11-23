@@ -12,7 +12,6 @@
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "^1.1.2",
     "@anthropic-ai/sdk": "^1.10.0",
-    "@aws-sdk/client-cloudwatch": "^3.577.0",
     "@aws-sdk/client-dynamodb": "^3.577.0",
     "@aws-sdk/client-sagemaker-runtime": "^3.577.0",
     "@aws-sdk/lib-dynamodb": "^3.577.0",
