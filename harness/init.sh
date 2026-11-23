@@ -6,7 +6,7 @@ cd "$(git rev-parse --show-toplevel)"
 git config core.hooksPath .githooks  # gates SDD e de memória valem para qualquer agente
 
 echo "== Ambiente"
-for t in git python3 terraform docker node; do
+for t in git python3 terraform docker node rtk; do
   printf '  %-10s %s\n' "$t" "$(command -v "$t" >/dev/null && ("$t" --version 2>/dev/null | head -1) || echo 'ausente')"
 done
 if curl -fsS -m 3 "${AWS_ENDPOINT_URL:-http://localhost:4566}" >/dev/null 2>&1; then
