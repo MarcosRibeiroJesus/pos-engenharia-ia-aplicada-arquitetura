@@ -2,7 +2,8 @@
 mock_provider "aws" {}
 
 variables {
-  emails_alerta = ["alerta@exemplo.com"]
+  emails_alerta      = ["alerta@exemplo.com"]
+  repositorio_github = "dono-sintetico/repo-sintetico"
 }
 
 run "limite_mensal_de_20_dolares" {

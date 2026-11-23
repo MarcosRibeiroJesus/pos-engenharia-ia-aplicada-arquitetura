@@ -1,0 +1,613 @@
+{
+  "descricao": "Lista nomeada das ações sem condição de tag nas roles de cada projeto (RNF-105 e ADR-0015 da D01, D-029, Art. IV). Toda declaração Allow das roles <chave>-deploy e <chave>-plan tem aws:RequestTag/project ou aws:ResourceTag/project igual à chave, ou é um item desta lista, com o mesmo Sid (id), as mesmas ações e os mesmos recursos. Cada item traz o motivo, a fonte (referência de autorização do serviço) e a data da consulta. Marcadores: {conta}, {regiao}, {chave}, {chave_glue} (chave com sublinhado), {bucket_state}, {chave_kms_state}. 'asterisco_justificado' só é true quando a referência do serviço só aceita Resource '*'. Lido por infra/conta/roles_projeto.tf (gera as declarações) e por tests/roles_projeto.tftest.hcl (TT-I01).",
+  "consulta_padrao": "Fonte não aberta nesta sessão (docs.aws.amazon.com bloqueado pela rede da sessão, 2026-11-23): conferir na referência de autorização antes do apply do dono (T033); um item errado falha fechado com AccessDenied (risco do ADR-0015).",
+  "excecoes": [
+    {
+      "id": "EstadoListarPrefixoDaChave",
+      "roles": [
+        "deploy",
+        "plan"
+      ],
+      "acoes": [
+        "s3:ListBucket"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{bucket_state}"
+      ],
+      "condicao": {
+        "StringLike": {
+          "s3:prefix": [
+            "{chave}/*",
+            "env:/*"
+          ]
+        }
+      },
+      "asterisco_justificado": false,
+      "motivo": "O backend S3 lista o bucket de state para achar a chave e os workspaces (prefixo env:/). O bucket é da conta (tag project = 00-conta); o limite é o prefixo da chave do projeto.",
+      "fonte": "https://developer.hashicorp.com/terraform/language/backend/s3 (permissões do bucket) e https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazons3.html (s3:prefix em ListBucket). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "EstadoLerGravarDaChave",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{bucket_state}/{chave}/*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Lê e grava o state do projeto na chave {chave}/ do bucket da conta. Os objetos do state não têm a tag do projeto.",
+      "fonte": "https://developer.hashicorp.com/terraform/language/backend/s3 (permissões do objeto de state). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "EstadoLerDaChave",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "s3:GetObject"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{bucket_state}/{chave}/*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "O plan do PR só lê o state do projeto.",
+      "fonte": "https://developer.hashicorp.com/terraform/language/backend/s3 (permissões do objeto de state). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "EstadoTravaDaChave",
+      "roles": [
+        "deploy",
+        "plan"
+      ],
+      "acoes": [
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{bucket_state}/{chave}/*.tflock"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Lock nativo do backend (use_lockfile): grava e apaga o arquivo .tflock ao lado do state. É a única escrita da role de plan.",
+      "fonte": "https://developer.hashicorp.com/terraform/language/backend/s3 (use_lockfile e permissões do .tflock). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "EstadoChaveKms",
+      "roles": [
+        "deploy",
+        "plan"
+      ],
+      "acoes": [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ],
+      "recursos": [
+        "{chave_kms_state}"
+      ],
+      "condicao": {
+        "StringEquals": {
+          "kms:ViaService": "s3.{regiao}.amazonaws.com"
+        }
+      },
+      "asterisco_justificado": false,
+      "motivo": "O bucket de state usa a CMK da conta (T030, saída state_kms_key_arn): ler o state exige kms:Decrypt, e gravar o state e o .tflock exige kms:GenerateDataKey (a conferir). Só pela chamada do S3 (kms:ViaService). A chave tem a tag project = 00-conta, então a condição de tag do projeto não serve.",
+      "fonte": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html (permissões de SSE-KMS) e https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html (kms:ViaService). Fonte não aberta; conferir. Achado das revisões da T030.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "LeituraDescreverListar",
+      "roles": [
+        "deploy",
+        "plan"
+      ],
+      "acoes": [
+        "ec2:Describe*",
+        "elasticloadbalancing:Describe*",
+        "logs:DescribeLogGroups",
+        "memorydb:Describe*",
+        "cloudwatch:DescribeAlarms",
+        "ecs:DescribeTaskDefinition",
+        "kms:ListAliases",
+        "ssm:DescribeParameters"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "Leituras Describe* e List* do refresh do Terraform para as quais a referência indicaria só Resource '*' (a conferir; ADR-0015). Só metadados; o ECS fica com DescribeTaskDefinition explícito, para o DescribeTasks continuar preso ao cluster do projeto (A02).",
+      "fonte": "Referência de autorização de cada serviço: https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonec2.html, list_elasticloadbalancingv2.html, list_amazoncloudwatchlogs.html, list_amazonmemorydb.html, list_amazoncloudwatch.html, list_amazonelasticcontainerservice.html, list_awskeymanagementservice.html, list_awssystemsmanager.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "PassarRolesDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "iam:PassRole"
+      ],
+      "recursos": [
+        "arn:aws:iam::{conta}:role/{chave}-*"
+      ],
+      "condicao": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "ecs-tasks.amazonaws.com",
+            "glue.amazonaws.com",
+            "sagemaker.amazonaws.com",
+            "vpc-flow-logs.amazonaws.com",
+            "airflow.amazonaws.com"
+          ]
+        }
+      },
+      "asterisco_justificado": false,
+      "motivo": "Limitado às roles com o prefixo da chave e aos serviços do stack (ADR-0015); se o PassRole aceita condição de tag do recurso fica a conferir. As roles de identidade (<chave>-deploy e <chave>-plan) têm Deny explícito.",
+      "fonte": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html e https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsidentityandaccessmanagementiam.html (iam:PassedToService). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "TokenDoEcr",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "O login no registro para o push da imagem; pela referência, a ação aceitaria só Resource '*' (a conferir; ADR-0015). O push em si fica no repositório com a tag do projeto.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelasticcontainerregistry.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "BucketsDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:PutBucketPolicy",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketVersioning",
+        "s3:PutBucketOwnershipControls",
+        "s3:PutBucketTagging",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutLifecycleConfiguration",
+        "s3:GetBucket*",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:ListBucket",
+        "s3:ListBucketVersions",
+        "s3:GetObject",
+        "s3:GetObjectTagging",
+        "s3:PutObject",
+        "s3:PutObjectTagging",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{chave}-*",
+        "arn:aws:s3:::{chave}-*/*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Buckets e objetos do projeto (golden dataset, resultados do Athena, scripts e artefatos), com as escritas de configuração explícitas (bloqueio público, versionamento, propriedade, política, tags, criptografia e ciclo de vida) e só na própria conta (s3:ResourceAccount), porque o nome do bucket é global. A condição de tag nas ações de bucket do S3 fica a conferir; o limite é o prefixo do nome (D-029, RNF-108).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazons3.html (chaves de condição por ação). Fonte não aberta; conferir se aws:ResourceTag já vale para o bucket e, se valer, mover para a condição de tag.",
+      "data_consulta": "2026-11-23",
+      "condicao": {
+        "StringEquals": {
+          "s3:ResourceAccount": "{conta}"
+        }
+      }
+    },
+    {
+      "id": "BucketsDoProjetoLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "s3:GetBucket*",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:GetObjectTagging"
+      ],
+      "recursos": [
+        "arn:aws:s3:::{chave}-*",
+        "arn:aws:s3:::{chave}-*/*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Refresh dos buckets e objetos do projeto no plan, só na própria conta (o aws_s3_object faz HeadObject, que pede s3:GetObject).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazons3.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23",
+      "condicao": {
+        "StringEquals": {
+          "s3:ResourceAccount": "{conta}"
+        }
+      }
+    },
+    {
+      "id": "AliasKmsDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "kms:CreateAlias",
+        "kms:DeleteAlias",
+        "kms:UpdateAlias"
+      ],
+      "recursos": [
+        "arn:aws:kms:{regiao}:{conta}:alias/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "O alias não teria tag própria (a conferir); fica no prefixo alias/{chave}- (exceção kms-alias do ADR-0014). A outra metade da autorização, a chave, está na declaração com aws:ResourceTag.",
+      "fonte": "https://docs.aws.amazon.com/kms/latest/developerguide/alias-access.html (as duas permissões do CreateAlias). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "CatalogoGlueDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "glue:CreateDatabase",
+        "glue:GetDatabase",
+        "glue:UpdateDatabase",
+        "glue:DeleteDatabase",
+        "glue:CreateTable",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:UpdateTable",
+        "glue:DeleteTable",
+        "glue:CreateConnection",
+        "glue:GetConnection",
+        "glue:UpdateConnection",
+        "glue:DeleteConnection",
+        "glue:GetTags",
+        "glue:TagResource",
+        "glue:UntagResource"
+      ],
+      "recursos": [
+        "arn:aws:glue:{regiao}:{conta}:catalog",
+        "arn:aws:glue:{regiao}:{conta}:database/p{chave_glue}_*",
+        "arn:aws:glue:{regiao}:{conta}:table/p{chave_glue}_*/*",
+        "arn:aws:glue:{regiao}:{conta}:connection/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "As ações do Data Catalog autorizariam também o recurso catalog, que é da conta e sem tag (a conferir); o limite é o nome do banco (p{chave_glue}_, exceção do ADR-0014), das tabelas e da conexão.",
+      "fonte": "https://docs.aws.amazon.com/glue/latest/dg/glue-specifying-resource-arns.html (recursos do catálogo) e https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsglue.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "CatalogoGlueDoProjetoLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:GetConnection",
+        "glue:GetTags"
+      ],
+      "recursos": [
+        "arn:aws:glue:{regiao}:{conta}:catalog",
+        "arn:aws:glue:{regiao}:{conta}:database/p{chave_glue}_*",
+        "arn:aws:glue:{regiao}:{conta}:table/p{chave_glue}_*/*",
+        "arn:aws:glue:{regiao}:{conta}:connection/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Refresh do catálogo do projeto no plan.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsglue.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "ConfiguracaoDeSegurancaGlue",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "glue:CreateSecurityConfiguration",
+        "glue:GetSecurityConfiguration",
+        "glue:DeleteSecurityConfiguration"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "A security configuration do Glue não teria ARN nem tag, e as três ações aceitariam só Resource '*' (a conferir). Risco residual: apagar a configuração de outro projeto (sem dado; o job dele falha ao iniciar).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsglue.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "ConfiguracaoDeSegurancaGlueLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "glue:GetSecurityConfiguration"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "Refresh da security configuration no plan; pela referência, só Resource '*' (a conferir).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsglue.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "LakeFormation",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "lakeformation:RegisterResource",
+        "lakeformation:DeregisterResource",
+        "lakeformation:DescribeResource",
+        "lakeformation:GrantPermissions",
+        "lakeformation:RevokePermissions",
+        "lakeformation:ListPermissions"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "O Lake Formation autoriza pelo próprio modelo de permissões (administrador e grants), e as ações de IAM aceitariam só Resource '*' (a conferir). O isolamento entre projetos aqui depende das permissões do Lake Formation, não do IAM.",
+      "fonte": "https://docs.aws.amazon.com/lake-formation/latest/dg/lf-permissions-reference.html e https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslakeformation.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "LakeFormationLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "lakeformation:DescribeResource",
+        "lakeformation:ListPermissions"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "Refresh do registro e dos grants no plan; pela referência, só Resource '*' (a conferir).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslakeformation.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "PainelDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "cloudwatch:PutDashboard",
+        "cloudwatch:GetDashboard",
+        "cloudwatch:DeleteDashboards"
+      ],
+      "recursos": [
+        "arn:aws:cloudwatch::{conta}:dashboard/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "O dashboard do CloudWatch não tem tags no provider (aws_cloudwatch_dashboard sem o argumento tags); o limite é o prefixo do nome. Se o serviço aceita condição de tag no dashboard fica a conferir.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazoncloudwatch.html (recurso dashboard). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "PainelDoProjetoLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "cloudwatch:GetDashboard"
+      ],
+      "recursos": [
+        "arn:aws:cloudwatch::{conta}:dashboard/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Refresh do dashboard no plan.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazoncloudwatch.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "AssinaturasSnsDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "sns:Unsubscribe",
+        "sns:GetSubscriptionAttributes",
+        "sns:SetSubscriptionAttributes"
+      ],
+      "recursos": [
+        "arn:aws:sns:{regiao}:{conta}:{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "A assinatura não teria tag própria (a conferir); o ARN dela é o do tópico mais um id, então o prefixo do tópico limita.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonsns.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "AssinaturasSnsDoProjetoLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "sns:GetSubscriptionAttributes"
+      ],
+      "recursos": [
+        "arn:aws:sns:{regiao}:{conta}:{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Refresh das assinaturas no plan.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonsns.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "OrcamentoDoProjeto",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "budgets:ModifyBudget",
+        "budgets:ViewBudget",
+        "budgets:TagResource",
+        "budgets:UntagResource",
+        "budgets:ListTagsForResource"
+      ],
+      "recursos": [
+        "arn:aws:budgets::{conta}:budget/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "O AWS Budgets diário do projeto (teto_diario_usd); a condição de tag no Budgets fica a conferir, e o limite é o prefixo do nome.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsbudgetservice.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "OrcamentoDoProjetoLeitura",
+      "roles": [
+        "plan"
+      ],
+      "acoes": [
+        "budgets:ViewBudget",
+        "budgets:ListTagsForResource"
+      ],
+      "recursos": [
+        "arn:aws:budgets::{conta}:budget/{chave}-*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Refresh do orçamento no plan.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsbudgetservice.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "ContratoComumDaPlataforma",
+      "roles": [
+        "deploy",
+        "plan"
+      ],
+      "acoes": [
+        "ssm:GetParameter"
+      ],
+      "recursos": [
+        "arn:aws:ssm:{regiao}:{conta}:parameter/00-plataforma-agentes/contrato/v1/comum"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "O stack do produto lê o contrato comum da plataforma (RF-110, ADR-0015); o parâmetro tem a tag da plataforma, não a do projeto. Sem segredo (ADR-0002 da plataforma).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssystemsmanager.html (recurso parameter). Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "PreRequisitosDaConta",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "ce:ListCostAllocationTags",
+        "xray:GetTraceSegmentDestination",
+        "tag:GetResources"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "Leituras da conta nos workflows: a tag de custo ativa e o Transaction Search antes do apply (D-034, ADR-0015) e a verificação de sobras pela tag no destroy (Art. V). Pela referência, as três aceitariam só Resource '*' (a conferir).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awscostexplorerservice.html, list_awsx-ray.html e list_amazonresourcegrouptaggingapi.html. Fonte não aberta; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "MetricasDaEvidencia",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "cloudwatch:GetMetricData"
+      ],
+      "recursos": [
+        "*"
+      ],
+      "asterisco_justificado": true,
+      "motivo": "Furo F3: o roteiro lê as métricas do namespace do serviço no runner (ADR-0016). GetMetricData não aceitaria tipo de recurso (a conferir).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazoncloudwatch.html (GetMetricData sem tipo de recurso). Fonte não aberta nesta sessão; conferir.",
+      "data_consulta": "2026-11-23"
+    },
+    {
+      "id": "DispararDagDoMwaa",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "airflow:InvokeRestApi",
+        "airflow:CreateWebLoginToken"
+      ],
+      "recursos": [
+        "arn:aws:airflow:{regiao}:{conta}:role/p{chave}-lab-mwaa/*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "Furo F3: o roteiro liga e dispara o DAG pelo InvokeRestApi (ADR-0016); as duas ações autorizam no recurso role/<ambiente>/<role do Airflow> (página da REST API do MWAA); se esse recurso aceita tag fica a conferir. Ambiente p{chave}-lab-mwaa (exceção mwaa-ambiente do ADR-0014).",
+      "fonte": "https://docs.aws.amazon.com/mwaa/latest/userguide/access-mwaa-apache-airflow-rest-api.html (consultada pelo plano em 2026-11-20) e https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonmanagedworkflowsforapacheairflow.html (fonte não aberta nesta sessão; conferir).",
+      "data_consulta": "2026-11-20"
+    },
+    {
+      "id": "EsperarTarefaDoRoteiro",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "ecs:DescribeTasks"
+      ],
+      "recursos": [
+        "arn:aws:ecs:{regiao}:{conta}:task/{chave}-*/*"
+      ],
+      "condicao": {
+        "ArnLike": {
+          "ecs:cluster": "arn:aws:ecs:{regiao}:{conta}:cluster/{chave}-*"
+        }
+      },
+      "asterisco_justificado": false,
+      "motivo": "A02 da análise 1: o runner espera o fim da tarefa do roteiro e lê o código de saída. Não é certo que a tarefa leve a tag do projeto; o limite é o ARN task/<cluster>/<id> e a condição ecs:cluster.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelasticcontainerservice.html (DescribeTasks exige o recurso task e aceita ecs:cluster), consultada pela análise 1.",
+      "data_consulta": "2026-11-20"
+    },
+    {
+      "id": "LerRelatorioDoRoteiro",
+      "roles": [
+        "deploy"
+      ],
+      "acoes": [
+        "logs:GetLogEvents"
+      ],
+      "recursos": [
+        "arn:aws:logs:{regiao}:{conta}:log-group:{chave}-*:log-stream:*"
+      ],
+      "asterisco_justificado": false,
+      "motivo": "A02 da análise 1: o relatório do roteiro sai em stdout pelo awslogs; o nome do stream (prefixo/contêiner/id-da-tarefa) é conhecido pelo id da tarefa. GetLogEvents exige o recurso log-stream (referência consultada pela análise 1); se o stream aceita condição de tag fica a conferir. A19: o padrão casa com o log group do serviço (T012).",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazoncloudwatchlogs.html e https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html, consultadas pela análise 1.",
+      "data_consulta": "2026-11-20"
+    }
+  ],
+  "com_condicao_de_tag_documentadas": [
+    {
+      "id": "ExecutarRoteiroEcs",
+      "acoes": [
+        "ecs:RunTask"
+      ],
+      "motivo": "Furo F3: o roteiro roda como tarefa ECS no task definition {chave}-*, com aws:ResourceTag/project e a condição ecs:cluster no cluster do projeto.",
+      "fonte": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelasticcontainerservice.html (RunTask no recurso task-definition, com ecs:cluster). Fonte não aberta nesta sessão; conferir.",
+      "data_consulta": "2026-11-23"
+    }
+  ]
+}

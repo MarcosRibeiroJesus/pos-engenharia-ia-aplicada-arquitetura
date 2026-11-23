@@ -160,7 +160,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `infra/conta/{main.tf,variables.tf,outputs.tf}` (ou `identidade.tf`), `infra/conta/tests/identidade.tftest.hcl`; a remoção de `U/infra/bootstrap/` e das referências a ele no README e nos workflows.
   - **Aceite:** um provedor e um bucket por conta, que servem a todos os projetos; se o `infra/conta` já tiver um dos dois por outra tarefa, ele é reusado; o ADR-0001 da unidade ganha uma nota apontando para o ADR-0015.
   - **Depende de:** T010.
-- [ ] T031 [engenheiro-seguranca] Roles `01-recomendacao-deploy` e `01-recomendacao-plan` com ABAC · RNF-105, Art. IV, D-029 · TT-I01
+- [x] T031 [engenheiro-seguranca] Roles `01-recomendacao-deploy` e `01-recomendacao-plan` com ABAC · RNF-105, Art. IV, D-029 · TT-I01
   - **Teste vermelho:** `infra/conta/tests/roles_projeto.tftest.hcl`:
     - a confiança da `01-recomendacao-deploy` tem exatamente os subjects `repo:<dono>/<repo>:environment:aws-lab` e `...:environment:aws-lab-destroy` (valores sintéticos no teste);
     - toda declaração de criação tem `aws:RequestTag/project = 01-recomendacao`, e toda de alteração ou remoção, `aws:ResourceTag/project = 01-recomendacao`;
@@ -184,6 +184,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T033 [DONO] Aplicar o `infra/conta` com a identidade da D01 e criar a variável e o ambiente · RNF-105, D-024
   - **Passos:** aplicar o `infra/conta` (provedor OIDC, bucket de state, roles da D01); criar a variável `AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO` com o ARN da `01-recomendacao-deploy`; criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main` (pendência da D-024, compartilhada com a plataforma T083).
   - **Aceite:** um plan da base no PR assume a `01-recomendacao-plan`; um destroy manual de teste roda no `aws-lab-destroy` sem pedir aprovação.
+  - **Service-linked roles (revisão da T031):** a `01-recomendacao-deploy` não tem `iam:CreateServiceLinkedRole`. Numa conta nova, o primeiro apply da base falha fechado nas service-linked roles do ECS, do ELB, do MemoryDB, do Lake Formation e do MWAA. Saídas, decisão do dono: pré-criar essas roles com a credencial do dono, ou conceder a ação com `iam:AWSServiceName` nesses serviços. Nada é concedido por padrão.
   - **Depende de:** T031, T032; a tarefa do harness (ainda sem id) que põe `kms_key_id` (de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro) nos modelos `harness/modelos/{apply,destroy}.yml` e nos workflows da plataforma; pendente da plataforma/harness até alguém assumir; esta sessão não edita `harness/modelos` nem os workflows da plataforma.
 
 ## Fase 4 · Núcleo: lote sintético fechado (D-051)

@@ -1,3 +1,4 @@
 # Copie para terraform.tfvars (fora do git) e preencha.
-emails_alerta     = ["voce@exemplo.com"]
-limite_mensal_usd = 20 # D-022
+emails_alerta      = ["voce@exemplo.com"]
+repositorio_github = "dono/repositorio" # subjects do OIDC das roles por projeto
+limite_mensal_usd  = 20 # D-022

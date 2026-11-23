@@ -17,3 +17,8 @@ output "state_kms_key_arn" {
   description = "Chave KMS do state; as roles de cada projeto precisam de kms:Decrypt e kms:GenerateDataKey nela."
   value       = aws_kms_key.state.arn
 }
+
+output "roles_projeto" {
+  description = "ARNs das roles de cada projeto; o da deploy vai na variável AWS_DEPLOY_ROLE_ARN_<CHAVE> (T033 da D01)."
+  value       = { for k, m in module.roles_projeto : k => { deploy = m.arn_deploy, plan = m.arn_plan } }
+}

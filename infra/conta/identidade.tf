@@ -1,6 +1,6 @@
 # Identidade e state da conta (ADR-0015 da D01, RNF-105). O provedor OIDC do GitHub é único por
 # conta e o bucket de state serve a todos os projetos, então os dois vivem aqui, fora do destroy de
-# qualquer projeto. As roles por projeto (com ABAC, D-029) entram na T031 da D01.
+# qualquer projeto. As roles por projeto (com ABAC, D-029) ficam em roles_projeto.tf (T031 da D01).
 data "aws_caller_identity" "atual" {}
 
 locals {
