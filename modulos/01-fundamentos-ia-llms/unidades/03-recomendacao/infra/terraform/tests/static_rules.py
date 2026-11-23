@@ -14,11 +14,14 @@ ST-T02 (RNF-108, revisão da T012): todo recurso de modules/ com atributo de nom
 output nomes_dos_recursos dele (o TT-T02 só confere o que está nesse output).
 ST-K01 (D-022, T013): todo aws_budgets_budget do stack é diário (`time_unit = "DAILY"` literal); o
 limite mensal da conta fica só no infra/conta.
+ST-07 (RNF-002, Art. V, T014): todo recurso cobrado por hora do root da base (endpoint de interface,
+ALB, MemoryDB, serviço ECS) é citado entre crases num ADR da unidade, cada endpoint de interface pelo
+nome do serviço; a base não declara NAT Gateway nem MWAA (o MWAA vive na raiz da janela, ADR-0007).
 TH-06 (RNF-102, D-021, T013): o padrão de teto_diario_usd no variables.tf, o "Teto diário: US$ X,YZ"
 do README da unidade e o teto_diario_usd do harness/estado.json são o mesmo valor.
 Roda sem rede e sem credenciais: `python3 tests/static_rules.py`. Importável (os testes do harness
 usam `st01_infracost`, `st04_excecoes_de_nome`, `st_t01_tags_dos_modulos`, `st_t02_nomes_dos_modulos`,
-`st_k01_budgets_diarios` e `th06_teto_nos_tres_lugares` com fixtures); a verificação só roda no
+`st_k01_budgets_diarios`, `st07_custo_fixo_citado` e `th06_teto_nos_tres_lugares` com fixtures); a verificação só roda no
 `__main__`.
 """
 import json
@@ -201,6 +204,56 @@ def st_k01_budgets_diarios(textos: dict) -> list:
     return falhas
 
 
+# ST-07: tipos cobrados por hora mesmo sem tráfego, e os que não podem existir na base.
+COBRADO_POR_HORA = ("aws_vpc_endpoint", "aws_lb", "aws_memorydb_cluster", "aws_ecs_service", "aws_nat_gateway",
+                    "aws_mwaa_environment", "aws_eks_cluster", "aws_db_instance", "aws_rds_cluster",
+                    "aws_elasticache_cluster", "aws_instance")
+FORA_DA_BASE = {
+    "aws_nat_gateway": "a saída é por endpoints de interface (ADR-0002)",
+    "aws_mwaa_environment": "o MWAA vive só na raiz da janela, com prazo próprio (ADR-0007, D-052)",
+}
+
+
+def st07_custo_fixo_citado(tipos: set, servicos_de_interface: list, texto_adrs: str) -> list:
+    """ST-07: tipos declarados no root, serviços dos endpoints de interface e texto dos ADRs -> falhas."""
+    falhas = []
+    for tipo in sorted(set(tipos) & set(COBRADO_POR_HORA)):
+        if tipo in FORA_DA_BASE:
+            falhas.append(f"ST-07: {tipo} na base; {FORA_DA_BASE[tipo]}")
+        elif f"`{tipo}`" not in texto_adrs:
+            falhas.append(f"ST-07: {tipo} é cobrado por hora e não é citado (entre crases) em nenhum ADR de adr/")
+    if "aws_vpc_endpoint" in tipos:
+        for servico in sorted(servicos_de_interface):
+            if f"`{servico}`" not in texto_adrs:
+                falhas.append(f"ST-07: endpoint de interface {servico} é cobrado por hora e não é citado em nenhum ADR de adr/")
+    return falhas
+
+
+def tipos_do_root_de(main: str, modulos: dict) -> set:
+    """Tipos de recurso do root: os do próprio main e os dos módulos que ele usa (source ./modules/<nome>)."""
+    usados = set(re.findall(r'source\s*=\s*"\./modules/([A-Za-z0-9_-]+)"', main))
+    tipos = set(re.findall(r'^resource\s+"([a-z0-9_]+)"', main, flags=re.M))
+    for nome in usados & set(modulos):
+        tipos |= set(re.findall(r'^resource\s+"([a-z0-9_]+)"', modulos[nome], flags=re.M))
+    return tipos
+
+
+def tipos_do_root() -> set:
+    main = "\n".join(p.read_text(encoding="utf-8") for p in sorted(ROOT.glob("*.tf")))
+    return tipos_do_root_de(main, {nome: textos["main"] for nome, textos in modulos_do_stack().items()})
+
+
+def servicos_de_interface_da_base() -> list:
+    """O padrão de interface_endpoint_services do módulo networking (o root não o sobrescreve)."""
+    texto = (ROOT / "modules" / "networking" / "variables.tf").read_text(encoding="utf-8")
+    m = re.search(r'variable\s+"interface_endpoint_services"\s*\{[^}]*?default\s*=\s*\[([^\]]*)\]', texto, flags=re.S)
+    return re.findall(r'"([^"]+)"', m.group(1)) if m else []
+
+
+def texto_dos_adrs() -> str:
+    return "\n".join(p.read_text(encoding="utf-8") for p in sorted((UNIT / "adr").glob("*.md")))
+
+
 def th06_teto_nos_tres_lugares(variables: str, readme: str, estado_teto) -> list:
     """TH-06: textos do variables.tf e do README, e o teto_diario_usd do estado.json -> falhas."""
     falhas = []
@@ -252,7 +305,8 @@ def regras_terraform() -> list:
                                         for p in ROOT.rglob("*.tf") if ".terraform" not in p.parts})
     failures += th06_teto_nos_tres_lugares((ROOT / "variables.tf").read_text(encoding="utf-8"),
                                            (UNIT / "README.md").read_text(encoding="utf-8"), teto_do_estado())
-    adr_text = "\n".join(p.read_text(encoding="utf-8") for p in (UNIT / "adr").glob("*.md"))
+    adr_text = texto_dos_adrs()
+    failures += st07_custo_fixo_citado(tipos_do_root(), servicos_de_interface_da_base(), adr_text)
     tf_files = [p for p in ROOT.rglob("*.tf") if ".terraform" not in p.parts]
     declared = set()
     for p in tf_files:

@@ -206,17 +206,8 @@ resource "aws_iam_policy" "ecs_task_policy" {
         Effect   = "Allow"
         Action   = ["sagemaker:InvokeEndpoint"]
         Resource = var.sagemaker_endpoint_arn
-      },
-      {
-        # PutMetricData não aceita ARN de recurso: a condição restringe ao namespace do serviço.
-        Sid      = "PublishServiceMetrics"
-        Effect   = "Allow"
-        Action   = ["cloudwatch:PutMetricData"]
-        Resource = "*"
-        Condition = {
-          StringEquals = { "cloudwatch:namespace" = var.metrics_namespace }
-        }
       }
+      # Sem cloudwatch:PutMetricData: as métricas saem por EMF no log do awslogs (ADR-0013).
     ], local.bedrock_statements)
   })
   tags = local.tags

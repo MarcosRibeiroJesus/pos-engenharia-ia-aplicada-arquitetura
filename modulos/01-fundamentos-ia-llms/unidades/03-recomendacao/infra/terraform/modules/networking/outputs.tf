@@ -86,3 +86,15 @@ output "nomes_dos_recursos" {
     { for i, r in aws_iam_role.flow_logs : "aws_iam_role.flow_logs[${i}]" => r.name },
   )
 }
+
+# Custo fixo (TT-K02, ADR-0002): AZs de cada endpoint de interface (US$ 0,01/h por ENI) e os serviços
+# com endpoint de gateway (sem custo por hora).
+output "endpoints_de_interface" {
+  description = "Quantidade de AZs (ENIs) de cada endpoint de interface, pelo serviço (TT-K02)."
+  value       = { for s, e in aws_vpc_endpoint.interface : s => length(e.subnet_ids) }
+}
+
+output "endpoints_de_gateway" {
+  description = "Serviços com endpoint de gateway (TT-K02)."
+  value       = toset(keys(aws_vpc_endpoint.gateway))
+}

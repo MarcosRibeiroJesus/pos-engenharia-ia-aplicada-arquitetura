@@ -32,3 +32,12 @@ output "cluster_name" {
   description = "Nome do cluster (exceção p01-recomendacao- do ADR-0014)."
   value       = aws_memorydb_cluster.vector_cluster.name
 }
+
+# Custo fixo (TT-K02, RNF-002): nós cobrados por hora e retenção de snapshot (que cobraria depois do destroy).
+output "custo_fixo" {
+  description = "Nós do cluster e retenção de snapshot, para o teste de custo fixo (TT-K02)."
+  value = {
+    nos                      = aws_memorydb_cluster.vector_cluster.num_shards * (aws_memorydb_cluster.vector_cluster.num_replicas_per_shard + 1)
+    snapshot_retention_limit = aws_memorydb_cluster.vector_cluster.snapshot_retention_limit
+  }
+}

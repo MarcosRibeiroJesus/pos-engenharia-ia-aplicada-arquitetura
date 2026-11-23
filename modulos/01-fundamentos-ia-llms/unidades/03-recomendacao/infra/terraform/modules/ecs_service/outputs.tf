@@ -63,3 +63,8 @@ output "nomes_dos_recursos" {
     { "aws_ecs_service.app" = aws_ecs_service.app.name },
   )
 }
+
+output "desired_count" {
+  description = "Tasks do serviço, para o teste de custo fixo (TT-K02)."
+  value       = aws_ecs_service.app.desired_count
+}

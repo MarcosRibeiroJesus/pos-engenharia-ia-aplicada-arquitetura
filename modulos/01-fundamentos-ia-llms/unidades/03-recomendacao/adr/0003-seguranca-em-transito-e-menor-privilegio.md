@@ -21,6 +21,7 @@ A versão importada tinha: MemoryDB com `tls_enabled = false`; a role das tasks 
 **Menor privilégio**
 - Task role: `dynamodb:GetItem/BatchGetItem/Query` só na tabela; `sagemaker:InvokeEndpoint` só no endpoint; `bedrock:InvokeModel` só no modelo configurado (e no perfil de inferência com o mesmo id); `kms:Decrypt` só via DynamoDB.
 - `cloudwatch:PutMetricData` não aceita ARN de recurso. A política usa `Resource = "*"` **com** condição `cloudwatch:namespace`. O teste aceita `"*"` só quando há condição.
+  - **Atualização (2026-11-23, T014 e T015):** esta regra deixou de valer. O serviço publica as métricas no formato Embedded Metric Format, no log que já sai pelo endpoint `logs` (ADR-0013), e a task role não tem mais `cloudwatch:PutMetricData`. O `regras_base.tftest.hcl` reprova a ação na task role. O texto acima fica como registro da decisão original.
 - Execution role: política própria (pull só do repositório do stack, logs só no log group do serviço) no lugar da managed policy.
 - SageMaker: sem `AmazonSageMakerFullAccess`; pull da imagem, logs no log group do endpoint, métricas por namespace; modelo com isolamento de rede.
 - Glue: sem `AWSGlueServiceRole`; S3 só no bucket do golden dataset, DynamoDB só na tabela, catálogo só no banco do projeto, security configuration criptografando S3, logs e bookmarks.

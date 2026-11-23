@@ -63,7 +63,11 @@ output "tags_padrao" {
 # cada módulo novo entra aqui com o output tags_dos_recursos dele (TT-T01).
 output "tags_dos_recursos" {
   description = "Tags efetivas por recurso tagueável do root, para o teste de tags (TT-T01)."
-  value = merge([for m, recursos in {
+  value       = local.tags_dos_recursos
+}
+
+locals {
+  tags_dos_recursos = merge([for m, recursos in {
     networking            = module.networking.tags_dos_recursos
     kms                   = module.kms.tags_dos_recursos
     s3_golden_dataset     = module.s3_golden_dataset.tags_dos_recursos
@@ -76,7 +80,6 @@ output "tags_dos_recursos" {
     athena_queries        = module.athena_queries.tags_dos_recursos
     glue_pipeline         = module.glue_pipeline.tags_dos_recursos
     cloudwatch_monitoring = module.cloudwatch_monitoring.tags_dos_recursos
-    mwaa_orchestration    = module.mwaa_orchestration.tags_dos_recursos
     } : { for endereco, tags in recursos : "${m}.${endereco}" => merge(local.tags_padrao, tags) }
   ]...)
 }
@@ -96,7 +99,11 @@ output "memorydb_cluster_name" {
 # tests/excecoes_de_nome.json; cada módulo novo entra aqui com o output nomes_dos_recursos dele.
 output "nomes_dos_recursos" {
   description = "Nome de cada recurso nomeado do root, para o teste de prefixo (TT-T02)."
-  value = merge([for m, recursos in {
+  value       = local.nomes_dos_recursos
+}
+
+locals {
+  nomes_dos_recursos = merge([for m, recursos in {
     networking            = module.networking.nomes_dos_recursos
     kms                   = module.kms.nomes_dos_recursos
     s3_golden_dataset     = module.s3_golden_dataset.nomes_dos_recursos
@@ -109,7 +116,26 @@ output "nomes_dos_recursos" {
     athena_queries        = module.athena_queries.nomes_dos_recursos
     glue_pipeline         = module.glue_pipeline.nomes_dos_recursos
     cloudwatch_monitoring = module.cloudwatch_monitoring.nomes_dos_recursos
-    mwaa_orchestration    = module.mwaa_orchestration.nomes_dos_recursos
     } : { for endereco, nome in recursos : "${m}.${endereco}" => nome }
   ]...)
+}
+
+# Recursos cobrados por hora da base (TT-K02, RNF-002, Art. V). A contagem por tipo vem das chaves de
+# tags_dos_recursos e nomes_dos_recursos (<modulo>.<tipo>.<recurso>), que o ST-T01 e o ST-T02 mantêm
+# completas; assim um NAT Gateway ou um MWAA novo aparece aqui sem lista à mão.
+locals {
+  enderecos_do_root = toset(concat(keys(local.tags_dos_recursos), keys(local.nomes_dos_recursos)))
+}
+
+output "custo_fixo_da_base" {
+  description = "Recursos cobrados por hora da base, para o teste de custo fixo (TT-K02)."
+  value = {
+    contagem_por_tipo = { for tipo in distinct([for e in local.enderecos_do_root : split(".", e)[1]]) :
+    tipo => length([for e in local.enderecos_do_root : e if split(".", e)[1] == tipo]) }
+    endpoints_de_interface            = module.networking.endpoints_de_interface
+    endpoints_de_gateway              = module.networking.endpoints_de_gateway
+    memorydb_nos                      = module.memorydb_cluster.custo_fixo.nos
+    memorydb_snapshot_retention_limit = module.memorydb_cluster.custo_fixo.snapshot_retention_limit
+    ecs_tarefas                       = module.ecs_service.desired_count
+  }
 }

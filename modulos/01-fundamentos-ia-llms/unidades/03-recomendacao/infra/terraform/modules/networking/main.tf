@@ -18,12 +18,8 @@ locals {
   region = data.aws_region.current.region
   azs    = slice(data.aws_availability_zones.available.names, 0, var.az_count)
 
-  # MWAA privado precisa de SQS (Celery) e dos endpoints do próprio Airflow.
-  mwaa_endpoint_services = ["sqs", "airflow.api", "airflow.env", "airflow.ops"]
-  interface_services = var.enable_interface_endpoints ? toset(concat(
-    var.interface_endpoint_services,
-    var.enable_mwaa ? local.mwaa_endpoint_services : []
-  )) : toset([])
+  # Só a saída das tasks. Os endpoints que o MWAA exige ficam na raiz da janela (ADR-0007).
+  interface_services = var.enable_interface_endpoints ? toset(var.interface_endpoint_services) : toset([])
 }
 
 resource "aws_vpc" "main" {

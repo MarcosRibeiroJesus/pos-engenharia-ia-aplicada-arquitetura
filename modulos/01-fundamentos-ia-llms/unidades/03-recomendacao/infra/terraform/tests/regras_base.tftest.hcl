@@ -156,9 +156,9 @@ run "rede_endpoints_de_interface_no_lab" {
 
   assert {
     condition = toset(keys(aws_vpc_endpoint.interface)) == toset([
-      "ecr.api", "ecr.dkr", "logs", "monitoring", "sagemaker.runtime", "bedrock-runtime"
+      "ecr.api", "ecr.dkr", "logs", "sagemaker.runtime", "bedrock-runtime"
     ])
-    error_message = "Saída do ECS (ADR-0002): endpoints para ECR, Logs, CloudWatch, SageMaker Runtime e Bedrock Runtime."
+    error_message = "Saída do ECS (ADR-0002, ADR-0013): endpoints para ECR, Logs, SageMaker Runtime e Bedrock Runtime; sem monitoring (EMF)."
   }
   assert {
     condition     = alltrue([for e in aws_vpc_endpoint.interface : length(e.subnet_ids) == 1 && e.private_dns_enabled])
@@ -167,21 +167,6 @@ run "rede_endpoints_de_interface_no_lab" {
   assert {
     condition     = toset([for e in aws_vpc_endpoint.gateway : e.vpc_endpoint_type]) == toset(["Gateway"]) && length(aws_vpc_endpoint.gateway) == 2
     error_message = "S3 e DynamoDB por endpoint de gateway (sem custo por hora)."
-  }
-}
-
-run "rede_mwaa_ligado_adiciona_endpoints" {
-  command = plan
-  module {
-    source = "./modules/networking"
-  }
-  variables {
-    enable_mwaa = true
-  }
-
-  assert {
-    condition     = alltrue([for s in ["sqs", "airflow.api", "airflow.env", "airflow.ops"] : contains(keys(aws_vpc_endpoint.interface), s)])
-    error_message = "MWAA privado precisa dos endpoints de SQS e Airflow."
   }
 }
 
@@ -321,6 +306,14 @@ run "ecs_menor_privilegio_e_privado" {
     ])
     error_message = "R3/ADR-0004: a task invoca só o modelo Claude configurado."
   }
+  # TT-K02 (ADR-0013): as métricas vão por EMF no log, então a task role não publica métricas.
+  assert {
+    condition = !anytrue([
+      for s in jsondecode(aws_iam_policy.ecs_task_policy.policy).Statement :
+      contains(flatten([s.Action]), "cloudwatch:PutMetricData")
+    ])
+    error_message = "ADR-0013: sem cloudwatch:PutMetricData na task role; as métricas saem por EMF no endpoint logs."
+  }
   assert {
     condition     = aws_lb.alb.internal == true
     error_message = "R1: ALB interno por padrão."
@@ -445,57 +438,9 @@ run "sagemaker_sem_full_access" {
   }
 }
 
-# ---------------------------------------------------------------- MWAA (R1, R3, R5)
-run "mwaa_desligado_por_padrao" {
-  command = plan
-  module {
-    source = "./modules/mwaa_orchestration"
-  }
-  variables {
-    vpc_id             = "vpc-123"
-    vpc_cidr           = "10.0.0.0/16"
-    private_subnet_ids = ["subnet-a", "subnet-b"]
-    s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
-    s3_bucket_name     = "01-recomendacao-lab-golden"
-  }
-
-  assert {
-    condition     = length(aws_mwaa_environment.pipeline) == 0
-    error_message = "R5: MWAA desligado por padrão (maior custo fixo do stack)."
-  }
-}
-
-run "mwaa_ligado_privado" {
-  command = plan
-  module {
-    source = "./modules/mwaa_orchestration"
-  }
-  variables {
-    vpc_id             = "vpc-123"
-    vpc_cidr           = "10.0.0.0/16"
-    private_subnet_ids = ["subnet-a", "subnet-b"]
-    s3_bucket_arn      = "arn:aws:s3:::01-recomendacao-lab-golden"
-    s3_bucket_name     = "01-recomendacao-lab-golden"
-    enable_mwaa        = true
-  }
-
-  assert {
-    condition     = aws_mwaa_environment.pipeline[0].webserver_access_mode == "PRIVATE_ONLY"
-    error_message = "R1: UI do Airflow só pela VPC."
-  }
-  assert {
-    condition     = aws_mwaa_environment.pipeline[0].kms_key == var.kms_key_arn
-    error_message = "R2: MWAA com a chave da plataforma."
-  }
-  assert {
-    condition     = alltrue([for r in aws_security_group.mwaa[0].egress : !contains(coalesce(r.cidr_blocks, []), "0.0.0.0/0")])
-    error_message = "R1: MWAA sem saída para a internet."
-  }
-  assert {
-    condition     = length(aws_iam_role_policy.mwaa_execution) == 1
-    error_message = "R3: a role do MWAA tem política escopada própria."
-  }
-}
+# MWAA (R1, R3, R5): saiu da base na T014. Os TT mwaa_ligado_privado e mwaa_desligado_por_padrao são
+# reescritos na raiz da janela (U/infra/janela-mwaa, T061, ADR-0007); o custo_fixo.tftest.hcl (TT-K02)
+# reprova um MWAA na base.
 
 # ---------------------------------------------------------------- Glue / Athena (R2, R3, R6)
 run "glue_criptografado_e_com_logs" {

@@ -3,6 +3,7 @@
 - Status: aceito (padrão escolhido pelo dono do repositório em 2026-11-18)
 - Data: 2026-11-18
 - Unidade: 01.03 (recomendação)
+- **Atualização (2026-11-23, T014):** a base tem 5 endpoints de interface (`ecr.api`, `ecr.dkr`, `logs`, `sagemaker.runtime` e `bedrock-runtime`). O `monitoring` saiu porque as métricas vão por EMF (ADR-0013). A `enable_mwaa` e o módulo do MWAA também saíram da base: o ambiente e os endpoints que só ele usa vivem na raiz da janela (ADR-0007). A parte de custo deste ADR foi substituída pelo ADR-0013. O corpo abaixo fica como registro da decisão original, e o TT-K02 (`custo_fixo.tftest.hcl`) e o ST-07 conferem o estado atual.
 
 ## Contexto
 

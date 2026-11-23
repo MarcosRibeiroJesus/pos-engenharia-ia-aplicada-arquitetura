@@ -36,7 +36,6 @@ module "networking" {
   expose_api_publicly         = var.expose_api_publicly
   enable_interface_endpoints  = var.enable_interface_endpoints
   interface_endpoint_az_count = var.interface_endpoint_az_count
-  enable_mwaa                 = var.enable_mwaa
   log_retention_days          = var.log_retention_days
 }
 
@@ -136,19 +135,6 @@ module "sagemaker_training" {
   s3_bucket_arn  = module.s3_golden_dataset.bucket_arn
   s3_bucket_name = module.s3_golden_dataset.bucket_name
   kms_key_arn    = module.kms.key_arn
-}
-
-module "mwaa_orchestration" {
-  source             = "./modules/mwaa_orchestration"
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_id             = module.networking.vpc_id
-  vpc_cidr           = module.networking.vpc_cidr
-  private_subnet_ids = module.networking.private_subnet_ids
-  s3_bucket_arn      = module.s3_golden_dataset.bucket_arn
-  s3_bucket_name     = module.s3_golden_dataset.bucket_name
-  enable_mwaa        = var.enable_mwaa
-  kms_key_arn        = module.kms.key_arn
 }
 
 module "cloudwatch_monitoring" {

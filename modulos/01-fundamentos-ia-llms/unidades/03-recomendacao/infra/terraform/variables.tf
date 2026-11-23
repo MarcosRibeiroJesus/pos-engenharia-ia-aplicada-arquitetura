@@ -40,12 +40,6 @@ variable "force_destroy" {
   default     = true
 }
 
-variable "enable_mwaa" {
-  description = "Liga o MWAA e os endpoints de que ele precisa. Maior custo fixo do stack (ADR-0002)."
-  type        = bool
-  default     = false
-}
-
 variable "expose_api_publicly" {
   description = "Opt-in para ALB público com HTTPS. Exige certificate_arn."
   type        = bool

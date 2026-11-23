@@ -75,16 +75,15 @@ variables {
     athena_queries        = "consultas"
     glue_pipeline         = "pipeline-glue"
     cloudwatch_monitoring = "monitoramento"
-    mwaa_orchestration    = "orquestracao-mwaa"
   }
 }
 
 run "tags_no_padrao_da_politica" {
   command = plan
 
-  # Liga os recursos opcionais (MWAA, API pública com TLS) para que eles também entrem na checagem.
+  # Liga o opcional (API pública com TLS) para que ele também entre na checagem. O MWAA saiu da base
+  # (T014); a tag orquestracao-mwaa é testada na raiz da janela (T060).
   variables {
-    enable_mwaa         = true
     expose_api_publicly = true
     certificate_arn     = "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
   }
@@ -101,7 +100,7 @@ run "tags_no_padrao_da_politica" {
   # Todo módulo do root contribui com os seus recursos.
   assert {
     condition     = toset([for k, _ in output.tags_dos_recursos : split(".", k)[0]]) == toset(keys(var.modulos_esperados))
-    error_message = "tags_dos_recursos precisa trazer os recursos de cada um dos 13 módulos do root."
+    error_message = "tags_dos_recursos precisa trazer os recursos de cada um dos 12 módulos do root."
   }
   assert {
     condition = alltrue([for t in values(output.tags_dos_recursos) :

@@ -45,8 +45,8 @@ variable "enable_interface_endpoints" {
 
 variable "interface_endpoint_services" {
   type        = list(string)
-  default     = ["ecr.api", "ecr.dkr", "logs", "monitoring", "sagemaker.runtime", "bedrock-runtime"]
-  description = "Serviços com endpoint de interface para as tasks."
+  default     = ["ecr.api", "ecr.dkr", "logs", "sagemaker.runtime", "bedrock-runtime"]
+  description = "Serviços com endpoint de interface para as tasks. Sem monitoring: as métricas vão por EMF no endpoint logs (ADR-0013)."
 }
 
 variable "interface_endpoint_az_count" {
@@ -58,12 +58,6 @@ variable "interface_endpoint_az_count" {
     condition     = var.interface_endpoint_az_count >= 1
     error_message = "Ao menos 1 AZ."
   }
-}
-
-variable "enable_mwaa" {
-  type        = bool
-  default     = false
-  description = "Adiciona os endpoints de que o MWAA privado precisa."
 }
 
 variable "enable_flow_logs" {

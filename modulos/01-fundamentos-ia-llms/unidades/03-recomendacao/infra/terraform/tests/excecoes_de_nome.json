@@ -30,7 +30,7 @@
       "id": "mwaa-ambiente",
       "recurso": "aws_mwaa_environment",
       "padrao": "^p01-recomendacao-",
-      "motivo": "O nome do ambiente do MWAA precisa começar por letra. Entra já aqui porque o módulo do MWAA ainda está na base (sai na T014, que mantém esta exceção para a raiz da janela); a T061 atualiza a fonte e acrescenta os log groups do Airflow.",
+      "motivo": "O nome do ambiente do MWAA precisa começar por letra. O módulo do MWAA saiu da base na T014; a exceção continua aqui porque a raiz da janela (U/infra/janela-mwaa, T060 e T061) usa esta lista. A T061 atualiza a fonte e acrescenta os log groups do Airflow.",
       "fonte": "https://docs.aws.amazon.com/mwaa/latest/API/API_CreateEnvironment.html (padrão [a-zA-Z][0-9a-zA-Z-_]*, consulta do plano em 2026-11-20).",
       "adr": "ADR-0014"
     },
