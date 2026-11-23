@@ -207,26 +207,35 @@ export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
     } else {
       // 5. ML Reranking via SageMaker (with Graceful Degradation)
       const rerankTimer = new StageTimer(logger, 'sagemaker-reranking');
+      // modelId de quem ranqueou (RERANKER_MODEL_VERSION, VT-16); indefinido na heurística.
+      let rerankerModelId: string | undefined;
       try {
-        recommendations = await this.reranker.rerank({
+        const reranked = await this.reranker.rerankWithModel({
           userId: params.userId,
           candidates: filteredCandidates,
           limit,
           sessionItemIds: params.sessionItemIds,
         });
+        recommendations = reranked.items;
+        rerankerModelId = reranked.modelId;
       } catch (error) {
         degradedMode = true;
-        void this.metricsPublisher?.publishSageMakerFallback();
+        // Feature fora do contrato (origem `feature`) não é queda do endpoint: não publica a métrica
+        // de fallback do SageMaker, só a de modo degradado.
+        const origemFeature = (error as { origem?: unknown } | null)?.origem === 'feature';
+        if (!origemFeature) {
+          void this.metricsPublisher?.publishSageMakerFallback();
+        }
         void this.metricsPublisher?.publishDegradedMode();
         logger.warn(
-          { error },
+          { err: error, ...dependencyFields(error), origem: origemFeature ? 'feature' : 'endpoint' },
           'SageMaker scoring unavailable or timed out; activating weighted heuristic fallback'
         );
 
         // Fallback to weighted heuristic reranker: (0.6 * batch) + (0.4 * vector)
         recommendations = HeuristicReranker.rerank(filteredCandidates, limit);
       }
-      rerankTimer.end({ finalCount: recommendations.length });
+      rerankTimer.end({ finalCount: recommendations.length, rerankerModelId });
     }
 
     if (degradedMode) {

@@ -55,6 +55,21 @@ A partir da versão 1.3-1, o container nativo grava o modelo com `Booster.save_m
 - **R3:** o container nativo pode não carregar um modelo treinado fora dele. Mitigação: mesma versão, mesmo formato e falha cedo no apply (DM-06).
 - O determinismo do XGBoost entre o runner e o container depende da versão e do `nthread`. Mitigação: PY-03 e a tolerância do DM-07.
 
+### Nota de 2026-11-23 (T075, cliente CSV do re-ranker)
+- **Formato da saída ainda não confirmado.** Não foi confirmado como o container 1.7-1 separa vários scores numa resposta `text/csv`: uma linha por score ou vírgulas numa linha só. O cliente aceita as duas formas. A contagem exata (um score por candidato) e a lista permitida (número decimal em [0, 1]) continuam valendo nos dois casos. A demonstração deve conferir uma resposta real com N > 1 scores (DM-06, T104).
+- **Contrato único das features, entre treino e serviço:**
+  - ordem das colunas: `batchScore,vectorScore,hibrido`;
+  - fonte ausente vale 0;
+  - `hibrido` é 1 só quando `provenance = hybrid`, e 0 nos outros casos;
+  - um candidato `fallback` é tratado como `batch` no `reranker.ts`;
+  - números com 6 casas decimais fixas;
+  - sem cabeçalho, sem `userId` e sem `itemId` no CSV.
+
+  A fixture versionada `U/tests/fixtures/reranker-features.json` traz cada candidato com a linha exata que ele gera. O serviço tem o teste de paridade em `U/tests/unit/reranker-features-paridade.test.ts`. O CSV de treino da T042 e da T043 (bloqueadas) deve reproduzir isso exatamente, de preferência com um teste de paridade do lado do Python sobre a mesma fixture.
+- **Origem do erro:**
+  - uma feature fora de [0, 1] vinda do lote não chama o endpoint e tem `origem: feature`. Ela cai na heurística, mas não publica `SageMakerFallbackCount` nem conta no disjuntor do SageMaker;
+  - uma resposta fora do contrato tem `origem: endpoint`. Ela conta no disjuntor e publica a métrica.
+
 ## Boa prática e erro comum (D-036)
 **Gate programático antes da produção e saída validada contra o contrato.** O arquiteto separa quem treina de quem promove, valida a forma da resposta antes de usá-la e cai num caminho conhecido quando ela não confere. O erro comum é deixar o pipeline de treino trocar o modelo de produção sozinho, ou aceitar qualquer resposta do endpoint e só descobrir o desalinhamento pelos rankings errados (1.4, 4.4, 5.6).
 

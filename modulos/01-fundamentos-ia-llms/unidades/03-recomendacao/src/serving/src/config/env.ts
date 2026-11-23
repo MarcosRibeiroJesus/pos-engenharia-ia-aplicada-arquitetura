@@ -12,6 +12,13 @@ const envSchema = z.object({
   MEMORYDB_CLUSTER_ENDPOINT: z.string().default('localhost:6379'),
   SAGEMAKER_ENDPOINT_NAME: z.string().default('recommendation-serverless-endpoint'),
   SAGEMAKER_ENDPOINT_URL: z.string().optional(),
+  // Versão do artefato do re-ranker (hash do model.tar.gz publicado pelo apply, ADR-0008). É o
+  // `modelId` que o cliente informa; o container nativo do XGBoost não devolve versão no CSV. Lista
+  // permitida de caracteres; sem a variável, um valor neutro que não se passa por versão real.
+  RERANKER_MODEL_VERSION: z
+    .string()
+    .regex(/^[A-Za-z0-9._-]{1,128}$/, 'must match ^[A-Za-z0-9._-]{1,128}$')
+    .default('reranker-sem-versao'),
   MEMORYDB_TLS: z
     .enum(['true', 'false'])
     .default('false')

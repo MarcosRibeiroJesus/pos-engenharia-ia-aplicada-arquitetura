@@ -362,7 +362,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/presentation/server.ts` (`buildDefaultUseCase`), `U/src/serving/src/infrastructure/cache/inventory-eligibility.repository.ts`, o adaptador do DynamoDB (lê `recentPurchases` no mesmo GetItem), os testes.
   - **Aceite:** nenhuma chamada nova no caminho de 60 ms; a documentação diz que o frescor é o do lote (diário).
   - **Depende de:** T071, T073.
-- [ ] T075 [P] [engenheiro-ml] Cliente do re-ranker no contrato CSV do container nativo · RF-005, RF-109, ADR-0008 · VT-09, VT-16
+- [x] T075 [P] [engenheiro-ml] Cliente do re-ranker no contrato CSV do container nativo · RF-005, RF-109, ADR-0008 · VT-09, VT-16
   - **Teste vermelho:** VT-09: o cliente manda `Content-Type: text/csv` com uma linha `batchScore,vectorScore,hibrido` por candidato, na ordem, e lê um score por linha; uma resposta com quantidade de scores diferente vira erro de contrato, e a resposta cai na heurística com `degradedMode: true`; VT-16: o `modelId` da resposta vem de `RERANKER_MODEL_VERSION`.
   - **Arquivos:** `U/src/serving/src/infrastructure/sagemaker/sagemaker-scoring.client.ts`, `U/src/serving/src/config/env.ts`, os testes; o contrato JSON legado `sagemaker-inference-contract.json` sai.
   - **Aceite:** o `fallback-sagemaker-degradation` (T005) segue verde; até 100 candidatos por chamada e 35 ms de timeout.
