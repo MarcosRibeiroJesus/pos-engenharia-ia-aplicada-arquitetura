@@ -1,0 +1,37 @@
+{
+  "verificado_em": "2026-11-19T08:05:36.841978+00:00",
+  "host": "http://127.0.0.1:3000 (Langfuse 3 local, Docker Compose)",
+  "traces": {
+    "total": 17,
+    "nomes": [
+      "turno"
+    ]
+  },
+  "observations": {
+    "total": 17,
+    "nomes": [
+      "extrair_intencao"
+    ]
+  },
+  "exemplo_geracao": {
+    "name": "extrair_intencao",
+    "type": "GENERATION",
+    "model": "anthropic.claude-sonnet-5-5",
+    "level": "DEFAULT",
+    "usageDetails": {
+      "input": 1800,
+      "output": 90,
+      "total": 1890
+    },
+    "costDetails": {
+      "total": 0.0045
+    }
+  },
+  "scores": {
+    "total": 15,
+    "nomes": [
+      "acerto_campos",
+      "acerto_intencao"
+    ]
+  }
+}

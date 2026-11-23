@@ -1,0 +1,87 @@
+# Langfuse local para o laboratório (ADR-0008). Só para máquina de desenvolvimento:
+# todas as portas ficam presas em 127.0.0.1 e as credenciais vêm do .env local (não versionado).
+# Armazenamento S3 do Langfuse: o próprio Floci (a imagem do MinIO saiu do Docker Hub).
+name: langfuse-lab
+
+x-langfuse-env: &langfuse-env
+  DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?defina no .env}@postgres:5432/postgres
+  SALT: ${LANGFUSE_SALT:?defina no .env}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:?defina no .env}
+  TELEMETRY_ENABLED: "false"
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: clickhouse
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?defina no .env}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_AUTH: ${REDIS_PASSWORD:?defina no .env}
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: test
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: test
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://s3:4566
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: us-east-1
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: test
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: test
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://s3:4566
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+
+services:
+  langfuse-web:
+    image: langfuse/langfuse:3
+    depends_on: [postgres, clickhouse, redis, s3]
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?defina no .env}
+      # Projeto e chaves criados na subida, sem cliques (inicialização headless).
+      LANGFUSE_INIT_ORG_ID: lab
+      LANGFUSE_INIT_ORG_NAME: Laboratorio
+      LANGFUSE_INIT_PROJECT_ID: assistente-agendamento
+      LANGFUSE_INIT_PROJECT_NAME: assistente-agendamento
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:?defina no .env}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:?defina no .env}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_USER_EMAIL:?defina no .env}
+      LANGFUSE_INIT_USER_NAME: lab
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_USER_PASSWORD:?defina no .env}
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3
+    depends_on: [postgres, clickhouse, redis, s3]
+    ports: ["127.0.0.1:3030:3030"]
+    environment: *langfuse-env
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env}
+      POSTGRES_DB: postgres
+    volumes: [langfuse_postgres:/var/lib/postgresql/data]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?defina no .env}
+    volumes: [langfuse_clickhouse:/var/lib/clickhouse]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina no .env}", "--maxmemory-policy", "noeviction"]
+
+  s3:
+    image: floci/floci:latest
+    ports: ["127.0.0.1:4567:4566"]
+
+volumes:
+  langfuse_postgres:
+  langfuse_clickhouse:

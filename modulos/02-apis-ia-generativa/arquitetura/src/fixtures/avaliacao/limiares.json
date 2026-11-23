@@ -1,0 +1,9 @@
+{
+  "descricao": "Limiares do gate de avaliação. Mudança de prompt, schema, modelo ou cadeia que piore uma métrica abaixo do limiar reprova o PR.",
+  "acuracia_intencao_min": 0.95,
+  "acuracia_campos_min": 0.9,
+  "acuracia_resposta_min": 0.9,
+  "taxa_saida_invalida_max": 0.05,
+  "media_tentativas_max": 1.3,
+  "custo_medio_usd_max": 0.002
+}

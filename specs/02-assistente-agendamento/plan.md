@@ -3,6 +3,7 @@
 - **Spec:** `specs/02-assistente-agendamento/spec.md` · **Status:** rascunho, pronto para a aprovação do dono (D-033). Nada aqui vale como aprovado
 - **Data:** 2026-11-21 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS além da leitura pública da Price List
 - **Decisões do dono aplicadas:** D-006, D-007, D-013, D-008, D-021, D-022, D-024, D-029, D-030, D-031, D-048, D-062, D-065, D-068
+- **Pendente do dono:** D02-P3 (consumo da plataforma, ADR-0003), D02-P2 (chaves do Langfuse Cloud), o valor do teto diário (D02-P4) e a aprovação deste plano (D02-P5)
 - **Decisões do dono (2026-11-22):** D02-P2 a D02-P4 decididas, e as divergências DV-01 a DV-12 também (seção "Decisões do dono" no fim). Falta só a aprovação deste plano (D02-P5)
 - **ADRs:** `specs/02-assistente-agendamento/adr/`. O gate SDD bloqueia a pasta do projeto antes da fase implementar; a primeira tarefa de implementar os move para `modulos/02-apis-ia-generativa/arquitetura/adr/`, onde o código já os cita
 - **Âncora (D-065):** *Natera's intelligent appointment scheduling with Amazon Bedrock AgentCore*, AWS Machine Learning Blog, 26/08/2026, lida na íntegra em 2026-11-21 (ADR-0001)

@@ -1,5 +1,6 @@
 # ADR-0006: Avaliação no CI com respostas gravadas, rodada real única e tracing no Langfuse Cloud
 
+- **Status:** proposto; aplica a D-048 (escolha do dono). As chaves do Langfuse são a pergunta D02-P2
 - **Status:** aceito pelo dono em 2026-11-22; aplica a D-048 (escolha do dono). As chaves do Langfuse são a pergunta D02-P2
 - **Data:** 2026-11-21 · **Autor:** arquiteto-aws (Claude Opus 5.5)
 

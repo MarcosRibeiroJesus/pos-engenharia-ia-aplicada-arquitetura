@@ -1,0 +1,470 @@
+[
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "08:00#S-CARD-1126-0800",
+  "slot_id": "S-CARD-1126-0800",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "08:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "09:00#S-CARD-1126-0900",
+  "slot_id": "S-CARD-1126-0900",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "09:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "reservado",
+  "consulta_id": "C-B7CARD01"
+ },
+ {
+  "pk": "CONSULTA#C-B7CARD01",
+  "sk": "META",
+  "consulta_id": "C-B7CARD01",
+  "usuario_id": "u-bruno",
+  "slot_id": "S-CARD-1126-0900",
+  "slot_pk": "SLOT#cardiologia#2026-11-26",
+  "slot_sk": "09:00#S-CARD-1126-0900",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "09:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "confirmada",
+  "versao": 1
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "10:00#S-CARD-1126-1000",
+  "slot_id": "S-CARD-1126-1000",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "10:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "11:00#S-CARD-1126-1100",
+  "slot_id": "S-CARD-1126-1100",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "11:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "reservado",
+  "consulta_id": "C-C1CARD02"
+ },
+ {
+  "pk": "CONSULTA#C-C1CARD02",
+  "sk": "META",
+  "consulta_id": "C-C1CARD02",
+  "usuario_id": "u-carla",
+  "slot_id": "S-CARD-1126-1100",
+  "slot_pk": "SLOT#cardiologia#2026-11-26",
+  "slot_sk": "11:00#S-CARD-1126-1100",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "11:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "confirmada",
+  "versao": 1
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "14:00#S-CARD-1126-1400",
+  "slot_id": "S-CARD-1126-1400",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "14:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "15:00#S-CARD-1126-1500",
+  "slot_id": "S-CARD-1126-1500",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "15:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-26",
+  "sk": "16:00#S-CARD-1126-1600",
+  "slot_id": "S-CARD-1126-1600",
+  "especialidade": "cardiologia",
+  "data": "2026-11-26",
+  "hora": "16:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "08:00#S-CARD-1127-0800",
+  "slot_id": "S-CARD-1127-0800",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "08:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "09:00#S-CARD-1127-0900",
+  "slot_id": "S-CARD-1127-0900",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "09:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "10:00#S-CARD-1127-1000",
+  "slot_id": "S-CARD-1127-1000",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "10:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "11:00#S-CARD-1127-1100",
+  "slot_id": "S-CARD-1127-1100",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "11:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "14:00#S-CARD-1127-1400",
+  "slot_id": "S-CARD-1127-1400",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "14:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "15:00#S-CARD-1127-1500",
+  "slot_id": "S-CARD-1127-1500",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "15:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#cardiologia#2026-11-27",
+  "sk": "16:00#S-CARD-1127-1600",
+  "slot_id": "S-CARD-1127-1600",
+  "especialidade": "cardiologia",
+  "data": "2026-11-27",
+  "hora": "16:00",
+  "profissional": "Dra. Helena Prado",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "08:00#S-DERM-1126-0800",
+  "slot_id": "S-DERM-1126-0800",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "08:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "09:00#S-DERM-1126-0900",
+  "slot_id": "S-DERM-1126-0900",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "09:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "10:00#S-DERM-1126-1000",
+  "slot_id": "S-DERM-1126-1000",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "10:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "11:00#S-DERM-1126-1100",
+  "slot_id": "S-DERM-1126-1100",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "11:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "14:00#S-DERM-1126-1400",
+  "slot_id": "S-DERM-1126-1400",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "14:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "15:00#S-DERM-1126-1500",
+  "slot_id": "S-DERM-1126-1500",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "15:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "reservado",
+  "consulta_id": "C-C2DERM03"
+ },
+ {
+  "pk": "CONSULTA#C-C2DERM03",
+  "sk": "META",
+  "consulta_id": "C-C2DERM03",
+  "usuario_id": "u-carla",
+  "slot_id": "S-DERM-1126-1500",
+  "slot_pk": "SLOT#dermatologia#2026-11-26",
+  "slot_sk": "15:00#S-DERM-1126-1500",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "15:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "confirmada",
+  "versao": 1
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-26",
+  "sk": "16:00#S-DERM-1126-1600",
+  "slot_id": "S-DERM-1126-1600",
+  "especialidade": "dermatologia",
+  "data": "2026-11-26",
+  "hora": "16:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "08:00#S-DERM-1127-0800",
+  "slot_id": "S-DERM-1127-0800",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "08:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "09:00#S-DERM-1127-0900",
+  "slot_id": "S-DERM-1127-0900",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "09:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "10:00#S-DERM-1127-1000",
+  "slot_id": "S-DERM-1127-1000",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "10:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "11:00#S-DERM-1127-1100",
+  "slot_id": "S-DERM-1127-1100",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "11:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "14:00#S-DERM-1127-1400",
+  "slot_id": "S-DERM-1127-1400",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "14:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "15:00#S-DERM-1127-1500",
+  "slot_id": "S-DERM-1127-1500",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "15:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#dermatologia#2026-11-27",
+  "sk": "16:00#S-DERM-1127-1600",
+  "slot_id": "S-DERM-1127-1600",
+  "especialidade": "dermatologia",
+  "data": "2026-11-27",
+  "hora": "16:00",
+  "profissional": "Dr. Caio Nunes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "08:00#S-CLIN-1126-0800",
+  "slot_id": "S-CLIN-1126-0800",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "08:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "09:00#S-CLIN-1126-0900",
+  "slot_id": "S-CLIN-1126-0900",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "09:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "10:00#S-CLIN-1126-1000",
+  "slot_id": "S-CLIN-1126-1000",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "10:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "11:00#S-CLIN-1126-1100",
+  "slot_id": "S-CLIN-1126-1100",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "11:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "14:00#S-CLIN-1126-1400",
+  "slot_id": "S-CLIN-1126-1400",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "14:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "15:00#S-CLIN-1126-1500",
+  "slot_id": "S-CLIN-1126-1500",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "15:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-26",
+  "sk": "16:00#S-CLIN-1126-1600",
+  "slot_id": "S-CLIN-1126-1600",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-26",
+  "hora": "16:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "08:00#S-CLIN-1127-0800",
+  "slot_id": "S-CLIN-1127-0800",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "08:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "09:00#S-CLIN-1127-0900",
+  "slot_id": "S-CLIN-1127-0900",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "09:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "10:00#S-CLIN-1127-1000",
+  "slot_id": "S-CLIN-1127-1000",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "10:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "11:00#S-CLIN-1127-1100",
+  "slot_id": "S-CLIN-1127-1100",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "11:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "14:00#S-CLIN-1127-1400",
+  "slot_id": "S-CLIN-1127-1400",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "14:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "15:00#S-CLIN-1127-1500",
+  "slot_id": "S-CLIN-1127-1500",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "15:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ },
+ {
+  "pk": "SLOT#clinica_geral#2026-11-27",
+  "sk": "16:00#S-CLIN-1127-1600",
+  "slot_id": "S-CLIN-1127-1600",
+  "especialidade": "clinica_geral",
+  "data": "2026-11-27",
+  "hora": "16:00",
+  "profissional": "Dra. Lia Moraes",
+  "status": "livre"
+ }
+]

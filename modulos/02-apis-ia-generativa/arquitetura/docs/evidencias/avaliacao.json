@@ -1,0 +1,146 @@
+{
+  "executado_em": "2026-11-19T08:05:06.848Z",
+  "modo": "gravado",
+  "aprovado": true,
+  "reprovacoes": [],
+  "metricas": {
+    "acuracia_intencao": 1,
+    "acuracia_campos": 1,
+    "acuracia_resposta": 1,
+    "taxa_saida_invalida": 0,
+    "media_tentativas": 1.1111111111111112,
+    "custo_medio_usd": 0.0007491666666666666,
+    "latencia_p95_ms": 241.74073900000002
+  },
+  "limiares": {
+    "descricao": "Limiares do gate de avaliação. Mudança de prompt, schema, modelo ou cadeia que piore uma métrica abaixo do limiar reprova o PR.",
+    "acuracia_intencao_min": 0.95,
+    "acuracia_campos_min": 0.9,
+    "acuracia_resposta_min": 0.9,
+    "taxa_saida_invalida_max": 0.05,
+    "media_tentativas_max": 1.3,
+    "custo_medio_usd_max": 0.002
+  },
+  "casos": [
+    {
+      "id": "E01",
+      "acertoIntencao": true,
+      "camposCertos": 3,
+      "camposTotal": 3,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.000255,
+      "latenciaMs": 93.065404,
+      "divergencias": []
+    },
+    {
+      "id": "E02",
+      "acertoIntencao": true,
+      "camposCertos": 3,
+      "camposTotal": 3,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.000244,
+      "latenciaMs": 241.74073900000002,
+      "divergencias": []
+    },
+    {
+      "id": "E03",
+      "acertoIntencao": true,
+      "camposCertos": 2,
+      "camposTotal": 2,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.000254,
+      "latenciaMs": 36.957600999999954,
+      "divergencias": []
+    },
+    {
+      "id": "E04",
+      "acertoIntencao": true,
+      "camposCertos": 2,
+      "camposTotal": 2,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.00026999999999999995,
+      "latenciaMs": 22.555901000000063,
+      "divergencias": []
+    },
+    {
+      "id": "E05",
+      "acertoIntencao": true,
+      "camposCertos": 0,
+      "camposTotal": 0,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.00023,
+      "latenciaMs": 25.018474000000083,
+      "divergencias": []
+    },
+    {
+      "id": "E06",
+      "acertoIntencao": true,
+      "camposCertos": 2,
+      "camposTotal": 2,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 2,
+      "custoUsd": 0.0005295,
+      "latenciaMs": 21.564921000000027,
+      "divergencias": []
+    },
+    {
+      "id": "E07",
+      "acertoIntencao": true,
+      "camposCertos": 0,
+      "camposTotal": 0,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.0045,
+      "latenciaMs": 25.085849000000053,
+      "divergencias": []
+    },
+    {
+      "id": "E08",
+      "acertoIntencao": true,
+      "camposCertos": 1,
+      "camposTotal": 1,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.000255,
+      "latenciaMs": 26.501486999999997,
+      "divergencias": []
+    },
+    {
+      "id": "E09",
+      "acertoIntencao": null,
+      "camposCertos": 0,
+      "camposTotal": 0,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 0,
+      "custoUsd": 0,
+      "latenciaMs": 13.115807999999902,
+      "divergencias": []
+    },
+    {
+      "id": "E10",
+      "acertoIntencao": true,
+      "camposCertos": 0,
+      "camposTotal": 0,
+      "acertoResposta": true,
+      "saidaInvalida": false,
+      "tentativas": 1,
+      "custoUsd": 0.000205,
+      "latenciaMs": 24.011000999999965,
+      "divergencias": []
+    }
+  ]
+}

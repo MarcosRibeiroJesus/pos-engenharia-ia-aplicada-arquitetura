@@ -1,0 +1,40 @@
+{
+  "name": "assistente-agendamento",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Assistente de agendamento: gateway de LLM, grafo LangGraph, intenção em JSON, gate, memória e defesa contra prompt injection.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:redteam": "vitest run tests/redteam",
+    "coverage": "vitest run --coverage",
+    "test:avaliacao": "vitest run tests/avaliacao",
+    "lab:conversa": "npm run build && node dist/cli/lab.mjs conversa",
+    "lab:avaliar": "npm run build && node dist/cli/lab.mjs avaliar"
+  },
+  "dependencies": {
+    "@anthropic-ai/bedrock-sdk": "1.1.2",
+    "@anthropic-ai/sdk": "1.10.0",
+    "@aws-sdk/client-dynamodb": "3.1172.0",
+    "@aws-sdk/client-lambda": "3.1172.0",
+    "@aws-sdk/client-s3": "3.1172.0",
+    "@aws-sdk/client-sfn": "3.1172.0",
+    "@aws-sdk/client-sns": "3.1172.0",
+    "@aws-sdk/lib-dynamodb": "3.1172.0",
+    "@langchain/core": "1.4.2",
+    "@langchain/langgraph": "1.7.5",
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@vitest/coverage-v8": "5.1.1",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1"
+  }
+}
