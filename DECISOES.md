@@ -8,10 +8,19 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 |---|---|---|---|---|
 | D01 Fundamentos | Recomendação de e-commerce (PR #1), em desenvolvimento (D-064) | Doom, opção 04-C (D-059): calibrador do limiar com gate humano sobre YOLO em TF.js num Web Worker; rótulos pelo motor do jogo; não é aprendizado por reforço | GCP | calcular no plano |
 | D02 APIs de IA generativa | Assistente de agendamento completo: plano aprovado (D-070), tarefas pendentes | pendente | GCP | US$ 0,85 por dia (D-070) |
-| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
+| D03 MCP | MCP de regras do CDB com liquidez diária; MCP 2026-07-28 com lane de compatibilidade em 2025-11-25 (D-072); spec esclarecida (D-071), fase planejar | pendente | Azure | calcular no plano (o US$ 10/mês foi substituído pela D-021) |
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **D03 (MCP de regras do CDB): respostas da spec e lane de compatibilidade** (D-071, D-072):
+  - sem ingestão assistida por Claude nesta entrega; regras entram como dados versionados revisados no PR (D03-P1 = B);
+  - inclui dados sintéticos de aplicações em JSON versionado validado por schema (`sintetico: true`, sem PII, cobrindo fronteiras de IOF, IR, cliente sem aplicação e teste de isolamento) e a tool `consultar_aplicacoes_cliente` (`dado_privado`), com `cliente_id` injetado pelo contexto autenticado do atendente (D03-P2 = A);
+  - exposição somente por HTTP sem estado pelo gateway da plataforma, sem distribuição local por `stdio` (D03-P4 = A);
+  - parâmetros do CDB sintético: 100% do CDI, aporte de R$ 100 a R$ 1.000.000 (FGC informativo até R$ 250 mil), vencimento em 1.080 dias corridos, sem carência, crédito no mesmo dia útil, corte às 16h (`America/Sao_Paulo`) e arredondamento meio para cima (D03-P5 = A);
+  - um tópico negado no guardrail do produto no Bedrock: `"recomendação de investimento personalizada"` (D03-P6 = A);
+  - conferir a fidelidade às legendas e PDFs das unidades 04 a 08 da D03 antes da fase `analisar` (D03-P9 = A);
+  - criar a classe `leitura_publica` numa versão menor do contrato da plataforma (`1.x`), fora das pernas da tríade letal, para classificar tools que só leem regras públicas e fazem contas determinísticas (D03-P10 = A);
+  - lane de compatibilidade só em `2025-11-25`, sem estado de sessão e mantendo `versoes_mcp` do contrato `comum` (D-072, delegada).
 - **Respostas da rodada anterior** (D-062): GCP como cloud comparativa da D04 à D07; uma rodada real paga por projeto, só com teto por execução aprovado pelo Marcos; sem teto por disciplina; ele revisa e mergeia, sem aprovação formal de PR.
 - **Projeto pausado não recebe tarefa** (D-060): `pausado` no `harness/estado.json`, com data e fonte; o `estado.py pode-delegar` nega. Retomar é decisão do Marcos. Hoje nenhum projeto está pausado (D-064).
 - **Links de sessão do Claude nunca no repositório** (D-069): repositório público; o rodapé `claude.com/claude-code` segue permitido. Teste `harness/testes/test_links_de_sessao.py`.
