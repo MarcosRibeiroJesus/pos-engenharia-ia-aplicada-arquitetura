@@ -104,3 +104,18 @@ class TestUmaSessaoPorVez(unittest.TestCase):
         texto = (AQUI.parent / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("D-066", texto)
         self.assertIn("push ao fim de cada fase", texto)
+
+
+class TestConsumoCompletoDaPlataformaD074(unittest.TestCase):
+    """D-074: toda arquitetura AWS consome completamente a 00-plataforma-agentes; IA aplicada é 100% alinhada às aulas."""
+
+    def test_regra_no_claude_md_e_nas_duas_copias_da_skill(self):
+        raiz = AQUI.parent
+        for arq in ("CLAUDE.md",
+                    ".claude/skills/plataforma-agentes/SKILL.md",
+                    ".agents/skills/plataforma-agentes/SKILL.md"):
+            texto = (raiz / arq).read_text(encoding="utf-8")
+            self.assertIn("D-074", texto, arq)
+            self.assertIn("00-plataforma-agentes", texto, arq)
+            self.assertIn("100% alinhad", texto, arq)
+

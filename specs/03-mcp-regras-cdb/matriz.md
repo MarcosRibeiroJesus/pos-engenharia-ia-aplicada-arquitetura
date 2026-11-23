@@ -68,7 +68,7 @@ Ids de teste: UT (Vitest unitário), CT (contrato HTTP em processo), RG (agente 
 | D-071 (`D03-P4 = A`) · somente HTTP sem estado pelo gateway, sem pacote local `stdio` | T032, T052 | CT-MCP-01 a 04, TT-SEC-01 |
 | D-071 (`D03-P5 = A`) · parâmetros do CDB sintético (100% CDI, R$ 100 a R$ 1M, 1.080 dias, sem carência, corte 16h, `HALF_UP`) | T020, T022, T023 | UT-DAT-01, UT-CALC-01 a 03 |
 | D-071 (`D03-P6 = A`) · tópico negado `"recomendação de investimento personalizada"` no guardrail | T043, T053, T063 | TT-PLAT-03, RG-09, DM-03 |
-| D-071 (`D03-P9 = A`) · extrair e resumir legendas/PDFs das unidades 04 a 08 antes da fase `analisar` | T000 | revisão de fidelidade antes do gate `sdd-analisar` |
+| D-074 (substitui `D03-P9` na arquitetura AWS) · arquiteturas AWS consomem 100% da `00-plataforma-agentes` com foco em produção AWS; IA aplicada 100% alinhada às aulas | T000 [x], T050, T053 | `TestConsumoCompletoDaPlataformaD074`, TH-PLAT-01, TT-PLAT-01 a 03 |
 | D-071 (`D03-P10 = A`) · classe `leitura_publica` em versão menor (`1.1.0`) do contrato da plataforma | T050, T053 | TT-PLAT-01 |
 | D-072 (`E16`) · lane de compatibilidade MCP somente na versão `2025-11-25` | T032, T060 | CT-MCP-03, CT-MCP-04, FL-02 |
 | D-073 (`D03-P7 = A`, `D03-P11 = A`) · plano aprovado e `teto_diario_usd = 0.50` com cota de 300.000 tokens | T011, T042, T051, T055, T064 | TT-COST-01, TH-COST-01, RG-01, DM-06 |

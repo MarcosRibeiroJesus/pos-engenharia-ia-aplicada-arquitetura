@@ -2,7 +2,7 @@
 
 - **Projeto:** `03-mcp-regras-cdb` · **Plano:** `plan.md`, aprovado pelo dono em 2026-11-22 com o teto diário de US$ 0,50 e cota de 300.000 tokens (D-073). O hash sha256 está registrado em `harness/estado.json`, campo `plano_aprovado`
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity) · **Matriz requisito → tarefa → teste:** `matriz.md`
-- **Decisões aplicadas:** D-001, D-006, D-007, D-008, D-011, D-013, D-021, D-022, D-024, D-029, D-030, D-031, D-033, D-034, D-039, D-043, D-044, D-047, D-058, D-062, D-063, D-065, D-068, D-069, D-071, D-072 e D-073
+- **Decisões aplicadas:** D-001, D-006, D-007, D-008, D-011, D-013, D-021, D-022, D-024, D-029, D-030, D-031, D-033, D-034, D-039, D-043, D-044, D-047, D-058, D-062, D-063, D-065, D-068, D-069, D-071, D-072, D-073 e D-074
 - **Implementação limpa a partir do SDD:** não há código pré-SDD da D03 no repositório; todas as tarefas começam abertas (`[ ]`), com teste vermelho antes do código
 
 `M/` abrevia `modulos/03-mcp/arquitetura/`.
@@ -16,11 +16,8 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - **Regra de teste vermelho para verificadores:** quando o teste é uma regra transversal (por exemplo, "nenhuma ação `*` em recurso `*`" ou "nenhum literal de alíquota fora dos dados"), o vermelho é uma fixture que viola a regra e precisa reprovar.
 
 ## Fase 0 · Preparação, conferência de fidelidade e contrato da plataforma
-- [ ] T000 [pesquisador] Extrair e resumir as legendas e PDFs das unidades 04 a 08 da D03 antes da análise · Art. II, D-071 (D03-P9 = A) · revisão de fidelidade
-  - **Teste vermelho:** verificação documental que confere a presença da nota de conferência de fidelidade das unidades 04 a 08 (servidor MCP do zero, fachada de sistema legado, autenticação/autorização/rate limit, publicação/transports e agente de operações) contra `spec.md` e `plan.md`, sem incluir material bruto do curso nem dados do aluno (Art. VIII, D-001).
-  - **Arquivos:** resumo próprio de conferência na conversa/nota de análise (sem texto literal da aula no repositório público, D-001).
-  - **Aceite:** confirma se todos os conceitos técnicos das unidades 04 a 08 estão representados nos requisitos `RF-001` a `RF-025` e no `E11`, apontando qualquer ajuste antes do gate `sdd-analisar`.
-  - **Depende de:** fase `tarefas` / `analisar`.
+- [x] T000 [pesquisador] Alinhamento de escopo com os exemplos de produção da AWS e consumo completo da `00-plataforma-agentes` (substitui a conferência de legendas da aula na arquitetura AWS, que fica para o projeto de IA aplicada da D03) · Art. II, D-074 · revisão de escopo
+  - **Aceite:** decisão D-074 registrada e aplicada: a arquitetura AWS `03-mcp-regras-cdb` prioriza os padrões de produção da AWS (âncora D-065 + consumo integral da `00-plataforma-agentes`), enquanto o projeto de IA aplicada da D03 será 100% alinhado às aulas.
 - [ ] T001 [operador-harness] Mover os ADRs para `M/adr/` e `azure.md` para `M/docs/azure.md` com redirecionamentos · Art. I, Art. VII · TH-DOC-01 (parte)
   - **Teste vermelho:** `harness/testes/test_d03_artefatos.py` afirma que `M/adr/0001-*.md` a `M/adr/0006-*.md` e `M/docs/azure.md` existem, que todo link relativo `adr/...` e `azure.md` de `specs/03-mcp-regras-cdb/spec.md` e `plan.md` resolve para um arquivo existente, e que o sha256 de `specs/03-mcp-regras-cdb/plan.md` continua idêntico ao de `plano_aprovado` no `harness/estado.json`.
   - **Arquivos:** `git mv specs/03-mcp-regras-cdb/adr/*.md M/adr/`, `git mv specs/03-mcp-regras-cdb/azure.md M/docs/azure.md`, arquivos de redirecionamento em `specs/03-mcp-regras-cdb/adr/*.md` e `specs/03-mcp-regras-cdb/azure.md`, e `harness/testes/test_d03_artefatos.py`.

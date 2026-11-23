@@ -140,7 +140,8 @@
         "D-065",
         "D-071",
         "D-072",
-        "D-073"
+        "D-073",
+        "D-074"
       ],
       "nota": "Nada implementado antes do SDD: não há código da D03 no repositório; a spec retroativa parte do contrato da plataforma, das decisões do dono e da âncora.",
       "infra_real": true,
