@@ -1,0 +1,10 @@
+# Copie para terraform.tfvars (fora do git). Valores do lab.
+# A tag project (01-recomendacao) é fixa no main.tf (D-031); o prefixo dos nomes muda na T012.
+aws_region                  = "us-east-1"
+environment                 = "lab"
+expose_api_publicly         = false # ALB interno; true exige certificate_arn
+interface_endpoint_az_count = 1
+ecs_desired_count           = 1
+bedrock_model_id            = "anthropic.claude-haiku-5-5"
+teto_diario_usd             = 7.1 # igual ao harness/estado.json e ao README (TH-06)
+alert_emails                = ["voce@example.com"]

@@ -1,0 +1,92 @@
+name: "01-recomendacao · apply (ambiente protegido)"
+# checkov:skip=CKV_GHA_7: workflow de implantação, não de build; prazo_horas é validado (0 a 24 h) pelo harness/infra.py. ADR docs/adr/0002
+
+# Modelo (harness/modelos). Apply só por disparo manual, em ambiente protegido, com prazo de vida (D-022).
+on:
+  workflow_dispatch:
+    inputs:
+      prazo_horas:
+        description: "Horas até o destroy automático (padrão e máximo 24)"
+        type: number
+        default: 24
+
+# Permissões mínimas: o token OIDC só no job que acessa a AWS (zizmor excessive-permissions).
+permissions:
+  contents: read
+
+concurrency:
+  group: 01-recomendacao-state   # apply e destroy nunca rodam juntos
+  cancel-in-progress: false
+
+env:
+  CHAVE: 01-recomendacao                 # chave em harness/estado.json
+  STACK_NAME: 01-recomendacao-lab            # o nome digitado para confirmar o destroy
+  TF_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/infra/terraform
+  STATE_KEY: 01-recomendacao/lab.tfstate
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: aws-lab
+    env:
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      # Chave do state (saída state_kms_key_arn do infra/conta). Vazia: o init segue sem kms_key_id,
+      # como hoje; contra o bucket do infra/conta ele falha fechado com AccessDenied (T032, D-012).
+      TF_STATE_KMS_KEY_ARN: ${{ vars.TF_STATE_KMS_KEY_ARN }}
+      REGIAO: ${{ vars.AWS_REGION || 'us-east-1' }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO || vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - name: Pré-requisitos da conta (D-034)
+        # Só avisa: a tag de custo e o Transaction Search são do infra/conta, aplicado pelo dono.
+        run: |
+          ativa=$(aws ce list-cost-allocation-tags --tag-keys project --status Active \
+            --query 'length(CostAllocationTags)' --output text 2>/dev/null || echo "?")
+          if [ "$ativa" != "1" ]; then
+            echo "::warning::A tag project não está ativa como tag de alocação de custo (ou não foi possível ler). O custo por projeto não aparece no Cost Explorer. A ativação é única na conta (D-039): aplique o infra/conta assim que a chave project aparecer no Billing."
+          fi
+          destino=$(aws xray get-trace-segment-destination --query Destination --output text 2>/dev/null || echo "?")
+          if [ "$destino" != "CloudWatchLogs" ]; then
+            echo "::warning::O Transaction Search do CloudWatch não está ligado (ou não foi possível ler). Os traces dos agentes não aparecem. Aplique o infra/conta."
+          fi
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          KMS_ARGS=()
+          if [ -n "$TF_STATE_KMS_KEY_ARN" ]; then KMS_ARGS=(-backend-config="kms_key_id=$TF_STATE_KMS_KEY_ARN"); fi
+          terraform init -input=false \
+            -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="key=$STATE_KEY" \
+            -backend-config="region=$REGIAO" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true" "${KMS_ARGS[@]}"
+      - name: Apply
+        run: terraform apply -input=false -auto-approve -lock-timeout=120s
+
+  prazo:
+    # Job separado: só ele escreve no repositório, e só no branch infra-no-ar.
+    needs: apply
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Registrar o prazo de vida
+        env:
+          HORAS: ${{ inputs.prazo_horas }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 harness/infra.py registrar "$CHAVE" --stack "$STACK_NAME" --horas "$HORAS" --run "$RUN"

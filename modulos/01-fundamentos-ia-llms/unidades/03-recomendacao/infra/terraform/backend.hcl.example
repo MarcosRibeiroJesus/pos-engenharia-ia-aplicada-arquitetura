@@ -1,0 +1,7 @@
+# Copie para backend.hcl (fora do git) e rode: terraform init -backend-config=backend.hcl
+bucket       = "nome-do-bucket-de-state-123456789012" # o mesmo de vars.TF_STATE_BUCKET (ou a saída state_bucket do infra/conta)
+key          = "01-recomendacao/lab.tfstate"          # mesma chave dos workflows do projeto (STATE_KEY)
+region       = "us-east-1"
+encrypt      = true
+kms_key_id   = "arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000" # saída state_kms_key_arn do infra/conta; sem ela, encrypt = true pede SSE-S3 e a política do bucket nega
+use_lockfile = true # lock nativo do S3 (Terraform >= 1.10), sem tabela DynamoDB

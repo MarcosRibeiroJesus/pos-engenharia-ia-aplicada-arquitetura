@@ -1,0 +1,47 @@
+{
+  "id": "erro-403-sem-guardrail",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "InvokeModel sem os cabeçalhos do guardrail, negado pela condição bedrock:GuardrailIdentifier do IAM (ADR-0010).",
+  "caminho": "erro-nao-retentavel",
+  "tipo": "erro-http",
+  "origem": {
+    "data": "2026-11-23",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "max_tokens": 1024,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tool_choice": {
+        "type": "tool",
+        "name": "record_explanations"
+      },
+      "tools": [
+        "record_explanations"
+      ],
+      "strict": true,
+      "itens": [
+        "SKU-1",
+        "SKU-2"
+      ]
+    },
+    "observacao": "formato a confirmar: corpo, cabeçalho e mensagem escritos à mão; a mensagem imita o formato comum de AccessDenied do IAM, com o ARN do chamador e do recurso, para provar que ela não chega ao log (A5 da revisão da T081). Conta 000000000000 e nomes sintéticos, sem recurso real; a mensagem real só na captura da T107"
+  },
+  "resposta": {
+    "status": 403,
+    "corpo": {
+      "type": "error",
+      "error": {
+        "type": "permission_error",
+        "message": "User: arn:aws:sts::000000000000:assumed-role/role-sintetica/sessao-sintetica is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:us-east-1:000000000000:application-inference-profile/perfilsintetico because no identity-based policy allows the bedrock:InvokeModel action"
+      }
+    },
+    "mensagem": "User: arn:aws:sts::000000000000:assumed-role/role-sintetica/sessao-sintetica is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:us-east-1:000000000000:application-inference-profile/perfilsintetico because no identity-based policy allows the bedrock:InvokeModel action",
+    "tipo_de_erro": "AccessDeniedException",
+    "cabecalhos": {
+      "x-amzn-errortype": "AccessDeniedException"
+    }
+  }
+}

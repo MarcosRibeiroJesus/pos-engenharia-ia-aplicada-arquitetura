@@ -1,0 +1,69 @@
+{
+  "id": "sinal-sem-lastro",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "SKU-2 com similar_items, que os dados do item não sustentam.",
+  "caminho": "validacao-falha",
+  "tipo": "messages",
+  "origem": {
+    "data": "2026-11-18",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "max_tokens": 1024,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tool_choice": {
+        "type": "tool",
+        "name": "record_explanations"
+      },
+      "tools": [
+        "record_explanations"
+      ],
+      "strict": true,
+      "itens": [
+        "SKU-1",
+        "SKU-2"
+      ]
+    }
+  },
+  "resposta": {
+    "id": "msg_test",
+    "type": "message",
+    "role": "assistant",
+    "model": "anthropic.claude-haiku-5-5",
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_1",
+        "name": "record_explanations",
+        "input": {
+          "explanations": [
+            {
+              "itemId": "SKU-1",
+              "reason": "Combina com o que você comprou antes e com o item que está vendo agora.",
+              "signals": [
+                "purchase_history",
+                "session_context"
+              ]
+            },
+            {
+              "itemId": "SKU-2",
+              "reason": "Parecido com itens que você viu recentemente nesta categoria.",
+              "signals": [
+                "similar_items"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "input_tokens": 900,
+      "output_tokens": 200
+    }
+  }
+}

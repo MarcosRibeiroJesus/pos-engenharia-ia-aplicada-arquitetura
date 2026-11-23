@@ -74,10 +74,10 @@ const ITEMS = [
     diagram: ["ViZDoom", "Treino Spot", "Avaliação", "Navegador"],
   },
   {
-    type: "arquitetura", module: "01", unit: "03", status: "draft", statusLabel: "Em construção",
-    title: "Plataforma híbrida de recomendação na AWS",
-    dek: "Batch com Glue, SageMaker e DynamoDB, tempo real com busca vetorial, serving resiliente em ECS e explicação das recomendações com Claude.",
-    href: "https://github.com/MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura/pull/1", minutes: null, tags: ["AWS", "Terraform", "Claude"],
+    type: "arquitetura", module: "01", unit: "03", status: "draft", statusLabel: "Em revisão",
+    title: "Recomendação do lote ao tempo real na AWS, com um LLM que explica sem inventar",
+    dek: "Lote diário, busca vetorial em tempo real e re-ranking em Terraform testado, sem NAT e com teto de US$ 10/mês. Claude no Bedrock explica cada item por tool_use validado, com fallback que nunca vira 500.",
+    href: "projetos/01-03-recomendacao.html", minutes: 10, tags: ["AWS", "Terraform", "Claude"],
     diagram: ["S3/Glue", "SageMaker", "MemoryDB", "ECS"],
   },
   {

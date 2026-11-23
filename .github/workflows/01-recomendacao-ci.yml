@@ -1,0 +1,194 @@
+name: "01-recomendacao · CI"
+
+# Roda só quando a unidade (ou um workflow da D01) muda. O gate de custo do PR é só o de
+# seguranca.yml, que compara o custo de 24 h com o teto diário do harness/estado.json (RNF-103).
+on:
+  pull_request:
+    paths:
+      - "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/**"
+      - "testing/scripts/integracao_01_03_recomendacao.py"
+      - ".github/workflows/01-recomendacao-*.yml"
+  push:
+    branches: [main]
+    paths:
+      - "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/**"
+      - ".github/workflows/01-recomendacao-*.yml"
+
+# Permissões mínimas: o token OIDC só no job de plan (RNF-106).
+permissions:
+  contents: read
+
+concurrency:
+  group: 01-recomendacao-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UNIT_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao
+  TF_DIR: modulos/01-fundamentos-ia-llms/unidades/03-recomendacao/infra/terraform
+  TF_VERSION: 1.13.5
+  STATE_KEY: 01-recomendacao/lab.tfstate
+
+jobs:
+  app:
+    name: Serviço (lint, build, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.UNIT_DIR }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.UNIT_DIR }}/package-lock.json
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: python -m unittest discover -s tests
+
+  infra-static:
+    name: Infra (fmt, validate, tflint, checkov, terraform test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: pip install checkov
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - run: tflint --recursive
+      - run: checkov -d .. --framework terraform --compact --quiet
+      - run: terraform test
+      - run: python3 tests/static_rules.py
+
+  integration-floci:
+    name: Integração no Floci (apply + asserts + destroy)
+    needs: infra-static
+    runs-on: ubuntu-latest
+    services:
+      floci:
+        image: ${{ vars.FLOCI_IMAGE || 'floci/floci:latest' }}  # D-013: tag de versão via variável
+        ports: ["4566:4566"]
+        # O ECR do Floci sobe um registry de verdade pelo Docker; sem o socket, DeleteRepository falha (ADR-0006).
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      EMULATOR_NAME: Floci (GitHub Actions)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: pip install awscli
+      - name: Aguardar o Floci
+        run: |
+          for _ in $(seq 1 30); do curl -s -o /dev/null http://localhost:4566 && exit 0; sleep 2; done
+          echo "Floci não respondeu" && exit 1
+      - name: Host do S3 Control do emulador
+        run: echo "127.0.0.1 000000000000.localhost" | sudo tee -a /etc/hosts
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+      - name: Dependências do serviço (teste do componente com Claude)
+        working-directory: ${{ env.UNIT_DIR }}
+        run: npm ci
+      - run: python3 testing/scripts/integracao_01_03_recomendacao.py
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: relatorio-integracao-01-recomendacao
+          path: testing/reports/
+
+  plan:
+    name: Plan na AWS (comentado no PR)
+    if: github.event_name == 'pull_request' && vars.AWS_PLAN_ROLE_ARN != ''
+    needs: infra-static
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write       # OIDC: só este job assume role (RNF-106)
+      pull-requests: write  # comentário do plan
+    env:
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      # Chave do state (saída state_kms_key_arn do infra/conta). Vazia: o init segue sem kms_key_id,
+      # como hoje; contra o bucket do infra/conta ele falha fechado com AccessDenied (T032, D-012).
+      TF_STATE_KMS_KEY_ARN: ${{ vars.TF_STATE_KMS_KEY_ARN }}
+      REGIAO: ${{ vars.AWS_REGION || 'us-east-1' }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      - name: Init com state remoto
+        run: |
+          KMS_ARGS=()
+          if [ -n "$TF_STATE_KMS_KEY_ARN" ]; then KMS_ARGS=(-backend-config="kms_key_id=$TF_STATE_KMS_KEY_ARN"); fi
+          terraform init -input=false \
+            -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="key=$STATE_KEY" \
+            -backend-config="region=$REGIAO" \
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true" "${KMS_ARGS[@]}"
+      - name: Plan
+        run: |
+          terraform plan -input=false -no-color -lock-timeout=120s -out=tfplan > plan.txt 2>&1 || (cat plan.txt; exit 1)
+          terraform show -no-color tfplan > plan-full.txt
+      - name: Comentar o plan no PR
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const fs = require('fs');
+            const dir = process.env.TF_DIR;
+            const full = fs.readFileSync(`${dir}/plan-full.txt`, 'utf8');
+            const summary = (full.match(/Plan: .*|No changes\..*/) || ['(sem resumo)'])[0];
+            const body = [
+              '### Terraform plan · 01-recomendacao',
+              `**${summary}**`,
+              '<details><summary>plan completo</summary>',
+              '',
+              '```',
+              full.slice(-60000),
+              '```',
+              '</details>',
+              '',
+              '---',
+              '_Gerado pelo workflow 01-recomendacao-ci_',
+            ].join('\n');
+            const marker = '### Terraform plan · 01-recomendacao';
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: context.issue.number });
+            const old = comments.find(c => c.body.startsWith(marker));
+            if (old) await github.rest.issues.updateComment({ ...context.repo, comment_id: old.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });

@@ -1,0 +1,330 @@
+import { randomUUID } from 'crypto';
+import { RecommendedItem, LimitSchema, UserIdSchema, MergedCandidate, BatchCandidate } from '../domain/candidate';
+import { RecentPurchase } from '../domain/filter-rule';
+import { IDynamoDbBatchRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
+import { IMemoryDbVectorRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
+import { ISageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
+import { ICuratedFallbackProvider, CuratedFallbackProvider } from '../infrastructure/fallback/curated-fallback.provider';
+import { ICloudWatchMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { IInventoryEligibilityRepository } from '../infrastructure/cache/inventory-eligibility.repository';
+import { BusinessFilterEngine } from './business-filter-engine';
+import { OutOfStockFilterRule, RecentPurchaseSuppressionRule } from '../domain/filter-rule';
+import { mergeCandidates } from './candidate-merger';
+import { SageMakerReranker } from './reranker';
+import { HeuristicReranker } from './heuristic-reranker';
+import { baseLogger, StageTimer } from '../infrastructure/logging/logger';
+import { IRecommendationExplainer, ExplanationOutcome } from './recommendation-explainer';
+import { isValidationError } from '../domain/dependency-error';
+
+export interface RecommendationRequestParams {
+  userId: string;
+  limit?: number;
+  category?: string;
+  sessionItemIds?: string[];
+  userCountry?: string;
+  requestId?: string;
+  /** Pede a explicação com Claude. Fora do SLO de 60 ms (ADR-0004). */
+  explain?: boolean;
+}
+
+export type ExplanationSummary =
+  | { status: 'not_requested' }
+  | { status: 'ok'; modelId: string; attempts: number }
+  | { status: 'unavailable'; reason: string; attempts: number };
+
+export interface RecommendationResponse {
+  requestId: string;
+  userId: string;
+  timestamp: string;
+  degradedMode: boolean;
+  executionDurationMs: number;
+  recommendations: RecommendedItem[];
+  explanation: ExplanationSummary;
+}
+
+export interface IGetRecommendationsUseCase {
+  execute(params: RecommendationRequestParams): Promise<RecommendationResponse>;
+}
+
+export interface UseCaseDependencies {
+  batchRepo: IDynamoDbBatchRepository;
+  vectorRepo: IMemoryDbVectorRepository;
+  scoringClient: ISageMakerScoringClient;
+  fallbackProvider?: ICuratedFallbackProvider;
+  metricsPublisher?: ICloudWatchMetricsPublisher;
+  filterEngine?: BusinessFilterEngine;
+  inventoryRepo?: IInventoryEligibilityRepository;
+  explainer?: IRecommendationExplainer;
+}
+
+export class GetRecommendationsUseCase implements IGetRecommendationsUseCase {
+  private batchRepo: IDynamoDbBatchRepository;
+  private vectorRepo: IMemoryDbVectorRepository;
+  private reranker: SageMakerReranker;
+  private fallbackProvider: ICuratedFallbackProvider;
+  private metricsPublisher?: ICloudWatchMetricsPublisher;
+  private filterEngine: BusinessFilterEngine;
+  private inventoryRepo?: IInventoryEligibilityRepository;
+  private explainer?: IRecommendationExplainer;
+
+  constructor(deps: UseCaseDependencies) {
+    this.batchRepo = deps.batchRepo;
+    this.vectorRepo = deps.vectorRepo;
+    this.reranker = new SageMakerReranker(deps.scoringClient);
+    this.fallbackProvider = deps.fallbackProvider || new CuratedFallbackProvider();
+    this.metricsPublisher = deps.metricsPublisher;
+    this.filterEngine =
+      deps.filterEngine ||
+      new BusinessFilterEngine([
+        new OutOfStockFilterRule(),
+        new RecentPurchaseSuppressionRule(),
+      ]);
+    this.inventoryRepo = deps.inventoryRepo;
+    this.explainer = deps.explainer;
+  }
+
+  public async execute(params: RecommendationRequestParams): Promise<RecommendationResponse> {
+    const startTime = process.hrtime.bigint();
+    const requestId = params.requestId || `req-${randomUUID()}`;
+    // Só o requestId no logger da requisição: o userId fica fora do log (lista permitida, T085).
+    const logger = baseLogger.child({ requestId });
+
+    // 1. Validation
+    UserIdSchema.parse(params.userId);
+    const limit = LimitSchema.parse(params.limit ?? 10);
+
+    let degradedMode = false;
+
+    // 2. Parallel candidate retrieval
+    const retrievalTimer = new StageTimer(logger, 'parallel-retrieval');
+    // RF-105 (ADR-0011, E5): a busca em tempo real usa o vetor derivado dos itens da sessão. Sem
+    // sessão, ela não roda e os candidatos vêm só do lote, sem ligar o modo degradado. Nesse caso a
+    // categoria não passa pelo `assertValidCategory` do repositório porque não chega ao Redis (o
+    // controlador já a validou antes, RNF-104).
+    const sessionItemIds = params.sessionItemIds ?? [];
+    // RF-104 (ADR-0012): quando o adaptador sabe, candidatos e compras recentes vêm do mesmo GetItem.
+    const batchRepo = this.batchRepo;
+    const batchFetch: Promise<{ candidates: BatchCandidate[]; recentPurchases?: RecentPurchase[] }> =
+      batchRepo.getBatchUserData
+        ? batchRepo.getBatchUserData(params.userId)
+        : batchRepo.getBatchCandidates(params.userId).then((candidates) => ({ candidates }));
+    const [batchResult, vectorResult] = await Promise.allSettled([
+      batchFetch,
+      sessionItemIds.length > 0
+        ? this.vectorRepo.searchBySession(sessionItemIds, params.category, 50)
+        : Promise.resolve([]),
+    ]);
+
+    // Erro de validação (categoria `validacao`, não retentável) é entrada recusada, não queda:
+    // sai do caso de uso sem ligar o modo degradado nem publicar a métrica da dependência.
+    for (const result of [batchResult, vectorResult]) {
+      if (result.status === 'rejected' && isValidationError(result.reason)) {
+        throw result.reason;
+      }
+    }
+
+    const batchCandidates = batchResult.status === 'fulfilled' ? batchResult.value.candidates : [];
+    // Com o DynamoDB fora, não se sabe o que o usuário comprou (ADR-0012): fica indefinido, e o modo
+    // degradado já é ligado pela falha do DynamoDB logo abaixo.
+    const batchRecentPurchases = batchResult.status === 'fulfilled' ? batchResult.value.recentPurchases : undefined;
+    const vectorCandidates = vectorResult.status === 'fulfilled' ? vectorResult.value : [];
+
+    // RF-106 (ADR-0011): os adaptadores reais lançam DependencyError; a degradação é decidida aqui.
+    if (batchResult.status === 'rejected') {
+      degradedMode = true;
+      void this.metricsPublisher?.publishDynamoDbFallback();
+      logger.warn({ erro: nomeDoErro(batchResult.reason), ...dependencyFields(batchResult.reason) }, 'DynamoDB batch candidate retrieval failed');
+    }
+
+    if (vectorResult.status === 'rejected') {
+      degradedMode = true;
+      void this.metricsPublisher?.publishMemoryDbFallback();
+      logger.warn({ erro: nomeDoErro(vectorResult.reason), ...dependencyFields(vectorResult.reason) }, 'MemoryDB vector search failed');
+    }
+
+    retrievalTimer.end({
+      batchCount: batchCandidates.length,
+      vectorCount: vectorCandidates.length,
+      degradedMode,
+    });
+
+    // 3. Candidate Merging & Deduplication
+    const mergeTimer = new StageTimer(logger, 'candidate-merging');
+    const mergedCandidates = mergeCandidates(batchCandidates, vectorCandidates);
+    mergeTimer.end({ mergedCount: mergedCandidates.length });
+
+    // 4. Inventory lookup & Business Filtering
+    const filterTimer = new StageTimer(logger, 'business-filtering');
+    let filteredCandidates: MergedCandidate[] = mergedCandidates;
+
+    let recentPurchases: RecentPurchase[] | undefined = batchRecentPurchases;
+    if (this.inventoryRepo && mergedCandidates.length > 0) {
+      const itemIds = mergedCandidates.map((c) => c.itemId);
+      const snapshot = { candidates: mergedCandidates, recentPurchases: batchRecentPurchases };
+      try {
+        const [stockMap, purchases] = await Promise.all([
+          this.inventoryRepo.checkStock(itemIds, snapshot),
+          this.inventoryRepo.getRecentPurchases(params.userId, snapshot),
+        ]);
+
+        // Estoque: qualquer fonte que diga false prevalece (o repositório não "devolve" estoque a
+        // um item que o lote marcou como esgotado).
+        for (const candidate of mergedCandidates) {
+          if (stockMap.has(candidate.itemId)) {
+            candidate.inStock = candidate.inStock !== false && stockMap.get(candidate.itemId) !== false;
+          }
+        }
+        recentPurchases = purchases;
+      } catch (error) {
+        // Erro de validação é entrada recusada, não queda (mesma regra da T073).
+        if (isValidationError(error)) throw error;
+        // VT-08 (RF-006, ADR-0012): falha da fonte de elegibilidade vira degradação, nunca 500. O
+        // estoque que veio no candidato continua filtrando; a supressão usa só o que o lote trouxe.
+        degradedMode = true;
+        void this.metricsPublisher?.publishDegradedMode();
+        logger.warn({ erro: nomeDoErro(error), ...dependencyFields(error) }, 'Inventory eligibility lookup failed; filtering with batch data only');
+      }
+    }
+
+    const filterResult = this.filterEngine.filter(mergedCandidates, {
+      userId: params.userId,
+      userCountry: params.userCountry,
+      recentPurchases,
+    });
+    filteredCandidates = filterResult.candidates;
+    filterTimer.end({
+      beforeCount: mergedCandidates.length,
+      afterCount: filteredCandidates.length,
+    });
+
+    let recommendations: RecommendedItem[] = [];
+
+    // Complete downstream outage or empty filtered candidate check
+    if (filteredCandidates.length === 0) {
+      degradedMode = true;
+      void this.metricsPublisher?.publishDegradedMode();
+      logger.warn('Eligible candidate pool is empty; triggering curated fallback provider');
+      recommendations = this.fallbackProvider.getFallbackRecommendations(limit);
+    } else {
+      // 5. ML Reranking via SageMaker (with Graceful Degradation)
+      const rerankTimer = new StageTimer(logger, 'sagemaker-reranking');
+      // modelId de quem ranqueou (RERANKER_MODEL_VERSION, VT-16); indefinido na heurística.
+      let rerankerModelId: string | undefined;
+      try {
+        const reranked = await this.reranker.rerankWithModel({
+          userId: params.userId,
+          candidates: filteredCandidates,
+          limit,
+          sessionItemIds: params.sessionItemIds,
+        });
+        recommendations = reranked.items;
+        rerankerModelId = reranked.modelId;
+      } catch (error) {
+        degradedMode = true;
+        // Feature fora do contrato (origem `feature`) não é queda do endpoint: não publica a métrica
+        // de fallback do SageMaker, só a de modo degradado.
+        const origemFeature = (error as { origem?: unknown } | null)?.origem === 'feature';
+        if (!origemFeature) {
+          void this.metricsPublisher?.publishSageMakerFallback();
+        }
+        void this.metricsPublisher?.publishDegradedMode();
+        logger.warn(
+          { erro: nomeDoErro(error), ...dependencyFields(error), origem: origemFeature ? 'feature' : 'endpoint' },
+          'SageMaker scoring unavailable or timed out; activating weighted heuristic fallback'
+        );
+
+        // Fallback to weighted heuristic reranker: (0.6 * batch) + (0.4 * vector)
+        recommendations = HeuristicReranker.rerank(filteredCandidates, limit);
+      }
+      rerankTimer.end({ finalCount: recommendations.length, rerankerModelId });
+    }
+
+    if (degradedMode) {
+      void this.metricsPublisher?.publishDegradedMode();
+    }
+
+    // 6. Explicação com Claude (opcional). Falha aqui nunca derruba a recomendação.
+    let explanation: ExplanationSummary = { status: 'not_requested' };
+    if (params.explain) {
+      const explainTimer = new StageTimer(logger, 'claude-explanation');
+      const evidence = new Map(filteredCandidates.map((c) => [c.itemId, c]));
+      let outcome: ExplanationOutcome;
+      if (!this.explainer) {
+        outcome = { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: 'explicações desligadas' };
+      } else {
+        try {
+          outcome = await this.explainer.explain({
+            userId: params.userId,
+            sessionItemIds: params.sessionItemIds,
+            items: recommendations.map((r) => {
+              const c = evidence.get(r.itemId);
+              return {
+                itemId: r.itemId,
+                title: r.title,
+                category: r.category,
+                provenance: r.provenance,
+                batchScore: c?.batchScore,
+                vectorScore: c?.vectorScore,
+              };
+            }),
+          });
+        } catch (err) {
+          // Só o nome da classe do erro: a mensagem pode trazer texto do modelo ou do provedor (sem eco).
+          const erro = err instanceof Error ? err.name : 'desconhecido';
+          logger.error({ erro, categoria: 'internal_error', retentavel: false }, 'Explainer lançou exceção; respondendo sem explicação');
+          outcome = {
+            status: 'unavailable',
+            attempts: 0,
+            errorCategory: 'internal_error',
+            retryable: false,
+            detail: `o explicador lançou ${erro}; mensagem omitida`,
+          };
+        }
+      }
+
+      if (outcome.status === 'ok') {
+        const byId = new Map(outcome.explanations.map((e) => [e.itemId, e]));
+        recommendations = recommendations.map((r) => {
+          const e = byId.get(r.itemId);
+          return e ? { ...r, explanation: { reason: e.reason, signals: e.signals, source: e.source } } : r;
+        });
+        explanation = { status: 'ok', modelId: outcome.modelId, attempts: outcome.attempts };
+      } else {
+        // O `detail` não vai ao log: na validação ele traz trechos da saída do modelo (itemId
+        // inventado, contagens, sinais). O log leva só a categoria, o retentável e as tentativas.
+        logger.warn(
+          { categoria: outcome.errorCategory, retentavel: outcome.retryable, tentativas: outcome.attempts },
+          'Explicação indisponível; resposta segue sem explicação'
+        );
+        explanation = { status: 'unavailable', reason: outcome.errorCategory, attempts: outcome.attempts };
+      }
+      explainTimer.end({ status: explanation.status });
+    }
+
+    const endTime = process.hrtime.bigint();
+    const executionDurationMs = Math.round(Number(endTime - startTime) / 1_000_000);
+
+    return {
+      requestId,
+      userId: params.userId,
+      timestamp: new Date().toISOString(),
+      degradedMode,
+      executionDurationMs,
+      recommendations,
+      explanation,
+    };
+  }
+}
+
+/** Campos estruturados do DependencyError para o log (dependência, categoria, retentável). */
+function dependencyFields(reason: unknown): Record<string, unknown> {
+  const r = reason as { dependencia?: unknown; categoria?: unknown; retentavel?: unknown } | null;
+  return r && typeof r === 'object'
+    ? { dependencia: r.dependencia, categoria: r.categoria, retentavel: r.retentavel }
+    : {};
+}
+
+/** Só o nome da classe do erro para o log: a mensagem pode trazer ARN ou texto do provedor (T085). */
+function nomeDoErro(reason: unknown): string {
+  return reason instanceof Error ? reason.name : 'desconhecido';
+}

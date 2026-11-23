@@ -1,0 +1,110 @@
+variable "aws_region" {
+  description = "Região AWS."
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "environment" {
+  description = "Postura do ambiente. 'lab' é a menor escala que demonstra o padrão."
+  type        = string
+  default     = "lab"
+
+  validation {
+    condition     = contains(["lab", "poc", "dev", "prod"], var.environment)
+    error_message = "environment deve ser lab, poc, dev ou prod."
+  }
+}
+
+variable "project_name" {
+  description = "Prefixo dos nomes dos recursos: a chave do projeto (D-029, RNF-108, ADR-0014). Não define a tag project, que é fixa no local.tags_padrao (D-031)."
+  type        = string
+  default     = "01-recomendacao"
+
+  # O prefixo é a chave do projeto e não se troca por input: as policies por ARN (ABAC, D-029) e o
+  # TT-T02 dependem dele. Exceções de nome ficam só em tests/excecoes_de_nome.json.
+  validation {
+    condition     = var.project_name == "01-recomendacao"
+    error_message = "project_name é a chave do projeto, 01-recomendacao (D-029, ADR-0014)."
+  }
+}
+
+variable "enable_serverless_inference" {
+  description = "SageMaker Serverless Inference (custo zero ocioso)."
+  type        = bool
+  default     = true
+}
+
+variable "force_destroy" {
+  description = "Permite que o destroy apague buckets e repositórios com conteúdo (lab)."
+  type        = bool
+  default     = true
+}
+
+variable "expose_api_publicly" {
+  description = "Opt-in para ALB público com HTTPS. Exige certificate_arn."
+  type        = bool
+  default     = false
+}
+
+variable "certificate_arn" {
+  description = "Certificado ACM do listener HTTPS (obrigatório se expose_api_publicly)."
+  type        = string
+  default     = null
+}
+
+variable "enable_interface_endpoints" {
+  description = "Endpoints de interface para a saída das tasks (ADR-0002)."
+  type        = bool
+  default     = true
+}
+
+variable "interface_endpoint_az_count" {
+  description = "AZs com endpoints de interface. 1 no lab, 2+ em produção (ADR-0002)."
+  type        = number
+  default     = 1
+}
+
+variable "ecs_desired_count" {
+  description = "Tasks do serviço de recomendação."
+  type        = number
+  default     = 1
+}
+
+variable "container_image_tag" {
+  description = "Tag da imagem no ECR do stack."
+  type        = string
+  default     = "lab"
+}
+
+variable "bedrock_model_id" {
+  description = "Modelo Claude no Bedrock para as explicações (ADR-0004)."
+  type        = string
+  default     = "anthropic.claude-haiku-5-5"
+}
+
+variable "explanations_enabled" {
+  description = "Liga a explicação por recomendação com Claude (opt-in por requisição)."
+  type        = bool
+  default     = true
+}
+
+variable "log_retention_days" {
+  description = "Retenção dos log groups."
+  type        = number
+  default     = 14
+}
+
+variable "alert_emails" {
+  description = "E-mails assinantes do tópico de alertas (alarmes e Budgets). Sensível: fora do plan e dos outputs."
+  type        = list(string)
+  default     = []
+  sensitive   = true
+}
+
+# O mesmo valor do teto_diario_usd do harness/estado.json e do README (TH-06), aprovado pelo dono
+# (D-056). O limite mensal da conta (US$ 20, D-022) fica só no infra/conta.
+variable "teto_diario_usd" {
+  description = "Teto do AWS Budgets diário do projeto, em USD: o custo estimado de um dia de demonstração (D-021)."
+  type        = number
+  default     = 7.1
+}

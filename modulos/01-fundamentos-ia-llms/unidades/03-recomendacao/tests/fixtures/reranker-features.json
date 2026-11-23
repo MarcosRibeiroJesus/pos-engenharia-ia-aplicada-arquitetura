@@ -1,0 +1,15 @@
+{
+  "descricao": "Contrato único das features do re-ranker entre treino (T042/T043) e serviço (T075), ADR-0008. Cada caso: o candidato e a linha CSV exata que ele gera. Dados sintéticos.",
+  "proveniencia": "sintetica",
+  "colunas": ["batchScore", "vectorScore", "hibrido"],
+  "casas_decimais": 6,
+  "cabecalho": false,
+  "casos": [
+    { "nome": "hibrido com as duas fontes", "candidato": { "provenance": "hybrid", "batchScore": 0.8, "vectorScore": 0.9 }, "linha": "0.800000,0.900000,1" },
+    { "nome": "so lote, vetorial ausente vale 0", "candidato": { "provenance": "batch", "batchScore": 0.6 }, "linha": "0.600000,0.000000,0" },
+    { "nome": "so vetorial, lote ausente vale 0", "candidato": { "provenance": "realtime", "vectorScore": 0.7 }, "linha": "0.000000,0.700000,0" },
+    { "nome": "limites do intervalo", "candidato": { "provenance": "hybrid", "batchScore": 0, "vectorScore": 1 }, "linha": "0.000000,1.000000,1" },
+    { "nome": "arredondamento em 6 casas", "candidato": { "provenance": "batch", "batchScore": 0.1234567, "vectorScore": 0.0000004 }, "linha": "0.123457,0.000000,0" },
+    { "nome": "fallback vira batch no re-ranker", "candidato": { "provenance": "fallback", "batchScore": 0.5 }, "linha": "0.500000,0.000000,0" }
+  ]
+}

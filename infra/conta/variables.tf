@@ -22,3 +22,22 @@ variable "emails_alerta" {
     error_message = "Informe ao menos um e-mail para os alertas."
   }
 }
+
+variable "state_bucket_name" {
+  description = "Nome do bucket de state da conta. Padrão: 00-conta-tfstate-<id da conta>."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.state_bucket_name == null || startswith(coalesce(var.state_bucket_name, "00-conta-"), "00-conta-")
+    error_message = "O bucket de state leva o prefixo da chave da conta, 00-conta- (D-029)."
+  }
+}
+
+variable "repositorio_github" {
+  description = "Repositório do GitHub (dono/repo) dos subjects do OIDC das roles por projeto (ADR-0015 da D01)."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$", var.repositorio_github))
+    error_message = "Use dono/repo, sem curinga."
+  }
+}

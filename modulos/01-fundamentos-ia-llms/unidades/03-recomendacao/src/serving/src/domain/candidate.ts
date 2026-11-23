@@ -1,0 +1,84 @@
+import { z } from 'zod';
+
+export const CandidateProvenanceEnum = z.enum(['batch', 'realtime', 'hybrid', 'fallback']);
+export type CandidateProvenance = z.infer<typeof CandidateProvenanceEnum>;
+
+/** Padrão do `userId`, também usado pelos `sessionItemIds` (RF-105). Única fonte da regra. */
+export const USER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+export const UserIdSchema = z
+  .string()
+  .min(1)
+  .regex(USER_ID_PATTERN, "User ID must match pattern '^[a-zA-Z0-9_\\-]+$'");
+
+/**
+ * Erro de validação do `userId` (categoria `validacao`, não retentável). Lançado pelo adaptador do
+ * DynamoDB antes do disjuntor: entrada recusada não é queda, então não liga o modo degradado nem
+ * publica DynamoDbFallbackCount. A entrada não entra na mensagem (RNF-001, Art. VIII).
+ */
+export class InvalidUserIdError extends Error {
+  public readonly categoria = 'validacao' as const;
+  public readonly retentavel = false;
+
+  constructor() {
+    super(`Parameter 'userId' must match pattern '${USER_ID_PATTERN.source}'`);
+    this.name = 'InvalidUserIdError';
+  }
+}
+
+export const LimitSchema = z.number().int().min(1).max(50).default(10);
+
+export const MergedCandidateSchema = z.object({
+  itemId: z.string().min(1),
+  provenance: CandidateProvenanceEnum,
+  batchScore: z.number().min(0.0).max(1.0).optional(),
+  batchRank: z.number().int().min(1).optional(),
+  vectorScore: z.number().min(0.0).max(1.0).optional(),
+  initialCombinedScore: z.number().min(0.0).max(1.0),
+  category: z.string().optional(),
+  priceCents: z.number().int().nonnegative().optional(),
+  title: z.string().optional(),
+  inStock: z.boolean().default(true).optional(),
+});
+
+export type MergedCandidate = z.infer<typeof MergedCandidateSchema>;
+
+export const RecommendedItemSchema = z.object({
+  itemId: z.string(),
+  rank: z.number().int().min(1),
+  score: z.number().min(0.0).max(1.0),
+  provenance: CandidateProvenanceEnum,
+  title: z.string(),
+  priceCents: z.number().int().nonnegative(),
+  category: z.string().optional(),
+  explanation: z
+    .object({
+      reason: z.string(),
+      signals: z.array(z.string()),
+      source: z.literal('claude'),
+    })
+    .optional(),
+});
+
+export type RecommendedItem = z.infer<typeof RecommendedItemSchema>;
+
+export interface BatchCandidate {
+  itemId: string;
+  score: number;
+  rank: number;
+  modelId?: string;
+  category?: string;
+  priceCents?: number;
+  title?: string;
+  /** Estoque publicado pelo lote em cada recomendação (ADR-0012); ausente = sem informação. */
+  inStock?: boolean;
+}
+
+export interface SemanticCandidate {
+  itemId: string;
+  vectorScore: number;
+  category?: string;
+  priceCents?: number;
+  title?: string;
+  inStock?: boolean;
+}

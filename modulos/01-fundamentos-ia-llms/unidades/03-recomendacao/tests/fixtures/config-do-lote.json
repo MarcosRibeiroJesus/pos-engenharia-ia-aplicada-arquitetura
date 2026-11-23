@@ -1,0 +1,22 @@
+{
+  "_comentario": "Configuração sintética do lote (formato de dags/config/01-recomendacao.json; a T063 gera o real a partir das saídas do Terraform e a T046 completa os campos do treino). Os nomes seguem o prefixo 01-recomendacao-lab- e o banco local.nome_do_banco do root.",
+  "regiao": "us-east-1",
+  "bucket_golden": "01-recomendacao-lab-golden-123456789012",
+  "prefixo_interacoes": "interactions",
+  "banco": "p01_recomendacao_lab_golden",
+  "tabelas": {
+    "interacoes": "interactions",
+    "catalogo": "catalog"
+  },
+  "workgroup_athena": "01-recomendacao-lab-workgroup",
+  "jobs_glue": {
+    "features": "01-recomendacao-lab-feature-engineering",
+    "publicar_dynamodb": "01-recomendacao-lab-publish-dynamodb",
+    "publicar_memorydb": "01-recomendacao-lab-publish-memorydb"
+  },
+  "treino": {
+    "prefixo_do_job": "01-recomendacao-lab-treino",
+    "role_arn": "arn:aws:iam::123456789012:role/01-recomendacao-lab-sagemaker-training-role",
+    "imagem": "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1"
+  }
+}

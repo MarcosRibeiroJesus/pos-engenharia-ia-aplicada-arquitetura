@@ -1,0 +1,78 @@
+{
+  "descricao": "Única lista de exceções ao prefixo de nome do projeto (RNF-108, Art. VI, D-029, ADR-0014). Todo nome começa por 'prefixo'; um nome fora dele só passa se o tipo do recurso e o padrão casarem com uma exceção abaixo. Cada exceção traz motivo, fonte e ADR (ST-04 em static_rules.py). Lido pelo tests/prefixo.tftest.hcl (TT-T02).",
+  "prefixo": "01-recomendacao-",
+  "excecoes": [
+    {
+      "id": "memorydb-cluster",
+      "recurso": "aws_memorydb_cluster",
+      "padrao": "^p01-recomendacao-",
+      "motivo": "O nome do cluster do MemoryDB precisa começar por letra.",
+      "fonte": "https://docs.aws.amazon.com/memorydb/latest/devguide/getting-started.html (regra de nome do cluster, citada no ADR-0014 em 2026-11-20). O validador do provider aws 6.73.0 não implementa a regra da letra inicial (aceita '01-recomendacao-lab-vec' no terraform validate em 2026-11-23), então a exceção se apoia só na documentação do serviço.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "memorydb-subnet-group",
+      "recurso": "aws_memorydb_subnet_group",
+      "padrao": "^p01-recomendacao-",
+      "motivo": "Precaução: a documentação do MemoryDB exige letra inicial no nome do cluster, e não há fonte que trate da regra para o subnet group. O validador do provider aws 6.73.0 não serve de prova, porque não implementa a regra da letra inicial nem para o cluster (aceita dígito inicial nos dois no terraform validate, 2026-11-23). Sai da lista só com fonte que trate da regra do subnet group em si (T102).",
+      "fonte": "https://docs.aws.amazon.com/memorydb/latest/devguide/subnetgroups.html e https://docs.aws.amazon.com/memorydb/latest/devguide/getting-started.html (regra do cluster). Páginas não abertas nesta tarefa; conferência na T102.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "memorydb-parameter-group",
+      "recurso": "aws_memorydb_parameter_group",
+      "padrao": "^p01-recomendacao-",
+      "motivo": "Precaução, pelo mesmo motivo do subnet group: a regra da letra inicial está documentada para o cluster, não há fonte que trate dela para o parameter group, e o validador do provider não implementa a regra. Sai da lista só com fonte que trate da regra do parameter group em si (T102).",
+      "fonte": "https://docs.aws.amazon.com/memorydb/latest/devguide/parametergroups.html e https://docs.aws.amazon.com/memorydb/latest/devguide/getting-started.html (regra do cluster). Páginas não abertas nesta tarefa; conferência na T102.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "mwaa-ambiente",
+      "recurso": "aws_mwaa_environment",
+      "padrao": "^p01-recomendacao-",
+      "motivo": "O nome do ambiente do MWAA precisa começar por letra. O módulo do MWAA saiu da base na T014; a exceção continua aqui porque a raiz da janela (U/infra/janela-mwaa, T060 e T061) usa esta lista. A T061 atualiza a fonte e acrescenta os log groups do Airflow.",
+      "fonte": "https://docs.aws.amazon.com/mwaa/latest/API/API_CreateEnvironment.html (padrão [a-zA-Z][0-9a-zA-Z-_]*, consulta do plano em 2026-11-20).",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "glue-catalogo-banco",
+      "recurso": "aws_glue_catalog_database",
+      "padrao": "^p01_recomendacao_",
+      "motivo": "O banco do Glue Data Catalog é lido pelo Athena, que aceita só minúsculas, dígitos e sublinhado no nome do banco; o hífen do prefixo não serve, e o 'p' inicial evita o nome que começa por dígito, que o Athena exige entre crases nas consultas.",
+      "fonte": "https://docs.aws.amazon.com/athena/latest/ug/tables-databases-columns-names.html (página de nomes do Athena). A página não foi aberta nesta tarefa (sem acesso à documentação na sessão); a conferência fica com a T102, e o ADR-0014 registra isso.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "glue-catalogo-tabela",
+      "recurso": "aws_glue_catalog_table",
+      "padrao": "^p01_recomendacao_",
+      "motivo": "Mesma regra de nomes do Athena do banco: só minúsculas, dígitos e sublinhado. As tabelas entram na T050.",
+      "fonte": "https://docs.aws.amazon.com/athena/latest/ug/tables-databases-columns-names.html (mesma ressalva da exceção do banco: conferência na T102).",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "kms-alias",
+      "recurso": "aws_kms_alias",
+      "padrao": "^alias/01-recomendacao-",
+      "motivo": "A API do KMS exige que o nome do alias comece por 'alias/'; o prefixo do projeto vem logo depois.",
+      "fonte": "Validador do provider aws 6.73.0: o terraform validate reprova um alias sem 'alias/' (conferido em 2026-11-23); https://docs.aws.amazon.com/kms/latest/APIReference/API_CreateAlias.html.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "sagemaker-log-do-endpoint",
+      "recurso": "aws_cloudwatch_log_group",
+      "padrao": "^/aws/sagemaker/Endpoints/01-recomendacao-",
+      "motivo": "O SageMaker grava os logs do endpoint no log group '/aws/sagemaker/Endpoints/<nome-do-endpoint>', nome imposto pelo serviço. O Terraform cria o grupo com esse nome para ter KMS, retenção e destroy; o nome do endpoint leva o prefixo do projeto.",
+      "fonte": "https://docs.aws.amazon.com/sagemaker/latest/dg/logging-cloudwatch.html (log group dos endpoints). Achado A19 da análise 2.",
+      "adr": "ADR-0014"
+    },
+    {
+      "id": "ssm-entradas-da-janela",
+      "recurso": "aws_ssm_parameter",
+      "padrao": "^/01-recomendacao/",
+      "motivo": "O parâmetro das entradas da janela usa a hierarquia do Parameter Store, cujo nome começa por '/'. O nome /01-recomendacao/lab/janela/entradas é fixado pelo plano e pelo ADR-0007; o primeiro nível da hierarquia é a chave do projeto, o que mantém o isolamento por prefixo (D-029) no ARN parameter/01-recomendacao/*.",
+      "fonte": "https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-hierarchies.html (hierarquias de parâmetros). A página não foi aberta nesta tarefa (sem acesso à documentação na sessão da T052); a conferência fica com a T102. O nome do parâmetro vem do ADR-0007.",
+      "adr": "ADR-0014"
+    }
+  ]
+}
