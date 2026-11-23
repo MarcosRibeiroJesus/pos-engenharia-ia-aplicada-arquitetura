@@ -1,0 +1,21 @@
+{
+  "sessao": "e7f13580-a7d3-5ce6-ad35-91b42f488e03",
+  "branch": "modulo/01-fundamentos-ia-llms/03-recomendacao",
+  "atualizado": "2026-11-23T00:20:18+00:00",
+  "modelos": {
+    "claude-sonnet-5-5": {
+      "requisicoes": 30,
+      "input": 66,
+      "cache_write": 184672,
+      "cache_read": 2974991,
+      "output": 12797
+    },
+    "claude-opus-5-5": {
+      "requisicoes": 1,
+      "input": 2,
+      "cache_write": 29756,
+      "cache_read": 0,
+      "output": 162
+    }
+  }
+}

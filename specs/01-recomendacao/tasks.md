@@ -20,7 +20,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
 - **Dependência da plataforma (R9):** "plataforma T0xx" é a tarefa de mesmo id em `specs/00-plataforma-agentes/tasks.md`. Uma tarefa daqui que depende dela só começa com a tarefa da plataforma marcada `[x]` no `main` ou no branch dela.
 
 ## Fase 0 · Preparação
-- [ ] T000 [operador-harness] Mover os ADRs para `U/adr/` · Art. I, Art. VII
+- [x] T000 [operador-harness] Mover os ADRs para `U/adr/` · Art. I, Art. VII
   - **Teste vermelho:** `harness/testes/test_adrs_do_projeto.py` afirma que `U/adr/0007-*.md` a `U/adr/0016-*.md` existem, que todo link `adr/...` do `spec.md` e do `plan.md` de `specs/01-recomendacao/` resolve para um arquivo, e que o sha256 do `plan.md` é igual ao de `plano_aprovado` no `harness/estado.json`.
   - **Arquivos:** `git mv specs/01-recomendacao/adr/*.md U/adr/`; um arquivo de redirecionamento por ADR em `specs/01-recomendacao/adr/` (mesmo nome, só o título e o link relativo para o novo local); o teste.
   - **Aceite:**
