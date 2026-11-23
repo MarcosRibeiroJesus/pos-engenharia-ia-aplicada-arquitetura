@@ -378,8 +378,34 @@ def regras_workflows() -> list:
     return failures
 
 
+SITE = REPO / "site"
+
+
+def textos_do_site() -> dict:
+    """{caminho relativo a site/: texto} de todo HTML do site."""
+    return {p.relative_to(SITE).as_posix(): p.read_text(encoding="utf-8")
+            for p in sorted(SITE.rglob("*.html"))} if SITE.exists() else {}
+
+
+def st05_site_sem_post_gcp(site: dict) -> list:
+    """ST-05 (RF-017, D-054): {caminho: texto} -> falhas. O post GCP não é publicado: nem página,
+    nem href/url apontando para ele (HTML ou item de ITEMS em index.html)."""
+    falhas = []
+    for caminho, texto in site.items():
+        if re.search(r"gcp", caminho, re.I):
+            falhas.append(f"ST-05: {caminho} publica o post da cloud comparativa (GCP); D-054 só publica a AWS")
+        for ref in re.findall(r"""(?:href|url|src)\s*[=:]\s*["']([^"']+)["']""", texto, re.I):
+            if re.search(r"gcp", ref, re.I):
+                falhas.append(f"ST-05: {caminho} aponta para {ref}; o post GCP não é publicado (D-054)")
+    return falhas
+
+
+def regras_site() -> list:
+    return st05_site_sem_post_gcp(textos_do_site())
+
+
 def main() -> int:
-    failures = regras_terraform() + regras_workflows()
+    failures = regras_terraform() + regras_workflows() + regras_site()
     for f in failures:
         print("FALHA", f)
     print(f"static_rules: {len(failures)} falha(s)")

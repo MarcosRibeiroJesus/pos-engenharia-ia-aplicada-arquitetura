@@ -445,7 +445,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/posts/aws.md`, `U/posts/gcp.md` (design doc, não publicado, D-054), `U/docs/matriz-cobertura.md` (aponta para `specs/01-recomendacao/matriz.md`), os ADRs antigos (nota de histórico), `static_rules.py`.
   - **Aceite:** o post AWS troca o "US$ 10/mês" pelo teto de um dia; o post GCP mantém o mapeamento do plano; toda afirmação sobre empresa tem fonte e data, ou fica marcada como inferência (Art. VIII); a revisão final é a T107.
   - **Depende de:** T011, T012, T092, T093.
-- [ ] T095 [P] [desenvolvedor-site] Site sem link para o post GCP · RF-017, D-054 · ST-05
+- [ ] T095 [IMPLEMENTADA, SEM REVISÃO INDEPENDENTE: comitada a pedido do dono; falta o veredito do revisor] [P] [desenvolvedor-site] Site sem link para o post GCP · RF-017, D-054 · ST-05
   - **Teste vermelho:** ST-05 reprova se `site/` tiver link ou item em `ITEMS` para o post GCP da D01.
   - **Arquivos:** `site/projetos/01-03-recomendacao.html`, `site/posts/`, `site/index.html`, `static_rules.py`.
   - **Aceite:** a página continua com status "Em revisão"; a publicação é a T110 e a T111.
