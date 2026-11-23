@@ -13,6 +13,16 @@ if ! command -v terraform >/dev/null || ! terraform version | grep -q "v${TF_VER
   chmod +x /usr/local/bin/terraform && rm -f /tmp/tf.zip
 fi
 
+# rtk (D-067): saída compacta dos comandos do Bash. Compilado do repositório oficial, numa tag fixa,
+# porque o `cargo install rtk` do crates.io instala outro projeto com o mesmo nome (Rust Type Kit).
+# A primeira compilação leva uns 5 minutos; o cache do ambiente guarda o binário.
+RTK_VERSION="${RTK_VERSION:-1.2.1}"
+if ! command -v rtk >/dev/null || ! rtk --version | grep -q "${RTK_VERSION}"; then
+  cargo install --locked --git https://github.com/rtk-ai/rtk --tag "v${RTK_VERSION}" rtk \
+    || echo "AVISO: rtk indisponível; as sessões funcionam igual, só sem a economia."
+fi
+rtk gain >/dev/null 2>&1 && echo "rtk $(rtk --version | awk '{print $2}') pronto (hook em .claude/hooks/rtk_rewrite.py)" || true
+
 # Ferramentas Python (PyPI está na lista padrão)
 pip install --break-system-packages -q --upgrade checkov cfn-lint awscli
 

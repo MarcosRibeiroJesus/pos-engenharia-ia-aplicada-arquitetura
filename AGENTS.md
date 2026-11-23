@@ -45,6 +45,7 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   Ele imprime o agente, o modelo de qualidade equivalente para o nível da tarefa, como iniciar e o prompt de passagem.
 - **Equivalência de modelos** (`harness/agentes.json`, D-028): por nível (máximo, equilibrado, rápido) e por família. O principal é o Claude Code, com a assinatura Pro do dono; na troca, o Antigravity usa Gemini e o Copilot usa modelos da OpenAI.
 - **Escreva skills e prompts sem depender de recurso exclusivo do Claude,** para funcionarem igual nas três famílias.
+- **Economia de tokens** (D-067, ADR 0004): o rtk compacta a saída dos comandos. No Claude Code, pelo hook do projeto; no Antigravity, pelo plugin `.agents/plugins/rtk`. Instale com `bash scripts/setup-ambiente.sh` (versão fixa do repositório oficial). O headroom roda só na máquina do dono (`scripts/headroom-local.sh`).
 - O agente que assume começa pelo ritual da seção 1. Nada do agente anterior é necessário além do que está commitado.
 
 ## 6. Modelos por tipo de trabalho
