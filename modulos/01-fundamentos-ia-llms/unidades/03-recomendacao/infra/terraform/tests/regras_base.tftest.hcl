@@ -353,6 +353,12 @@ run "ecs_menor_privilegio_e_privado" {
     )
     error_message = "ADR-0004: o serviço recebe o modelo do Bedrock por variável de ambiente."
   }
+  assert {
+    # VT-19 (T076, RF-008): o ALB sonda só o processo; `/health` consulta as dependências e, se
+    # fosse o caminho do ALB, uma queda delas tiraria a task do ar e o fallback do RF-006 com ela.
+    condition     = one(aws_lb_target_group.app.health_check).path == "/health/live"
+    error_message = "VT-19: o health check do target group usa /health/live (liveness), não /health."
+  }
 }
 
 run "ecs_api_publica_exige_tls" {

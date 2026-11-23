@@ -5,6 +5,7 @@ import { DependencyError } from '../../domain/dependency-error';
 import { assertValidSessionItems } from '../../domain/session';
 import { env } from '../../config/env';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
+import { DownstreamStatus } from '../../domain/health';
 
 /** Dimensão dos vetores `v` publicados no índice `item_idx` (FLOAT32, 128 posições). */
 export const VECTOR_DIM = 128;
@@ -52,6 +53,12 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
         name: 'memorydb-vector-repo',
       }
     );
+  }
+
+  /** Verificador de saúde (RF-008, VT-19): PING no mesmo cliente do caminho quente, fora do disjuntor. */
+  public async checkHealth(): Promise<DownstreamStatus> {
+    const reply = await this.redis.ping();
+    return reply === 'PONG' ? 'CONNECTED' : 'DEGRADED';
   }
 
   /**

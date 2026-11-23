@@ -6,6 +6,10 @@ import { RecentPurchase } from '../../domain/filter-rule';
 import { env } from '../../config/env';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
 import { baseLogger } from '../logging/logger';
+import { DownstreamStatus } from '../../domain/health';
+
+/** Chave fixa da sonda de saúde: nunca vem da requisição. */
+export const HEALTH_PROBE_USER_ID = 'health-probe';
 
 /** Limite de compras lidas por usuário, o mesmo da publicação (risco de 400 KB do ADR-0012). */
 export const MAX_RECENT_PURCHASES = 100;
@@ -91,6 +95,22 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
     }));
 
     return { candidates, recentPurchases, discardedPurchases };
+  }
+
+  /**
+   * Verificador de saúde (RF-008, VT-19): GetItem na chave fixa de sonda, só com a chave na projeção.
+   * Fora do disjuntor do caminho quente (a sonda não conta falha contra o tráfego) e com a permissão
+   * que a task já tem (`dynamodb:GetItem`). Item ausente é esperado: o que importa é a tabela responder.
+   */
+  public async checkHealth(): Promise<DownstreamStatus> {
+    await this.docClient.send(
+      new GetCommand({
+        TableName: this.tableName,
+        Key: { userId: HEALTH_PROBE_USER_ID },
+        ProjectionExpression: 'userId',
+      })
+    );
+    return 'CONNECTED';
   }
 
   public async getBatchCandidates(userId: string): Promise<BatchCandidate[]> {

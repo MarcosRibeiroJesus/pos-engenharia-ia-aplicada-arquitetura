@@ -367,7 +367,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/infrastructure/sagemaker/sagemaker-scoring.client.ts`, `U/src/serving/src/config/env.ts`, os testes; o contrato JSON legado `sagemaker-inference-contract.json` sai.
   - **Aceite:** o `fallback-sagemaker-degradation` (T005) segue verde; até 100 candidatos por chamada e 35 ms de timeout.
   - **Depende de:** T000.
-- [ ] T076 [P] [engenheiro-ml] Saúde com verificadores reais no servidor de produção · RF-008 · VT-19
+- [x] T076 [P] [engenheiro-ml] Saúde com verificadores reais no servidor de produção · RF-008 · VT-19
   - **Teste vermelho:** VT-19: o servidor montado por `buildDefaultUseCase` injeta verificadores do DynamoDB, do MemoryDB e do SageMaker; com um deles simulado fora, `GET /health` dá `DEGRADED`; com todos fora, `DOWN`.
   - **Arquivos:** `U/src/serving/src/presentation/server.ts`, `controllers/health.controller.ts`, o teste.
   - **Aceite:** o health check do ALB continua usando um caminho que só prova o processo, para uma dependência fora não derrubar a task (a resposta 200 do RF-006 depende da task no ar); a decisão fica num comentário do teste.

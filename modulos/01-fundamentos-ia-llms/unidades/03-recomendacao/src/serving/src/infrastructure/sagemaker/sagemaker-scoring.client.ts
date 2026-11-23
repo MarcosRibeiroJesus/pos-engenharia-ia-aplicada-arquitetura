@@ -3,6 +3,7 @@ import { env } from '../../config/env';
 import { DependencyError } from '../../domain/dependency-error';
 import { baseLogger } from '../logging/logger';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
+import { DownstreamStatus } from '../../domain/health';
 
 /**
  * Contrato do re-ranker (RF-005, ADR-0008): o container nativo do XGBoost 1.7-1 recebe `text/csv`,
@@ -56,6 +57,8 @@ export interface ISageMakerScoringClient {
   scoreCandidates(input: SageMakerScoringRequest): Promise<ScoredPrediction[]>;
   /** Scores com o `modelId` que ranqueou. Opcional para os dublês que só têm `scoreCandidates`. */
   score?(input: SageMakerScoringRequest): Promise<SageMakerScoringResponse>;
+  /** Estado observado pelo tráfego real, sem chamar o endpoint. Opcional para os dublês. */
+  healthStatus?(): DownstreamStatus;
 }
 
 /** Erro de contrato: a mensagem não leva a resposta do endpoint nem dado do usuário. */
@@ -161,6 +164,17 @@ export class SageMakerScoringClient implements ISageMakerScoringClient {
     const scores = decodeScoresCsv(rawBody, candidates.length);
 
     return candidates.map((c, i) => ({ itemId: c.itemId, score: scores[i] }));
+  }
+
+  /**
+   * Verificador de saúde passivo (RF-008, VT-19): lê o disjuntor, sem InvokeEndpoint. O health não
+   * gera inferência paga nem cold start no endpoint serverless, e não pede permissão IAM nova.
+   * Aberto = UNREACHABLE; meio-aberto = DEGRADED; fechado = CONNECTED (sem tráfego ainda, otimista).
+   */
+  public healthStatus(): DownstreamStatus {
+    if (this.breaker.opened) return 'UNREACHABLE';
+    if (this.breaker.halfOpen) return 'DEGRADED';
+    return 'CONNECTED';
   }
 
   /** Scores na ordem dos candidatos, com o `modelId` da configuração (VT-16). */
