@@ -90,7 +90,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
   - Os marketplaces de terceiros (HashiCorp, Trail of Bits, promptfoo e Google) foram confirmados por mim (D-049).
   - Marketplace novo só entra com a minha confirmação. Um teste reprova marketplace fora da lista.
-- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
+- **Uso de tokens:** registrado sozinho a cada resposta pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. O registro entra em **todo commit criado por `git commit`** (D-074), para não se perder se a sessão ou o container acabar: o `.githooks/pre-commit` inclui sozinho os arquivos novos ou modificados de `harness/uso/`, inclusive os de outras sessões, também no fim de merge, cherry-pick e revert com conflito (`--continue`) e com `-a`, `--amend` ou `--allow-empty`. Exceções, em que o registro entra no próximo commit: os commits que o git cria sem passar por `git commit` (merge, rebase, cherry-pick e revert sem conflito; `git am`; `git pull`, que é merge ou rebase), `git rebase --continue`, `--no-verify` e o commit com caminhos explícitos (`-- caminho` ou `--only`). Sem os hooks do git ativos (o `harness/init.sh` ativa), inclua `harness/uso/` no commit por conta própria.
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
@@ -245,6 +245,9 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Economia de tokens** (D-058):
   - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
   - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
+  - **rtk e headroom** (D-067, ADR 0004):
+    - o rtk compacta a saída do Bash em toda sessão, pelo hook `.claude/hooks/rtk_rewrite.py`, que só repassa a reescrita de comandos simples de leitura e de teste, sem pular pedidos de permissão. Saída compacta demais: `rtk bypass <cmd>`;
+    - o headroom comprime o contexto só na minha máquina: `bash scripts/headroom-local.sh`, com a telemetria desligada. Nas sessões de nuvem ele não fica no caminho do modelo. Nunca use o `headroom learn` aqui;
   - **Uso registrado de tudo:**
     - o hook de uso soma também os transcripts dos subagentes;
     - o executor comita `harness/uso/` ao fechar cada fase;
@@ -257,6 +260,7 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - Acompanhamento ao vivo e histórico até o fim da pós: o app `apps/painel-ia` (npm ou Docker) lê os transcripts, guarda tudo em SQLite e exporta o relatório final (ADR 0002).
 
 ## Privacidade
+- Links de sessão do Claude (URL do claude.ai cujo caminho tenha `session_` ou comece com `chat/`) nunca entram no repositório, nem em PR, commit, issue ou comentário: o repositório é público e o link dá acesso à conversa inteira. O rodapé de atribuição `claude.com/claude-code` é permitido. Teste: `harness/testes/test_links_de_sessao.py`.
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
 - Segredos nunca entram no repositório.
