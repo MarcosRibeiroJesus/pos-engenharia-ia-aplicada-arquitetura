@@ -1,6 +1,6 @@
 # Versão do harness
 
-**Versão atual: 0.6.0** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
+**Versão atual: 0.6.1** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
 
 ## Critérios para a 1.0 (estável e testada)
 | # | Critério | Como se prova | Situação |
@@ -15,6 +15,8 @@
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico
+- **0.6.1:**
+  - gate no CI para branch sem o harness atual da base (`branch_defasado.py`), depois do PR #8, que saiu de um main anterior ao harness e passou por fora dos gates locais. Critério 2 (gates estáveis) afetado: o gate que dependia só do hook local agora também vale no CI.
 - **0.5.1:**
   - padrão de tags (D-031);
   - trava de branch mergeado (D-032);
