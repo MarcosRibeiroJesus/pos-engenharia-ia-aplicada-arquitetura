@@ -14,7 +14,7 @@ import { GetRecommendationsUseCase } from '../../src/serving/src/application/get
 import { BedrockClaudeClient } from '../../src/serving/src/infrastructure/bedrock/bedrock-claude.client';
 import { contratoBedrock } from '../../src/serving/src/config/env';
 import { baseLogger } from '../../src/serving/src/infrastructure/logging/logger';
-import { carregarGravacao, erroGravado, mensagemGravada } from '../fixtures/claude/gravacoes';
+import { carregarGravacao, erroGravado, mensagemGravada, guardrailDeSaidaQueAprova } from '../fixtures/claude/gravacoes';
 
 // VT-11 (T082, RF-110, RF-007, ADR-0010 itens 4 e 6): a intervenção do guardrail no InvokeModel e o
 // 403 de uma chamada sem guardrail são falhas NÃO retentáveis, com o mesmo padrão estruturado do
@@ -38,7 +38,7 @@ const input: ExplainInput = {
   ],
 };
 
-const opts = { modelId: 'rotulo-do-modelo', timeoutMs: 1000 };
+const opts = { modelId: 'rotulo-do-modelo', timeoutMs: 1000, guardrailDeSaida: guardrailDeSaidaQueAprova() };
 
 /** Textos que não podem ecoar no `detail` nem no log: o do modelo bloqueado e o do provedor no 403. */
 const TEXTO_DO_MODELO = 'Sorry, the model cannot answer';

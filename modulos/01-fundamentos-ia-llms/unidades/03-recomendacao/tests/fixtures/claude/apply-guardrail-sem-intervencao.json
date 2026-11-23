@@ -1,0 +1,34 @@
+{
+  "id": "apply-guardrail-sem-intervencao",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "ApplyGuardrail com source OUTPUT que aprovou as frases (action NONE).",
+  "caminho": "sucesso",
+  "tipo": "apply-guardrail",
+  "origem": {
+    "data": "2026-11-23",
+    "autor": "escrita à mão (nenhuma chamada ao modelo nem à AWS)",
+    "modelo": "n/a (ApplyGuardrail)",
+    "parametros": {
+      "guardrailIdentifier": "<GUARDRAIL_ID do contrato>",
+      "guardrailVersion": "<GUARDRAIL_VERSAO do contrato>",
+      "source": "OUTPUT",
+      "content": [
+        {
+          "text": {
+            "text": "<frases aprovadas na validação>"
+          }
+        }
+      ]
+    },
+    "observacao": "FORMATO A CONFIRMAR: escrita à mão; a página da API ApplyGuardrail não foi consultada (docs.aws.amazon.com bloqueado nesta execução). Os campos action (GUARDRAIL_INTERVENED ou NONE), outputs, assessments e usage, e o source OUTPUT do pedido, seguem os tipos do @aws-sdk/client-bedrock-runtime 3.1171.0 instalado (código do pacote), não a documentação; a resposta real só na captura da T107 (R4)"
+  },
+  "resposta": {
+    "action": "NONE",
+    "outputs": [],
+    "assessments": [
+      {}
+    ],
+    "usage": {}
+  }
+}

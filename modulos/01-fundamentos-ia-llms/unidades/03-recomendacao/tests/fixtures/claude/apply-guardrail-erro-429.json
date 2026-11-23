@@ -4,10 +4,10 @@
   "sintetica": true,
   "descricao": "ApplyGuardrail com limite de taxa (retentável pelo RF-007).",
   "caminho": "erro-retentavel",
-  "tipo": "erro-http",
+  "tipo": "erro-aws",
   "origem": {
     "data": "2026-11-23",
-    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "autor": "escrita à mão (nenhuma chamada ao modelo nem à AWS)",
     "modelo": "n/a (ApplyGuardrail)",
     "parametros": {
       "guardrailIdentifier": "<GUARDRAIL_ID do contrato>",
@@ -21,21 +21,16 @@
         }
       ]
     },
-    "observacao": "formato a confirmar: a página da API ApplyGuardrail não foi consultada nesta execução; a T084 ou a captura da T107 confirma (R4); o corpo está no formato de erro da Anthropic, mas o cliente real do ApplyGuardrail lança o erro do SDK da AWS (ThrottlingException ou ValidationException, com message); a T084 cria o próprio carregador de erros da AWS"
+    "observacao": "FORMATO A CONFIRMAR: escrita à mão; a página da API ApplyGuardrail não foi consultada (docs.aws.amazon.com bloqueado nesta execução). O formato segue o que o desserializador do @aws-sdk/client-bedrock-runtime 3.1171.0 instalado lê (código do pacote): status HTTP, cabeçalho x-amzn-errortype com o nome da exceção e corpo JSON com message. Reescrita na T084: antes estava no formato de erro da Anthropic, que o cliente do ApplyGuardrail nunca recebe. A mensagem real só na captura da T107 (R4)"
   },
   "resposta": {
     "status": 429,
-    "corpo": {
-      "type": "error",
-      "error": {
-        "type": "rate_limit_error",
-        "message": "Too many requests"
-      }
-    },
-    "mensagem": "Too many requests",
     "tipo_de_erro": "ThrottlingException",
     "cabecalhos": {
       "x-amzn-errortype": "ThrottlingException"
+    },
+    "corpo": {
+      "message": "Too many requests"
     }
   }
 }

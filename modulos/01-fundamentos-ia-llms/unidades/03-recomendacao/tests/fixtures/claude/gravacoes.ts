@@ -14,13 +14,16 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import Anthropic from '@anthropic-ai/sdk';
+import type { GuardrailDeSaidaPort } from '../../../src/serving/src/application/recommendation-explainer';
 
 export const DIRETORIO_GRAVACOES = __dirname;
 
 export const PROVENIENCIAS = ['sintetica', 'documentacao', 'captura'] as const;
 export type Proveniencia = (typeof PROVENIENCIAS)[number];
 
-export const TIPOS = ['messages', 'erro-http', 'apply-guardrail', 'resultado-explicador'] as const;
+// `erro-http`: erro da Messages API como o SDK da Anthropic o lança. `erro-aws`: erro de uma API da AWS
+// (o ApplyGuardrail) como o SDK da AWS o recebe: cabeçalho `x-amzn-errortype` e corpo com `message`.
+export const TIPOS = ['messages', 'erro-http', 'erro-aws', 'apply-guardrail', 'resultado-explicador'] as const;
 export type TipoGravacao = (typeof TIPOS)[number];
 
 export interface OrigemGravacao {
@@ -136,4 +139,83 @@ export function resultadoGravado<T>(id: string): T {
   const g = carregarGravacao(id);
   if (g.tipo !== 'resultado-explicador') throw new Error(`gravação ${id} não é do tipo resultado-explicador`);
   return structuredClone(g.resposta) as T;
+}
+
+// ---------------------------------------------------------------- ApplyGuardrail (SDK da AWS, T084)
+
+/** Resposta HTTP crua que o SDK da AWS recebe do transporte e desserializa sozinho. */
+export interface RespostaHttpGravada {
+  statusCode: number;
+  headers: Record<string, string>;
+  body: Uint8Array;
+}
+
+interface ErroAwsGravado {
+  status: number;
+  tipo_de_erro: string;
+  cabecalhos: Record<string, string>;
+  corpo: Record<string, unknown>;
+}
+
+/**
+ * Resposta HTTP do ApplyGuardrail gravada (tipo `apply-guardrail`, status 200, ou `erro-aws`). O teste
+ * entrega a resposta ao transporte do SDK da AWS, e é o desserializador do próprio SDK que monta o
+ * resultado ou a exceção (ThrottlingException, ValidationException, AccessDeniedException): nenhuma
+ * exceção da AWS é montada à mão.
+ */
+export function respostaHttpAwsGravada(id: string): RespostaHttpGravada {
+  const g = carregarGravacao(id);
+  const json = (corpo: unknown) => new TextEncoder().encode(JSON.stringify(corpo));
+  if (g.tipo === 'apply-guardrail') {
+    return { statusCode: 200, headers: { 'content-type': 'application/json' }, body: json(g.resposta) };
+  }
+  if (g.tipo === 'erro-aws') {
+    const r = g.resposta as ErroAwsGravado;
+    return { statusCode: r.status, headers: { 'content-type': 'application/json', ...r.cabecalhos }, body: json(r.corpo) };
+  }
+  throw new Error(`gravação ${id} não é do tipo apply-guardrail nem erro-aws`);
+}
+
+/** Pedido que o SDK da AWS entregou ao transporte, já assinado. */
+export interface PedidoAwsRegistrado {
+  method: string;
+  path: string;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+}
+
+/**
+ * Transporte falso do SDK da AWS (`requestHandler`): devolve as gravações na ordem (a última se repete)
+ * e guarda os pedidos. Nenhuma rede. Respeita o `abortSignal` como o transporte real.
+ */
+export function transporteAwsGravado(...ids: string[]) {
+  const pedidos: PedidoAwsRegistrado[] = [];
+  let i = 0;
+  return {
+    pedidos,
+    handle: async (request: any, opcoes?: { abortSignal?: AbortSignal }) => {
+      if (opcoes?.abortSignal?.aborted) {
+        const erro = new Error('Request aborted');
+        erro.name = 'AbortError';
+        throw erro;
+      }
+      const corpo = request.body === undefined ? '' : new TextDecoder().decode(request.body as Uint8Array);
+      pedidos.push({
+        method: request.method,
+        path: request.path,
+        headers: { ...request.headers },
+        body: corpo ? (JSON.parse(corpo) as Record<string, unknown>) : {},
+      });
+      const id = ids[Math.min(i++, ids.length - 1)];
+      return { response: respostaHttpAwsGravada(id) };
+    },
+  };
+}
+
+/**
+ * Guardrail de saída que sempre aprova (`NONE`), para os testes cujo assunto não é a revisão da saída
+ * (T084). Não é gravação: os casos do ApplyGuardrail usam as gravações acima pelo VT-12.
+ */
+export function guardrailDeSaidaQueAprova(): GuardrailDeSaidaPort {
+  return { revisarSaida: async () => 'NONE' };
 }

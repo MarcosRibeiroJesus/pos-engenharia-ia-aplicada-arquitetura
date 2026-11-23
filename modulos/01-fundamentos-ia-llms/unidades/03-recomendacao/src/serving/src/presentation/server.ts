@@ -13,6 +13,8 @@ import { BatchDataEligibilityRepository } from '../infrastructure/cache/inventor
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type Redis from 'ioredis';
 import { BedrockClaudeClient } from '../infrastructure/bedrock/bedrock-claude.client';
+import type { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
+import { BedrockApplyGuardrailClient } from '../infrastructure/bedrock/bedrock-apply-guardrail.client';
 import { RecommendationExplainer } from '../application/recommendation-explainer';
 
 export interface ServerOptions extends FastifyServerOptions {
@@ -121,6 +123,8 @@ export interface DefaultUseCaseClients {
   redis?: Redis;
   scoringClient?: ISageMakerScoringClient;
   metricsPublisher?: ICloudWatchMetricsPublisher;
+  /** Cliente do SDK da AWS para o ApplyGuardrail; os testes injetam um com transporte falso. */
+  bedrockRuntimeClient?: BedrockRuntimeClient;
 }
 
 export interface DefaultService {
@@ -150,6 +154,8 @@ export function buildDefaultService(clients: DefaultUseCaseClients = {}): Defaul
         // Rótulo público: só o id do perfil, sem conta nem região do ARN.
         modelId: rotuloDoPerfil(contrato),
         timeoutMs: env.EXPLANATION_TIMEOUT_MS,
+        // ApplyGuardrail com source OUTPUT no guardrail do contrato (T084, ADR-0010 item 7).
+        guardrailDeSaida: new BedrockApplyGuardrailClient(contrato, clients.bedrockRuntimeClient),
         metrics: {
           publishExplanationRetry: () => metricsPublisher.publishExplanationRetry?.(),
           publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback?.(c),

@@ -52,6 +52,24 @@ Fatos que moldam a decisão (consulta em 2026-11-20):
    - as frases aprovadas na validação passam por um `ApplyGuardrail` com `source=OUTPUT`;
    - uma intervenção vira `guardrail`, e um erro da chamada segue as categorias do RF-007;
    - tudo cabe no orçamento de 2,5 s.
+   - **Nota de 2026-11-23 (T084, VT-12): FORMATO A CONFIRMAR.**
+     - **O que está implementado:**
+       - a porta `GuardrailDeSaidaPort` no explicador e o adaptador `bedrock-apply-guardrail.client.ts`;
+       - as frases aprovadas vão num bloco só de texto, uma por linha, para pagar o mínimo de unidades;
+       - uma falha do `ApplyGuardrail` é final para a requisição, e o modelo não é chamado de novo;
+       - só o 429, o 408, o 409, o 5xx e a falha de rede repetem o `ApplyGuardrail`, uma vez;
+       - o 403, os outros 4xx e uma `action` fora da lista ficam fora do disjuntor, porque são configuração;
+       - o detail nunca leva a mensagem do provedor nem o texto revisado;
+       - sem a porta configurada, o modelo nem é chamado (falha fechada).
+     - **Dependência:** o `@aws-sdk/client-bedrock-runtime` passa a ser dependência direta do serviço, fixada em `3.1171.0`. O pacote já estava no lock nessa versão, puxado pelo `@anthropic-ai/bedrock-sdk` 1.1.2, então nenhum código novo entra. O SDK da Anthropic não cobre o `ApplyGuardrail`, e assinar à mão com SigV4 duplicaria o que o SDK da AWS já faz.
+     - **Sem fonte aberta nesta sessão:** a página da API `ApplyGuardrail` não pôde ser consultada. O pedido, a resposta e as exceções seguem os tipos e o desserializador do SDK 3.1171.0 instalado (código do pacote), não a documentação:
+       - pedido: `guardrailIdentifier`, `guardrailVersion`, `source: OUTPUT`, `content[].text.text`;
+       - resposta: `action` com `GUARDRAIL_INTERVENED` ou `NONE`;
+       - exceções: `ThrottlingException`, `ValidationException`, `AccessDeniedException`.
+     - **A confirmar antes da demonstração (DM-08, T107):**
+       - o formato real da resposta e dos erros;
+       - se a cobrança é por bloco ou por texto total.
+     - **Se o formato estiver errado:** a resposta cai em `model_error` não retentável, e a explicação some (falha fechada).
 8. **Falha fechada:** sem configuração do contrato, o explicador não chama o modelo e devolve `unavailable` com `internal_error`.
 
 ## Alternativas rejeitadas

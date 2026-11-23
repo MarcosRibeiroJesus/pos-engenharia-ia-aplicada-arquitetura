@@ -39,6 +39,52 @@ export interface ClaudeMessagesPort {
   prontidao?(): ProntidaoClaude;
 }
 
+/**
+ * Ação do guardrail de saída, já traduzida pelo adaptador para uma lista fechada (ADR-0010 item 7).
+ * `NONE`: as frases passaram. `INTERVENED`: o guardrail interveio, e nenhuma frase vai ao cliente.
+ */
+export type AcaoDoGuardrailDeSaida = 'NONE' | 'INTERVENED';
+
+/**
+ * Motivo de falha do guardrail de saída, numa lista fechada. O adaptador traduz o erro do provedor
+ * para um destes motivos e nunca repassa a mensagem dele (que pode trazer ARN e conta).
+ * - `limite`: 429 / ThrottlingException (retentável);
+ * - `indisponivel`: 5xx do provedor (retentável);
+ * - `conexao`: falha de rede sem resposta HTTP (retentável);
+ * - `permissao`: 403, a role sem `bedrock:ApplyGuardrail` no guardrail do contrato (configuração);
+ * - `requisicao`: outro 4xx, como 400 ou 404 (configuração ou pedido inválido);
+ * - `formato`: resposta fora da lista permitida (ação desconhecida);
+ * - `configuracao`: contrato inválido, recusado antes de qualquer rede.
+ */
+export type MotivoFalhaDoGuardrailDeSaida =
+  | 'limite'
+  | 'indisponivel'
+  | 'conexao'
+  | 'permissao'
+  | 'requisicao'
+  | 'formato'
+  | 'configuracao';
+
+export class FalhaDoGuardrailDeSaida extends Error {
+  constructor(
+    public readonly motivo: MotivoFalhaDoGuardrailDeSaida,
+    public readonly status?: number
+  ) {
+    super(`falha do guardrail de saída: ${motivo}${status === undefined ? '' : ` (HTTP ${status})`}`);
+    this.name = 'FalhaDoGuardrailDeSaida';
+  }
+}
+
+/**
+ * Porta do guardrail de saída (ApplyGuardrail com source OUTPUT, ADR-0010 item 7, T084). O guardrail
+ * do InvokeModel não alcança os parâmetros de tool, onde as frases estão; por isso as frases aprovadas
+ * na validação passam por esta revisão antes de chegar à resposta. O adaptador do Bedrock implementa;
+ * os testes injetam o adaptador real com um transporte falso, ou um fake da porta.
+ */
+export interface GuardrailDeSaidaPort {
+  revisarSaida(textos: string[], options: { signal: AbortSignal }): Promise<AcaoDoGuardrailDeSaida>;
+}
+
 export interface ExplainItem {
   itemId: string;
   title?: string;
@@ -133,7 +179,16 @@ export interface ExplainerOptions {
   now?: () => number;
   /** Gerador do sufixo das marcas do guardrail; os testes injetam um fixo. Padrão: aleatório. */
   gerarSufixoDaMarca?: () => string;
+  /**
+   * Revisão da saída pelo guardrail da plataforma (ApplyGuardrail, T084). Obrigatória: sem ela o
+   * explicador não chama o modelo (falha fechada), porque nenhuma frase pode chegar à resposta sem
+   * passar na validação e no guardrail.
+   */
+  guardrailDeSaida: GuardrailDeSaidaPort;
 }
+
+/** Chamadas ao ApplyGuardrail por requisição: a primeira e uma retentativa, como o RF-007. */
+const MAX_TENTATIVAS_DO_GUARDRAIL = 2;
 
 // ---------------------------------------------------------------- prompt e tool
 
@@ -222,9 +277,74 @@ class TerminalFailure extends Error {
   constructor(
     public readonly category: ExplanationErrorCategory,
     public readonly retryable: boolean,
-    message: string
+    message: string,
+    /**
+     * Se a falha conta no disjuntor. Sem valor, decide pela categoria. Erro de configuração do
+     * guardrail de saída (403, 400, formato) passa `false`: não é indisponibilidade do Bedrock.
+     */
+    public readonly contaNoDisjuntor?: boolean
   ) {
     super(message);
+  }
+}
+
+class PrazoEsgotado extends Error {}
+
+/**
+ * Espera a promessa, mas encerra quando o sinal aborta, mesmo que a porta ignore o sinal: o orçamento
+ * de tempo é um só para o InvokeModel e o ApplyGuardrail (VT-12).
+ */
+function comPrazo<T>(promessa: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(new PrazoEsgotado());
+  return new Promise<T>((resolve, reject) => {
+    const aoAbortar = () => reject(new PrazoEsgotado());
+    signal.addEventListener('abort', aoAbortar, { once: true });
+    promessa.then(
+      (v) => {
+        signal.removeEventListener('abort', aoAbortar);
+        resolve(v);
+      },
+      (e) => {
+        signal.removeEventListener('abort', aoAbortar);
+        reject(e);
+      }
+    );
+  });
+}
+
+/**
+ * Categoria do RF-007 para uma falha do guardrail de saída. O detail tem só o motivo e o status, nunca
+ * a mensagem do provedor nem o texto revisado (sem eco). Erros de configuração ficam fora do disjuntor.
+ */
+function classificarFalhaDoGuardrail(err: unknown, aborted: boolean): TerminalFailure {
+  if (aborted || err instanceof PrazoEsgotado) {
+    return new TerminalFailure('timeout', true, 'orçamento de tempo da explicação esgotado na revisão da saída');
+  }
+  if (!(err instanceof FalhaDoGuardrailDeSaida)) {
+    return new TerminalFailure('internal_error', false, 'falha inesperada na revisão da saída; mensagem omitida');
+  }
+  const http = err.status === undefined ? '' : ` (HTTP ${err.status})`;
+  const omitida = '; mensagem do provedor omitida';
+  switch (err.motivo) {
+    case 'limite':
+      return new TerminalFailure('throttled', true, `ApplyGuardrail com limite de taxa${http}${omitida}`);
+    case 'indisponivel':
+      return new TerminalFailure('model_error', true, `ApplyGuardrail indisponível${http}${omitida}`);
+    case 'conexao':
+      return new TerminalFailure('model_error', true, `falha de conexão com o ApplyGuardrail${omitida}`);
+    case 'permissao':
+      return new TerminalFailure(
+        'model_error',
+        false,
+        `acesso negado ao ApplyGuardrail${http}: role sem permissão no guardrail do contrato${omitida}`,
+        false
+      );
+    case 'requisicao':
+      return new TerminalFailure('model_error', false, `ApplyGuardrail recusou o pedido${http}${omitida}`, false);
+    case 'formato':
+      return new TerminalFailure('model_error', false, 'ApplyGuardrail respondeu fora do formato esperado; resposta omitida', false);
+    case 'configuracao':
+      return new TerminalFailure('internal_error', false, 'contrato do guardrail de saída inválido; ApplyGuardrail não chamado', false);
   }
 }
 
@@ -300,6 +420,19 @@ export class RecommendationExplainer implements IRecommendationExplainer {
       return { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: prontidao.motivo };
     }
 
+    // Falha fechada (T084): sem a revisão da saída, nenhuma frase pode chegar à resposta; então o
+    // modelo nem é chamado. Erro de configuração: fora do disjuntor.
+    if (!this.options.guardrailDeSaida) {
+      void this.options.metrics?.publishExplanationFallback('internal_error');
+      return {
+        status: 'unavailable',
+        attempts: 0,
+        errorCategory: 'internal_error',
+        retryable: false,
+        detail: 'revisão da saída sem guardrail configurado; modelo não chamado',
+      };
+    }
+
     if (input.items.length === 0) {
       return { status: 'ok', attempts: 0, modelId: this.options.modelId, explanations: [] };
     }
@@ -332,6 +465,7 @@ export class RecommendationExplainer implements IRecommendationExplainer {
     const deadline = this.now() + this.timeoutMs;
     let attempts = 0;
     let lastFailure: TerminalFailure | null = null;
+    let aprovadas: ItemExplanation[] | null = null;
 
     try {
       while (attempts < this.maxAttempts) {
@@ -341,9 +475,8 @@ export class RecommendationExplainer implements IRecommendationExplainer {
             signal: controller.signal,
             timeout: Math.max(1, deadline - this.now()),
           });
-          const explanations = this.parse(response, input, allowed);
-          this.recordSuccess();
-          return { status: 'ok', attempts, modelId: this.options.modelId, explanations };
+          aprovadas = this.parse(response, input, allowed);
+          break;
         } catch (err) {
           if (err instanceof ValidationFailure) {
             lastFailure = new TerminalFailure('validation', true, err.message);
@@ -358,11 +491,46 @@ export class RecommendationExplainer implements IRecommendationExplainer {
           if (attempts < this.maxAttempts) void this.options.metrics?.publishExplanationRetry();
         }
       }
+
+      // Revisão da saída (ADR-0010 item 7): só as frases que passaram na validação, no mesmo
+      // orçamento de tempo. Uma falha aqui é final para a requisição: o modelo não é chamado de novo.
+      if (aprovadas) {
+        const falha = await this.revisarSaida(aprovadas, controller.signal);
+        if (falha) return this.fail(attempts, falha);
+        this.recordSuccess();
+        return { status: 'ok', attempts, modelId: this.options.modelId, explanations: aprovadas };
+      }
     } finally {
       clearTimeout(timer);
     }
 
     return this.fail(attempts, lastFailure ?? new TerminalFailure('internal_error', false, 'sem resultado'));
+  }
+
+  // ------------------------------------------------------------ revisão da saída
+
+  /**
+   * ApplyGuardrail com source OUTPUT sobre as frases aprovadas, num bloco só de texto (uma frase por
+   * linha), para a requisição pagar o mínimo de unidades de texto. Devolve a falha, ou `null` se o
+   * guardrail aprovou. Só os motivos retentáveis repetem, e só o ApplyGuardrail (nunca o modelo).
+   */
+  private async revisarSaida(explicacoes: ItemExplanation[], signal: AbortSignal): Promise<TerminalFailure | null> {
+    const textos = [explicacoes.map((e) => e.reason).join('\n')];
+    for (let tentativa = 1; ; tentativa++) {
+      try {
+        const acao = await comPrazo(this.options.guardrailDeSaida.revisarSaida(textos, { signal }), signal);
+        if (acao === 'NONE') return null;
+        if (acao === 'INTERVENED') {
+          // O texto que o guardrail devolve no lugar das frases não entra no detail (sem eco).
+          return new TerminalFailure('guardrail', false, 'o guardrail da plataforma interveio na revisão da saída');
+        }
+        return classificarFalhaDoGuardrail(new FalhaDoGuardrailDeSaida('formato'), false);
+      } catch (err) {
+        const falha = classificarFalhaDoGuardrail(err, signal.aborted);
+        if (!falha.retryable || falha.category === 'timeout' || tentativa >= MAX_TENTATIVAS_DO_GUARDRAIL) return falha;
+        void this.options.metrics?.publishExplanationRetry();
+      }
+    }
   }
 
   // ------------------------------------------------------------ request
@@ -508,7 +676,7 @@ export class RecommendationExplainer implements IRecommendationExplainer {
   private fail(attempts: number, failure: TerminalFailure): ExplanationOutcome {
     // Validação, recusa e intervenção do guardrail são problema da resposta (do conteúdo), não da
     // disponibilidade do Bedrock: não contam no disjuntor.
-    if (!NAO_CONTAM_NO_DISJUNTOR.has(failure.category)) {
+    if (failure.contaNoDisjuntor ?? !NAO_CONTAM_NO_DISJUNTOR.has(failure.category)) {
       this.consecutiveFailures++;
       if (this.consecutiveFailures >= this.failureThreshold) this.openedAt = this.now();
     }

@@ -399,7 +399,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `recommendation-explainer.ts` (montagem do prompt), os testes.
   - **Aceite:** o prompt continua com os critérios explícitos e o exemplo do ADR-0004.
   - **Depende de:** T081.
-- [ ] T084 [engenheiro-claude] `ApplyGuardrail` na saída, dentro do orçamento de 2,5 s · RF-110, RF-007, ADR-0010 · VT-12
+- [x] T084 [engenheiro-claude] `ApplyGuardrail` na saída, dentro do orçamento de 2,5 s · RF-110, RF-007, ADR-0010 · VT-12
   - **Teste vermelho:** VT-12: depois da validação, as frases aprovadas passam por um `ApplyGuardrail` com `source=OUTPUT` no guardrail do contrato; a gravação de intervenção vira `guardrail`; um erro da chamada segue as categorias do RF-007 (429 retentável, 400 não); o timeout de 2,5 s cobre as duas chamadas.
   - **Arquivos:** um cliente do `ApplyGuardrail` atrás de uma porta, `recommendation-explainer.ts`, os testes.
   - **Aceite:** nenhuma frase chega à resposta sem passar na validação e no `ApplyGuardrail`.

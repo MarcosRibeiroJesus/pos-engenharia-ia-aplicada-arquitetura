@@ -5,7 +5,8 @@ import AnthropicBedrock from '@anthropic-ai/bedrock-sdk';
 import { BedrockClaudeClient } from '../../src/serving/src/infrastructure/bedrock/bedrock-claude.client';
 import { RecommendationExplainer, ExplainInput } from '../../src/serving/src/application/recommendation-explainer';
 import { contratoBedrock, loadEnv, rotuloDoPerfil } from '../../src/serving/src/config/env';
-import { erroGravado, mensagemGravada } from '../fixtures/claude/gravacoes';
+import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
+import { erroGravado, mensagemGravada, guardrailDeSaidaQueAprova, transporteAwsGravado } from '../fixtures/claude/gravacoes';
 import type Anthropic from '@anthropic-ai/sdk';
 import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import type Redis from 'ioredis';
@@ -82,7 +83,7 @@ describe('VT-10: configuração do Claude vem do contrato da plataforma (RF-110)
   it('a requisição sai com model igual ao ARN do perfil e os cabeçalhos do guardrail assinados, sem trace', async () => {
     const { sdk, pedidos } = sdkComFetchSimulado();
     const cliente = new BedrockClaudeClient(contratoBedrock(CONTRATO_COMPLETO), sdk);
-    const out = await new RecommendationExplainer(cliente, { modelId: 'rotulo-do-modelo', timeoutMs: 2000 }).explain(input);
+    const out = await new RecommendationExplainer(cliente, { modelId: 'rotulo-do-modelo', guardrailDeSaida: guardrailDeSaidaQueAprova(), timeoutMs: 2000 }).explain(input);
 
     expect(out.status).toBe('ok');
     expect(pedidos).toHaveLength(1);
@@ -137,6 +138,7 @@ describe('VT-10: falha fechada sem a configuração do contrato (nunca chama o m
     const fallbacks: string[] = [];
     const explicador = new RecommendationExplainer(new BedrockClaudeClient(contrato, sdk), {
       modelId: 'rotulo-do-modelo',
+      guardrailDeSaida: guardrailDeSaidaQueAprova(),
       timeoutMs: 2000,
       metrics: { publishExplanationRetry: () => undefined, publishExplanationFallback: (c) => void fallbacks.push(c) },
     });
@@ -159,6 +161,7 @@ describe('VT-10: falha fechada sem a configuração do contrato (nunca chama o m
     const { sdk } = sdkComFetchSimulado();
     const explicador = new RecommendationExplainer(new BedrockClaudeClient(contratoBedrock({}), sdk), {
       modelId: 'rotulo-do-modelo',
+      guardrailDeSaida: guardrailDeSaidaQueAprova(),
       failureThreshold: 2,
     });
     for (let i = 0; i < 4; i++) {
@@ -218,6 +221,14 @@ describe('VT-10: o ARN do perfil (com a conta) não chega à resposta da API', (
       return new Response(JSON.stringify(resposta), { status: 200, headers: { 'content-type': 'application/json' } });
     });
     vi.stubGlobal('fetch', fetchSimulado);
+    // ApplyGuardrail da composição (T084): SDK da AWS com transporte falso, nenhuma rede.
+    const transporteDoGuardrail = transporteAwsGravado('apply-guardrail-sem-intervencao');
+    const guardrailNaComposicao = new BedrockRuntimeClient({
+      region: 'us-east-1',
+      maxAttempts: 1,
+      credentials: { accessKeyId: 'credencial-sintetica-de-teste', secretAccessKey: 'credencial-sintetica-de-teste' },
+      requestHandler: transporteDoGuardrail,
+    });
     vi.resetModules();
     try {
       const { buildDefaultService } = await import('../../src/serving/src/presentation/server');
@@ -239,6 +250,7 @@ describe('VT-10: o ARN do perfil (com a conta) não chega à resposta da API', (
             inp.candidates.map((c) => ({ itemId: c.itemId, score: 0.5 }))
           ),
         },
+        bedrockRuntimeClient: guardrailNaComposicao,
         metricsPublisher: {
           publishDegradedMode: vi.fn(),
           publishSageMakerFallback: vi.fn(),
@@ -251,6 +263,10 @@ describe('VT-10: o ARN do perfil (com a conta) não chega à resposta da API', (
       expect(fetchSimulado).toHaveBeenCalledTimes(1);
       expect(decodeURIComponent(new URL(urls[0]).pathname)).toBe(`/model/${PERFIL_ARN}/invoke`);
       expect(res.explanation).toEqual({ status: 'ok', modelId: 'perfil/perfilsintetico', attempts: 1 });
+      // A composição de produção revisa a saída no guardrail do contrato, depois do InvokeModel.
+      expect(transporteDoGuardrail.pedidos).toHaveLength(1);
+      expect(transporteDoGuardrail.pedidos[0].path).toBe(`/guardrail/${GUARDRAIL_ID}/version/${GUARDRAIL_VERSAO}/apply`);
+      expect(transporteDoGuardrail.pedidos[0].body.source).toBe('OUTPUT');
       expect(JSON.stringify(res.explanation)).not.toContain('000000000000');
       expect(JSON.stringify(res)).not.toContain('000000000000');
       expect(JSON.stringify(res)).not.toContain('arn:');
@@ -272,7 +288,7 @@ describe('VT-10: a falha de configuração não conta no disjuntor (prontidão a
       create,
       prontidao: () => (pronto ? { pronto: true as const } : { pronto: false as const, motivo: 'GUARDRAIL_ID ausente' }),
     };
-    const explicador = new RecommendationExplainer(porta, { modelId: 'rotulo-do-modelo', failureThreshold: 2, maxAttempts: 1 });
+    const explicador = new RecommendationExplainer(porta, { modelId: 'rotulo-do-modelo', guardrailDeSaida: guardrailDeSaidaQueAprova(), failureThreshold: 2, maxAttempts: 1 });
 
     expect(await explicador.explain(input)).toMatchObject({ errorCategory: 'model_error' }); // 1ª falha real
     pronto = false;

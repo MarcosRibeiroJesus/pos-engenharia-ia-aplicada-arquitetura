@@ -6,7 +6,7 @@ import {
   ExplainInput,
   EXPLANATION_TOOL_NAME,
 } from '../../src/serving/src/application/recommendation-explainer';
-import { erroGravado, mensagemGravada } from '../fixtures/claude/gravacoes';
+import { erroGravado, mensagemGravada, guardrailDeSaidaQueAprova } from '../fixtures/claude/gravacoes';
 
 // Respostas gravadas em tests/fixtures/claude/, cada uma com a sua proveniência (RF-111, VT-13).
 // Todas são sintéticas: provam o código diante de cada formato, não o comportamento real do modelo (D-006).
@@ -33,7 +33,7 @@ function fakeClient(...steps: Array<Anthropic.Message | Error>): ClaudeMessagesP
   };
 }
 
-const opts = { modelId: 'anthropic.claude-haiku-5-5', timeoutMs: 1000 };
+const opts = { modelId: 'anthropic.claude-haiku-5-5', timeoutMs: 1000, guardrailDeSaida: guardrailDeSaidaQueAprova() };
 
 describe('RecommendationExplainer · saída estruturada via tool_use (CCAR-F 4.3)', () => {
   it('força a tool de explicação com schema estrito e devolve as explicações válidas', async () => {
