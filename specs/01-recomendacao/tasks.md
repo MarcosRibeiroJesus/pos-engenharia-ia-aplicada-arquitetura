@@ -394,7 +394,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/application/recommendation-explainer.ts`, `U/src/serving/src/domain/explanation.ts` (categoria `guardrail`), o cliente, os testes.
   - **Aceite:** o campo é lido do corpo cru pela porta `ClaudeMessagesPort`; sem o campo e sem `tool_use`, segue a validação de hoje (R4); as métricas `ExplanationFallbackCount` contam a intervenção.
   - **Depende de:** T081.
-- [ ] T083 [P] [engenheiro-claude] Campos de catálogo entre as marcas de entrada do guardrail · RF-110, ADR-0010 (injeção indireta) · VT-17
+- [x] T083 [P] [engenheiro-claude] Campos de catálogo entre as marcas de entrada do guardrail · RF-110, ADR-0010 (injeção indireta) · VT-17
   - **Teste vermelho:** VT-17: título e categoria de cada item vão entre as marcas de entrada do guardrail, com um sufixo aleatório por requisição (duas requisições têm sufixos diferentes); nada além desses campos fica marcado; um título que contém a marca de fechamento não fecha a marca.
   - **Arquivos:** `recommendation-explainer.ts` (montagem do prompt), os testes.
   - **Aceite:** o prompt continua com os critérios explícitos e o exemplo do ADR-0004.

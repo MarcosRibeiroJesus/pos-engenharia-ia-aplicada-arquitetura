@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { CandidateProvenance } from '../domain/candidate';
@@ -63,6 +64,38 @@ export type { ExplanationErrorCategory };
  */
 export const CAMPO_ACAO_DO_GUARDRAIL = 'amazon-bedrock-guardrailAction';
 
+/**
+ * Marcas de entrada do guardrail (ADR-0010 item 5, T083, VT-17). Título e categoria vêm do catálogo,
+ * que não é confiável (injeção indireta): só eles vão entre as marcas, para o filtro de ataque de
+ * prompt do guardrail avaliá-los como conteúdo de entrada. O sufixo é aleatório por requisição e vai
+ * declarado no corpo do InvokeModel, para que um dado de catálogo não adivinhe a marca de fechamento.
+ *
+ * FORMATO A CONFIRMAR (DM-08, captura da T107): o prefixo da marca, o campo do corpo e o limite do
+ * sufixo não estão registrados no ADR-0010 e a documentação da AWS não foi reaberta na T083. Se a
+ * forma real for outra, muda só aqui. Se o corpo for recusado, o 400 cai em `model_error` não
+ * retentável (falha fechada); se as marcas forem ignoradas, o guardrail avalia o prompt inteiro.
+ */
+export const PREFIXO_MARCA_DO_GUARDRAIL = 'amazon-bedrock-guardrails-guardContent';
+export const CAMPO_CONFIG_DO_GUARDRAIL = 'amazon-bedrock-guardrailConfig';
+/** Lista permitida do sufixo: só minúsculas e dígitos, de 8 a 20 caracteres (limite a confirmar). */
+export const SUFIXO_DA_MARCA_VALIDO = /^[a-z0-9]{8,20}$/;
+
+function sufixoAleatorio(): string {
+  return randomBytes(8).toString('hex');
+}
+
+/**
+ * Campo de catálogo entre as marcas. `<` e `>` saem do valor: sem eles nenhum dado de catálogo forma
+ * uma marca de abertura ou de fechamento, com qualquer sufixo. O resto do texto continua dentro da
+ * marca, onde o guardrail o avalia. Campo vazio ou ausente fica ausente (sem marca vazia).
+ */
+function marcarCampoDeCatalogo(valor: string | undefined, sufixo: string): string | undefined {
+  if (valor === undefined) return undefined;
+  const neutro = valor.replace(/[<>]/g, '');
+  if (neutro.trim().length === 0) return undefined;
+  return `<${PREFIXO_MARCA_DO_GUARDRAIL}_${sufixo}>${neutro}</${PREFIXO_MARCA_DO_GUARDRAIL}_${sufixo}>`;
+}
+
 export type ExplanationOutcome =
   | { status: 'ok'; attempts: number; modelId: string; explanations: ItemExplanation[] }
   | {
@@ -98,6 +131,8 @@ export interface ExplainerOptions {
   cooldownMs?: number;
   metrics?: IExplanationMetrics;
   now?: () => number;
+  /** Gerador do sufixo das marcas do guardrail; os testes injetam um fixo. Padrão: aleatório. */
+  gerarSufixoDaMarca?: () => string;
 }
 
 // ---------------------------------------------------------------- prompt e tool
@@ -269,12 +304,28 @@ export class RecommendationExplainer implements IRecommendationExplainer {
       return { status: 'ok', attempts: 0, modelId: this.options.modelId, explanations: [] };
     }
 
+    // Um sufixo por requisição (VT-17), o mesmo nas retentativas, para as marcas do histórico
+    // continuarem válidas. Fora da lista permitida, falha fechada: sem marca confiável, nenhum dado de
+    // catálogo vai ao modelo. É erro interno, não de disponibilidade: não conta no disjuntor. O valor
+    // não entra no detail (sem eco).
+    const sufixo = (this.options.gerarSufixoDaMarca ?? sufixoAleatorio)();
+    if (typeof sufixo !== 'string' || !SUFIXO_DA_MARCA_VALIDO.test(sufixo)) {
+      void this.options.metrics?.publishExplanationFallback('internal_error');
+      return {
+        status: 'unavailable',
+        attempts: 0,
+        errorCategory: 'internal_error',
+        retryable: false,
+        detail: 'sufixo das marcas do guardrail fora da lista permitida; modelo não chamado',
+      };
+    }
+
     if (this.isCircuitOpen()) {
       return this.fail(0, new TerminalFailure('circuit_open', true, 'Bedrock com falhas seguidas; disjuntor aberto'));
     }
 
     const allowed = new Map(input.items.map((i) => [i.itemId, allowedSignalsFor(i, input.sessionItemIds)]));
-    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: this.userPrompt(input, allowed) }];
+    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: this.userPrompt(input, allowed, sufixo) }];
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -286,7 +337,7 @@ export class RecommendationExplainer implements IRecommendationExplainer {
       while (attempts < this.maxAttempts) {
         attempts++;
         try {
-          const response = await this.client.create(this.request(messages), {
+          const response = await this.client.create(this.request(messages, sufixo), {
             signal: controller.signal,
             timeout: Math.max(1, deadline - this.now()),
           });
@@ -316,8 +367,8 @@ export class RecommendationExplainer implements IRecommendationExplainer {
 
   // ------------------------------------------------------------ request
 
-  private request(messages: Anthropic.MessageParam[]): Anthropic.MessageCreateParamsNonStreaming {
-    return {
+  private request(messages: Anthropic.MessageParam[], sufixo: string): Anthropic.MessageCreateParamsNonStreaming {
+    const params: Anthropic.MessageCreateParamsNonStreaming & { [CAMPO_CONFIG_DO_GUARDRAIL]: { tagSuffix: string } } = {
       model: this.options.modelId,
       max_tokens: this.maxTokens,
       system: SYSTEM_PROMPT,
@@ -326,14 +377,20 @@ export class RecommendationExplainer implements IRecommendationExplainer {
       tools: [EXPLANATION_TOOL],
       tool_choice: { type: 'tool', name: EXPLANATION_TOOL_NAME },
       messages,
+      // Declara o sufixo das marcas no corpo do InvokeModel (formato a confirmar, ver acima). O SDK
+      // do Bedrock repassa o corpo, tirando só `model` e `stream`.
+      [CAMPO_CONFIG_DO_GUARDRAIL]: { tagSuffix: sufixo },
     };
+    return params;
   }
 
-  private userPrompt(input: ExplainInput, allowed: Map<string, ExplanationSignal[]>): string {
+  private userPrompt(input: ExplainInput, allowed: Map<string, ExplanationSignal[]>, sufixo: string): string {
+    // Só título e categoria vêm do catálogo e vão marcados; itemId, proveniência e sinais são
+    // calculados pelo serviço e ficam fora das marcas (nada além desses campos fica marcado).
     const items = input.items.map((i) => ({
       itemId: i.itemId,
-      title: i.title,
-      category: i.category,
+      title: marcarCampoDeCatalogo(i.title, sufixo),
+      category: marcarCampoDeCatalogo(i.category, sufixo),
       provenance: i.provenance,
       allowedSignals: allowed.get(i.itemId),
     }));

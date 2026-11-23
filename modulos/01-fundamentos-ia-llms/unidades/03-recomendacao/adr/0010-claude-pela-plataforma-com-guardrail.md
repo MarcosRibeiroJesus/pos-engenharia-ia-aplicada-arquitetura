@@ -34,6 +34,17 @@ Fatos que moldam a decisão (consulta em 2026-11-20):
    - o módulo também concede `bedrock-agentcore:InvokeGateway` no gateway e `ssm:GetParameter` no contrato, que ficam como risco residual do R9, sem rota na VPC da base (linha E do STRIDE do plano, emenda 1);
    - uma chamada sem o guardrail recebe 403, não retentável.
 5. **Entrada marcada:** só os campos de catálogo (título e categoria) vão entre as marcas de entrada do guardrail, com sufixo aleatório por requisição, porque são o ponto de injeção indireta.
+   - **Nota de 2026-11-23 (T083, VT-17): FORMATO A CONFIRMAR.**
+     - **O que está implementado** (`recommendation-explainer.ts`):
+       - o prefixo `amazon-bedrock-guardrails-guardContent_<sufixo>`;
+       - o campo `amazon-bedrock-guardrailConfig.tagSuffix` no corpo do InvokeModel;
+       - o sufixo com 8 a 20 caracteres, só minúsculas e dígitos (gerado por `crypto.randomBytes`).
+     - **Sem fonte aberta nesta sessão:** a documentação da AWS não pôde ser consultada. Os três itens estão marcados no código como "FORMATO A CONFIRMAR".
+     - **A confirmar antes da demonstração (DM-08, T107):**
+       - que o InvokeModel aceita o corpo com `tagSuffix`;
+       - que o guardrail avalia só o trecho marcado;
+       - se o Bedrock retira as marcas antes de entregar o texto ao Claude.
+     - **Se o formato estiver errado:** o efeito é um 400, que vira `model_error` não retentável, e a explicação some (falha fechada); o fallback do RF-007 continua.
 6. **Leitura da resposta:**
    - `amazon-bedrock-guardrailAction` com `INTERVENED` vira a categoria nova `guardrail`, não retentável, com o fallback do RF-007;
    - sem o campo e sem `tool_use`, a resposta segue a validação de hoje.
