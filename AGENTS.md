@@ -17,6 +17,7 @@ Vale igualmente para Claude Code, Google Antigravity e GitHub Copilot. Os agente
   - **Onde perguntar:** registre a pergunta no PR, na seção `## Perguntas ao dono`, com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. A orquestração leva a pergunta ao dono no chat, onde ele responde por múltipla escolha, com a boa prática e o tradeoff de cada opção (D-041). O dono não responde no PR.
 - **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations. Ao explicar uma decisão ao dono, diga o nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só códigos da prova (D-036). Os ids ficam nos ADRs, ao lado do nome.
 - **Privacidade:** nada do curso, do aluno ou das empresas em que o dono trabalha. Só fontes públicas e dados sintéticos. Segredos nunca entram no repositório.
+- **Links de sessão nunca entram no repositório nem em PR, commit, issue ou comentário.** O repositório é público, e quem tem o link lê a conversa inteira. Proibido: qualquer URL do claude.ai cujo caminho tenha `session_` ou comece com `chat/`. Permitido: o rodapé de atribuição `claude.com/claude-code`. Um teste do harness (`harness/testes/test_links_de_sessao.py`) reprova os arquivos rastreados com link de sessão.
 
 ## 3. SDD: como todo projeto é construído
 especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar
