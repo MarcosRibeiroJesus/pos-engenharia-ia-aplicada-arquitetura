@@ -189,7 +189,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T031, T032; `kms_key_id` (de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro): parte da D01 feita na T032; modelos do harness e workflows da plataforma seguem pendentes (tarefa do harness sem id); esta sessão não edita `harness/modelos` nem os workflows da plataforma.
 
 ## Fase 4 · Núcleo: lote sintético fechado (D-051)
-- [ ] T040 [P] [engenheiro-ml] Gerador sintético com semente fixa · Art. VIII, RNF-007, RF-012, RNF-104 · PY-07
+- [x] T040 [P] [engenheiro-ml] Gerador sintético com semente fixa · Art. VIII, RNF-007, RF-012, RNF-104 · PY-07
   - **Teste vermelho:** `U/tests/unit/test_gerador_sintetico.py`: duas execuções com a mesma semente dão bytes iguais; todo registro tem `sintetico: true`; toda categoria casa com `^[A-Za-z0-9_]{1,40}$`; todo item tem `inStock`; nenhum título está fora da lista de nomes fictícios usada pelo VT-14.
   - **Arquivos:** `U/src/batch/gerar_dados_sinteticos.py` (usuários, itens, estoque e interações), o teste.
   - **Aceite:** o gerador recebe destino e volume por argumento; nenhum nome de recurso fixo (PY-01).
