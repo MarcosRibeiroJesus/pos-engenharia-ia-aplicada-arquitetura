@@ -1,14 +1,3 @@
-### 2026-11-22 · D-069 · Nunca incluir links de sessão do Claude no repositório · fonte: Marcos
-O repositório é público, e um link de sessão dá acesso à conversa inteira. Os links já publicados nos corpos de 18 PRs foram removidos.
-
-**Aplicado em:** `AGENTS.md` (seção 2), `CLAUDE.md` (Privacidade), `harness/testes/test_links_de_sessao.py` (PR #45).
-
-### 2026-11-22 · D-070 · D02 (assistente de agendamento): plano aprovado com as decisões de DV-01 a DV-12 · fonte: Marcos
-O dono revisou por múltipla escolha as divergências do PR #44 e aceitou as opções recomendadas. Aprovou o plano (D-033) e decidiu: teto diário de US$ 0,85 com cota de 400.000 tokens e alarme de custo de tokens em US$ 0,40; consumo parcial da plataforma (opção A); Langfuse Cloud na demonstração, um projeto por produto, host `https://cloud.langfuse.com`. DV-04 foi respondido com texto livre ("definir conforme o tipo de projeto e gasto estimado por dia") e convertido em orçamento diário pelo gasto estimado.
-A 2ª pergunta da sessão D02 (D02-P1) não foi localizada e foi dispensada pelo dono, sem decisão.
-
-**Aplicado em:** `specs/02-assistente-agendamento/plan.md` (seção "Decisões do dono"), `specs/02-assistente-agendamento/adr/0006-avaliacao-e-observabilidade.md`, `harness/estado.json` (`plano_aprovado` e `teto_diario_usd`, branch do PR #44).
-
 # Memória compartilhada: histórico de decisões
 
 Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e fonte:
@@ -16,6 +5,35 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 - "delegada": decisão técnica ou de processo tomada pela orquestração com base nas boas práticas da prova, conforme a D-014.
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
+
+### 2026-11-22 · D-072 · D03: lane de compatibilidade MCP somente na versão 2025-11-25 · fonte: delegada
+A lane de compatibilidade da D03 (D-011) atende somente a versão `2025-11-25` (a imediatamente anterior à `2026-07-28`, já presente em `versoes_mcp` do contrato `comum`, ADR-0010 da plataforma), sem estado de sessão nem cabeçalho de sessão. A versão `2025-06-18` só entra se um cliente real precisar, como versão menor do contrato (`1.1.0`). Boa prática: menor superfície de compatibilidade que atende os clientes reais, com política de versão explícita (2.4, 5.6); evita o erro comum de aceitar versões antigas sem demanda e aumentar a superfície de tradução e teste.
+
+**Aplicado em:** `specs/03-mcp-regras-cdb/spec.md` (RF-002 e E16), `harness/estado.json` (branch `modulo/03-mcp/mcp-regras-cdb`).
+
+### 2026-11-22 · D-071 · D03 (MCP de regras do CDB): respostas do dono às perguntas D03-P1 a D03-P10 · fonte: Marcos
+O Marcos respondeu por múltipla escolha às perguntas abertas da spec da D03 (`specs/03-mcp-regras-cdb/spec.md`):
+- **D03-P1 = B:** a etapa de ingestão assistida por Claude (extração de manual sintético para regras estruturadas) fica fora desta entrega; as regras entram como dados versionados revisados no pull request (`RF-016` fora desta entrega).
+- **D03-P2 = A:** o servidor inclui dados sintéticos de aplicações de clientes em JSON versionado validado por schema (`sintetico: true`, sem PII, cobrindo fronteiras de IOF, IR, cliente sem aplicação e teste de isolamento) e a tool `consultar_aplicacoes_cliente` (classe `dado_privado`, `RF-009`), com o `cliente_id` injetado exclusivamente pelo contexto autenticado do atendente (`RF-021`).
+- **D03-P4 = A:** sem distribuição local por `stdio`; exposição somente via HTTP sem estado pelo gateway da plataforma.
+- **D03-P5 = A:** parâmetros do CDB sintético aprovados conforme a proposta da spec (`RF-014`): 100% do CDI; aporte mínimo de R$ 100,00 e máximo de R$ 1.000.000,00 por aporte (FGC informativo até R$ 250 mil por CPF por conglomerado); vencimento em 1.080 dias corridos; sem carência; crédito no mesmo dia útil; horário de corte às 16h (`America/Sao_Paulo`); arredondamento meio para cima (`HALF_UP`).
+- **D03-P6 = A:** um tópico negado no guardrail do produto no Amazon Bedrock (`RF-024`): `"recomendação de investimento personalizada"`.
+- **D03-P9 = A:** uma sessão na máquina do dono extrai e resume as legendas e PDFs das unidades 04 a 08 da D03 antes da fase `analisar` para conferir a fidelidade do desenho.
+- **D03-P10 = A:** criar a classe `leitura_publica` numa versão menor do contrato da plataforma (`1.x`), fora das três pernas da tríade letal, para classificar tools que só leem dados públicos e fazem contas determinísticas (`RF-022`, `RF-023`, `E8`).
+Resta apenas D03-P7 (`teto_diario_usd`), calculado no plano e aprovado junto com o `plan.md`.
+
+**Aplicado em:** `specs/03-mcp-regras-cdb/spec.md` (RF-004, RF-009, RF-014, RF-016, RF-021 a RF-024, Fora de escopo e Perguntas ao dono), `harness/estado.json` (fase `planejar` da `03-mcp-regras-cdb`, branch `modulo/03-mcp/mcp-regras-cdb`).
+
+### 2026-11-22 · D-070 · D02 (assistente de agendamento): plano aprovado com as decisões de DV-01 a DV-12 · fonte: Marcos
+O dono revisou por múltipla escolha as divergências do PR #44 e aceitou as opções recomendadas. Aprovou o plano (D-033) e decidiu: teto diário de US$ 0,85 com cota de 400.000 tokens e alarme de custo de tokens em US$ 0,40; consumo parcial da plataforma (opção A); Langfuse Cloud na demonstração, um projeto por produto, host `https://cloud.langfuse.com`. DV-04 foi respondido com texto livre ("definir conforme o tipo de projeto e gasto estimado por dia") e convertido em orçamento diário pelo gasto estimado.
+A 2ª pergunta da sessão D02 (D02-P1) não foi localizada e foi dispensada pelo dono, sem decisão.
+
+**Aplicado em:** `specs/02-assistente-agendamento/plan.md` (seção "Decisões do dono"), `specs/02-assistente-agendamento/adr/0006-avaliacao-e-observabilidade.md`, `harness/estado.json` (`plano_aprovado` e `teto_diario_usd`, branch do PR #44).
+
+### 2026-11-22 · D-069 · Nunca incluir links de sessão do Claude no repositório · fonte: Marcos
+O repositório é público, e um link de sessão dá acesso à conversa inteira. Os links já publicados nos corpos de 18 PRs foram removidos.
+
+**Aplicado em:** `AGENTS.md` (seção 2), `CLAUDE.md` (Privacidade), `harness/testes/test_links_de_sessao.py` (PR #45).
 
 ### 2026-11-21 · D-068 · Teto da rodada real paga: US$ 20 por execução · fonte: Marcos
 O Marcos respondeu "$20" à pendência da D-062 (valor do teto por execução da rodada real paga do componente Claude). O valor é o máximo por execução: o plano propõe o custo estimado abaixo dele e o relatório informa o medido; passou do teto, a rodada para. É o mesmo número do limite mensal da conta (US$ 20, D-022), que continua valendo por cima de tudo.
