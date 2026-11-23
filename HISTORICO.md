@@ -6,6 +6,17 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-23 · D-074 · Consumo completo da `00-plataforma-agentes` em todas as arquiteturas AWS e IA aplicada 100% alinhada às aulas · fonte: Marcos
+O Marcos definiu a separação clara de propósito entre os dois projetos de cada disciplina:
+- **Projetos de Arquitetura AWS (`tipo: arquitetura`):** foco em praticar conceitos e uso das ferramentas em produção, coerentes com os exemplos oficiais da AWS (âncoras da D-065) e não restritos às simplificações das aulas. Todo projeto de arquitetura AWS (`01-recomendacao`, `02-assistente-agendamento`, `03-mcp-regras-cdb` e seguintes) deve utilizar **completamente** a plataforma de agentes compartilhada (`00-plataforma-agentes`): AgentCore Gateway MCP, AgentCore Policy Engine (Cedar em `ENFORCE`), Bedrock Guardrails, Perfil de Inferência de Aplicação, Contrato SSM v1, alarmes no tópico SNS da plataforma e AgentCore Evaluations.
+- **Projetos de IA Aplicada (`tipo: ia-aplicada`):** 100% alinhados ao que foi ensinado nas aulas da disciplina.
+- **O que muda nos projetos em andamento:**
+  - **D03 (`03-mcp-regras-cdb`):** já desenhada com consumo 100% da plataforma (PR #46); dispensa a conferência de fidelidade às legendas da aula na arquitetura AWS (substitui `D03-P9` da D-071 na arquitetura AWS, mantendo as legendas para o projeto de IA aplicada da D03).
+  - **D02 (`02-assistente-agendamento`):** substitui a parte "consumo parcial (opção A)" da D-070 (`D02-P3`) pelo **consumo completo (opção B do ADR-0003 da D02)**, registrando o executor da agenda como alvo do AgentCore Gateway MCP com políticas Cedar em `ENFORCE` (`cancelar` como `sensivel` restrita à role de aprovação).
+  - **D01 (`01-recomendacao`):** estende o consumo da plataforma (ADR-0010 da D01) para consumo completo, registrando também o alvo MCP de consulta de contexto/catálogo e políticas Cedar no AgentCore Gateway, além de perfil, guardrail, contrato SSM, alarme e Evaluations.
+
+**Aplicado em:** `CLAUDE.md` (Entregáveis e Segurança/FinOps), `.claude/skills/plataforma-agentes/SKILL.md`, `.agents/skills/plataforma-agentes/SKILL.md`, `harness/testes/test_regras_do_dono.py` (`TestConsumoCompletoDaPlataformaD074`), `specs/03-mcp-regras-cdb/spec.md`, `specs/03-mcp-regras-cdb/tasks.md`, `specs/03-mcp-regras-cdb/matriz.md`, `harness/estado.json` (PR #46).
+
 ### 2026-11-22 · D-073 · D03 (MCP de regras do CDB): plano aprovado e teto diário de US$ 0,50 · fonte: Marcos
 O Marcos respondeu por múltipla escolha às duas perguntas do plano da D03 (`specs/03-mcp-regras-cdb/plan.md`):
 - **D03-P7 = A:** teto diário `teto_diario_usd = 0.50` (US$ 0,50 por dia, sobre a estimativa de US$ 0,39, com ~28% de margem), combinado com cota dura de 300.000 tokens por dia no código do agente (pior caso US$ 0,58).
