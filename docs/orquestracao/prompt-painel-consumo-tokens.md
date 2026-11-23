@@ -1,0 +1,89 @@
+# Prompt: painel de consumo de tokens (sessão local, Claude CLI)
+
+## Como abrir
+
+```bash
+cd <pasta do repositório pos-engenharia-ia-aplicada-arquitetura>
+git fetch origin && git switch main && git pull --ff-only
+claude --model opus --add-dir ~/.claude/projects
+```
+
+Cole o prompt abaixo. O `--add-dir` deixa a sessão ler os transcripts do Claude Code fora do repositório (a sessão local pode lê-los; a de nuvem não pode). Aprove as leituras de `~/.claude/projects` quando o Claude pedir.
+
+## Prompt
+
+```
+Projeto: plataforma (painel de consumo de tokens)
+Repositório: MarcosRibeiroJesus/pos-engenharia-ia-aplicada-arquitetura, clonado nesta máquina. Modelo desta sessão: Opus (use Sonnet só no que for mecânico, como estilo de tela e renomeações, D-058).
+
+Você é a sessão que cria o painel de consumo de tokens, aberta pelo dono (Marcos), no ambiente LOCAL. Esta é a prioridade dele agora, acima do restante do backlog.
+
+## Por que isto existe
+O Claude Code está gastando muitos tokens sem efeito prático, e hoje ninguém sabe exatamente para onde cada token vai. O painel precisa responder, com número medido e sem achismo:
+1. Para onde foi cada token de cada sessão (por tipo de token, por requisição, por ferramenta, por subagente, por origem do conteúdo no contexto).
+2. Onde há oportunidade concreta de economia e o que é uso efetivo.
+3. O MESMO, com o mesmo nível de informação e detalhe, para as outras duas ferramentas de código que o dono usa em revezamento quando a cota de uma acaba (AGENTS.md, seção 5, `harness/agente.py`): Google Antigravity e GitHub Copilot. Mais a taxa de conclusão de tarefas de cada uma das três ferramentas (Claude Code, Antigravity e Copilot), para comparar custo e resultado.
+
+## Ponto de partida (verifique, não assuma)
+- Já existe `apps/painel-ia` (ADR em `docs/adr/0002-painel-de-uso-de-ia.md`; README no próprio app): Node 22.13+, sem dependências npm, histórico em SQLite (`node:sqlite`), lê os transcripts em `~/.claude/projects`, mostra tokens por modelo, projeto, sessão e tarefa, e exporta relatório. Ele NÃO mostra o que acontece DENTRO de uma sessão. É essa a lacuna.
+- Existem também: `scripts/uso/uso.py` e `docs/uso/uso-tokens.csv` (registro por sessão e modelo), o hook `.claude/hooks/registrar_uso.py` (grava `harness/uso/<sessao>.json` somando os subagentes) e `site/uso.html` (página pública gerada do CSV).
+- Um dado real, só como pista: a sessão `harness/uso/e7f13580-a7d3-5ce6-ad35-91b42f488e03.json` (a de nuvem que implementou a D01) registra ~1,9 mil requisições, ~273 milhões de tokens de cache LIDO, ~11 milhões de cache escrito e ~1,65 milhão de saída. O cache lido é ~165 vezes a saída. Hipótese a CONFIRMAR ou REFUTAR com medição: o gasto vem de reler a cada requisição um contexto grande, multiplicado por muitas requisições (principalmente com o Opus e com subagentes), e não do texto que o modelo escreve. Outras hipóteses para testar: cache frio depois de pausa ou reinício (o contexto inteiro volta a ser escrito), resultados de ferramenta enormes que ficam no contexto para sempre, injeções por hook a cada mensagem (memória compartilhada, system-reminders), briefings longos de subagentes, rodadas repetidas de revisão e correção, Opus em tarefa mecânica, sessões longas demais sem compactar ou recomeçar.
+
+## Regras do repositório que valem aqui (leia CLAUDE.md, AGENTS.md e a constituição)
+- Antes de agir: `bash harness/init.sh`, `python3 harness/memoria.py ler` (decisões do dono prevalecem), `python3 harness/estado.py status`. Skill `retomar`.
+- SDD e TDD: se o painel ficar sob um projeto de `harness/estado.json`, siga o fluxo (spec, plano, tarefas, analisar, implementar) e o gate de fase; se `apps/painel-ia` NÃO for um projeto no estado, não invente fase: trate como ferramenta de plataforma, escreva uma spec curta em `specs/` ou no ADR (decida e registre o porquê) e siga TDD (teste vermelho antes do código; Art. III). Descubra pelo `estado.py`, não adivinhe.
+- Decisões que são do dono (escopo, publicação, o que vai para o site público, orçamento, aprovação de plano) NÃO se assumem: pergunte pelo `AskUserQuestion`, em múltipla escolha, com a boa prática pelo nome, o erro comum que ela evita e o tradeoff de cada opção (D-041, D-036). Decisões técnicas e de processo são suas, segundo as boas práticas da prova CCAR-F; registre o porquê em ADR.
+- Privacidade (inegociável): transcripts contêm prompts, código e saídas de ferramenta. NUNCA os coloque no repositório, em commit, PR, post ou na página pública. Fixtures de teste são SINTÉTICAS. O painel mostra, por padrão, agregados, contagens, tamanhos, nomes de ferramenta e hashes, não o texto das mensagens; ver conteúdo é opt-in, só local. O que for para `site/uso.html` ou outra página pública só entra com aprovação do dono e sem dado do curso, do aluno ou de empresa.
+- Nada de material do curso no repositório. Nunca estime número de uso e o apresente como medido: o que for estimado fica rotulado como estimativa, o que não tem medição fica `nao-medido`.
+- Git: crie um branch novo a partir do `main`: `plataforma/painel-consumo-tokens`, de preferência num worktree próprio. PR para o `main`. Não mexa no branch nem no PR da D01 (`modulo/01-fundamentos-ia-llms/03-recomendacao`, PR #1) nem em outro branch em andamento. Nada de push com força, nem push no `main`, nem merge: o merge é do dono (D-062). Na primeira linha do PR coloque o estado ("Em andamento: ..." ou "Pronto para revisão do dono: ...").
+- Seja econômica NESTA sessão (o painel prega o que você deve praticar): transcripts são JSONL de dezenas ou centenas de MB, nunca os leia inteiros no contexto. Escreva scripts versionados que leem em fluxo e agregam (scripts inline em interpretador podem ser bloqueados por hooks do repositório; use arquivos), imprima só resumos pequenos, use Grep e leitura por faixa, e delegue a subagente só o que for mesmo independente.
+
+## Antigravity e Copilot: o mesmo painel, com a mesma profundidade (pedido do dono)
+Nada aqui está confirmado: descubra o que cada ferramenta realmente expõe, nesta máquina e nas contas do dono, antes de prometer qualquer visão.
+- **Fontes de dados:** para cada ferramenta, ache onde ficam os registros de uso e de sessão (arquivos locais, logs, bancos locais, exportações, APIs de métricas de uso da conta ou da organização). Para o Copilot, verifique o que o VS Code ou a CLI gravam localmente e o que as APIs de uso e de métricas do GitHub entregam (tokens por requisição, requisições premium, por modelo, por usuário ou só agregados). Para o Antigravity, verifique o que ele grava localmente e se a conta mostra uso e cota. Use só fontes oficiais ou observação direta nos arquivos; não invente formato.
+- **Paridade honesta:** o painel tem de mostrar, para cada ferramenta, as mesmas visões do Claude Code (visão geral, linha do tempo da sessão, para onde foi cada token, subagentes ou agentes, oportunidades de economia) até onde a fonte permitir. O que a fonte não expõe aparece como "não disponível nesta ferramenta" (e o motivo), nunca como número estimado apresentado como medido. Se uma ferramenta só der agregados (por exemplo, requisições premium por dia), mostre o agregado e diga que o detalhe por requisição não existe.
+- **Normalização:** crie um modelo comum (ferramenta, sessão, requisição, modelo, tokens de entrada, saída, cache quando existir, custo equivalente ou unidade de cota própria da ferramenta). Não some tokens de ferramentas diferentes numa unidade sem rótulo: modelos e tokenizadores diferem, e cobrança por requisição premium não é cobrança por token. Mostre cada unidade na sua escala e, quando comparar, diga a regra da comparação.
+- **Se faltar acesso ou fonte:** é decisão do dono (por exemplo, exportar dados da conta, habilitar um relatório, dar um token de leitura de métricas). Pergunte pelo `AskUserQuestion` e siga com as ferramentas que já têm dados. Nunca peça nem digite senha ou token no chat; segredo não entra no repositório.
+
+## Taxa de conclusão de tarefas, por ferramenta (pedido do dono)
+- **Defina antes de medir** (e confirme a definição com o dono pelo `AskUserQuestion`, porque é decisão de produto): sugestão de definição, a validar. Tarefa concluída = tarefa de `tasks.md` marcada `[x]` com o commit e o revisor que o repositório já exige; tarefa iniciada = tarefa que um agente começou (commit, linha em `harness/progresso.md`, `TaskCreate`/`TodoWrite` no transcript, PR aberto). Taxa de conclusão = concluídas sobre iniciadas, por ferramenta e por período.
+- **Fontes que já existem no repositório:** `harness/progresso.md` (cada linha traz data, projeto, agente e modelo, o que foi feito e a próxima tarefa), os trailers dos commits (`Co-Authored-By`, `Revisado-por`), o histórico de PRs e de `tasks.md`, `harness/agente.py` (marcações de cota esgotada e trocas de agente), `harness/uso/*.json`, e, para o Claude Code, as tarefas e os estados nos transcripts. Cruze as fontes para atribuir cada tarefa a uma ferramenta; quando a atribuição for ambígua, marque "não atribuída" e conte quantas ficaram assim.
+- **Mostre também a qualidade da conclusão:** quantas rodadas de revisão e correção até a aprovação, quantas tarefas foram reprovadas ou marcadas `[BLOQUEADO]`, quantas pararam por limite de cota e foram retomadas por outra ferramenta, e o custo (na unidade de cada ferramenta) por tarefa concluída. Taxa alta com custo e retrabalho altos não é uso efetivo.
+- Não compare ferramentas só pela taxa: tarefas diferem em tamanho e dificuldade (as do harness pedem nível máximo de modelo). Mostre a taxa junto do tamanho e do tipo da tarefa, e avise quando a amostra for pequena.
+
+## Fase 1: diagnóstico antes de construir (entregue primeiro)
+1. Descubra o formato real dos transcripts com amostras pequenas (não assuma). Confirme, por exemplo: `message.usage` (input, output, cache_creation_input_tokens e a divisão por TTL se existir, cache_read_input_tokens), `message.model`, `message.id` e `requestId` (deduplicar: a mesma resposta aparece em mais de um registro), `uuid` e `parentUuid`, `isSidechain` e onde ficam os transcripts de subagentes, blocos `tool_use` (nome da ferramenta) e `tool_result` (tamanho), entradas de compactação ou resumo, anexos de hook e system-reminders, reinícios e retomadas, timestamps.
+2. Escreva um script de análise (`scripts/uso/` ou `apps/painel-ia/`, versionado) que, para as sessões reais mais recentes e mais caras, reconcilie os totais com o que o repositório já registra (`harness/uso/*.json` e `docs/uso/uso-tokens.csv`). Se não bater, ache e explique a diferença antes de seguir.
+3. Responda com números e sem enfeite, num resumo curto para o dono:
+   - quanto do custo equivalente vem de cache lido, cache escrito, entrada nova e saída (pesos já usados no repositório: lido 0,1, escrito 2, saída 5; confirme em `docs/uso/README.md`);
+   - o quanto o tamanho do contexto cresce por requisição e quando cai (compactação, nova sessão);
+   - quanto vai para subagentes e para qual tipo de subagente, e quanto foi Opus versus Sonnet versus Haiku;
+   - quantas vezes o cache esfriou no meio de uma sessão (requisição com cache escrito enorme e cache lido ~0) e quanto isso custou;
+   - as 10 maiores fontes de crescimento do contexto (ferramenta e tamanho do resultado) e o custo acumulado de cada uma;
+   - quantas rodadas de revisão e correção, e o custo de cada tarefa de ponta a ponta.
+   - para o Antigravity e o Copilot: quais fontes de dados existem de fato, o que cada uma entrega (por requisição, por sessão ou só agregado), o que fica "não disponível" e o que seria preciso do dono para ter mais; e, para as três ferramentas, a taxa de conclusão e a qualidade da conclusão pela definição acima (com a definição já confirmada pelo dono).
+4. Apresente os achados e, antes da Fase 2, pergunte ao dono pelo `AskUserQuestion` o que decidir de escopo (por exemplo: estender o painel existente ou criar uma tela nova dentro dele; só local ou também uma página agregada e sanitizada no site público; retenção do histórico). Recomende a opção mais segura (local, agregados) e deixe claro que publicar é decisão dele.
+
+## Fase 2: o painel (depois da resposta do dono)
+Estenda `apps/painel-ia` mantendo o jeito dele (Node 22.13+, zero dependências npm, SQLite local, HTML e CSS estáticos, JavaScript puro, gráficos em SVG, nada de fonte ou script externo, tema escuro). Visões mínimas:
+1. **Visão geral:** custo equivalente e tokens por tipo (entrada, cache escrito, cache lido, saída), por modelo, por projeto, por dia; destaque do que mais pesa.
+2. **Linha do tempo de uma sessão:** tamanho do contexto por requisição, taxa de acerto do cache, marcadores (compactação, retomada depois de pausa, reinício por limite de uso, troca de modelo, disparo de subagente, hook que injetou contexto).
+3. **Para onde foi cada token (atribuição):** por ferramenta, por subagente (tipo e descrição), por injeção de hook e system-reminder, por mensagem do usuário, por saída do modelo. MÉTODO sugerido, que mede em vez de estimar: o aumento do contexto entre requisições consecutivas do mesmo fio (entrada + cache escrito + cache lido) é o que a última resposta, o último resultado de ferramenta e a última mensagem acrescentaram; reparta esse aumento entre os blocos pela proporção de bytes e marque a repartição como proporcional. Calcule também o custo de CARREGAR cada item: um token que entra na requisição k é relido em todas as seguintes até a compactação, então custo do item = tamanho x requisições seguintes. Mostre o ranking dos itens mais caros por token-requisição. Tudo que não se atribui entra como "não atribuído", nunca some.
+4. **Subagentes:** custo total e por tarefa, relação entre briefing e resultado, quantos reabriram arquivos já lidos.
+5. **Oportunidades de economia:** regras explícitas e testadas, cada uma com a evidência (sessão, requisição, tamanho), a economia estimada em tokens equivalentes (rotulada como estimativa) e a ação sugerida. Candidatas: resultado de ferramenta enorme que ficou no contexto; mesmo arquivo lido várias vezes; modelo mais caro em tarefa mecânica (D-058); sessão longa que valeria recomeçar com resumo (retomada >8 h ou contexto grande, ver "Retomada de sessão" no CLAUDE.md); cache frio depois de pausa; injeção repetida por hook; briefing de subagente grande demais; rodada de revisão desnecessária; tarefa que parou por limite de uso e recomeçou relendo tudo.
+6. **Comparativo entre ferramentas:** Claude Code, Antigravity e Copilot lado a lado: uso na unidade de cada uma, custo equivalente quando houver regra de comparação explícita, tarefas iniciadas e concluídas, taxa de conclusão, rodadas de revisão por tarefa, trocas por cota esgotada e custo por tarefa concluída. Cada seletor de ferramenta abre as mesmas visões 1 a 5, com "não disponível" onde a fonte não dá o dado.
+7. **Exportação:** o relatório do painel (MD e CSV) continua funcionando e passa a incluir as visões novas em forma agregada e sem conteúdo de mensagem.
+
+## Critérios de aceite
+- Testes primeiro (`node --test`), com transcripts sintéticos gerados por script (nunca reais) e cobrindo: deduplicação por id, subagente, cache frio, compactação, retomada, requisição sem `usage`, linha corrompida.
+- Conciliação: o total do painel para uma sessão é igual ao do `harness/uso/<sessao>.json` e ao CSV (diferença explicada se houver).
+- Atribuição fecha: a soma por origem mais "não atribuído" é igual ao total medido da sessão. Toda estimativa vem rotulada.
+- Matriz de paridade no README do app: para cada visão e cada ferramenta, "disponível", "parcial (só agregado)" ou "não disponível (motivo)". Nenhuma célula "disponível" sem teste com dado sintético no formato real da fonte.
+- Taxa de conclusão: a definição confirmada pelo dono está escrita no README; o cálculo é reproduzível a partir de `tasks.md`, `harness/progresso.md`, commits e PRs; há teste com um repositório sintético (tarefas, commits e linhas de progresso fictícios) e caso de atribuição ambígua; a amostra pequena é avisada na tela.
+- Nenhum conteúdo de mensagem sai do processo local; nenhum dado pessoal no repositório; o servidor escuta só em 127.0.0.1.
+- Desempenho: um transcript de centenas de MB é processado em fluxo, sem carregar tudo em memória, e o painel responde em tempo aceitável (informe o tempo medido).
+- README do app atualizado com como rodar e como ler cada visão; ADR novo (ou nota no ADR 0002) com as decisões, as alternativas rejeitadas e as tarefas da prova exercitadas.
+
+## Ao terminar cada fase
+Commit do que estiver verde (um por passo), linha em `harness/progresso.md`, uso registrado (`python3 scripts/uso/uso.py registrar` e `uso.py painel` conforme o README de uso) e push (o pre-push exige a memória lida). Atualize a primeira linha do PR. Pare ao fim da Fase 1 para o dono decidir, e ao fim da Fase 2 para ele revisar e mergear. Interrompa antes só pelos critérios da skill `executar-tarefas` (tarefa [DONO], mudança de plano, falha repetida, ação irreversível).
+```
