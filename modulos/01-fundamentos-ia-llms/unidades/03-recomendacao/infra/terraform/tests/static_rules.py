@@ -12,9 +12,14 @@ ST-T01 (RNF-107, achado A1 da revisão da T011): todo recurso de modules/ com at
 local.tags do módulo e aparece no output tags_dos_recursos dele.
 ST-T02 (RNF-108, revisão da T012): todo recurso de modules/ com atributo de nome próprio aparece no
 output nomes_dos_recursos dele (o TT-T02 só confere o que está nesse output).
+ST-K01 (D-022, T013): todo aws_budgets_budget do stack é diário (`time_unit = "DAILY"` literal); o
+limite mensal da conta fica só no infra/conta.
+TH-06 (RNF-102, D-021, T013): o padrão de teto_diario_usd no variables.tf, o "Teto diário: US$ X,YZ"
+do README da unidade e o teto_diario_usd do harness/estado.json são o mesmo valor.
 Roda sem rede e sem credenciais: `python3 tests/static_rules.py`. Importável (os testes do harness
-usam `st01_infracost`, `st04_excecoes_de_nome`, `st_t01_tags_dos_modulos` e `st_t02_nomes_dos_modulos` com
-fixtures); a verificação só roda no `__main__`.
+usam `st01_infracost`, `st04_excecoes_de_nome`, `st_t01_tags_dos_modulos`, `st_t02_nomes_dos_modulos`,
+`st_k01_budgets_diarios` e `th06_teto_nos_tres_lugares` com fixtures); a verificação só roda no
+`__main__`.
 """
 import json
 import pathlib
@@ -186,6 +191,43 @@ def st_t02_nomes_dos_modulos(modulos: dict) -> list:
     return falhas
 
 
+def st_k01_budgets_diarios(textos: dict) -> list:
+    """ST-K01: {arquivo: texto .tf} -> falhas. Budgets sem time_unit = "DAILY" literal reprova."""
+    falhas = []
+    for arquivo, texto in textos.items():
+        for tipo, nome, corpo in blocos_de_recurso(texto):
+            if tipo == "aws_budgets_budget" and not re.search(r'^\s*time_unit\s*=\s*"DAILY"\s*$', corpo, flags=re.M):
+                falhas.append(f"ST-K01: {arquivo}: aws_budgets_budget.{nome} não é diário; o mensal fica no infra/conta (D-022)")
+    return falhas
+
+
+def th06_teto_nos_tres_lugares(variables: str, readme: str, estado_teto) -> list:
+    """TH-06: textos do variables.tf e do README, e o teto_diario_usd do estado.json -> falhas."""
+    falhas = []
+    m = re.search(r'variable\s+"teto_diario_usd"\s*\{[^}]*?default\s*=\s*([0-9]+(?:\.[0-9]+)?)', variables, flags=re.S)
+    r = re.search(r"Teto diário: US\$ ([0-9]+,[0-9]{2})", readme)
+    if not m:
+        falhas.append("TH-06: variables.tf sem padrão numérico de teto_diario_usd")
+    if not r:
+        falhas.append("TH-06: README sem 'Teto diário: US$ X,YZ'")
+    if not isinstance(estado_teto, (int, float)):
+        falhas.append("TH-06: harness/estado.json sem teto_diario_usd numérico")
+    if falhas:
+        return falhas
+    valores = {"variables.tf": round(float(m.group(1)), 2), "README.md": round(float(r.group(1).replace(",", ".")), 2),
+               "estado.json": round(float(estado_teto), 2)}
+    if len(set(valores.values())) != 1:
+        falhas.append(f"TH-06: teto diário diferente entre os três lugares: {valores}")
+    return falhas
+
+
+def teto_do_estado():
+    estado = json.loads((REPO / "harness" / "estado.json").read_text(encoding="utf-8"))
+    projetos = estado["projetos"]
+    projetos = projetos.values() if isinstance(projetos, dict) else projetos
+    return next((p.get("teto_diario_usd") for p in projetos if p.get("chave") == CHAVE), None)
+
+
 def modulos_do_stack() -> dict:
     modulos = {}
     for d in sorted((ROOT / "modules").iterdir()):
@@ -206,6 +248,10 @@ def regras_terraform() -> list:
         failures += st04_excecoes_de_nome(json.loads(EXCECOES.read_text(encoding="utf-8")), adrs_existentes())
     failures += st_t01_tags_dos_modulos(modulos_do_stack())
     failures += st_t02_nomes_dos_modulos(modulos_do_stack())
+    failures += st_k01_budgets_diarios({str(p.relative_to(ROOT)): p.read_text(encoding="utf-8")
+                                        for p in ROOT.rglob("*.tf") if ".terraform" not in p.parts})
+    failures += th06_teto_nos_tres_lugares((ROOT / "variables.tf").read_text(encoding="utf-8"),
+                                           (UNIT / "README.md").read_text(encoding="utf-8"), teto_do_estado())
     adr_text = "\n".join(p.read_text(encoding="utf-8") for p in (UNIT / "adr").glob("*.md"))
     tf_files = [p for p in ROOT.rglob("*.tf") if ".terraform" not in p.parts]
     declared = set()

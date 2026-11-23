@@ -101,13 +101,16 @@ variable "log_retention_days" {
 }
 
 variable "alert_emails" {
-  description = "E-mails assinantes do tópico de alertas (alarmes e Budgets)."
+  description = "E-mails assinantes do tópico de alertas (alarmes e Budgets). Sensível: fora do plan e dos outputs."
   type        = list(string)
   default     = []
+  sensitive   = true
 }
 
-variable "monthly_budget_usd" {
-  description = "Teto mensal do AWS Budgets para a conta do lab."
+# O mesmo valor do teto_diario_usd do harness/estado.json e do README (TH-06), aprovado pelo dono
+# (D-056). O limite mensal da conta (US$ 20, D-022) fica só no infra/conta.
+variable "teto_diario_usd" {
+  description = "Teto do AWS Budgets diário do projeto, em USD: o custo estimado de um dia de demonstração (D-021)."
   type        = number
-  default     = 10
+  default     = 7.1
 }

@@ -80,7 +80,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - a tag `project` continua `01-recomendacao` em todos os recursos (T011 verde).
   - **Análise 2 (A19):** o log group do serviço e o do Glue passam ao prefixo (`01-recomendacao-servico` e `01-recomendacao-glue-…`, com o `--continuous-log-logGroup` apontando para ele); o do endpoint, de nome imposto pelo SageMaker, entra no `excecoes_de_nome.json` e no ADR-0014 com motivo, fonte e ADR (ST-04).
   - **Depende de:** T011.
-- [ ] T013 [P] [engenheiro-terraform] AWS Budgets diário com o teto nos três lugares · RNF-102, RNF-002, Art. V · TT-K01, TH-06
+- [x] T013 [P] [engenheiro-terraform] AWS Budgets diário com o teto nos três lugares · RNF-102, RNF-002, Art. V · TT-K01, TH-06
   - **Teste vermelho:**
     - TT-K01 no `regras_base.tftest.hcl` (ou num `budgets.tftest.hcl`): `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd`, filtro `user:project$01-recomendacao`, nenhum `aws_budgets_budget` com `time_unit = "MONTHLY"` no stack e, no Budgets diário, só notificações com `notification_type = "ACTUAL"`; fixture vermelha: o Budgets diário com a notificação `FORECASTED` que o módulo `cloudwatch_monitoring` tem hoje (A09 da análise 1);
     - TH-06 em `harness/testes/test_teto_01_recomendacao.py`: o padrão de `teto_diario_usd` em `U/infra/terraform/variables.tf`, o valor citado no `U/README.md` e o `teto_diario_usd` do `harness/estado.json` (7,1) são iguais; mudar um só precisa reprovar.

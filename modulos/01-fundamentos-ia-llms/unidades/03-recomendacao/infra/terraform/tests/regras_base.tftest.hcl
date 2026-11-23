@@ -546,7 +546,7 @@ run "monitoramento_e_orcamento" {
     alb_arn_suffix          = "app/01-recomendacao-lab-alb/123"
     target_group_arn_suffix = "targetgroup/01-recomendacao-lab-tg/456"
     sagemaker_endpoint_name = "01-recomendacao-lab-reranker"
-    monthly_budget_usd      = 10
+    teto_diario_usd         = 7.1
   }
 
   assert {
@@ -561,13 +561,10 @@ run "monitoramento_e_orcamento" {
     condition     = aws_sns_topic.alerts.kms_master_key_id == var.kms_key_arn
     error_message = "R2: tópico de alertas criptografado."
   }
+  # R9: o Budgets diário com o teto de um dia é conferido no tests/budgets.tftest.hcl (TT-K01, T013).
   assert {
-    condition     = aws_budgets_budget.monthly.limit_amount == "10" && aws_budgets_budget.monthly.limit_unit == "USD"
-    error_message = "R9: teto de US$ 10/mês no AWS Budgets."
-  }
-  assert {
-    condition     = toset([for n in aws_budgets_budget.monthly.notification : n.threshold]) == toset([80, 100])
-    error_message = "R9: alertas do orçamento em 80% e 100%."
+    condition     = aws_budgets_budget.daily.time_unit == "DAILY" && aws_budgets_budget.daily.limit_amount == "7.1"
+    error_message = "R9: Budgets diário com o teto de US$ 7,10 (D-056)."
   }
   assert {
     condition     = aws_cloudwatch_metric_alarm.this["api_p95_latency"].extended_statistic == "p95"

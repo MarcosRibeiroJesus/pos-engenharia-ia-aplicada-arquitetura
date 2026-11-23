@@ -23,7 +23,7 @@ flowchart LR
     ECS -. explain=true .-> BR[Bedrock<br/>Claude Haiku 5.5]
     EP[[Endpoints de interface:<br/>ECR, Logs, CloudWatch,<br/>SageMaker, Bedrock]]
   end
-  ECS --> CW[CloudWatch<br/>métricas, alarmes, SNS] --> Budget[AWS Budgets<br/>US$ 10/mês]
+  ECS --> CW[CloudWatch<br/>métricas, alarmes, SNS] --> Budget[AWS Budgets<br/>US$ 7,10/dia]
 ```
 
 Fluxo de uma requisição: o serviço busca em paralelo os candidatos do lote (DynamoDB) e da busca vetorial (MemoryDB), junta e deduplica, aplica as regras de negócio (sem item fora de estoque nem comprado nos últimos 30 dias), pede o score ao SageMaker e devolve o top-N. Cada dependência tem fallback (heurística, só lote, só tempo real ou catálogo curado), e a API não responde 500 por falha de dependência.
@@ -47,11 +47,15 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 |---|---|
 | Stack de pé (padrão do lab) | ~US$ 0,16/h: endpoints de interface, ALB, MemoryDB, 1 task Fargate, KMS |
 | 20 h de lab por mês | ~US$ 3,20 + centavos de armazenamento e chamadas |
-| Esquecido ligado 24/7 | ~US$ 115/mês (o alerta de 80% do orçamento dispara em ~2 dias) |
+| Esquecido ligado 24/7 | ~US$ 115/mês (o destroy automático em até 24 h evita esse caso; o limite mensal da conta é a segunda camada) |
 | Com MWAA ligado | +~US$ 0,49/h |
 | Explicações com Claude | ~US$ 0,00035 por requisição com `explain=true` (tabela da API da Anthropic; o Bedrock tem tabela própria) |
 
-**Teto mensal: US$ 10** no AWS Budgets, com alertas em 80% (real) e 100% (previsto) no tópico SNS de alertas. Valores aproximados de preços públicos de 2026-11; confira as páginas de preço antes do apply.
+**Teto diário: US$ 7,10** (custo estimado de um dia de demonstração, aprovado no plano), num AWS Budgets com período diário filtrado pela tag `project=01-recomendacao`, com alertas do custo real em 80% e 100% no tópico SNS de alertas. O mesmo valor está em `teto_diario_usd` no `harness/estado.json` e no `infra/terraform/variables.tf`. O limite mensal de US$ 20 é da conta e fica no stack `infra/conta`, não neste stack. Valores aproximados de preços públicos de 2026-11; confira as páginas de preço antes do apply.
+
+- O filtro por tag só enxerga custo depois que a tag `project` for ativada como tag de alocação de custo na conta; antes disso, o orçamento diário não vê nada e sobra só o limite mensal da conta.
+- O custo do Claude é cobrado pelo AWS Marketplace e pode não aparecer no filtro por tag; o limite mensal da conta, sem filtro, cobre esse caso.
+- Só alertas de custo real: a previsão do Budgets precisa de semanas de histórico e não dispararia num stack que vive um dia.
 
 ## Pré-requisitos
 

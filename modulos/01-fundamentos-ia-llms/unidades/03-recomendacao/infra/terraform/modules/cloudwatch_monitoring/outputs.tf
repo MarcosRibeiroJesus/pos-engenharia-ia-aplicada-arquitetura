@@ -13,7 +13,7 @@ output "tags_dos_recursos" {
   value = merge(
     { "aws_sns_topic.alerts" = aws_sns_topic.alerts.tags },
     { for k, r in aws_cloudwatch_metric_alarm.this : "aws_cloudwatch_metric_alarm.this[${k}]" => r.tags },
-    { "aws_budgets_budget.monthly" = aws_budgets_budget.monthly.tags },
+    { "aws_budgets_budget.daily" = aws_budgets_budget.daily.tags },
   )
 }
 
@@ -24,7 +24,17 @@ output "nomes_dos_recursos" {
   value = merge(
     { "aws_sns_topic.alerts" = aws_sns_topic.alerts.name },
     { for k, r in aws_cloudwatch_metric_alarm.this : "aws_cloudwatch_metric_alarm.this[${k}]" => r.alarm_name },
-    { "aws_budgets_budget.monthly" = aws_budgets_budget.monthly.name },
+    { "aws_budgets_budget.daily" = aws_budgets_budget.daily.name },
     { "aws_cloudwatch_dashboard.platform" = aws_cloudwatch_dashboard.platform.dashboard_name },
   )
+}
+
+# Só o que não identifica ninguém: nome, período e limite. Os destinatários ficam fora (Art. VIII).
+output "orcamento_diario" {
+  description = "Budgets diário do stack (TT-K01)."
+  value = {
+    nome         = aws_budgets_budget.daily.name
+    time_unit    = aws_budgets_budget.daily.time_unit
+    limit_amount = aws_budgets_budget.daily.limit_amount
+  }
 }

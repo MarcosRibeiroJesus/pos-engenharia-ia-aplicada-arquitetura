@@ -120,11 +120,13 @@ resource "aws_sns_topic_policy" "alerts" {
   policy = data.aws_iam_policy_document.alerts.json
 }
 
+# Os endereços são dado pessoal e o log do Actions é público (Art. VIII; TT-S06 da plataforma): a
+# variável é sensível, só a quantidade sai do sensível, e o endpoint continua sensível no plan.
 resource "aws_sns_topic_subscription" "email" {
-  for_each  = toset(var.alert_emails)
+  count     = nonsensitive(length(var.alert_emails))
   topic_arn = aws_sns_topic.alerts.arn
   protocol  = "email"
-  endpoint  = each.value
+  endpoint  = var.alert_emails[count.index]
 }
 
 resource "aws_cloudwatch_metric_alarm" "this" {
@@ -147,38 +149,35 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   tags                = local.tags
 }
 
-# ---------------------------------------------------------------- orçamento (R9)
-# Orçamento da conta do lab (os dois primeiros budgets da conta não têm custo).
-# O filtro por tag só funciona depois de ativar 'project' como cost allocation tag no Billing.
-resource "aws_budgets_budget" "monthly" {
-  name         = "${local.name}-monthly"
+# ---------------------------------------------------------------- orçamento (R9, TT-K01)
+# Budgets diário com o teto de um dia de demonstração (D-021, RNF-102). O limite mensal da conta fica
+# só no infra/conta (D-022). O filtro pela tag project só enxerga custo depois que a tag for ativada
+# como tag de alocação de custo na conta (D-039); o Claude, cobrado pelo AWS Marketplace, pode não
+# aparecer no filtro (R7 do plano). Só alertas ACTUAL: a previsão precisa de semanas de histórico e
+# nunca dispararia num stack de um dia (A09 da análise 1). A tag project é a chave do projeto, que o
+# root fixa em var.project_name (validação no variables.tf do root).
+resource "aws_budgets_budget" "daily" {
+  name         = "${local.name}-daily"
   budget_type  = "COST"
-  limit_amount = tostring(var.monthly_budget_usd)
+  limit_amount = tostring(var.teto_diario_usd)
   limit_unit   = "USD"
-  time_unit    = "MONTHLY"
+  time_unit    = "DAILY"
 
-  dynamic "cost_filter" {
-    for_each = var.budget_filter_by_project_tag ? [1] : []
+  cost_filter {
+    name = "TagKeyValue"
+    # format(): em HCL, "$${" é o escape de um "${" literal, e o filtro sairia sem a chave.
+    values = [format("user:project$%s", var.project_name)]
+  }
+
+  dynamic "notification" {
+    for_each = var.alertas_do_orcamento
     content {
-      name   = "TagKeyValue"
-      values = ["user:project$${var.project_name}"]
+      comparison_operator       = "GREATER_THAN"
+      threshold                 = notification.value.threshold
+      threshold_type            = "PERCENTAGE"
+      notification_type         = notification.value.notification_type
+      subscriber_sns_topic_arns = [aws_sns_topic.alerts.arn]
     }
-  }
-
-  notification {
-    comparison_operator       = "GREATER_THAN"
-    threshold                 = 80
-    threshold_type            = "PERCENTAGE"
-    notification_type         = "ACTUAL"
-    subscriber_sns_topic_arns = [aws_sns_topic.alerts.arn]
-  }
-
-  notification {
-    comparison_operator       = "GREATER_THAN"
-    threshold                 = 100
-    threshold_type            = "PERCENTAGE"
-    notification_type         = "FORECASTED"
-    subscriber_sns_topic_arns = [aws_sns_topic.alerts.arn]
   }
 
   depends_on = [aws_sns_topic_policy.alerts]

@@ -18,7 +18,7 @@ Regra sem teste conta como falha (CLAUDE.md). Camadas:
 | R6 | Logs, métricas e alarmes nos componentes críticos | TT `rede_privada_por_padrao` (flow logs), `ecs_menor_privilegio_e_privado` (logs das tasks), `glue_criptografado_e_com_logs`, `monitoramento_e_orcamento` (7 alarmes com ação, p95 real) · IT "Alarmes com ação no SNS", "Log groups com KMS e retenção" |
 | R7 | Destroy sem sobras | TT `kms_chave_da_plataforma` (janela de 7 dias), `s3_golden_dataset` (force_destroy), `dynamodb_criptografado` (sem deletion protection), `ecs_menor_privilegio_e_privado` (ECR force_delete), `sagemaker_sem_full_access` (log group gerenciado), `glue_criptografado_e_com_logs` · IT "Stack: terraform destroy", "Destroy sem sobras" |
 | R8 | State remoto com lock | ST (backend `s3`, `use_lockfile = true`, sem DynamoDB) · IT "Stack: init com backend S3 + use_lockfile", "State remoto no S3 e lock liberado após o apply", "State remoto preservado e lock liberado após o destroy" |
-| R9 | Teto de custo no AWS Budgets | TT `monitoramento_e_orcamento` (US$ 10, alertas em 80% e 100%) · IT "AWS Budgets com teto de US$ 10" |
+| R9 | Teto de custo no AWS Budgets | TT-K01 `tests/budgets.tftest.hcl` (diário, `limit_amount = var.teto_diario_usd` = US$ 7,10, filtro `user:project$01-recomendacao`, só `ACTUAL`, fixture `FORECASTED` rejeitada, e-mails sensíveis) · ST-K01 e TH-06 em `static_rules.py` e `harness/testes/test_teto_01_recomendacao.py` (nenhum Budgets mensal no stack; teto igual no `variables.tf`, README e `estado.json`) · IT "AWS Budgets diário com teto de US$ 7,10" (`testing/scripts/integracao_01_03_recomendacao.py`) |
 
 ## Decisões da unidade
 

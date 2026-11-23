@@ -351,10 +351,12 @@ def assertions(o):
 
     def budget():
         acct, _ = aws("sts", "get-caller-identity")
-        d, raw = aws("budgets", "describe-budget", "--account-id", acct["Account"], "--budget-name", f"{nome}-monthly")
-        lim = (d or {}).get("Budget", {}).get("BudgetLimit", {})
-        return f"{lim.get('Amount')} {lim.get('Unit')}", float(lim.get("Amount", 0)) == 10.0 and lim.get("Unit") == "USD", raw
-    check("AWS Budgets com teto de US$ 10", budget, rule="R9", expected="10 USD")
+        d, raw = aws("budgets", "describe-budget", "--account-id", acct["Account"], "--budget-name", f"{nome}-daily")
+        b = (d or {}).get("Budget", {})
+        lim = b.get("BudgetLimit", {})
+        ok = float(lim.get("Amount", 0)) == 7.1 and lim.get("Unit") == "USD" and b.get("TimeUnit") == "DAILY"
+        return f"{lim.get('Amount')} {lim.get('Unit')} {b.get('TimeUnit')}", ok, raw
+    check("AWS Budgets diário com teto de US$ 7,10 (T013)", budget, rule="R9", expected="7.1 USD DAILY")
 
     def remote_state():
         d, raw = aws("s3api", "list-objects-v2", "--bucket", STATE_BUCKET)

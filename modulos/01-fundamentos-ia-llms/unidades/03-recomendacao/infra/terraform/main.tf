@@ -162,5 +162,5 @@ module "cloudwatch_monitoring" {
   target_group_arn_suffix = module.ecs_service.target_group_arn_suffix
   sagemaker_endpoint_name = module.sagemaker_endpoint.endpoint_name
   alert_emails            = var.alert_emails
-  monthly_budget_usd      = var.monthly_budget_usd
+  teto_diario_usd         = var.teto_diario_usd
 }
