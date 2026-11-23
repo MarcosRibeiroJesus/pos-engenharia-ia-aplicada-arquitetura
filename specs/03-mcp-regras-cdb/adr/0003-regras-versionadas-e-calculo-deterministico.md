@@ -1,6 +1,6 @@
 # ADR-0003: Regras versionadas em dados, cálculo decimal determinístico e aplicações sintéticas de clientes
 
-- **Status:** proposto (aguarda aprovação do plano da D03 pelo dono, D-033)
+- **Status:** aceito (plano aprovado pelo dono em 2026-11-22, D-073)
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity)
 - **Requisitos:** RF-005 a RF-009, RF-013, RF-014, RF-015, RNF-005; D-001, D-008, D-071
 

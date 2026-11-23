@@ -1,6 +1,6 @@
 # ADR-0006: Custo diário, segurança em conta única e cobertura do Floci
 
-- **Status:** proposto (aguarda aprovação do plano e do teto `D03-P7` pelo dono, D-033)
+- **Status:** aceito (plano e teto diário de US$ 0,50 aprovados pelo dono em 2026-11-22, D-073)
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity)
 - **Requisitos:** RF-025, RNF-001 a RNF-007; D-006, D-013, D-021, D-022, D-024, D-029, D-031, D-034, D-044
 

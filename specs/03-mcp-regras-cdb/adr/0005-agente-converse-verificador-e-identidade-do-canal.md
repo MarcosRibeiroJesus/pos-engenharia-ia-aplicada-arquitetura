@@ -1,6 +1,6 @@
 # ADR-0005: Agente de atendimento via Bedrock Converse, verificador determinístico de citações e identidade do cliente pelo canal
 
-- **Status:** proposto (aguarda aprovação do plano da D03 pelo dono, D-033)
+- **Status:** aceito (plano aprovado pelo dono em 2026-11-22, D-073)
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity)
 - **Requisitos:** RF-017, RF-018, RF-019, RF-020, RF-021, RF-024; D-006, D-071
 

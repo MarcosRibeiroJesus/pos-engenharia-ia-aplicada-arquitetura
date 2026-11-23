@@ -1,6 +1,6 @@
 # ADR-0001: Arquitetura âncora — servidor MCP sem estado na AWS (Well-Architected)
 
-- **Status:** aceito quanto à âncora (escolha do dono, D-065); o desenho detalhado vai na aprovação do plano
+- **Status:** aceito (plano aprovado pelo dono em 2026-11-22, D-073; âncora D-065)
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity)
 - **Âncora:** *MCP went stateless: Is your AWS MCP server deployment well-architected?*, AWS Architecture Blog, publicado em **01/09/2026**. https://aws.amazon.com/blogs/architecture/mcp-went-stateless-is-your-aws-mcp-server-deployment-well-architected
 - **Requisitos:** RF-001, RF-002, RF-003, RF-022, RNF-001, RNF-002; D-011, D-034, D-065, D-071, D-072

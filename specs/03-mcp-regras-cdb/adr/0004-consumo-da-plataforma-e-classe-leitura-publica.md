@@ -1,6 +1,6 @@
 # ADR-0004: Consumo integral da plataforma 00-plataforma-agentes, classe leitura_publica (v1.1.0) e negação por padrão no Cedar
 
-- **Status:** proposto (aguarda aprovação do plano da D03 pelo dono, D-033; a classe `leitura_publica` foi aprovada pelo dono em D03-P10 = A, D-071)
+- **Status:** aceito (plano aprovado pelo dono em 2026-11-22, D-073; classe `leitura_publica` aprovada em D03-P10 = A, D-071)
 - **Data:** 2026-11-22 · **Autor:** arquiteto-aws (orquestração Antigravity)
 - **Requisitos:** RF-004, RF-022, RF-023, RF-024, RNF-001; D-030, D-034, D-044, D-071
 
