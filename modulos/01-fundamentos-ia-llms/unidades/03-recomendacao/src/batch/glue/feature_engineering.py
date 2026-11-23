@@ -16,13 +16,33 @@ except ImportError:
     SparkContext = None
     Job = None
     F = None
+    getResolvedOptions = None
 
-def run_feature_engineering():
+# Nomes por argumento do job (RF-107, PY-01): os caminhos de entrada e de saída vêm do default_arguments
+# do aws_glue_job no Terraform (prefixo da chave do projeto), nunca escritos aqui.
+ARGUMENTOS = ["JOB_NAME", "caminho_interacoes", "caminho_catalogo", "caminho_features"]
+
+
+def ler_argumentos(argv):
+    """getResolvedOptions no Glue; fora dele, o mesmo contrato (argumento faltando encerra o job)."""
+    if getResolvedOptions is not None:
+        return getResolvedOptions(argv, ARGUMENTOS)
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    for nome in ARGUMENTOS:
+        parser.add_argument(f"--{nome}", required=True)
+    conhecidos, _ = parser.parse_known_args(argv[1:])
+    return vars(conhecidos)
+
+
+def run_feature_engineering(argv=None):
     print("Starting Glue Feature Engineering Job...")
+    args = ler_argumentos(sys.argv if argv is None else argv)
 
     # Job parameters with Job Bookmark keys
     job_args = {
-        "JOB_NAME": "ecommerce_feature_engineering",
+        "JOB_NAME": args["JOB_NAME"],
         "jobBookmarkKeys": ["year", "month", "day", "timestamp"],
         "compression": "snappy",
     }
@@ -35,8 +55,8 @@ def run_feature_engineering():
         job.init(job_args["JOB_NAME"], sys.argv)
 
         # Read interaction events with Snappy Parquet
-        interactions_df = spark.read.option("compression", "snappy").parquet("s3://ecommerce-golden/interactions/")
-        catalog_df = spark.read.option("compression", "snappy").parquet("s3://ecommerce-golden/catalog/")
+        interactions_df = spark.read.option("compression", "snappy").parquet(args["caminho_interacoes"])
+        catalog_df = spark.read.option("compression", "snappy").parquet(args["caminho_catalogo"])
 
         # Compute user-item interaction weights
         joined_df = interactions_df.join(catalog_df, on="item_id", how="inner")
@@ -60,11 +80,12 @@ def run_feature_engineering():
             .format("parquet") \
             .option("compression", "snappy") \
             .partitionBy("year", "month", "day") \
-            .save("s3://ecommerce-golden/user_features/")
+            .save(args["caminho_features"])
 
         job.commit()
     else:
         # Mock logic for verification
+        print(f"Mock execution: {args['caminho_interacoes']} + {args['caminho_catalogo']} -> {args['caminho_features']}")
         required_cols = ["user_id", "item_id", "interaction_weight"]
         print(f"Mock execution verified with schema columns: {required_cols}")
 

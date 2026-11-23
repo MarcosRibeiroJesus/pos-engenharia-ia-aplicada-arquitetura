@@ -1,8 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { BatchCandidate, UserIdSchema } from '../../domain/candidate';
+import { DependencyError } from '../../domain/dependency-error';
 import { env } from '../../config/env';
-import { baseLogger } from '../logging/logger';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
 
 export interface IDynamoDbBatchRepository {
@@ -66,15 +66,13 @@ export class DynamoDbBatchCandidateRepository implements IDynamoDbBatchRepositor
       throw new Error(`Invalid userId format: ${userId}`);
     }
 
+    // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. Lista vazia
+    // fica só para "sem dados" (item ausente), que não liga o modo degradado.
     try {
       const result = await this.breaker.fire(userId);
       return (result as BatchCandidate[]) || [];
     } catch (error) {
-      baseLogger.warn(
-        { error, userId },
-        `DynamoDB batch candidate retrieval failed or timed out. Returning empty list.`
-      );
-      return [];
+      throw DependencyError.fromBreaker('dynamodb', error);
     }
   }
 }

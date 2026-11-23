@@ -25,6 +25,7 @@ O provedor OIDC com a URL do GitHub é único por conta, e o bucket de state ser
      - nada de `*` com `*`;
    - **`01-recomendacao-plan`:** só leitura e state, para o plan comentado no PR.
 3. **Workflows:** usam `vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO`, com fallback para `vars.AWS_DEPLOY_ROLE_ARN`. Criar a variável e dar o valor é com o dono.
+   > **Nota de 2026-11-23 (T032):** os workflows também leem `vars.TF_STATE_KMS_KEY_ARN` (ARN da CMK do state, saída `state_kms_key_arn` do `infra/conta`) para o `kms_key_id` do backend, com fallback sem a variável. A role de plan do PR (pergunta D01-P33) segue pendente do dono; até a resposta, o plan do PR mantém a role de plan.
 4. **Teste:** TT-I01 no `infra/conta` (os dois subjects; nenhuma ação ampla sem condição, fora da lista).
 
 ## Alternativas rejeitadas
@@ -46,6 +47,12 @@ Nenhum: IAM e OIDC não cobram.
 ## Risco
 - Uma lista de exceções incompleta faz o primeiro apply falhar com `AccessDenied`. Isso aparece cedo, antes da gravação, e a correção entra na lista com a fonte.
 - O apply do `infra/conta` depende do dono.
+
+> **Nota de 2026-11-23 (T031, revisão independente, M1):** a role de deploy põe tags na criação de recursos. A forma de cada serviço:
+> - **EC2:** a tag na criação só vale dentro das ações de criação (`ec2:CreateAction`), o padrão da AWS. Assim a role não adota um recurso existente sem tag, como a VPC padrão, porque os ARNs do EC2 não levam o nome.
+> - **Serviços com o prefixo da chave no ARN:** a tag na criação exige que o recurso ainda não tenha a tag `project` (condição `Null`). Adotar um recurso sem tag, nesses serviços, é adotar um recurso que já tem o nome do projeto.
+> - **Risco residual:** a chave KMS (`key/*`) e o guardrail do Bedrock (`guardrail/*`) não têm nome no ARN, e não há chave de condição equivalente ao `ec2:CreateAction` conferida para eles. Uma chave ou um guardrail criados fora do Terraform e sem nenhuma tag podem ser adotados pela role de deploy (tag `project = 01-recomendacao`) e, depois, alterados ou agendados para exclusão pelo ABAC. Recurso com qualquer tag `project` não é adotado. Mitigação no lab: todo recurso da conta nasce pelo Terraform com a tag `project` (D-031), e a verificação de sobras do destroy mostra a tag. Em produção, uma SCP nega `kms:TagResource` e `bedrock:TagResource` fora da criação.
+> - **Permissions boundary:** a ausência dela é a pergunta D01-P31 (escalonamento por role criada pela deploy), decisão do dono e mudança de plano, ainda pendente.
 
 ## Boa prática e erro comum (D-036)
 **Uma identidade por função, com o limite imposto fora do código do projeto.** O arquiteto dá a cada projeto uma role que só mexe no que tem a tag dele e deixa os recursos da conta num stack da conta. O erro comum é uma role ampla compartilhada, ou um projeto que cria recurso da conta e o leva junto no próprio destroy (1.4).

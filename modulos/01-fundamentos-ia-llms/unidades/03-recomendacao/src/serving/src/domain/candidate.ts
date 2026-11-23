@@ -60,4 +60,5 @@ export interface SemanticCandidate {
   category?: string;
   priceCents?: number;
   title?: string;
+  inStock?: boolean;
 }

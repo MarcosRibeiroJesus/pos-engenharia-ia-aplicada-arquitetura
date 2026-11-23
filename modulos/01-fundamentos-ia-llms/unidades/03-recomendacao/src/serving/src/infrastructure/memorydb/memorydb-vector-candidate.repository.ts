@@ -1,7 +1,8 @@
 import Redis from 'ioredis';
 import { SemanticCandidate } from '../../domain/candidate';
+import { assertValidCategory } from '../../domain/category';
+import { DependencyError } from '../../domain/dependency-error';
 import { env } from '../../config/env';
-import { baseLogger } from '../logging/logger';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
 
 export interface IMemoryDbVectorRepository {
@@ -50,7 +51,8 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       ? `(@cat:{${category}})=>[KNN ${k} @v $vec AS vector_score]`
       : `*=>[KNN ${k} @v $vec AS vector_score]`;
 
-    // RediSearch FT.SEARCH command with binary parameter buffer
+    // VT-03 (ADR-0011, E8): o FT.SEARCH do MemoryDB não tem `SORTBY` (o KNN já vem ordenado pela
+    // distância) e o `LIMIT` padrão é `0 10`; por isso o `LIMIT 0 k` explícito.
     const rawResult = (await this.redis.call(
       'FT.SEARCH',
       'item_idx',
@@ -59,12 +61,14 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       '2',
       'vec',
       vectorBuffer,
-      'SORTBY',
-      'vector_score',
-      'ASC',
+      'LIMIT',
+      '0',
+      String(k),
       'RETURN',
-      '1',
+      '3',
       'vector_score',
+      'cat',
+      'inStock',
       'DIALECT',
       '2'
     )) as [number, ...unknown[]];
@@ -81,21 +85,25 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       const attributes = rawResult[i + 1] as unknown[];
       const itemId = key.replace(/^item:/, '');
 
-      let vectorScore = 0.5;
+      const candidate: SemanticCandidate = { itemId, vectorScore: 0.5 };
       if (Array.isArray(attributes)) {
         for (let j = 0; j < attributes.length; j += 2) {
-          if (attributes[j] === 'vector_score') {
-            const rawScore = parseFloat(String(attributes[j + 1]));
+          const field = String(attributes[j]);
+          const value = String(attributes[j + 1]);
+          if (field === 'vector_score') {
             // Cosine distance to similarity: 1.0 - distance
-            vectorScore = Math.max(0.0, Math.min(1.0, 1.0 - rawScore));
+            candidate.vectorScore = Math.max(0.0, Math.min(1.0, 1.0 - parseFloat(value)));
+          } else if (field === 'cat') {
+            candidate.category = value;
+          } else if (field === 'inStock') {
+            // Só valores reconhecidos viram booleano; o resto fica indefinido (não inventa estoque).
+            if (value === 'true' || value === '1') candidate.inStock = true;
+            else if (value === 'false' || value === '0') candidate.inStock = false;
           }
         }
       }
 
-      candidates.push({
-        itemId,
-        vectorScore,
-      });
+      candidates.push(candidate);
     }
 
     return candidates;
@@ -106,6 +114,12 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
     category?: string,
     limit = 50
   ): Promise<SemanticCandidate[]> {
+    // RNF-104 (ADR-0011): defesa em profundidade. Confere a categoria de novo antes de montar a
+    // consulta e lança o erro de validação fora do try abaixo, para ele não virar lista vazia.
+    if (category !== undefined) {
+      assertValidCategory(category);
+    }
+
     let buffer: Buffer;
     if (vector instanceof Buffer) {
       buffer = vector;
@@ -121,15 +135,13 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
       }
     }
 
+    // RF-106 (ADR-0011): a falha sai como DependencyError, nunca como lista vazia. A validação da
+    // categoria acontece antes, fora do disjuntor, para entrada ruim não contar como queda.
     try {
       const result = await this.breaker.fire(buffer, category, limit);
       return (result as SemanticCandidate[]) || [];
     } catch (error) {
-      baseLogger.warn(
-        { error, category },
-        `MemoryDB vector search failed or timed out. Returning empty list.`
-      );
-      return [];
+      throw DependencyError.fromBreaker('memorydb', error);
     }
   }
 }

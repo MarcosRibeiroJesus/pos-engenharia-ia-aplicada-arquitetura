@@ -36,9 +36,15 @@ paths:
         - name: category
           in: query
           required: false
-          description: Optional category taxonomy filter for candidate retrieval.
+          description: >-
+            Optional category taxonomy filter for candidate retrieval. Allowlist only
+            (RNF-104, ADR-0011): letters, digits and underscore, 1 to 40 characters.
+            Any other value returns 400 before the vector query is built.
           schema:
             type: string
+            pattern: '^[A-Za-z0-9_]{1,40}$'
+            minLength: 1
+            maxLength: 40
             example: "Electronics"
         - name: sessionItemIds
           in: query

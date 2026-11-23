@@ -136,6 +136,116 @@ class TestWorkflowsDaD01IguaisAoModelo(unittest.TestCase):
                     self.assertIn("${{ vars.FLOCI_IMAGE || 'floci/floci:latest' }}", linha, arq.name)
 
 
+ROLE_DEPLOY = "${{ vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO || vars.AWS_DEPLOY_ROLE_ARN }}"
+README = RAIZ / PASTA / "README.md"
+
+
+def blocos_dos_jobs(texto: str) -> dict:
+    """{job: texto do job}, no mesmo formato de indentação de `jobs_do_workflow`."""
+    corpo = texto.split("\njobs:\n", 1)[1]
+    blocos, atual = {}, None
+    for linha in corpo.splitlines():
+        m = re.match(r"^  ([\w-]+):\s*$", linha)
+        if m:
+            atual = m.group(1)
+            blocos[atual] = []
+            continue
+        if atual is not None:
+            blocos[atual].append(linha)
+    return {k: "\n".join(v) for k, v in blocos.items()}
+
+
+def _roles(bloco: str) -> list[str]:
+    return [m.group(1).strip() for m in re.finditer(r"^\s+role-to-assume:\s*(.+?)\s*$", bloco, re.M)]
+
+
+def erros_role_de_deploy(texto: str) -> list[str]:
+    """T032: todo job com OIDC do apply e do destroy assume a role do projeto, com fallback (D-012)."""
+    erros = []
+    for job, bloco in blocos_dos_jobs(texto).items():
+        if "id-token: write" not in bloco:
+            continue
+        roles = _roles(bloco)
+        if not roles:
+            erros.append(f"job {job}: tem OIDC e não assume role")
+        for r in roles:
+            if r != ROLE_DEPLOY:
+                erros.append(f"job {job}: role-to-assume {r} em vez de {ROLE_DEPLOY}")
+    return erros
+
+
+def erros_role_do_plan(texto: str) -> list[str]:
+    """T032: o job de PR (plan) nunca assume a role de deploy (menor privilégio; a deploy só confia nos ambientes)."""
+    return [f"job {job}: o plan do PR assume a role de deploy ({r})"
+            for job, bloco in blocos_dos_jobs(texto).items() for r in _roles(bloco)
+            if "AWS_DEPLOY_ROLE_ARN" in r]
+
+
+def erros_kms_do_state(texto: str) -> list[str]:
+    """T032 (achado da T030): todo init com state remoto passa o kms_key_id da variável, só se ela existir."""
+    erros = []
+    for job, bloco in blocos_dos_jobs(texto).items():
+        if "-backend-config=\"encrypt=true\"" not in bloco:
+            continue
+        if "TF_STATE_KMS_KEY_ARN: ${{ vars.TF_STATE_KMS_KEY_ARN }}" not in bloco:
+            erros.append(f"job {job}: falta o env TF_STATE_KMS_KEY_ARN vindo de vars.TF_STATE_KMS_KEY_ARN")
+        if '"${KMS_ARGS[@]}"' not in bloco or 'kms_key_id=$TF_STATE_KMS_KEY_ARN' not in bloco:
+            erros.append(f"job {job}: o init não passa o kms_key_id do state")
+        if 'if [ -n "$TF_STATE_KMS_KEY_ARN" ]' not in bloco:
+            erros.append(f"job {job}: o kms_key_id não tem fallback para a variável ausente")
+        if "${{ vars.TF_STATE_KMS_KEY_ARN }}" in bloco.replace("TF_STATE_KMS_KEY_ARN: ${{ vars.TF_STATE_KMS_KEY_ARN }}", ""):
+            erros.append(f"job {job}: a variável entra direto no script (use o env, contra injeção)")
+    return erros
+
+
+class TestT032RoleDoProjetoEKmsDoState(unittest.TestCase):
+    """T032 (RNF-105, ADR-0015, D-012): role da D01 com fallback e kms_key_id do state com fallback."""
+
+    def test_apply_e_destroy_assumem_a_role_do_projeto(self):
+        for qual in ("apply", "destroy"):
+            with self.subTest(qual=qual):
+                texto = (WF / f"{CHAVE}-{qual}.yml").read_text(encoding="utf-8")
+                self.assertEqual(erros_role_de_deploy(texto), [])
+
+    def test_fixture_so_com_a_role_de_hoje_reprova(self):
+        for qual in ("apply", "destroy"):
+            with self.subTest(qual=qual):
+                modelo = modelo_preenchido(qual)
+                self.assertIn("role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}", modelo)
+                self.assertTrue(erros_role_de_deploy(modelo))
+
+    def test_fixture_com_job_oidc_sem_role_reprova(self):
+        sem_role = re.sub(r"^\s+role-to-assume:.*\n", "", modelo_preenchido("apply"), flags=re.M)
+        self.assertTrue(any("não assume role" in e for e in erros_role_de_deploy(sem_role)))
+
+    def test_plan_do_pr_nao_usa_a_role_de_deploy(self):
+        texto = (WF / f"{CHAVE}-ci.yml").read_text(encoding="utf-8")
+        self.assertTrue(_roles(texto), "o CI tem o job de plan com OIDC")
+        self.assertEqual(erros_role_do_plan(texto), [])
+        fixture = texto.replace("role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}", f"role-to-assume: {ROLE_DEPLOY}")
+        self.assertTrue(erros_role_do_plan(fixture))
+
+    def test_init_passa_o_kms_do_state_com_fallback(self):
+        for qual in ("apply", "destroy", "ci"):
+            with self.subTest(qual=qual):
+                texto = (WF / f"{CHAVE}-{qual}.yml").read_text(encoding="utf-8")
+                self.assertIn('-backend-config="encrypt=true"', texto)
+                self.assertEqual(erros_kms_do_state(texto), [])
+
+    def test_fixture_sem_kms_reprova(self):
+        for qual in ("apply", "destroy"):
+            with self.subTest(qual=qual):
+                self.assertTrue(erros_kms_do_state(modelo_preenchido(qual)))
+
+    def test_readme_lista_as_variaveis_sem_valor(self):
+        texto = README.read_text(encoding="utf-8")
+        for var in ("AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO", "TF_STATE_KMS_KEY_ARN"):
+            with self.subTest(var=var):
+                linhas = [l for l in texto.splitlines() if var in l]
+                self.assertTrue(linhas, f"o README não lista {var}")
+                self.assertFalse([l for l in linhas if re.search(r"arn:aws[\w-]*:", l)], f"{var} com valor")
+
+
 def _carregar_static_rules():
     spec = importlib.util.spec_from_file_location("static_rules_01_recomendacao", STATIC_RULES)
     mod = importlib.util.module_from_spec(spec)

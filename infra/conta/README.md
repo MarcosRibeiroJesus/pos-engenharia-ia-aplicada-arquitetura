@@ -32,7 +32,15 @@ Um AWS Budgets **mensal de US$ 20** soma todas as demonstrações do mês (D-022
   - os modelos `harness/modelos/{apply,destroy}.yml` e os `00-plataforma-agentes-{apply,destroy}.yml` da plataforma: tarefa do harness ainda sem id, que lê o ARN de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro;
   - depois que o `infra/conta` for aplicado, esses workflows falham contra este bucket com AccessDenied até receberem o `kms_key_id`;
   - **risco do `.tflock` no plan do CI:** o plan do PR também grava e apaga o `.tflock`. Se o backend mandar `encrypt=true` sem a chave também no lockfile, o plan falha no lock antes de ler o state. Ou o plan recebe o `kms_key_id`, ou roda com `-lock=false` só no PR, que não altera o state.
-- **Roles por projeto** com ABAC (D-029): entram na T031 da D01. Elas precisam de `kms:Decrypt` e `kms:GenerateDataKey` na chave do state (saída `state_kms_key_arn`).
+- **Roles por projeto com ABAC** (`roles_projeto.tf` e `modules/role-projeto/`, D-029, T031 da D01), geradas pela lista `projetos_iam`:
+  - `<chave>-deploy`: confiança só nos subjects `repo:<dono>/<repo>:environment:aws-lab` e `...:environment:aws-lab-destroy` (variável `repositorio_github`); criar só com `aws:RequestTag/project = <chave>`, alterar e remover só com `aws:ResourceTag/project = <chave>`; tag na criação só em recurso sem a tag `project`, e a tag `project` não muda depois;
+  - `<chave>-plan`: confiança só no subject `repo:<dono>/<repo>:pull_request`; só leitura, o state da chave e o `.tflock`;
+  - as duas leem o state só no prefixo `<chave>/` do bucket, com `kms:Decrypt` e `kms:GenerateDataKey` na chave do state, só pelo S3 (`kms:ViaService`);
+  - as ações sem condição de tag ficam só na lista nomeada `tests/acoes_sem_condicao_de_tag.json`, com motivo, fonte e data de cada item. O módulo nega no plan qualquer outra declaração sem a tag (TT-I01, `tests/roles_projeto.tftest.hcl`);
+  - as roles e as políticas são da conta (`project = 00-conta`, políticas `00-conta-<chave>-*`), e um Deny explícito impede a deploy de alterar a si mesma ou a plan;
+  - **a conferir antes do primeiro apply:** as fontes da lista não puderam ser abertas na sessão que escreveu o stack. Um nome de ação ou de chave de condição errado falha fechado com AccessDenied (risco do ADR-0015);
+  - **sem `iam:CreateServiceLinkedRole`:** a deploy não cria as service-linked roles do ECS, do ELB, do MemoryDB, do Lake Formation e do MWAA. Numa conta nova, o primeiro apply falha fechado com AccessDenied. Há duas saídas, e a escolha é do dono: pré-criar as service-linked roles com a credencial do dono, ou conceder a ação com a condição `iam:AWSServiceName` nesses serviços. A role não recebe a ação por padrão;
+  - a saída `roles_projeto` traz o ARN da deploy para a variável `AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO` (T033 da D01, do dono).
 - **Conta que já tem o provedor OIDC** (de um bootstrap antigo): importe-o antes do apply, `terraform import aws_iam_openid_connect_provider.github arn:aws:iam::<conta>:oidc-provider/token.actions.githubusercontent.com`, em vez de criar um segundo.
 
 **Tags e nome:** `project = 00-conta` e `managed-by = terraform` em todos os recursos; `module = finops` no orçamento, `identidade` no provedor OIDC e `estado-terraform` no bucket e na chave, no padrão da política de tags do Infracost (D-031). Os nomes levam o prefixo `00-conta-` (D-029).

@@ -21,7 +21,8 @@ mock_provider "aws" {
 }
 
 variables {
-  emails_alerta = ["alerta@exemplo.com"]
+  emails_alerta      = ["alerta@exemplo.com"]
+  repositorio_github = "dono-sintetico/repo-sintetico"
 }
 
 run "provedor_oidc_do_github" {

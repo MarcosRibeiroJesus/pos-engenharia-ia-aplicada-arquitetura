@@ -61,6 +61,10 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 
 - Terraform >= 1.10 (testado com 1.13.4), Node.js 20, Python 3.11+, Docker.
 - Para a AWS: conta de lab dedicada, acesso ao modelo Claude Haiku 5.5 habilitado no Bedrock na região, e permissão para criar o bucket de state.
+- Variáveis do repositório para os workflows, criadas pelo dono depois de aplicar o `infra/conta` (o valor não entra no repositório; ADR-0015):
+  - `AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO`: ARN da role `01-recomendacao-deploy` (saída `roles_projeto`). O apply e o destroy a assumem; sem ela, caem na `AWS_DEPLOY_ROLE_ARN` de hoje;
+  - `TF_STATE_KMS_KEY_ARN`: ARN da chave do state (saída `state_kms_key_arn`), passado como `kms_key_id` no init do apply, do destroy e do plan do PR. Sem ela, o init segue como hoje, sem `kms_key_id`, e falha fechado (AccessDenied) contra o bucket do `infra/conta`;
+  - `TF_STATE_BUCKET` e `AWS_REGION`, como já usados; o plan do PR só roda com `AWS_PLAN_ROLE_ARN`.
 - Para testar sem AWS: o emulador [Floci](https://floci.io) (`docker run -d -p 4566:4566 -v /var/run/docker.sock:/var/run/docker.sock "${FLOCI_IMAGE:-floci/floci:latest}"`, com `FLOCI_IMAGE=floci/floci:2.5.0`, a versão testada; o socket é necessário para o ECR do emulador).
 
 ## Como subir (5 passos)

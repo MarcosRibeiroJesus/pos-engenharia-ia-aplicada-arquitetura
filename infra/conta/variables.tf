@@ -32,3 +32,12 @@ variable "state_bucket_name" {
     error_message = "O bucket de state leva o prefixo da chave da conta, 00-conta- (D-029)."
   }
 }
+
+variable "repositorio_github" {
+  description = "Repositório do GitHub (dono/repo) dos subjects do OIDC das roles por projeto (ADR-0015 da D01)."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$", var.repositorio_github))
+    error_message = "Use dono/repo, sem curinga."
+  }
+}

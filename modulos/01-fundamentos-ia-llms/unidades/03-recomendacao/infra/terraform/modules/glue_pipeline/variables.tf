@@ -38,3 +38,12 @@ variable "log_retention_days" {
   default     = 14
   description = "Retenção dos logs."
 }
+
+variable "prefixos" {
+  type = object({
+    interacoes = string
+    catalogo   = string
+    features   = string
+  })
+  description = "Prefixos do lote no golden dataset (local.prefixos_do_lote do root), passados ao job de features por argumento (RF-107)."
+}

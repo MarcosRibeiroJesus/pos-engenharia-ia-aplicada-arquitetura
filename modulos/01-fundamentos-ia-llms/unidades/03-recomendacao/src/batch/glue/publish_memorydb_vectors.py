@@ -2,10 +2,34 @@
 Indexes 128-dim Float32 binary embeddings into Amazon MemoryDB for Redis (item_idx).
 """
 import struct
+import sys
 import time
 import redis
 
-def publish_vectors_to_memorydb(host="localhost", port=6379):
+try:
+    from awsglue.utils import getResolvedOptions
+except ImportError:
+    # Execução e testes locais sem as bibliotecas do Glue
+    getResolvedOptions = None
+
+# Nomes por argumento do job (RF-107, PY-01): o endpoint do cluster vem do Terraform, nunca escrito aqui.
+ARGUMENTOS = ["memorydb_host", "memorydb_port"]
+
+
+def ler_argumentos(argv):
+    """getResolvedOptions no Glue; fora dele, o mesmo contrato (argumento faltando encerra o job)."""
+    if getResolvedOptions is not None:
+        return getResolvedOptions(argv, ARGUMENTOS)
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    for nome in ARGUMENTOS:
+        parser.add_argument(f"--{nome}", required=True)
+    conhecidos, _ = parser.parse_known_args(argv[1:])
+    return vars(conhecidos)
+
+
+def publish_vectors_to_memorydb(host, port):
     print(f"Connecting to MemoryDB Redis at {host}:{port}")
     r = redis.Redis(host=host, port=port, decode_responses=False)
 
@@ -63,4 +87,5 @@ def publish_vectors_to_memorydb(host="localhost", port=6379):
     print("Successfully indexed 50 128-dim product vectors into MemoryDB index item_idx.")
 
 if __name__ == "__main__":
-    publish_vectors_to_memorydb()
+    args = ler_argumentos(sys.argv)
+    publish_vectors_to_memorydb(args["memorydb_host"], int(args["memorydb_port"]))
