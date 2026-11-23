@@ -16,7 +16,7 @@ describe('Hybrid Recommendations End-to-End Flow (Integration)', () => {
 
     // Mock MemoryDB Vector Repository
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockResolvedValue([
+      searchBySession: vi.fn().mockResolvedValue([
         { itemId: 'PROD-1', vectorScore: 0.95, title: 'Ergonomic Keyboard', priceCents: 4999, category: 'Computers' },
         { itemId: 'PROD-3', vectorScore: 0.79, title: 'Vertical Mouse', priceCents: 2999, category: 'Computers' },
       ]),
@@ -45,6 +45,7 @@ describe('Hybrid Recommendations End-to-End Flow (Integration)', () => {
       userId: 'u-12345',
       limit: 3,
       requestId: 'req-test-123',
+      sessionItemIds: ['SESSAO-1'],
     });
 
     expect(response.userId).toBe('u-12345');

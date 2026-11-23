@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { IGetRecommendationsUseCase } from '../../application/get-recommendations.use-case';
 import { CATEGORY_PATTERN, CATEGORY_PATTERN_SOURCE } from '../../domain/category';
 import { isValidationError } from '../../domain/dependency-error';
+import { isValidSessionItems, SESSION_ITEMS_MESSAGE } from '../../domain/session';
 
 const QuerySchema = z.object({
   userId: z
@@ -21,7 +22,14 @@ const QuerySchema = z.object({
     .string()
     .regex(CATEGORY_PATTERN, `Parameter 'category' must match pattern '${CATEGORY_PATTERN_SOURCE}'`)
     .optional(),
-  sessionItemIds: z.string().optional(),
+  // RF-105 (ADR-0011): até 10 ids no padrão do `userId`; fora disso, 400 sem eco da entrada.
+  sessionItemIds: z
+    .string()
+    .optional()
+    .transform((raw) =>
+      raw ? raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0) : undefined
+    )
+    .refine((ids) => ids === undefined || isValidSessionItems(ids), { message: SESSION_ITEMS_MESSAGE }),
   explain: z
     .enum(['true', 'false'], { errorMap: () => ({ message: "Parameter 'explain' must be 'true' or 'false'" }) })
     .optional()
@@ -50,16 +58,12 @@ export class RecommendationController {
 
     const { userId, limit, category, sessionItemIds, explain } = parseResult.data;
 
-    const parsedSessionItems = sessionItemIds
-      ? sessionItemIds.split(',').map((s) => s.trim()).filter((s) => s.length > 0)
-      : undefined;
-
     try {
       const response = await this.useCase.execute({
         userId,
         limit,
         category,
-        sessionItemIds: parsedSessionItems,
+        sessionItemIds,
         requestId: req.id,
         explain,
       });

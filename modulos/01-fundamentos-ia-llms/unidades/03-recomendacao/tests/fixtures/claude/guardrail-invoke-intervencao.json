@@ -1,0 +1,56 @@
+{
+  "id": "guardrail-invoke-intervencao",
+  "proveniencia": "documentacao",
+  "sintetica": true,
+  "descricao": "InvokeModel com guardrail que interveio: o corpo traz amazon-bedrock-guardrailAction INTERVENED e a mensagem de bloqueio, sem tool_use.",
+  "caminho": "intervencao-guardrail",
+  "tipo": "messages",
+  "origem": {
+    "data": "2026-11-23",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "max_tokens": 1024,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tool_choice": {
+        "type": "tool",
+        "name": "record_explanations"
+      },
+      "tools": [
+        "record_explanations"
+      ],
+      "strict": true,
+      "itens": [
+        "SKU-1",
+        "SKU-2"
+      ],
+      "X-Amzn-Bedrock-GuardrailIdentifier": "<GUARDRAIL_ID do contrato>",
+      "X-Amzn-Bedrock-GuardrailVersion": "<GUARDRAIL_VERSAO do contrato>"
+    },
+    "fonte": "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-test.html",
+    "consultado_em": "2026-11-20",
+    "conferido_por": "ADR-0010 (consulta registrada em 2026-11-20); não reaberta nesta execução",
+    "da_fonte": "o campo amazon-bedrock-guardrailAction no corpo, com o valor INTERVENED",
+    "sintetico": "o resto do corpo (formato da Messages API, texto de bloqueio, ids e uso de tokens); a forma exata no caminho do SDK é o risco R4, confirmada na captura da T107"
+  },
+  "resposta": {
+    "id": "msg_guardrail",
+    "type": "message",
+    "role": "assistant",
+    "model": "anthropic.claude-haiku-5-5",
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "content": [
+      {
+        "type": "text",
+        "text": "Sorry, the model cannot answer this question."
+      }
+    ],
+    "usage": {
+      "input_tokens": 900,
+      "output_tokens": 20
+    },
+    "amazon-bedrock-guardrailAction": "INTERVENED"
+  }
+}

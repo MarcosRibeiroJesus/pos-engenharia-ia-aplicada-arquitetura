@@ -45,6 +45,7 @@ A mesma página diz que, sem `LIMIT`, o padrão é `LIMIT 0 10`. Então hoje o s
 ## Trade-offs
 - Uma leitura a mais no MemoryDB por requisição com sessão, em pipeline, dentro dos 15 ms.
 - A lista de caracteres limita os nomes de categoria. O catálogo sintético já obedece.
+- Nota de 2026-11-23 (T072): a premissa é 1 shard. O cliente é `ioredis` de nó único e o pipeline de `HGET` em várias chaves `item:<id>` só funciona assim; com mais shards vêm `MOVED` ou `CROSSSLOT` e a busca vira `DependencyError` (degradação visível, não resultado errado). Em produção, um arquiteto sênior usaria `Redis.Cluster` com pipeline agrupado por slot, ou chaves com hash tag quando o volume couber num slot, e mediria o p95 no DM-05 antes de aumentar os shards.
 
 ## Custo
 Nenhum custo novo.

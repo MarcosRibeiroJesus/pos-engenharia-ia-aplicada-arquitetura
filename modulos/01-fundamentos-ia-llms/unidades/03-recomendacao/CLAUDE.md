@@ -212,7 +212,6 @@ The architecture targets **minimum-cost PoC** (~$150–$200/month scheduled, <$2
   - `recommendations-api.yaml`: OpenAPI 3.0 REST API contract
   - `dynamodb-batch-recs-contract.json`: DynamoDB item schema
   - `memorydb-vector-contract.md`: MemoryDB Redis HNSW index structure
-  - `sagemaker-inference-contract.json`: SageMaker input/output payloads
 
 **Implementation Plan**: [`specs/001-aws-recommendation-platform/plan.md`](./specs/001-aws-recommendation-platform/plan.md)
 - Phased delivery roadmap (Phase 0: Research, Phase 1: Local validation, Phase 2: Live AWS)

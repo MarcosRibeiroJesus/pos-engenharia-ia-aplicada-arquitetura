@@ -3,10 +3,28 @@ import { z } from 'zod';
 export const CandidateProvenanceEnum = z.enum(['batch', 'realtime', 'hybrid', 'fallback']);
 export type CandidateProvenance = z.infer<typeof CandidateProvenanceEnum>;
 
+/** Padrão do `userId`, também usado pelos `sessionItemIds` (RF-105). Única fonte da regra. */
+export const USER_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 export const UserIdSchema = z
   .string()
   .min(1)
-  .regex(/^[a-zA-Z0-9_-]+$/, "User ID must match pattern '^[a-zA-Z0-9_\\-]+$'");
+  .regex(USER_ID_PATTERN, "User ID must match pattern '^[a-zA-Z0-9_\\-]+$'");
+
+/**
+ * Erro de validação do `userId` (categoria `validacao`, não retentável). Lançado pelo adaptador do
+ * DynamoDB antes do disjuntor: entrada recusada não é queda, então não liga o modo degradado nem
+ * publica DynamoDbFallbackCount. A entrada não entra na mensagem (RNF-001, Art. VIII).
+ */
+export class InvalidUserIdError extends Error {
+  public readonly categoria = 'validacao' as const;
+  public readonly retentavel = false;
+
+  constructor() {
+    super(`Parameter 'userId' must match pattern '${USER_ID_PATTERN.source}'`);
+    this.name = 'InvalidUserIdError';
+  }
+}
 
 export const LimitSchema = z.number().int().min(1).max(50).default(10);
 
@@ -52,6 +70,8 @@ export interface BatchCandidate {
   category?: string;
   priceCents?: number;
   title?: string;
+  /** Estoque publicado pelo lote em cada recomendação (ADR-0012); ausente = sem informação. */
+  inStock?: boolean;
 }
 
 export interface SemanticCandidate {

@@ -23,6 +23,15 @@ A regra de não mostrar compras dos últimos 30 dias (RF-004) só funciona nos t
   - qualquer exceção do repositório de elegibilidade vira degradação, nunca 500.
 - **Frescor:** o do lote, diário. A documentação diz isso.
 
+### Nota de 2026-11-23: contrato de leitura de `recentPurchases` (T074)
+O serviço lê o item do usuário assim, e a publicação (T044) DEVE gravar neste formato ou mudar os dois lados no mesmo PR:
+- **Nomes:** `recentPurchases` é uma lista de objetos `{ "itemId": string, "purchasedAt": number }`, no mesmo item que guarda `recommendations`. Cada recomendação leva `inStock` (booleano).
+- **Unidade:** `purchasedAt` em **segundos** desde a época (UTC), a mesma unidade de `generatedAt` e `ttlTimestamp`. O serviço converte para milissegundos no domínio.
+- **Janela e tamanho:** a publicação grava só as compras dos **últimos 30 dias**, no máximo **100** por usuário. O serviço lê no máximo 100 e ignora o excedente; compra com mais de 30 dias não suprime nada (regra do RF-004).
+- **Entradas inválidas:** `itemId` vazio ou ausente, `purchasedAt` que não é número finito (texto ISO, por exemplo), negativo ou acima de agora mais 300 s (pega milissegundos gravados por engano) são **descartadas e contadas** (`discardedPurchases`), com um log estruturado que leva só as contagens, sem `userId` nem `itemId`. Uma entrada ruim nunca derruba a requisição.
+- **Estoque sem campo:** recomendação sem `inStock` booleano conta como sem informação; o item só sai se outra fonte disser `false`.
+- **Onde está testado:** `U/tests/integration/eligibility-real-service.test.ts` (VT-07, VT-08 e os casos do contrato de leitura).
+
 ## Alternativas rejeitadas
 | Alternativa | Por que não |
 |---|---|

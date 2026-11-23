@@ -7,7 +7,8 @@ import { MemoryDbVectorCandidateRepository } from '../../src/serving/src/infrast
 import { IMemoryDbVectorRepository } from '../../src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository';
 import { ISageMakerScoringClient } from '../../src/serving/src/infrastructure/sagemaker/sagemaker-scoring.client';
 import { ICloudWatchMetricsPublisher } from '../../src/serving/src/infrastructure/monitoring/cloudwatch-metrics';
-import { DependencyError } from '../../src/serving/src/domain/dependency-error';
+import { DependencyError, isValidationError } from '../../src/serving/src/domain/dependency-error';
+import { InvalidUserIdError } from '../../src/serving/src/domain/candidate';
 import { InvalidCategoryError } from '../../src/serving/src/domain/category';
 import { RecommendationController } from '../../src/serving/src/presentation/controllers/recommendation.controller';
 
@@ -22,8 +23,17 @@ function dynamoWith(send: ReturnType<typeof vi.fn>) {
   return new DynamoDbBatchCandidateRepository({ send } as unknown as DynamoDBDocumentClient, 'tabela-teste');
 }
 
+// T072 (RF-105): a busca vetorial só roda com sessão; o pipeline simulado devolve o vetor `v` de
+// cada item da sessão, para o FT.SEARCH (o `call`) ser o ponto da falha ou da resposta.
+const sessionVector = Buffer.from(new Float32Array(128).fill(0.1).buffer);
+const session = ['SESSAO-1'];
+
 function redisWith(call: ReturnType<typeof vi.fn>) {
-  return new MemoryDbVectorCandidateRepository({ call } as unknown as Redis);
+  const pipeline = () => {
+    const p = { hgetBuffer: () => p, exec: async () => [[null, sessionVector]] };
+    return p;
+  };
+  return new MemoryDbVectorCandidateRepository({ call, pipeline } as unknown as Redis);
 }
 
 function metrics(): ICloudWatchMetricsPublisher & Record<string, ReturnType<typeof vi.fn>> {
@@ -61,6 +71,44 @@ describe('DependencyError: adaptadores reais lançam a falha com dependência, c
 
     expect(err).toBeInstanceOf(DependencyError);
     expect(err).toMatchObject({ dependencia: 'dynamodb', categoria: 'indisponivel', retentavel: true });
+  });
+
+  it('DependencyError preserva a causa original e a mensagem não leva o userId (achado A1 da revisão da T073)', async () => {
+    const original = new Error('ServiceUnavailable');
+    const repo = dynamoWith(vi.fn().mockRejectedValue(original));
+
+    const err = await repo.getBatchCandidates('usuario-sintetico-42').catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(DependencyError);
+    expect((err as Error).cause).toBe(original);
+    expect((err as Error).message).not.toContain('usuario-sintetico-42');
+  });
+
+  it('DynamoDB: userId fora do padrão vira erro de validação estruturado, sem eco e sem chamar o cliente (achado A2)', async () => {
+    const send = vi.fn().mockResolvedValue(dynamoItem);
+    const repo = dynamoWith(send);
+
+    const err = await repo.getBatchCandidates('mal$formado}').catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(InvalidUserIdError);
+    expect(err).not.toBeInstanceOf(DependencyError);
+    expect(err).toMatchObject({ categoria: 'validacao', retentavel: false });
+    expect(isValidationError(err)).toBe(true);
+    expect((err as Error).message).toContain('userId');
+    expect((err as Error).message).not.toContain('mal$formado}');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('DynamoDB: userId inválido repetido não abre o disjuntor', async () => {
+    const send = vi.fn().mockResolvedValue(dynamoItem);
+    const repo = dynamoWith(send);
+
+    for (let i = 0; i < 10; i++) {
+      await repo.getBatchCandidates('mal formado').catch(() => undefined);
+    }
+
+    await expect(repo.getBatchCandidates('u-1')).resolves.toHaveLength(2);
+    expect(send).toHaveBeenCalledTimes(1);
   });
 
   it('DynamoDB: send que não responde em 20 ms vira DependencyError timeout', async () => {
@@ -121,7 +169,7 @@ describe('VT-05: DynamoDB real fora do ar no caso de uso', () => {
       metricsPublisher: m,
     });
 
-    const response = await useCase.execute({ userId: 'u-1', limit: 5 });
+    const response = await useCase.execute({ userId: 'u-1', limit: 5, sessionItemIds: session });
 
     expect(response.degradedMode).toBe(true);
     expect(m.publishDynamoDbFallback).toHaveBeenCalledTimes(1);
@@ -138,7 +186,7 @@ describe('VT-05: DynamoDB real fora do ar no caso de uso', () => {
       metricsPublisher: m,
     });
 
-    const response = await useCase.execute({ userId: 'u-1', limit: 5 });
+    const response = await useCase.execute({ userId: 'u-1', limit: 5, sessionItemIds: session });
 
     expect(response.degradedMode).toBe(false);
     expect(m.publishDynamoDbFallback).not.toHaveBeenCalled();
@@ -156,7 +204,7 @@ describe('VT-06: MemoryDB real fora do ar no caso de uso', () => {
       metricsPublisher: m,
     });
 
-    const response = await useCase.execute({ userId: 'u-1', limit: 5 });
+    const response = await useCase.execute({ userId: 'u-1', limit: 5, sessionItemIds: session });
 
     expect(response.degradedMode).toBe(true);
     expect(m.publishMemoryDbFallback).toHaveBeenCalledTimes(1);
@@ -173,7 +221,7 @@ describe('VT-06: MemoryDB real fora do ar no caso de uso', () => {
       metricsPublisher: m,
     });
 
-    const response = await useCase.execute({ userId: 'u-1', limit: 5 });
+    const response = await useCase.execute({ userId: 'u-1', limit: 5, sessionItemIds: session });
 
     expect(response.degradedMode).toBe(false);
     expect(m.publishMemoryDbFallback).not.toHaveBeenCalled();
@@ -191,7 +239,7 @@ describe('Erro de validação não é queda do MemoryDB (nota da revisão da T07
       metricsPublisher: m,
     });
 
-    const err = await useCase.execute({ userId: 'u-1', limit: 5, category: 'bad}' }).catch((e: unknown) => e);
+    const err = await useCase.execute({ userId: 'u-1', limit: 5, category: 'bad}', sessionItemIds: session }).catch((e: unknown) => e);
 
     expect(err).toBeInstanceOf(InvalidCategoryError);
     expect(err).toMatchObject({ categoria: 'validacao', retentavel: false });
@@ -214,7 +262,7 @@ describe('Erro de validação não é queda do MemoryDB (nota da revisão da T07
 
   it('o controlador responde 400 (nunca 500) quando o caso de uso propaga erro de validação', async () => {
     const vectorRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockRejectedValue(new InvalidCategoryError()),
+      searchBySession: vi.fn().mockRejectedValue(new InvalidCategoryError()),
     };
     const useCase = new GetRecommendationsUseCase({
       batchRepo: dynamoWith(vi.fn().mockResolvedValue(dynamoItem)),
@@ -226,7 +274,7 @@ describe('Erro de validação não é queda do MemoryDB (nota da revisão da T07
     reply.status.mockReturnValue(reply);
 
     await controller.getRecommendations(
-      { query: { userId: 'u-1', category: 'Livros' }, id: 'req-1' } as never,
+      { query: { userId: 'u-1', category: 'Livros', sessionItemIds: 'SESSAO-1' }, id: 'req-1' } as never,
       reply as never
     );
 

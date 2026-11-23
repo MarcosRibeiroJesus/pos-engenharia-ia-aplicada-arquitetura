@@ -120,13 +120,14 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
   // vetorial nunca é acionado. O caso de uso aqui é o real, com repositórios simulados.
   describe('VT-01: category validada por lista de caracteres permitidos', () => {
     let guardedApp: FastifyInstance;
-    const searchSimilarItems = vi.fn().mockResolvedValue([]);
+    // T072 (RF-105): a interface do repositório passou a ser a busca pela sessão.
+    const searchBySession = vi.fn().mockResolvedValue([]);
     const getBatchCandidates = vi.fn().mockResolvedValue([
       { itemId: 'BATCH-1', score: 0.9, rank: 1, title: 'Item 1', priceCents: 1500 },
     ]);
 
     beforeAll(async () => {
-      const vectorRepo: IMemoryDbVectorRepository = { searchSimilarItems };
+      const vectorRepo: IMemoryDbVectorRepository = { searchBySession };
       const batchRepo: IDynamoDbBatchRepository = { getBatchCandidates };
       const scoringClient: ISageMakerScoringClient = {
         scoreCandidates: vi.fn().mockImplementation(async (input) =>
@@ -144,7 +145,7 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
     });
 
     beforeEach(() => {
-      searchSimilarItems.mockClear();
+      searchBySession.mockClear();
       getBatchCandidates.mockClear();
     });
 
@@ -164,7 +165,8 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
     it.each(forbidden)('rejeita category com %s: 400 com error, message e requestId, sem chamar o repositório', async (_nome, category) => {
       const res = await guardedApp.inject({
         method: 'GET',
-        url: `/v1/recommendations?userId=u-12345&category=${encodeURIComponent(category)}`,
+        // Com sessão, o caso de uso chamaria o repositório: a asserção abaixo pode reprovar (T072).
+        url: `/v1/recommendations?userId=u-12345&category=${encodeURIComponent(category)}&sessionItemIds=SKU-1`,
       });
 
       expect(res.statusCode).toBe(400);
@@ -173,7 +175,7 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
       expect(typeof body.message).toBe('string');
       expect(body.message).toContain('category');
       expect(body).toHaveProperty('requestId');
-      expect(searchSimilarItems).not.toHaveBeenCalled();
+      expect(searchBySession).not.toHaveBeenCalled();
       expect(getBatchCandidates).not.toHaveBeenCalled();
     });
 
@@ -183,12 +185,12 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
 
       const res = await guardedApp.inject({
         method: 'GET',
-        url: `/v1/recommendations?userId=u-12345&category=${category}`,
+        url: `/v1/recommendations?userId=u-12345&category=${category}&sessionItemIds=SKU-1`,
       });
 
       expect(res.statusCode).toBe(200);
-      expect(searchSimilarItems).toHaveBeenCalledTimes(1);
-      expect(searchSimilarItems.mock.calls[0][1]).toBe(category);
+      expect(searchBySession).toHaveBeenCalledTimes(1);
+      expect(searchBySession.mock.calls[0][1]).toBe(category);
     });
   });
 });

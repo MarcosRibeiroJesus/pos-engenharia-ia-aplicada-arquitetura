@@ -18,7 +18,7 @@ describe('Business Filter Enforcement in Serving Pipeline (Integration)', () => 
     };
 
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockResolvedValue([]),
+      searchBySession: vi.fn().mockResolvedValue([]),
     };
 
     const mockSageMakerClient: ISageMakerScoringClient = {

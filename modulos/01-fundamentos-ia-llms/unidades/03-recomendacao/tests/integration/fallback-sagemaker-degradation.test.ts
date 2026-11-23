@@ -14,7 +14,7 @@ describe('Fallback SageMaker Degradation (Integration)', () => {
     };
 
     const mockMemoryDbRepo: IMemoryDbVectorRepository = {
-      searchSimilarItems: vi.fn().mockResolvedValue([
+      searchBySession: vi.fn().mockResolvedValue([
         { itemId: 'PROD-A', vectorScore: 0.9, title: 'Item A', priceCents: 1000 },
         { itemId: 'PROD-C', vectorScore: 0.7, title: 'Item C', priceCents: 3000 },
       ]),
@@ -34,6 +34,7 @@ describe('Fallback SageMaker Degradation (Integration)', () => {
     const response = await useCase.execute({
       userId: 'u-12345',
       limit: 3,
+      sessionItemIds: ['SESSAO-1'],
     });
 
     expect(response.degradedMode).toBe(true);

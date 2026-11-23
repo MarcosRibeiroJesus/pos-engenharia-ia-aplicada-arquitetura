@@ -1,0 +1,42 @@
+{
+  "id": "erro-400",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "Requisição inválida (não retentável).",
+  "caminho": "erro-nao-retentavel",
+  "tipo": "erro-http",
+  "origem": {
+    "data": "2026-11-18",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "max_tokens": 1024,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tool_choice": {
+        "type": "tool",
+        "name": "record_explanations"
+      },
+      "tools": [
+        "record_explanations"
+      ],
+      "strict": true,
+      "itens": [
+        "SKU-1",
+        "SKU-2"
+      ]
+    }
+  },
+  "resposta": {
+    "status": 400,
+    "corpo": {
+      "type": "error",
+      "error": {
+        "type": "invalid_request_error",
+        "message": "bad"
+      }
+    },
+    "mensagem": "bad"
+  }
+}

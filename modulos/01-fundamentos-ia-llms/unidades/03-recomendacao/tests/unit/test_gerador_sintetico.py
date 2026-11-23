@@ -3,7 +3,9 @@
 O gerador do lote precisa ser reprodutível (mesma semente, mesmos bytes), marcar
 todo registro como sintético, usar só categorias no padrão do RNF-104, dar
 `inStock` a todo item e tirar os títulos da lista versionada de nomes fictícios
-(`tests/fixtures/nomes-ficticios.json`), a mesma que o VT-14 (T077) usa.
+(`tests/fixtures/nomes-ficticios.json`), a mesma que o VT-14 (T077) usa. Cada título
+tem uma categoria fixa na lista, e o item gerado leva essa categoria (T077, achado A2
+da revisão da T040: categoria sorteada sem relação com o título).
 """
 import hashlib
 import json
@@ -69,7 +71,9 @@ class TestGeradorSintetico(unittest.TestCase):
         cls.b = Path(cls._tmp.name) / "b"
         _rodar(cls.a)
         _rodar(cls.b)
-        cls.permitidos = json.loads(NOMES.read_text(encoding="utf-8"))["titulos"]
+        lista = json.loads(NOMES.read_text(encoding="utf-8"))
+        cls.categoria_do_titulo = {i["titulo"]: i["categoria"] for i in lista["itens"]}
+        cls.permitidos = list(cls.categoria_do_titulo)
 
     @classmethod
     def tearDownClass(cls):
@@ -120,6 +124,30 @@ class TestGeradorSintetico(unittest.TestCase):
         # Prova que a checagem morde: um título que não está na lista precisa aparecer.
         falso = [{"title": "Produto Que Nao Esta Na Lista"}]
         self.assertEqual(_titulos_estranhos(falso, self.permitidos), ["Produto Que Nao Esta Na Lista"])
+
+    def test_categoria_e_a_do_titulo_na_lista(self):
+        for item in _registros(self.a, "itens"):
+            self.assertEqual(item["category"], self.categoria_do_titulo[item["title"]], item)
+
+    def test_lista_com_categoria_fora_do_padrao_e_recusada(self):
+        sys.path.insert(0, str(GERADOR.parent))
+        try:
+            import gerar_dados_sinteticos as gerador
+        finally:
+            sys.path.pop(0)
+        ruins = (
+            {"categorias": ["Casa"], "itens": [{"titulo": "Cesto", "categoria": "Casa & Mesa"}]},
+            {"categorias": ["Casa"], "itens": [{"titulo": "Cesto", "categoria": "Jardim"}]},
+            {"categorias": ["Casa"], "itens": [{"titulo": "Cesto", "categoria": "Casa"},
+                                               {"titulo": "Cesto", "categoria": "Casa"}]},
+            {"categorias": ["Casa"], "itens": []},
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            for n, conteudo in enumerate(ruins):
+                arquivo = Path(tmp) / f"lista-{n}.json"
+                arquivo.write_text(json.dumps(conteudo), encoding="utf-8")
+                with self.subTest(conteudo=conteudo), self.assertRaises(ValueError):
+                    gerador.carregar_catalogo(arquivo)
 
     def test_interacoes_referenciam_usuarios_e_itens_gerados(self):
         usuarios = {u["userId"] for u in _registros(self.a, "usuarios")}

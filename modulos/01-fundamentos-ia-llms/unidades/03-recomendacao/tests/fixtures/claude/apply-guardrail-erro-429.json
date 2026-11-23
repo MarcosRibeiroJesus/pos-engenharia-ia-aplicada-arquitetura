@@ -1,0 +1,41 @@
+{
+  "id": "apply-guardrail-erro-429",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "ApplyGuardrail com limite de taxa (retentável pelo RF-007).",
+  "caminho": "erro-retentavel",
+  "tipo": "erro-http",
+  "origem": {
+    "data": "2026-11-23",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "guardrailIdentifier": "<GUARDRAIL_ID do contrato>",
+      "guardrailVersion": "<GUARDRAIL_VERSAO do contrato>",
+      "source": "OUTPUT",
+      "content": [
+        {
+          "text": {
+            "text": "<frases aprovadas na validação>"
+          }
+        }
+      ]
+    },
+    "observacao": "formato a confirmar: a página da API ApplyGuardrail não foi consultada nesta execução; a T084 ou a captura da T107 confirma (R4)"
+  },
+  "resposta": {
+    "status": 429,
+    "corpo": {
+      "type": "error",
+      "error": {
+        "type": "rate_limit_error",
+        "message": "Too many requests"
+      }
+    },
+    "mensagem": "Too many requests",
+    "tipo_de_erro": "ThrottlingException",
+    "cabecalhos": {
+      "x-amzn-errortype": "ThrottlingException"
+    }
+  }
+}

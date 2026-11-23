@@ -347,32 +347,32 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository.ts`, `U/tests/unit/memorydb-vector-candidate.repository.test.ts`.
   - **Aceite:** o serviço recebe até 50 candidatos vetoriais, e não mais 10; o `inStock` do `RETURN` chega ao candidato.
   - **Depende de:** T070.
-- [ ] T072 [engenheiro-ml] Vetor da busca pelos itens da sessão · RF-105, E5, ADR-0011 · VT-04
+- [x] T072 [engenheiro-ml] Vetor da busca pelos itens da sessão · RF-105, E5, ADR-0011 · VT-04
   - **Teste vermelho:** VT-04: com dois `sessionItemIds`, um único pipeline `HGET item:<id> v` é feito e o vetor da consulta é a média normalizada em L2 dos dois (diferente de zero); id ausente é ignorado; sem sessão ou sem nenhum vetor, o repositório vetorial não é chamado e `degradedMode` fica `false`; mais de 10 ids ou id fora do padrão do `userId` dá 400.
   - **Arquivos:** controlador, caso de uso (`get-recommendations.use-case.ts`), repositório do MemoryDB, os testes.
   - **Aceite:** leitura e busca dividem o orçamento de 15 ms; o `new Float32Array(128)` de zeros sai do código.
   - **Depende de:** T071.
-- [ ] T073 [P] [engenheiro-ml] Falha de dependência propagada pelos adaptadores reais · RF-106, RF-006, E4, ADR-0011 · VT-05, VT-06
+- [x] T073 [P] [engenheiro-ml] Falha de dependência propagada pelos adaptadores reais · RF-106, RF-006, E4, ADR-0011 · VT-05, VT-06
   - **Teste vermelho:** VT-05 e VT-06 em `U/tests/integration/fallback-real-adapters.test.ts`, com o adaptador real sobre o cliente simulado (DynamoDB `send` e Redis `call` que lançam): o caso de uso real devolve 200, `degradedMode: true` e publica `DynamoDbFallbackCount` ou `MemoryDbFallbackCount`; "sem dados" (item ausente) continua lista vazia, sem degradação.
   - **Arquivos:** os dois adaptadores (lançam `DependencyError {dependencia, categoria, retentavel}`), o caso de uso, `U/src/serving/src/domain/` (tipo do erro), os testes.
   - **Aceite:** os quatro testes de fallback existentes (T005) seguem verdes; o disjuntor conta a falha propagada.
   - **Depende de:** T000.
-- [ ] T074 [engenheiro-ml] Compras recentes e estoque pelo lote no serviço real · RF-104, RF-004, RF-006, E7, ADR-0012 · VT-07, VT-08
+- [x] T074 [engenheiro-ml] Compras recentes e estoque pelo lote no serviço real · RF-104, RF-004, RF-006, E7, ADR-0012 · VT-07, VT-08
   - **Teste vermelho:** com o `buildDefaultUseCase` e os clientes simulados: VT-07, um item comprado há 10 dias (em `recentPurchases` do item do DynamoDB) não aparece, e um com `inStock: false` não aparece; VT-08, com a fonte fora do ar ou o repositório de elegibilidade lançando, a resposta é 200 com `degradedMode: true`, nunca 500.
   - **Arquivos:** `U/src/serving/src/presentation/server.ts` (`buildDefaultUseCase`), `U/src/serving/src/infrastructure/cache/inventory-eligibility.repository.ts`, o adaptador do DynamoDB (lê `recentPurchases` no mesmo GetItem), os testes.
   - **Aceite:** nenhuma chamada nova no caminho de 60 ms; a documentação diz que o frescor é o do lote (diário).
   - **Depende de:** T071, T073.
-- [ ] T075 [P] [engenheiro-ml] Cliente do re-ranker no contrato CSV do container nativo · RF-005, RF-109, ADR-0008 · VT-09, VT-16
+- [x] T075 [P] [engenheiro-ml] Cliente do re-ranker no contrato CSV do container nativo · RF-005, RF-109, ADR-0008 · VT-09, VT-16
   - **Teste vermelho:** VT-09: o cliente manda `Content-Type: text/csv` com uma linha `batchScore,vectorScore,hibrido` por candidato, na ordem, e lê um score por linha; uma resposta com quantidade de scores diferente vira erro de contrato, e a resposta cai na heurística com `degradedMode: true`; VT-16: o `modelId` da resposta vem de `RERANKER_MODEL_VERSION`.
   - **Arquivos:** `U/src/serving/src/infrastructure/sagemaker/sagemaker-scoring.client.ts`, `U/src/serving/src/config/env.ts`, os testes; o contrato JSON legado `sagemaker-inference-contract.json` sai.
   - **Aceite:** o `fallback-sagemaker-degradation` (T005) segue verde; até 100 candidatos por chamada e 35 ms de timeout.
   - **Depende de:** T000.
-- [ ] T076 [P] [engenheiro-ml] Saúde com verificadores reais no servidor de produção · RF-008 · VT-19
+- [x] T076 [P] [engenheiro-ml] Saúde com verificadores reais no servidor de produção · RF-008 · VT-19
   - **Teste vermelho:** VT-19: o servidor montado por `buildDefaultUseCase` injeta verificadores do DynamoDB, do MemoryDB e do SageMaker; com um deles simulado fora, `GET /health` dá `DEGRADED`; com todos fora, `DOWN`.
   - **Arquivos:** `U/src/serving/src/presentation/server.ts`, `controllers/health.controller.ts`, o teste.
   - **Aceite:** o health check do ALB continua usando um caminho que só prova o processo, para uma dependência fora não derrubar a task (a resposta 200 do RF-006 depende da task no ar); a decisão fica num comentário do teste.
   - **Depende de:** T000.
-- [ ] T077 [P] [engenheiro-ml] Catálogo curado com nomes fictícios · RNF-109, Art. VIII · VT-14
+- [x] T077 [P] [engenheiro-ml] Catálogo curado com nomes fictícios · RNF-109, Art. VIII · VT-14
   - **Teste vermelho:** VT-14 confere cada título do catálogo curado de fallback e do `U/scripts/seed-local.ts` contra `U/tests/fixtures/nomes-ficticios.json`; um título com marca real precisa reprovar.
   - **Arquivos:** `U/src/serving/src/infrastructure/fallback/curated-fallback.provider.ts`, `U/scripts/seed-local.ts`, a lista de nomes, o teste.
   - **Aceite:** o gerador do lote usa a mesma lista (PY-07).

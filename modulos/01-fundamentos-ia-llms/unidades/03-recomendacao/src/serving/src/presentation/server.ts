@@ -7,18 +7,31 @@ import { RecommendationController } from './controllers/recommendation.controlle
 import { IGetRecommendationsUseCase, GetRecommendationsUseCase } from '../application/get-recommendations.use-case';
 import { DynamoDbBatchCandidateRepository } from '../infrastructure/dynamodb/dynamodb-batch-candidate.repository';
 import { MemoryDbVectorCandidateRepository } from '../infrastructure/memorydb/memorydb-vector-candidate.repository';
-import { SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
-import { EmfMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { ISageMakerScoringClient, SageMakerScoringClient } from '../infrastructure/sagemaker/sagemaker-scoring.client';
+import { EmfMetricsPublisher, ICloudWatchMetricsPublisher } from '../infrastructure/monitoring/cloudwatch-metrics';
+import { BatchDataEligibilityRepository } from '../infrastructure/cache/inventory-eligibility.repository';
+import type { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import type Redis from 'ioredis';
 import { BedrockClaudeClient } from '../infrastructure/bedrock/bedrock-claude.client';
 import { RecommendationExplainer } from '../application/recommendation-explainer';
 
 export interface ServerOptions extends FastifyServerOptions {
   healthCheckers?: DownstreamHealthCheckers;
   recommendationUseCase?: IGetRecommendationsUseCase;
+  /** Dublês dos clientes de baixo nível para a composição de produção (E7). */
+  clients?: DefaultUseCaseClients;
 }
 
 export function buildServer(options: ServerOptions = {}): FastifyInstance {
-  const { healthCheckers, recommendationUseCase, ...fastifyOptions } = options;
+  const { healthCheckers, recommendationUseCase, clients, ...fastifyOptions } = options;
+
+  // Sem caso de uso injetado, é a composição de produção (a de `startServer`): caso de uso e
+  // verificadores de saúde compartilham os mesmos adaptadores (mesmo cliente Redis, mesmo disjuntor
+  // do SageMaker). Com caso de uso injetado (testes do caso de uso), os verificadores são só os
+  // passados.
+  const defaults = recommendationUseCase ? undefined : buildDefaultService(clients);
+  const useCase = recommendationUseCase ?? defaults!.useCase;
+  const checkers = healthCheckers ?? defaults?.healthCheckers;
 
   const app = fastify({
     logger: false, // We use custom structured logging via Pino
@@ -85,38 +98,81 @@ export function buildServer(options: ServerOptions = {}): FastifyInstance {
     });
   });
 
-  // Register Health Check Route
-  const healthController = new HealthController(healthCheckers);
+  // RF-008: `/health` consulta as dependências (diagnóstico e alarmes); `/health/live` só prova o
+  // processo e é o caminho do ALB e do HEALTHCHECK do contêiner (VT-19).
+  const healthController = new HealthController(checkers);
   app.get('/health', (req, reply) => healthController.getHealth(req, reply));
+  app.get('/health/live', (req, reply) => healthController.getLiveness(req, reply));
 
   // Register Recommendations Route
-  const useCase = recommendationUseCase || buildDefaultUseCase();
   const recommendationController = new RecommendationController(useCase);
   app.get('/v1/recommendations', (req, reply) => recommendationController.getRecommendations(req, reply));
 
   return app;
 }
 
-function buildDefaultUseCase(): IGetRecommendationsUseCase {
-  const metricsPublisher = new EmfMetricsPublisher();
+/**
+ * Clientes de baixo nível que o teste pode trocar por dublês. A composição (adaptadores, filtros e
+ * repositório de elegibilidade) é sempre a de produção: o teste prova o que roda no contêiner
+ * (E7, ADR-0012).
+ */
+export interface DefaultUseCaseClients {
+  dynamoDocClient?: DynamoDBDocumentClient;
+  redis?: Redis;
+  scoringClient?: ISageMakerScoringClient;
+  metricsPublisher?: ICloudWatchMetricsPublisher;
+}
+
+export interface DefaultService {
+  useCase: IGetRecommendationsUseCase;
+  healthCheckers: DownstreamHealthCheckers;
+}
+
+export function buildDefaultUseCase(clients: DefaultUseCaseClients = {}): IGetRecommendationsUseCase {
+  return buildDefaultService(clients).useCase;
+}
+
+/**
+ * Composição de produção: o caso de uso e os verificadores de saúde (RF-008) sobre os mesmos
+ * adaptadores. DynamoDB e MemoryDB têm verificador ativo barato (GetItem de sonda, PING); o
+ * SageMaker, passivo (disjuntor), para o health não pagar inferência.
+ */
+export function buildDefaultService(clients: DefaultUseCaseClients = {}): DefaultService {
+  const batchRepo = new DynamoDbBatchCandidateRepository(clients.dynamoDocClient);
+  const vectorRepo = new MemoryDbVectorCandidateRepository(clients.redis);
+  const scoringClient = clients.scoringClient ?? new SageMakerScoringClient();
+  const metricsPublisher = clients.metricsPublisher ?? new EmfMetricsPublisher();
   const explainer = env.EXPLANATIONS_ENABLED
     ? new RecommendationExplainer(new BedrockClaudeClient(), {
         modelId: env.BEDROCK_MODEL_ID,
         timeoutMs: env.EXPLANATION_TIMEOUT_MS,
         metrics: {
-          publishExplanationRetry: () => metricsPublisher.publishExplanationRetry(),
-          publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback(c),
+          publishExplanationRetry: () => metricsPublisher.publishExplanationRetry?.(),
+          publishExplanationFallback: (c) => metricsPublisher.publishExplanationFallback?.(c),
         },
       })
     : undefined;
 
-  return new GetRecommendationsUseCase({
-    batchRepo: new DynamoDbBatchCandidateRepository(),
-    vectorRepo: new MemoryDbVectorCandidateRepository(),
-    scoringClient: new SageMakerScoringClient(),
+  const useCase = new GetRecommendationsUseCase({
+    batchRepo,
+    vectorRepo,
+    scoringClient,
     metricsPublisher,
     explainer,
+    // RF-104 (ADR-0012): compras recentes e estoque pelo lote, sem chamada nova; frescor diário.
+    inventoryRepo: new BatchDataEligibilityRepository(),
   });
+
+  const healthCheckers: DownstreamHealthCheckers = {
+    checkDynamoDb: () => batchRepo.checkHealth(),
+    checkMemoryDb: () => vectorRepo.checkHealth(),
+    // Dublê sem estado de saúde: sem verificador (o controlador o trata como CONNECTED).
+    checkSageMaker: scoringClient.healthStatus
+      ? async () => scoringClient.healthStatus!()
+      : undefined,
+  };
+
+  return { useCase, healthCheckers };
 }
 
 export async function startServer(): Promise<FastifyInstance> {

@@ -65,6 +65,42 @@ describe('CandidateMerger (Unit)', () => {
     expect(vectorOnly?.provenance).toBe('realtime');
   });
 
+  // VT-07 (T074, RF-004, ADR-0012): o estoque vem do lote, no candidato do DynamoDB e no hash do
+  // MemoryDB. A junção não pode fixar `inStock: true`: se uma das fontes diz false, prevalece false.
+  describe('VT-07: estoque das fontes preservado na junção', () => {
+    it('candidato só vetorial com inStock false fica false', () => {
+      const merged = mergeCandidates([], [{ itemId: 'v-1', vectorScore: 0.9, inStock: false }]);
+      expect(merged[0].inStock).toBe(false);
+    });
+
+    it('candidato só do lote com inStock false fica false', () => {
+      const merged = mergeCandidates([{ itemId: 'b-1', score: 0.9, rank: 1, inStock: false }], []);
+      expect(merged[0].inStock).toBe(false);
+    });
+
+    it.each([
+      ['lote false, vetor true', false, true],
+      ['lote true, vetor false', true, false],
+      ['lote false, vetor sem campo', false, undefined],
+      ['lote sem campo, vetor false', undefined, false],
+    ])('hybrid com %s: prevalece false', (_nome, batchStock, vectorStock) => {
+      const merged = mergeCandidates(
+        [{ itemId: 'h-1', score: 0.8, rank: 1, inStock: batchStock }],
+        [{ itemId: 'h-1', vectorScore: 0.7, inStock: vectorStock }]
+      );
+      expect(merged[0].provenance).toBe('hybrid');
+      expect(merged[0].inStock).toBe(false);
+    });
+
+    it('sem informação de estoque em nenhuma fonte o candidato segue elegível (true)', () => {
+      const merged = mergeCandidates(
+        [{ itemId: 'h-1', score: 0.8, rank: 1 }],
+        [{ itemId: 'h-1', vectorScore: 0.7 }, { itemId: 'v-2', vectorScore: 0.6, inStock: true }]
+      );
+      expect(merged.map((c) => c.inStock)).toEqual([true, true]);
+    });
+  });
+
   it('should handle empty candidates from both sources gracefully', () => {
     const merged = mergeCandidates([], []);
     expect(merged).toEqual([]);

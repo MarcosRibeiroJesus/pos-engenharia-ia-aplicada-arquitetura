@@ -3,6 +3,21 @@ import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import Redis from 'ioredis';
 import { env } from '../src/serving/src/config/env';
 
+// Dados da semente local: produtos fictícios, sem marca real (RNF-109, Art. VIII). Título e
+// categoria vêm de `tests/fixtures/nomes-ficticios.json`; o VT-14 confere os dois.
+export const SEED_RECOMMENDATIONS = [
+  { itemId: 'PROD-1', score: 0.95, rank: 1, title: 'Teclado Ergonomico Compacto', priceCents: 4999, category: 'Informatica' },
+  { itemId: 'PROD-2', score: 0.88, rank: 2, title: 'Cabo USB-C Trancado 1 m', priceCents: 999, category: 'Acessorios' },
+  { itemId: 'SKU-9021', score: 0.82, rank: 3, title: 'Fone de Ouvido com Cancelamento de Ruido', priceCents: 19999, category: 'Eletronicos' },
+];
+
+// Itens do índice vetorial local (campo `cat` do HASH, RNF-104).
+export const SEED_VECTOR_ITEMS = [
+  { itemId: 'PROD-1', category: 'Informatica', priceCents: 4999 },
+  { itemId: 'PROD-3', category: 'Informatica', priceCents: 2999 },
+  { itemId: 'SKU-9021', category: 'Eletronicos', priceCents: 19999 },
+];
+
 async function seedLocalDynamo() {
   console.log(`[Seed] Populating DynamoDB at table ${env.DYNAMODB_TABLE_NAME}...`);
   const client = new DynamoDBClient({
@@ -25,11 +40,7 @@ async function seedLocalDynamo() {
             userId,
             generatedAt: now,
             ttlTimestamp: ttl,
-            recommendations: [
-              { itemId: 'PROD-1', score: 0.95, rank: 1, title: 'Ergonomic Keyboard', priceCents: 4999, category: 'Computers' },
-              { itemId: 'PROD-2', score: 0.88, rank: 2, title: 'USB-C Cable', priceCents: 999, category: 'Accessories' },
-              { itemId: 'SKU-9021', score: 0.82, rank: 3, title: 'Noise-Canceling Headphones', priceCents: 19999, category: 'Electronics' },
-            ],
+            recommendations: SEED_RECOMMENDATIONS,
           },
         })
       );
@@ -75,9 +86,8 @@ async function seedLocalRedis() {
       console.log(`[Seed] Index notice: ${(e as Error).message}`);
     }
 
-    const items = ['PROD-1', 'PROD-3', 'SKU-9021'];
-    for (let i = 0; i < items.length; i++) {
-      const itemId = items[i];
+    for (let i = 0; i < SEED_VECTOR_ITEMS.length; i++) {
+      const { itemId, category, priceCents } = SEED_VECTOR_ITEMS[i];
       const buffer = Buffer.alloc(512); // 128 * 4 bytes
       for (let j = 0; j < 128; j++) {
         buffer.writeFloatLE(0.05 + i * 0.1, j * 4);
@@ -85,8 +95,8 @@ async function seedLocalRedis() {
 
       await redis.hset(`item:${itemId}`, {
         v: buffer,
-        cat: 'Electronics',
-        price: '4999',
+        cat: category,
+        price: String(priceCents),
       });
       console.log(`[Seed] Indexed vector item:${itemId} in Redis`);
     }
