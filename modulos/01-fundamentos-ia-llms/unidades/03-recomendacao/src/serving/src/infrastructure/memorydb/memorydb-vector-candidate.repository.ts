@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import { SemanticCandidate } from '../../domain/candidate';
+import { assertValidCategory } from '../../domain/category';
 import { env } from '../../config/env';
 import { baseLogger } from '../logging/logger';
 import { createCircuitBreaker } from '../resilience/circuit-breaker';
@@ -106,6 +107,12 @@ export class MemoryDbVectorCandidateRepository implements IMemoryDbVectorReposit
     category?: string,
     limit = 50
   ): Promise<SemanticCandidate[]> {
+    // RNF-104 (ADR-0011): defesa em profundidade. Confere a categoria de novo antes de montar a
+    // consulta e lança o erro de validação fora do try abaixo, para ele não virar lista vazia.
+    if (category !== undefined) {
+      assertValidCategory(category);
+    }
+
     let buffer: Buffer;
     if (vector instanceof Buffer) {
       buffer = vector;

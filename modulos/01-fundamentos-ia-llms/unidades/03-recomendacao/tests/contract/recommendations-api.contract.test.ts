@@ -1,7 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/serving/src/presentation/server';
-import { IGetRecommendationsUseCase } from '../../src/serving/src/application/get-recommendations.use-case';
+import {
+  IGetRecommendationsUseCase,
+  GetRecommendationsUseCase,
+} from '../../src/serving/src/application/get-recommendations.use-case';
+import { IDynamoDbBatchRepository } from '../../src/serving/src/infrastructure/dynamodb/dynamodb-batch-candidate.repository';
+import { IMemoryDbVectorRepository } from '../../src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository';
+import { ISageMakerScoringClient } from '../../src/serving/src/infrastructure/sagemaker/sagemaker-scoring.client';
 
 describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
   let app: FastifyInstance;
@@ -107,5 +113,82 @@ describe('Recommendations API Contract Tests (OpenAPI 3.0)', () => {
     });
 
     expect(res.statusCode).toBe(400);
+  });
+
+  // VT-01 (T070, RNF-104, ADR-0011): a `category` entra na expressão `(@cat:{...})` do RediSearch.
+  // Fora de ^[A-Za-z0-9_]{1,40}$ a API responde 400 antes de qualquer chamada, e o repositório
+  // vetorial nunca é acionado. O caso de uso aqui é o real, com repositórios simulados.
+  describe('VT-01: category validada por lista de caracteres permitidos', () => {
+    let guardedApp: FastifyInstance;
+    const searchSimilarItems = vi.fn().mockResolvedValue([]);
+    const getBatchCandidates = vi.fn().mockResolvedValue([
+      { itemId: 'BATCH-1', score: 0.9, rank: 1, title: 'Item 1', priceCents: 1500 },
+    ]);
+
+    beforeAll(async () => {
+      const vectorRepo: IMemoryDbVectorRepository = { searchSimilarItems };
+      const batchRepo: IDynamoDbBatchRepository = { getBatchCandidates };
+      const scoringClient: ISageMakerScoringClient = {
+        scoreCandidates: vi.fn().mockImplementation(async (input) =>
+          input.candidates.map((c: { itemId: string }) => ({ itemId: c.itemId, score: 0.9 }))
+        ),
+      };
+      guardedApp = buildServer({
+        recommendationUseCase: new GetRecommendationsUseCase({ batchRepo, vectorRepo, scoringClient }),
+      });
+      await guardedApp.ready();
+    });
+
+    afterAll(async () => {
+      await guardedApp.close();
+    });
+
+    beforeEach(() => {
+      searchSimilarItems.mockClear();
+      getBatchCandidates.mockClear();
+    });
+
+    const forbidden: Array<[string, string]> = [
+      ['chave de fechamento', 'Electronics}'],
+      ['barra vertical', 'Books|Electronics'],
+      ['asterisco', '*'],
+      ['arroba', '@cat'],
+      ['parêntese de fechamento', 'Electronics)'],
+      ['espaço', 'Home Garden'],
+      ['41 caracteres', 'A'.repeat(41)],
+      ['quebra de linha antes de }', 'Electronics\n}'],
+      ['quebra de linha no fim', 'a\n'],
+      ['valor vazio', ''],
+    ];
+
+    it.each(forbidden)('rejeita category com %s: 400 com error, message e requestId, sem chamar o repositório', async (_nome, category) => {
+      const res = await guardedApp.inject({
+        method: 'GET',
+        url: `/v1/recommendations?userId=u-12345&category=${encodeURIComponent(category)}`,
+      });
+
+      expect(res.statusCode).toBe(400);
+      const body = JSON.parse(res.body);
+      expect(body.error).toBe('Bad Request');
+      expect(typeof body.message).toBe('string');
+      expect(body.message).toContain('category');
+      expect(body).toHaveProperty('requestId');
+      expect(searchSimilarItems).not.toHaveBeenCalled();
+      expect(getBatchCandidates).not.toHaveBeenCalled();
+    });
+
+    it('aceita category no padrão (40 caracteres com dígito e sublinhado) e a repassa ao repositório', async () => {
+      const category = `Home_Garden_2${'x'.repeat(27)}`;
+      expect(category).toHaveLength(40);
+
+      const res = await guardedApp.inject({
+        method: 'GET',
+        url: `/v1/recommendations?userId=u-12345&category=${category}`,
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(searchSimilarItems).toHaveBeenCalledTimes(1);
+      expect(searchSimilarItems.mock.calls[0][1]).toBe(category);
+    });
   });
 });

@@ -337,7 +337,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T021, T022, T023, T032, T061.
 
 ## Fase 7 · Núcleo: serviço
-- [ ] T070 [P] [engenheiro-seguranca] Categoria por lista de caracteres permitidos, no controlador e no repositório · RNF-104, RNF-001, Art. IV · VT-01, VT-02
+- [x] T070 [P] [engenheiro-seguranca] Categoria por lista de caracteres permitidos, no controlador e no repositório · RNF-104, RNF-001, Art. IV · VT-01, VT-02
   - **Teste vermelho:** VT-01 em `U/tests/contract/recommendations-api.contract.test.ts`: `category` com `}`, `|`, `*`, `@`, `)`, espaço ou 41 caracteres dá 400 com `error`, `message` e `requestId`, e o repositório vetorial não é chamado; VT-02 em `U/tests/unit/memorydb-vector-candidate.repository.test.ts`: o repositório lança erro de validação com uma categoria fora do padrão, sem montar a consulta.
   - **Arquivos:** `U/src/serving/src/presentation/controllers/recommendation.controller.ts`, `U/src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository.ts`, os testes.
   - **Aceite:** o padrão `^[A-Za-z0-9_]{1,40}$` fica numa constante só, usada pelos dois; o contrato OpenAPI documenta o padrão.
