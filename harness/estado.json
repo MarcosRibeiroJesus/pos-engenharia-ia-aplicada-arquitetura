@@ -122,7 +122,7 @@
         "modulos/03-mcp/arquitetura/"
       ],
       "specs": "specs/03-mcp-regras-cdb/",
-      "fase": "especificar",
+      "fase": "implementar",
       "retroativo": true,
       "pr": null,
       "cloud": "azure",
@@ -133,18 +133,31 @@
         "D-011",
         "D-021",
         "D-022",
-        "D-065"
+        "D-024",
+        "D-029",
+        "D-031",
+        "D-034",
+        "D-065",
+        "D-071",
+        "D-072",
+        "D-073",
+        "D-074"
       ],
-      "nota": "Pouca implementação antes do SDD.",
+      "nota": "Nada implementado antes do SDD: não há código da D03 no repositório; a spec retroativa parte do contrato da plataforma, das decisões do dono e da âncora.",
       "infra_real": true,
       "destroy_workflow": ".github/workflows/03-mcp-regras-cdb-destroy.yml",
-      "teto_diario_usd": null,
+      "teto_diario_usd": 0.5,
       "apply_workflow": ".github/workflows/03-mcp-regras-cdb-apply.yml",
       "ancora": {
         "url": "https://aws.amazon.com/blogs/architecture/mcp-went-stateless-is-your-aws-mcp-server-deployment-well-architected",
         "titulo": "MCP went stateless: Is your AWS MCP server deployment well-architected? (AWS Architecture Blog)",
         "data": "2026-09-01",
         "fonte": "Marcos no chat em 2026-11-21: \"Aceito as três\" (D-065)"
+      },
+      "plano_aprovado": {
+        "data": "2026-11-22",
+        "fonte": "Marcos no chat em 2026-11-22, por múltipla escolha (D03-P7 = A: teto diário US$ 0,50 com cota de 300.000 tokens; D03-P11 = A: aprovar o plano da D03 e avançar para tarefas, D-073)",
+        "sha256": "2495c5a2d474a2965ff46faca6561434922abcc2149d2689183ab6f8fa689f11"
       }
     },
     {
