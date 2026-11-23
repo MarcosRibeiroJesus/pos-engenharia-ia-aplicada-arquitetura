@@ -1,0 +1,38 @@
+{
+  "id": "apply-guardrail-intervencao",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "ApplyGuardrail com source OUTPUT que interveio nas frases aprovadas.",
+  "caminho": "intervencao-guardrail",
+  "tipo": "apply-guardrail",
+  "origem": {
+    "data": "2026-11-23",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "n/a (ApplyGuardrail)",
+    "parametros": {
+      "guardrailIdentifier": "<GUARDRAIL_ID do contrato>",
+      "guardrailVersion": "<GUARDRAIL_VERSAO do contrato>",
+      "source": "OUTPUT",
+      "content": [
+        {
+          "text": {
+            "text": "<frases aprovadas na validação>"
+          }
+        }
+      ]
+    },
+    "observacao": "formato a confirmar: a página da API ApplyGuardrail não foi consultada nesta execução; a T084 ou a captura da T107 confirma (R4)"
+  },
+  "resposta": {
+    "action": "GUARDRAIL_INTERVENED",
+    "outputs": [
+      {
+        "text": "Sorry, the model cannot answer this question."
+      }
+    ],
+    "assessments": [
+      {}
+    ],
+    "usage": {}
+  }
+}

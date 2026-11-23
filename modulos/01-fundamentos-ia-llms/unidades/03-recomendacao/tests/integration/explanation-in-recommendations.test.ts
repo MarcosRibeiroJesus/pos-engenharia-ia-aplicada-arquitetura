@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { GetRecommendationsUseCase } from '../../src/serving/src/application/get-recommendations.use-case';
 import { IRecommendationExplainer } from '../../src/serving/src/application/recommendation-explainer';
 import { buildServer } from '../../src/serving/src/presentation/server';
+import { resultadoGravado } from '../fixtures/claude/gravacoes';
 
 const batchRepo = {
   getBatchCandidates: vi.fn().mockResolvedValue([
@@ -34,15 +35,7 @@ describe('Explicações no fluxo de recomendação', () => {
 
   it('com explain=true anexa a explicação a cada item, com proveniência', async () => {
     const explainer: IRecommendationExplainer = {
-      explain: vi.fn().mockResolvedValue({
-        status: 'ok',
-        attempts: 1,
-        modelId: 'anthropic.claude-haiku-5-5',
-        explanations: [
-          { itemId: 'SKU-1', reason: 'Combina com o seu histórico e com itens parecidos.', signals: ['purchase_history', 'similar_items'], source: 'claude' },
-          { itemId: 'SKU-2', reason: 'Clientes com histórico parecido com o seu compraram.', signals: ['purchase_history'], source: 'claude' },
-        ],
-      }),
+      explain: vi.fn().mockResolvedValue(resultadoGravado('explicador-ok')),
     };
     const res = await useCaseWith(explainer).execute({ userId: 'u-1', limit: 2, explain: true, sessionItemIds: ['SKU-9'] });
 
@@ -56,7 +49,7 @@ describe('Explicações no fluxo de recomendação', () => {
 
   it('se a explicação falhar, a resposta sai igual, sem explicação e sem 500', async () => {
     const explainer: IRecommendationExplainer = {
-      explain: vi.fn().mockResolvedValue({ status: 'unavailable', attempts: 2, errorCategory: 'validation', retryable: true, detail: 'x' }),
+      explain: vi.fn().mockResolvedValue(resultadoGravado('explicador-indisponivel-validacao')),
     };
     const res = await useCaseWith(explainer).execute({ userId: 'u-1', limit: 2, explain: true });
     expect(res.recommendations).toHaveLength(2);

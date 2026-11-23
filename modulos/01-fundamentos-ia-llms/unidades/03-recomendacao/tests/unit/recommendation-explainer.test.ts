@@ -6,47 +6,16 @@ import {
   ExplainInput,
   EXPLANATION_TOOL_NAME,
 } from '../../src/serving/src/application/recommendation-explainer';
+import { erroGravado, mensagemGravada } from '../fixtures/claude/gravacoes';
 
-// Respostas sintéticas no formato da Messages API (o que o Bedrock devolve para modelos Claude).
-function toolUseMessage(input: unknown, stopReason: Anthropic.Message['stop_reason'] = 'tool_use'): Anthropic.Message {
-  return {
-    id: 'msg_test',
-    type: 'message',
-    role: 'assistant',
-    model: 'anthropic.claude-haiku-5-5',
-    stop_reason: stopReason,
-    stop_sequence: null,
-    content: [{ type: 'tool_use', id: 'toolu_1', name: EXPLANATION_TOOL_NAME, input }],
-    usage: { input_tokens: 900, output_tokens: 200 },
-  } as unknown as Anthropic.Message;
-}
-
-function textMessage(text: string, stopReason: Anthropic.Message['stop_reason'] = 'end_turn'): Anthropic.Message {
-  return {
-    id: 'msg_text',
-    type: 'message',
-    role: 'assistant',
-    model: 'anthropic.claude-haiku-5-5',
-    stop_reason: stopReason,
-    stop_sequence: null,
-    content: [{ type: 'text', text }],
-    usage: { input_tokens: 900, output_tokens: 20 },
-  } as unknown as Anthropic.Message;
-}
-
+// Respostas gravadas em tests/fixtures/claude/, cada uma com a sua proveniência (RF-111, VT-13).
+// Todas são sintéticas: provam o código diante de cada formato, não o comportamento real do modelo (D-006).
 const input: ExplainInput = {
   userId: 'u-1',
   sessionItemIds: ['SKU-9'],
   items: [
     { itemId: 'SKU-1', title: 'Fone sem fio', category: 'Audio', provenance: 'hybrid', batchScore: 0.8, vectorScore: 0.9 },
     { itemId: 'SKU-2', title: 'Capa de celular', category: 'Acessorios', provenance: 'batch', batchScore: 0.6 },
-  ],
-};
-
-const valid = {
-  explanations: [
-    { itemId: 'SKU-1', reason: 'Combina com o que você comprou antes e com o item que está vendo agora.', signals: ['purchase_history', 'session_context'] },
-    { itemId: 'SKU-2', reason: 'Clientes com histórico de compras parecido com o seu levaram este item.', signals: ['purchase_history'] },
   ],
 };
 
@@ -68,7 +37,7 @@ const opts = { modelId: 'anthropic.claude-haiku-5-5', timeoutMs: 1000 };
 
 describe('RecommendationExplainer · saída estruturada via tool_use (CCAR-F 4.3)', () => {
   it('força a tool de explicação com schema estrito e devolve as explicações válidas', async () => {
-    const client = fakeClient(toolUseMessage(valid));
+    const client = fakeClient(mensagemGravada('sucesso'));
     const out = await new RecommendationExplainer(client, opts).explain(input);
 
     expect(out.status).toBe('ok');
@@ -90,7 +59,7 @@ describe('RecommendationExplainer · saída estruturada via tool_use (CCAR-F 4.3
   });
 
   it('o prompt tem critérios explícitos e um exemplo (CCAR-F 4.1 e 4.2)', async () => {
-    const client = fakeClient(toolUseMessage(valid));
+    const client = fakeClient(mensagemGravada('sucesso'));
     await new RecommendationExplainer(client, opts).explain(input);
     const system = JSON.stringify(client.calls[0].system);
     expect(system).toMatch(/no máximo 160 caracteres/);
@@ -101,8 +70,7 @@ describe('RecommendationExplainer · saída estruturada via tool_use (CCAR-F 4.3
 
 describe('RecommendationExplainer · validação e retentativa com o erro (CCAR-F 4.4)', () => {
   it('reenvia o erro de validação como tool_result is_error e aceita a correção', async () => {
-    const missingItem = { explanations: [valid.explanations[0]] };
-    const client = fakeClient(toolUseMessage(missingItem), toolUseMessage(valid));
+    const client = fakeClient(mensagemGravada('retentativa-item-faltando'), mensagemGravada('sucesso'));
     const metrics = { publishExplanationRetry: vi.fn(), publishExplanationFallback: vi.fn() };
 
     const out = await new RecommendationExplainer(client, { ...opts, metrics }).explain(input);
@@ -124,13 +92,7 @@ describe('RecommendationExplainer · validação e retentativa com o erro (CCAR-
   });
 
   it('rejeita sinal que os dados do item não sustentam (proveniência, CCAR-F 5.6)', async () => {
-    const invented = {
-      explanations: [
-        valid.explanations[0],
-        { itemId: 'SKU-2', reason: 'Parecido com itens que você viu recentemente nesta categoria.', signals: ['similar_items'] },
-      ],
-    };
-    const client = fakeClient(toolUseMessage(invented), toolUseMessage(invented));
+    const client = fakeClient(mensagemGravada('sinal-sem-lastro'), mensagemGravada('sinal-sem-lastro'));
     const out = await new RecommendationExplainer(client, opts).explain(input);
 
     expect(out.status).toBe('unavailable');
@@ -140,13 +102,7 @@ describe('RecommendationExplainer · validação e retentativa com o erro (CCAR-
   });
 
   it('rejeita promessa de preço ou desconto e item fora da lista', async () => {
-    const bad = {
-      explanations: [
-        { itemId: 'SKU-1', reason: 'Está com 30% de desconto só hoje, aproveite agora.', signals: ['purchase_history'] },
-        { itemId: 'SKU-404', reason: 'Clientes com histórico parecido com o seu compraram.', signals: ['purchase_history'] },
-      ],
-    };
-    const client = fakeClient(toolUseMessage(bad), toolUseMessage(bad));
+    const client = fakeClient(mensagemGravada('preco-e-item-fora-da-lista'), mensagemGravada('preco-e-item-fora-da-lista'));
     const out = await new RecommendationExplainer(client, opts).explain(input);
     expect(out.status).toBe('unavailable');
     if (out.status !== 'unavailable') return;
@@ -155,14 +111,14 @@ describe('RecommendationExplainer · validação e retentativa com o erro (CCAR-
   });
 
   it('trata resposta sem tool_use como falha de validação e tenta de novo', async () => {
-    const client = fakeClient(textMessage('Aqui estão as explicações...'), toolUseMessage(valid));
+    const client = fakeClient(mensagemGravada('sem-tool-use'), mensagemGravada('sucesso'));
     const out = await new RecommendationExplainer(client, opts).explain(input);
     expect(out.status).toBe('ok');
     expect(out.attempts).toBe(2);
   });
 
   it('respeita o limite de tentativas', async () => {
-    const client = fakeClient(toolUseMessage({ explanations: [] }));
+    const client = fakeClient(mensagemGravada('lista-vazia-de-explicacoes'));
     const out = await new RecommendationExplainer(client, { ...opts, maxAttempts: 3 }).explain(input);
     expect(out.status).toBe('unavailable');
     expect(out.attempts).toBe(3);
@@ -172,7 +128,7 @@ describe('RecommendationExplainer · validação e retentativa com o erro (CCAR-
 
 describe('RecommendationExplainer · fallback sem explicação e erros estruturados (CCAR-F 5.3, 2.2)', () => {
   it('refusal não é retentado', async () => {
-    const client = fakeClient(textMessage('', 'refusal'));
+    const client = fakeClient(mensagemGravada('recusa'));
     const out = await new RecommendationExplainer(client, opts).explain(input);
     expect(out.status).toBe('unavailable');
     if (out.status !== 'unavailable') return;
@@ -182,7 +138,7 @@ describe('RecommendationExplainer · fallback sem explicação e erros estrutura
   });
 
   it('429 é retentável e, esgotadas as tentativas, cai no fallback como throttled', async () => {
-    const err = new Anthropic.RateLimitError(429, { type: 'error', error: { type: 'rate_limit_error', message: 'slow down' } }, 'slow down', new Headers());
+    const err = erroGravado('erro-429');
     const client = fakeClient(err, err);
     const metrics = { publishExplanationRetry: vi.fn(), publishExplanationFallback: vi.fn() };
     const out = await new RecommendationExplainer(client, { ...opts, metrics }).explain(input);
@@ -195,7 +151,7 @@ describe('RecommendationExplainer · fallback sem explicação e erros estrutura
   });
 
   it('400 do modelo não é retentado', async () => {
-    const err = new Anthropic.BadRequestError(400, { type: 'error', error: { type: 'invalid_request_error', message: 'bad' } }, 'bad', new Headers());
+    const err = erroGravado('erro-400');
     const client = fakeClient(err);
     const out = await new RecommendationExplainer(client, opts).explain(input);
     expect(out.status).toBe('unavailable');
@@ -221,7 +177,7 @@ describe('RecommendationExplainer · fallback sem explicação e erros estrutura
   });
 
   it('abre o disjuntor depois de falhas seguidas e nem chama o modelo', async () => {
-    const err = new Anthropic.InternalServerError(500, { type: 'error', error: { type: 'api_error', message: 'x' } }, 'x', new Headers());
+    const err = erroGravado('erro-500');
     const client = fakeClient(err);
     let now = 0;
     const explainer = new RecommendationExplainer(client, { ...opts, maxAttempts: 1, failureThreshold: 2, cooldownMs: 30_000, now: () => now });
@@ -241,7 +197,7 @@ describe('RecommendationExplainer · fallback sem explicação e erros estrutura
   });
 
   it('lista vazia não chama o modelo', async () => {
-    const client = fakeClient(toolUseMessage(valid));
+    const client = fakeClient(mensagemGravada('sucesso'));
     const out = await new RecommendationExplainer(client, opts).explain({ ...input, items: [] });
     expect(out.status).toBe('ok');
     expect(client.create).not.toHaveBeenCalled();

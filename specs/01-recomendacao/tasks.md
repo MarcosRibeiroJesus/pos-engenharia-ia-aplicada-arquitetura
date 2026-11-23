@@ -379,7 +379,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T000.
 
 ## Fase 8 · Componente Claude (só respostas gravadas, D-006)
-- [ ] T080 [avaliador-llm] Proveniência nas respostas gravadas e gravações novas · RF-111, RF-110, E10, Art. III · VT-13
+- [x] T080 [avaliador-llm] Proveniência nas respostas gravadas e gravações novas · RF-111, RF-110, E10, Art. III · VT-13
   - **Teste vermelho:** VT-13 em `U/tests/unit/gravacoes.test.ts` reprova uma resposta gravada sem o campo `proveniencia`, ou com valor fora de `sintetica`, `documentacao` e `captura` (furo F8).
   - **Arquivos:** as gravações usadas por `recommendation-explainer.test.ts` e `explanation-in-recommendations.test.ts` movidas para `U/tests/fixtures/claude/`, cada uma com `proveniencia`; gravações novas: intervenção do guardrail no InvokeModel (`amazon-bedrock-guardrailAction: INTERVENED`), intervenção e erro do `ApplyGuardrail`, e 403 por falta do guardrail.
   - **Aceite:** as de formato tirado da documentação da AWS ([testar guardrail](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-test.html)) ficam como `documentacao`, com o link; as escritas à mão, `sintetica`; o ADR-0004 diz que o comportamento real do modelo não é validado em CI (D-006).

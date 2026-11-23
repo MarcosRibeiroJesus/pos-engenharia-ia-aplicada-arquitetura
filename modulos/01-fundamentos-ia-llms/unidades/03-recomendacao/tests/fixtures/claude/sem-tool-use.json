@@ -1,0 +1,49 @@
+{
+  "id": "sem-tool-use",
+  "proveniencia": "sintetica",
+  "sintetica": true,
+  "descricao": "Resposta em texto, sem tool_use.",
+  "caminho": "retentativa-validacao",
+  "tipo": "messages",
+  "origem": {
+    "data": "2026-11-18",
+    "autor": "escrita à mão (nenhuma chamada ao modelo)",
+    "modelo": "anthropic.claude-haiku-5-5",
+    "parametros": {
+      "max_tokens": 1024,
+      "thinking": {
+        "type": "disabled"
+      },
+      "tool_choice": {
+        "type": "tool",
+        "name": "record_explanations"
+      },
+      "tools": [
+        "record_explanations"
+      ],
+      "strict": true,
+      "itens": [
+        "SKU-1",
+        "SKU-2"
+      ]
+    }
+  },
+  "resposta": {
+    "id": "msg_text",
+    "type": "message",
+    "role": "assistant",
+    "model": "anthropic.claude-haiku-5-5",
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "content": [
+      {
+        "type": "text",
+        "text": "Aqui estão as explicações..."
+      }
+    ],
+    "usage": {
+      "input_tokens": 900,
+      "output_tokens": 20
+    }
+  }
+}
