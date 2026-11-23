@@ -17,6 +17,7 @@ Vale igualmente para Claude Code, Google Antigravity e GitHub Copilot. Os agente
   - **Onde perguntar:** registre a pergunta no PR, na seção `## Perguntas ao dono`, com a tabela `| id | pergunta | bloqueia | opções | recomendação |`. A orquestração leva a pergunta ao dono no chat, onde ele responde por múltipla escolha, com a boa prática e o tradeoff de cada opção (D-041). O dono não responde no PR.
 - **Decisões técnicas e de processo** são delegadas: siga as boas práticas da prova Claude Certified Architect – Foundations. Ao explicar uma decisão ao dono, diga o nome da boa prática, o que o arquiteto faz e o erro comum que ela evita, sem citar só códigos da prova (D-036). Os ids ficam nos ADRs, ao lado do nome.
 - **Privacidade:** nada do curso, do aluno ou das empresas em que o dono trabalha. Só fontes públicas e dados sintéticos. Segredos nunca entram no repositório.
+- **Links de sessão nunca entram no repositório nem em PR, commit, issue ou comentário.** O repositório é público, e quem tem o link lê a conversa inteira. Proibido: qualquer URL do claude.ai cujo caminho tenha `session_` ou comece com `chat/`. Permitido: o rodapé de atribuição `claude.com/claude-code`. Um teste do harness (`harness/testes/test_links_de_sessao.py`) reprova os arquivos rastreados com link de sessão.
 
 ## 3. SDD: como todo projeto é construído
 especificar → esclarecer → planejar → tarefas → analisar → implementar → verificar → publicar
@@ -32,6 +33,8 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 
 ## 4. Ao terminar ou antes de parar
 - Faça commit do que estiver verde. Nunca deixe trabalho só na memória da conversa.
+- **Registro de uso em todo commit** (D-074): os arquivos novos ou modificados de `harness/uso/` entram em todo commit criado por `git commit`, inclusive os de outras sessões e no fim de merge, cherry-pick e revert com conflito (`--continue`). O `.githooks/pre-commit` faz isso sozinho. Exceções, em que o registro entra no próximo commit: os commits que o git cria sem passar por `git commit` (merge, rebase, cherry-pick e revert sem conflito; `git am`; `git pull`, que é merge ou rebase), `git rebase --continue`, `--no-verify` e o commit com caminhos explícitos (`-- caminho` ou `--only`). Um commit com só o registro e sem `--allow-empty` aborta (o git avisa que não há nada para commitar, porque calcula o status antes do hook), mas deixa o registro no índice; repita o comando ou use `--allow-empty`; sem os hooks do git ativos (o `harness/init.sh` ativa), inclua `harness/uso/` por conta própria.
+  - **Antigravity e Copilot** não têm o hook `registrar_uso.py` do Claude Code: registrem o próprio uso com `python3 scripts/uso/uso.py manual` (medição informada) ou `registrar --transcript <arquivo>` (quando houver transcript), conforme `docs/uso/README.md`, e incluam `docs/uso/uso-tokens.csv` no mesmo commit. Trecho sem medição entra como `nao-medido` (`manual --fonte nao-medido`); nunca estime números.
 - Acrescente uma linha em `harness/progresso.md`: `- data · projeto · agente (modelo) · feito · testes · próxima tarefa`.
 - O push só sai se a memória compartilhada lida for a mais recente (`pre-push`). Se for bloqueado, leia a novidade, ajuste e repita.
 - **Branch já mergeado não recebe commit novo** (D-032). O `pre-push` bloqueia o envio. Crie um branch novo a partir do `main`, traga os commits com cherry-pick e abra um PR novo.
@@ -44,6 +47,7 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   Ele imprime o agente, o modelo de qualidade equivalente para o nível da tarefa, como iniciar e o prompt de passagem.
 - **Equivalência de modelos** (`harness/agentes.json`, D-028): por nível (máximo, equilibrado, rápido) e por família. O principal é o Claude Code, com a assinatura Pro do dono; na troca, o Antigravity usa Gemini e o Copilot usa modelos da OpenAI.
 - **Escreva skills e prompts sem depender de recurso exclusivo do Claude,** para funcionarem igual nas três famílias.
+- **Economia de tokens** (D-067, ADR 0004): o rtk compacta a saída dos comandos. No Claude Code, pelo hook do projeto; no Antigravity, pelo plugin `.agents/plugins/rtk`. Instale com `bash scripts/setup-ambiente.sh` (versão fixa do repositório oficial). O headroom roda só na máquina do dono (`scripts/headroom-local.sh`).
 - O agente que assume começa pelo ritual da seção 1. Nada do agente anterior é necessário além do que está commitado.
 
 ## 6. Modelos por tipo de trabalho

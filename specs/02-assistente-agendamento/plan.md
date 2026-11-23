@@ -4,6 +4,7 @@
 - **Data:** 2026-11-21 · **Autor:** arquiteto-aws (Claude Opus 5.5), em plan mode, sem chamada à AWS além da leitura pública da Price List
 - **Decisões do dono aplicadas:** D-006, D-007, D-013, D-008, D-021, D-022, D-024, D-029, D-030, D-031, D-048, D-062, D-065, D-068
 - **Pendente do dono:** D02-P3 (consumo da plataforma, ADR-0003), D02-P2 (chaves do Langfuse Cloud), o valor do teto diário (D02-P4) e a aprovação deste plano (D02-P5)
+- **Decisões do dono (2026-11-22):** D02-P2 a D02-P4 decididas, e as divergências DV-01 a DV-12 também (seção "Decisões do dono" no fim). Falta só a aprovação deste plano (D02-P5)
 - **ADRs:** `specs/02-assistente-agendamento/adr/`. O gate SDD bloqueia a pasta do projeto antes da fase implementar; a primeira tarefa de implementar os move para `modulos/02-apis-ia-generativa/arquitetura/adr/`, onde o código já os cita
 - **Âncora (D-065):** *Natera's intelligent appointment scheduling with Amazon Bedrock AgentCore*, AWS Machine Learning Blog, 26/08/2026, lida na íntegra em 2026-11-21 (ADR-0001)
 
@@ -15,7 +16,7 @@
   3. conta única: tag `project = 02-assistente-agendamento`, `module` em kebab, prefixo da chave, Budgets diário, apply e destroy pelos modelos do harness, sem bootstrap próprio (ADR-0007);
   4. CI do D02 com o gate de avaliação e tracing opcional no Langfuse Cloud (ADR-0006).
 - **Plataforma:** o nível de consumo é decisão do dono (D02-P3). O plano recomenda a opção A (perfis, guardrail e role de aprovação pelo módulo `registro-produto`, sem alvo MCP) e marca o que muda em B e C.
-- **Custo de um dia (só o stack do D02):** estimativa de **US$ 0,71**; pior caso limitado pela cota de tokens: US$ 2,16. **Teto diário proposto: US$ 0,85 [PENDENTE: D02-P4]**. Não está gravado no `harness/estado.json`.
+- **Custo de um dia (só o stack do D02):** estimativa de **US$ 0,71**; pior caso limitado pela cota de tokens: US$ 2,16. **Teto diário: US$ 0,85, decidido pelo dono (D02-P4)**; gravado no `harness/estado.json` na aprovação do plano.
 
 ## Verificação da constituição
 | Artigo | Como o plano cumpre | Risco |
@@ -92,14 +93,14 @@ Fontes de preço: AWS Price List (arquivos públicos de oferta por serviço em `
 | Aprovação | `aprovadorId` no corpo | ARN da sessão assumida; método restrito à role de aprovação; confiança da role com `sts:SourceIdentity` | DV-11 |
 | Tags e nomes | `project = assistente-agendamento`, `module` com barra, prefixo `agenda-` | `02-assistente-agendamento`, `module` por componente, prefixo da chave | DV-01 a DV-03 |
 | Budgets | mensal, US$ 5 | diário, `var.teto_diario_usd` | DV-04 |
-| Cota de tokens | 200.000 por dia por cliente | **[PROPOSTA, D02-P4]** 400.000 (cabe a rodada real e limita o pior caso; na prática global, porque o único cliente é o orquestrador) | custo |
+| Cota de tokens | 200.000 por dia por cliente | **400.000 (decidido, D02-P4)** (cabe a rodada real e limita o pior caso; na prática global, porque o único cliente é o orquestrador) | custo |
 | Role de logs do API Gateway | criada pelo stack (`configurar_conta_logs_apigw = true`) | `false`; a configuração vai para o `infra/conta` | sobra no destroy (R4) |
 | Workflows | inexistentes | `02-assistente-agendamento-ci.yml`, `-apply.yml`, `-destroy.yml` a partir de `harness/modelos/` | DV-05, DV-09 |
 | Bootstrap | OIDC e roles próprios | fora do caminho de apply; backend e role de deploy da conta | DV-06 |
-| Observabilidade | Langfuse só local | Langfuse Cloud opcional por parâmetro `SecureString` do dono, com a chave `aws/ssm` e sem a tag `project` (fica fora da verificação de sobras; ADR-0006) | DV-08 |
+| Observabilidade | Langfuse só local | Langfuse Cloud na demonstração (`SecureString` do SSM sob `/02-assistente-agendamento/langfuse/`, chave `aws/ssm`, sem a tag `project`), local no desenvolvimento; um projeto Langfuse por produto, com chaves próprias (ADR-0006) | DV-08 |
 | Nomes | prefixo `agenda-` | prefixo `02-assistente-agendamento-`; exceções verificadas por limite de tamanho: bucket com o id da conta (`02-assistente-agendamento-anexos-<conta>`, 52 caracteres, abaixo de 63) e roles e funções até 64 caracteres (o maior nome previsto, `02-assistente-agendamento-orquestrador`, tem 38) | DV-03 |
 | Documentação | sem README; ADRs citados e ausentes | README com 5 passos; ADRs movidos para `adr/` | DV-10 |
-| Imagem do Floci no lab | `floci/floci:latest` literal | `${FLOCI_IMAGE:-floci/floci:latest}` | DV-12 |
+| Imagem do Floci no lab | `floci/floci:latest` literal | `${FLOCI_IMAGE:-floci/floci:2.5.0}` (decidido) | DV-12 |
 | Falha da tabela de estado do gateway | exceção propagada | erro `transitorio` retentável, como os erros do provedor | RF-005 (limite conhecido) |
 | Prazo da aprovação | `timeout_aprovacao_s = 86400` fixo | o executor limita o timeout ao prazo restante do stack (`prazo_horas` do apply menos 1 h), e o destroy encerra execuções pendentes antes de remover a state machine, deixando a ação `EXPIRADA` | RF-014 (limite conhecido), D-024 |
 | Testes que faltam | aceites marcados **teste falta** na spec | um teste por aceite, antes de qualquer mudança de comportamento | Art. III |
@@ -235,7 +236,7 @@ Região `us-east-1`. Preços da AWS Price List, lidos em 2026-11-21. Quando exis
 | **Total estimado** | **0,707** | | |
 
 - **Pior caso limitado:** a cota de 400.000 tokens por dia esgotada inteira no Sonnet 5.5, na mesma proporção entrada/saída, custa cerca de US$ 1,69 em tokens; com a infraestrutura e o guardrail, o dia fica em cerca de **US$ 2,16**. Isso cabe no teto por execução da rodada real (US$ 20, D-068).
-- **Teto diário proposto: US$ 0,85 [PENDENTE: D02-P4].** É a estimativa com cerca de 20% de margem, arredondada para a dezena de centavo seguinte. A alternativa é US$ 2,20, que cobre o pior caso limitado pela cota. Recomendo US$ 0,85 com o alarme de custo de tokens (`custo_diario_llm_alarme_usd`) em US$ 0,40, porque o limite duro é a cota do gateway e o Budgets só avisa. **O valor não está gravado** no `harness/estado.json`; ele entra lá, no README e no Budgets diário depois da aprovação do dono.
+- **Teto diário: US$ 0,85 (decidido pelo dono, D02-P4).** É a estimativa com cerca de 20% de margem, arredondada para a dezena de centavo seguinte. A alternativa é US$ 2,20, que cobre o pior caso limitado pela cota. Recomendo US$ 0,85 com o alarme de custo de tokens (`custo_diario_llm_alarme_usd`) em US$ 0,40, porque o limite duro é a cota do gateway e o Budgets só avisa. **O valor não está gravado** no `harness/estado.json`; ele entra lá, no README e no Budgets diário depois da aprovação do dono.
 - **Plataforma (opções A e B):** o custo dela é o da `00-plataforma-agentes` (teto de US$ 1,20, D-035), cobrado no stack dela. Na opção A o D02 não usa o gateway MCP nem a avaliação sob demanda; a linha de US$ 0,744 de avaliação da plataforma só existe se alguém rodá-la. Um dia com as duas no ar fica entre US$ 1,05 e US$ 1,79, de 5% a 9% do limite mensal da conta (D-022).
 - **Peso no mês:** só o D02, cerca de 3,5% do limite mensal de US$ 20.
 - **O que fica cobrando depois do destroy:**
@@ -276,10 +277,10 @@ Registro apenas; o dono responde no chat (D-041).
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
 | D02-P1 | ~~2ª pergunta da sessão D02~~ **Não localizada; o dono dispensou em 2026-11-21: sem decisão** | nada | — | — |
-| D02-P2 | Criar a conta e as chaves do Langfuse Cloud (Hobby, D-048) e gravá-las num `SecureString` do SSM sob o prefixo do projeto | só o tracing da demonstração | criar agora; criar antes da demonstração; não criar | criar antes da demonstração |
-| D02-P3 | Nível de consumo da plataforma `00-plataforma-agentes` (ADR-0003) | origem do perfil e do guardrail, ordem do dia, dependência da plataforma | A: parcial (perfis, guardrail, role de aprovação, sem alvo MCP); B: completo (executor como alvo MCP com Cedar); C: sem plataforma, com ADR de exceção à D-030 | A |
-| D02-P4 | Teto diário do D02 e a cota de tokens que limita o pior caso | o Budgets diário, o gate de custo do PR, o valor da cota e a fase tarefas (`estado.py` exige o teto) | US$ 0,85 com cota de 400.000 tokens (estimativa de US$ 0,71 com margem; pior caso US$ 2,16); US$ 2,20 com a mesma cota (cobre o pior caso); manter a cota em 200.000 com outro teto | US$ 0,85 com cota de 400.000 e alarme de custo de tokens em US$ 0,40 |
-| D02-P5 | Aprovação deste plano (D-033) | a fase tarefas e a delegação sem aprovação por disparo | aprovar; aprovar com ajustes; reprovar | aprovar depois de responder D02-P3 e D02-P4 |
+| D02-P2 | **Decidido:** criar a conta e as chaves do Langfuse Cloud (Hobby, D-048), gravadas num `SecureString` do SSM sob `/02-assistente-agendamento/langfuse/` | só o tracing da demonstração | — | criar antes da demonstração (recomendação aceita) |
+| D02-P3 | **Decidido: opção A.** Nível de consumo da plataforma `00-plataforma-agentes` (ADR-0003) | origem do perfil e do guardrail, ordem do dia, dependência da plataforma | A: parcial (perfis, guardrail, role de aprovação, sem alvo MCP); B: completo (executor como alvo MCP com Cedar); C: sem plataforma, com ADR de exceção à D-030 | A |
+| D02-P4 | **Decidido: US$ 0,85 com cota de 400.000 tokens e alarme de custo de tokens em US$ 0,40.** Teto diário do D02 e cota de tokens que limita o pior caso | o Budgets diário, o gate de custo do PR, o valor da cota e a fase tarefas (`estado.py` exige o teto) | US$ 0,85 com cota de 400.000 tokens (estimativa de US$ 0,71 com margem; pior caso US$ 2,16); US$ 2,20 com a mesma cota (cobre o pior caso); manter a cota em 200.000 com outro teto | US$ 0,85 com cota de 400.000 e alarme de custo de tokens em US$ 0,40 |
+| D02-P5 | Aprovação deste plano (D-033), pendente até o registro com `estado.py aprovar-plano` | a fase tarefas e a delegação sem aprovação por disparo | aprovar; aprovar com ajustes; reprovar | aprovar depois de responder D02-P3 e D02-P4 |
 
 ## Fontes (consulta em 2026-11-21)
 | Afirmação | Fonte | Data da fonte | Certeza |
@@ -292,3 +293,25 @@ Registro apenas; o dono responde no chat (D-041).
 | Preços de Lambda, API Gateway, DynamoDB, Step Functions, CloudWatch, X-Ray, KMS e SNS | AWS Price List, ofertas por serviço em `us-east-1` | publicações de 2026-11-04 a 2026-11-20 | confirmado |
 | Serviços emulados pelo Floci | [Floci services](https://floci.io/floci/services/) | sem data | confirmado; guardrail e perfil sem emulação documentada |
 | Cloud comparativa | [`gcp.md`](gcp.md) | 2026-11-21 | ver o documento |
+
+## Decisões do dono (2026-11-22)
+Todas as divergências do PR #44 foram revisadas pelo dono, por múltipla escolha, e as opções recomendadas foram aceitas (DV-04 com valor livre, convertido em orçamento diário pelo gasto estimado):
+
+| Divergência | Decisão |
+|---|---|
+| DV-01 tag `project` | `02-assistente-agendamento` |
+| DV-02 tag `module` | um valor por componente, em kebab |
+| DV-03 nomes | prefixo com a chave do projeto |
+| DV-04 orçamento | diário, US$ 0,85, cota de 400.000 tokens |
+| DV-05 apply e destroy | criados a partir de `harness/modelos/` |
+| DV-06 OIDC | fora do bootstrap próprio; role de deploy da conta |
+| DV-07 Bedrock | `bedrock-runtime` com perfis de inferência por ARN |
+| DV-08 Langfuse | Cloud na demonstração, local no desenvolvimento |
+| DV-09 CI | testes e gate de avaliação com respostas gravadas |
+| DV-10 documentação | README e referências apontando para os ADRs 0001 a 0008 |
+| DV-11 aprovador | identidade autenticada do chamador; só a role de aprovação |
+| DV-12 imagem do Floci | `${FLOCI_IMAGE:-floci/floci:2.5.0}` |
+| Langfuse por produto | um projeto Langfuse por produto, com chaves próprias |
+
+Consequências: o ADR-0006 já reflete o Langfuse por produto e o host `https://cloud.langfuse.com`; o parâmetro SSM do D02 é `/02-assistente-agendamento/langfuse/public-key`, `/secret-key` e `/host`, criados pelo dono com `aws ssm put-parameter` (`SecureString`, sem tag `project`).
+

@@ -94,6 +94,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/rtk_rewrite.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/rtk_rewrite.py\"; fi",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "Stop": [
@@ -232,7 +242,12 @@
       "Bash(mkdir *)",
       "Bash(cp *)",
       "Bash(mv *)",
-      "Bash(echo *)"
+      "Bash(echo *)",
+      "Bash(rtk git status*)",
+      "Bash(rtk git diff*)",
+      "Bash(rtk git log*)",
+      "Bash(rtk git show*)",
+      "Bash(rtk gain*)"
     ],
     "deny": [
       "Bash(git push --force*)",

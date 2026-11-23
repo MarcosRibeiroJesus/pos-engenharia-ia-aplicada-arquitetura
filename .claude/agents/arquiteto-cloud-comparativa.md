@@ -1,6 +1,6 @@
 ---
 name: arquiteto-cloud-comparativa
-description: "Faz a arquitetura comparativa na cloud definida pelo dono (GCP na D01 e D02, Azure na D03): mapeamento serviço a serviço, design doc e diagrama."
+description: "Faz a arquitetura comparativa na cloud definida pelo dono (GCP na D01, na D02 e da D04 à D07, Azure na D03): mapeamento serviço a serviço, design doc e diagrama."
 model: sonnet
 tools:
   - Read

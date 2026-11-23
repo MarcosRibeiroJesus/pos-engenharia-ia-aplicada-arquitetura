@@ -1,0 +1,4 @@
+# Hooks do git e scripts de shell sempre com LF: com CRLF (checkout no Windows com autocrlf)
+# o bash falha no shebang e o pre-commit trava todo commit.
+.githooks/* text eol=lf
+*.sh text eol=lf

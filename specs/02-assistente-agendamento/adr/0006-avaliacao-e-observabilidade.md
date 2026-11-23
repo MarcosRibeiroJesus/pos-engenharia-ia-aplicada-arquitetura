@@ -1,6 +1,7 @@
 # ADR-0006: Avaliação no CI com respostas gravadas, rodada real única e tracing no Langfuse Cloud
 
 - **Status:** proposto; aplica a D-048 (escolha do dono). As chaves do Langfuse são a pergunta D02-P2
+- **Status:** aceito pelo dono em 2026-11-22; aplica a D-048 (escolha do dono). As chaves do Langfuse são a pergunta D02-P2
 - **Data:** 2026-11-21 · **Autor:** arquiteto-aws (Claude Opus 5.5)
 
 ## Contexto
@@ -9,7 +10,7 @@ A D-048 escolheu gate de avaliação no CI e traces no Langfuse Cloud, plano Hob
 ## Decisão
 1. **Workflow de CI do D02** (`02-assistente-agendamento-ci.yml`), em todo PR que toque a pasta do projeto: `npm ci`, `tsc --noEmit`, vitest (unitários, red team e gate de avaliação), `terraform fmt`, `validate`, `tflint`, `checkov` e `terraform test`. Sem Bedrock e sem segredo (D-006); actions fixadas por SHA e `permissions` mínimas.
 2. **Rodada real única** na demonstração: o mesmo gate e a mesma bateria em `modo_llm = bedrock`, dentro do teto por execução de US$ 20 (D-068) e da cota diária de tokens do gateway, com relatório revisado pelo dono antes de publicar.
-3. **Tracing:** o rastreador continua nulo por padrão. Na demonstração, se as chaves existirem (D02-P2), as Lambdas leem `LANGFUSE_HOST` (padrão da nuvem do Langfuse), a chave pública e a secreta de um parâmetro `SecureString` do SSM sob o prefixo do projeto, criado fora do Terraform pelo dono; sem o parâmetro, o tracing fica desligado. A entrada das gerações continua mascarada por padrão. O `lab/langfuse/` local fica como opção de laboratório. O parâmetro usa a chave gerenciada `aws/ssm` (não a CMK do stack, para o `kms:ViaService` continuar sem `ssm`) e **não** leva a tag `project=02-assistente-agendamento`: ele é do dono, vive fora do ciclo de apply e destroy e não pode contar como sobra na verificação pela tag. A role de cada Lambda ganha só `ssm:GetParameter` nesse ARN e `kms:Decrypt` com `kms:ViaService = ssm`.
+3. **Tracing:** o rastreador continua nulo por padrão. Na demonstração, se as chaves existirem (D02-P2), as Lambdas leem `LANGFUSE_HOST` (`https://cloud.langfuse.com`, decidido pelo dono em 2026-11-22), a chave pública e a secreta de um parâmetro `SecureString` do SSM sob o prefixo do projeto, criado fora do Terraform pelo dono; sem o parâmetro, o tracing fica desligado. A entrada das gerações continua mascarada por padrão. O `lab/langfuse/` local fica como opção de laboratório. O parâmetro usa a chave gerenciada `aws/ssm` (não a CMK do stack, para o `kms:ViaService` continuar sem `ssm`) e **não** leva a tag `project=02-assistente-agendamento`: ele é do dono, vive fora do ciclo de apply e destroy e não pode contar como sobra na verificação pela tag. A role de cada Lambda ganha só `ssm:GetParameter` nesse ARN e `kms:Decrypt` com `kms:ViaService = ssm`.
 4. **Na AWS:** métricas EMF, alarmes e X-Ray continuam a observabilidade operacional.
 
 ## Alternativas rejeitadas
@@ -34,3 +35,10 @@ Dado real colado por engano iria para um serviço externo. Mitigação: só dado
 
 ## O que um arquiteto sênior faria em produção
 Rodaria o gate com modelo real em ambiente de homologação a cada mudança de prompt, modelo ou cadeia, com amostragem de produção para avaliação contínua e alarme de deriva nas métricas do gate.
+
+## Decisão do dono (2026-11-22)
+- **Langfuse por produto:** cada produto grava no seu próprio projeto Langfuse, com par de chaves próprio. O D02 usa `/02-assistente-agendamento/langfuse/` no SSM (`public-key`, `secret-key`, `host`).
+- **Host:** `https://cloud.langfuse.com`.
+- **Uso:** Langfuse Cloud na demonstração; `lab/langfuse/` local só no desenvolvimento.
+- **Criação do parâmetro:** pelo dono, com `aws ssm put-parameter --type SecureString`, sem a tag `project`.
+

@@ -22,6 +22,18 @@ Os produtos não repetem governança: a plataforma concentra o que uma empresa c
 | Identidade | o agente se autentica no gateway; segredo nunca entra no prompt | 2.2 |
 | Observabilidade e evals | spans e métricas por produto; o gate de CI segue com respostas gravadas | 4.6, 5.5 |
 
+## Consumo completo obrigatório em toda arquitetura AWS (D-074)
+- **Separação de papéis entre os dois projetos da disciplina:**
+  - **Projeto de IA aplicada (`ia-aplicada`):** 100% alinhado às aulas da disciplina.
+  - **Arquitetura AWS (`arquitetura`):** foco em conceitos e ferramentas de produção na AWS, coerente com os exemplos oficiais da AWS (âncora D-065) e não restrito às simplificações da aula.
+- **Todo projeto de arquitetura AWS (`01-recomendacao`, `02-assistente-agendamento`, `03-mcp-regras-cdb` e seguintes) consome completamente a `00-plataforma-agentes`** pelo módulo `registro-produto` e pelo contrato SSM:
+  1. **Gateway MCP (`AgentCore Gateway`):** tools ou ações do produto registradas como alvo do gateway;
+  2. **Política (`AgentCore Policy` em `ENFORCE`):** regras Cedar geradas a partir das classes das tools (`leitura_publica`, `dado_privado`, `conteudo_nao_confiavel`, `canal_saida`, `sensivel`), com validação contra a tríade letal e `InvokeGuardrailChecks`;
+  3. **Guardrails (`Bedrock Guardrails`):** guardrail do produto imposto por condição IAM (`bedrock:GuardrailIdentifier`);
+  4. **Acesso ao modelo (`Application Inference Profile`):** perfil de inferência por produto para atribuição de custo por tag `project`;
+  5. **Observabilidade, alarmes e avaliações (`AgentCore Evaluations`):** spans no Transaction Search, alarmes no tópico SNS do contrato `comum` e coleta de evidências/avaliações sob demanda.
+- Substitui o consumo parcial na D02 (passa da opção A da D-070 para o consumo completo, opção B do ADR-0003 da D02) e estende a D01 para registrar também alvo e política Cedar no gateway além de perfil, guardrail e alarme.
+
 ## Primeiro consumidor e alarmes (D-034)
 - **O primeiro produto a consumir a plataforma é a D03** (`03-mcp-regras-cdb`, servidor MCP como alvo do gateway). Confira a versão de MCP que o gateway aceita contra a lane de compatibilidade da D03.
 - **Os alarmes da plataforma vão para os mesmos e-mails de `emails_alerta` do `infra/conta`,** sem variável nova.

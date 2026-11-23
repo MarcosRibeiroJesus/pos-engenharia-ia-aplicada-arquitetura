@@ -90,7 +90,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Skills de mercado:** plugins dos marketplaces dos próprios publicadores (Anthropic, HashiCorp, Trail of Bits, promptfoo, AWS, Microsoft e Google), declarados em `.claude/settings.json`. Só os de uso diário ficam ligados; os demais se instalam sob demanda.
   - Os marketplaces de terceiros (HashiCorp, Trail of Bits, promptfoo e Google) foram confirmados por mim (D-049).
   - Marketplace novo só entra com a minha confirmação. Um teste reprova marketplace fora da lista.
-- **Uso de tokens:** registrado sozinho no fim da sessão pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. Inclua esse arquivo no commit.
+- **Uso de tokens:** registrado sozinho a cada resposta pelo hook `registrar_uso.py`, em `harness/uso/<sessao>.json`. O registro entra em **todo commit criado por `git commit`** (D-074), para não se perder se a sessão ou o container acabar: o `.githooks/pre-commit` inclui sozinho os arquivos novos ou modificados de `harness/uso/`, inclusive os de outras sessões, também no fim de merge, cherry-pick e revert com conflito (`--continue`) e com `-a`, `--amend` ou `--allow-empty`. Exceções, em que o registro entra no próximo commit: os commits que o git cria sem passar por `git commit` (merge, rebase, cherry-pick e revert sem conflito; `git am`; `git pull`, que é merge ou rebase), `git rebase --continue`, `--no-verify` e o commit com caminhos explícitos (`-- caminho` ou `--only`). Sem os hooks do git ativos (o `harness/init.sh` ativa), inclua `harness/uso/` no commit por conta própria.
 
 ## Estrutura
 - `docs/curso/PROGRESSO.md`: módulos, aulas, projeto escolhido, status do projeto e do post.
@@ -103,24 +103,26 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - **Sessões independentes por projeto:** cada projeto pode ter a sua sessão de implementação, em paralelo com as outras, desde que:
   - cada sessão esteja no seu próprio worktree (`git worktree add`), no branch `modulo/NN-slug/<projeto>` ou `plataforma/<projeto>-impl`, com PR para `main`;
   - as sessões não se mandem mensagem para coordenar: o estado compartilhado é o git (memória, `harness/progresso.md`, PR);
+  - **por ora, uma sessão por vez** (D-066, depois de três em paralelo esgotarem o limite de 5 horas em 25 minutos): ordem D02, D03 e D01. Eu abro cada sessão no ambiente pos-arquitetura com o prompt da orquestração, e a sessão faz commit e push ao fim de cada fase, para um limite de uso não apagar o trabalho;
   - a sessão de cada projeto lê a memória compartilhada antes de empurrar (gate `pre-push`);
-  - o merge depende da minha aprovação.
-  - Um projeto com Terraform roda só na minha máquina (D-042); projeto sem Terraform pode rodar em sessão de nuvem, sem Bedrock.
+  - o merge é meu: eu reviso o PR quando estiver pronto e mergeio. Não peça aprovação formal de PR; avise quando estiver pronto (D-062).
+  - Projeto com Terraform também roda em sessão de nuvem, com um agente por projeto em paralelo (D-063, substitui a D-042), sem Bedrock.
   - Cada sessão paralela consome o limite de uso da conta; o custo estimado de tokens é de 4 a 15 vezes uma sessão de chat (medição da própria Anthropic), então eu limito a quantidade de sessões ativas ao que eu consigo acompanhar.
 - **Mudança depois de um PR anunciado como pronto vai em PR novo,** a partir do `main` (D-032).
   - Antes de empurrar num branch com PR, confira se o PR ainda está aberto.
   - O `pre-push` bloqueia commit novo em branch já mergeado.
   - Não empilhe PRs, a não ser quando a dependência for real; o PR empilhado fica fora do `main` se a base for mergeada antes.
 - Testes de integração no fim de cada módulo podem rodar na minha máquina (meu Docker) ou no ambiente de nuvem.
-- **Terraform roda na minha máquina** (D-042). A implementação de projeto com Terraform é feita numa sessão do Claude Code no meu computador, com ciclo de teste em segundos.
-  - Essa sessão é a única que comita no branch de implementação.
-  - A orquestração na nuvem coordena, mas não escreve nesse branch.
+- **Terraform nas sessões de nuvem** (D-063, substitui a D-042). Sem ciclo local na minha máquina: a implementação de Terraform roda em agentes e sessões de nuvem, em paralelo, um por projeto.
+  - A sessão precisa ter `terraform`, os providers e o Floci (rede do ambiente com releases.hashicorp.com, registry.terraform.io, floci.io e o Docker Hub). Sem eles, ela não escreve Terraform às cegas: para e avisa a orquestração.
+  - A sessão do projeto é a única que comita no branch de implementação; a orquestração coordena, mas não escreve nesse branch.
+  - O apply numa conta real continua só pelo workflow protegido, disparado por mim.
 - Meus agentes de `.claude/` (tf-writer, security-auditor, cost-optimizer, drift-detector) e a skill /infra-audit só existem na minha máquina; em sessões de nuvem, aplique os mesmos critérios diretamente.
 
 ## Entregáveis
 - **Por disciplina** (não por unidade), sempre os dois projetos abaixo:
-  1. **Projeto de IA aplicada**: um por disciplina, baseado nas aulas e fiel ao que foi ensinado (como o agente que vence Doom na D01), em `modulos/NN-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
-  2. **Arquitetura AWS completa**: uma por disciplina, a versão enterprise de um tema da disciplina, em Terraform, escolhida por mim entre opções com link para as fontes oficiais de arquitetura da AWS (Architecture Center, Solutions Library, Prescriptive Guidance, blogs oficiais) mais uma sugestão sua. Critérios: exercitar de forma profissional o papel de arquiteto e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica na pasta da unidade de onde o tema vem (`unidades/UU-slug/infra/` e `src/`) ou, quando cobre várias unidades, em `modulos/NN-slug/arquitetura/`.
+  1. **Projeto de IA aplicada (100% alinhado às aulas, D-074)**: um por disciplina, baseado nas aulas e 100% fiel ao que foi ensinado (como o agente que vence Doom na D01), em `modulos/NN-slug/ia-aplicada/`. Eu escolho depois de assistir às aulas; não comece um projeto de IA aplicada sem a minha escolha.
+  2. **Arquitetura AWS completa (foco em produção e consumo completo da plataforma, D-074)**: uma por disciplina, a versão enterprise de produção de um tema da disciplina, em Terraform, coerente com os exemplos oficiais da AWS (a âncora da D-065) e não limitada ao código simplificado das aulas. **Toda arquitetura AWS consome completamente a plataforma compartilhada `00-plataforma-agentes`** (AgentCore Gateway MCP, AgentCore Policy Engine com Cedar em `ENFORCE`, Bedrock Guardrails, Perfil de Inferência de Aplicação, Contrato SSM v1, alarmes no tópico SNS da plataforma e AgentCore Evaluations). Critérios: exercitar de forma profissional o papel de arquiteto em produção e cobrir domínios da prova Claude Certified Architect – Foundations (lente abaixo). Fica na pasta da unidade de onde o tema vem (`unidades/UU-slug/infra/` e `src/`) ou, quando cobre várias unidades, em `modulos/NN-slug/arquitetura/`.
   3. Post da arquitetura AWS (`posts/aws.md`), publicado no site.
   4. Exemplo da mesma arquitetura em outra cloud (`posts/<cloud>.md`), o mais igual possível; quando não houver equivalente direto, diga o que muda e por quê.
 - As opções da disciplina ficam em `modulos/NN-slug/OPCOES.md`, e toda opção traz o link da fonte oficial da AWS em que se baseia. O índice para escolha é `docs/curso/CATALOGO-AWS.md`.
@@ -224,7 +226,8 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
     - `managed-by` só `terraform`.
   - **Como aplicar:** `project` e `managed-by` pelo `default_tags` do provider; `module` pelo `local.tags` de cada módulo. O `terraform test` confere antes, a partir do modelo `harness/modelos/tags.tftest.hcl`;
   - cada projeto tem as próprias roles, com condição na tag (ABAC). Um projeto não lê nem altera recurso de outro.
-- **Plataforma compartilhada na AWS** (D-030, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
+- **Plataforma compartilhada na AWS** (D-030 e D-074, projeto `00-plataforma-agentes`): gateway MCP com política e identidade, guardrails e perfis de inferência por produto, observabilidade e evals por uso.
+  - **Consumo completo obrigatório nas arquiteturas AWS (D-074):** todo projeto de arquitetura AWS (`01-recomendacao`, `02-assistente-agendamento`, `03-mcp-regras-cdb` e seguintes) utiliza completamente a `00-plataforma-agentes` via módulo `registro-produto` e contrato SSM (alvos no AgentCore Gateway MCP, políticas Cedar em `ENFORCE`, Guardrail do produto, Perfil de Inferência, tópico SNS de alarmes e AgentCore Evaluations), priorizando a coerência com os exemplos de produção da AWS, enquanto o projeto de IA aplicada de cada disciplina fica 100% alinhado às aulas.
   - Ela sobe e desce junto com as demonstrações, pelo mesmo ciclo de 24 horas.
   - Projeto novo entra pelo caminho padrão: `python3 harness/novo_projeto.py`.
 - Supply chain: actions fixadas por SHA, Dependabot para actions, npm, pip e Terraform, permissões mínimas do `GITHUB_TOKEN` em cada workflow.
@@ -242,6 +245,9 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Economia de tokens** (D-058):
   - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
   - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
+  - **rtk e headroom** (D-067, ADR 0004):
+    - o rtk compacta a saída do Bash em toda sessão, pelo hook `.claude/hooks/rtk_rewrite.py`, que só repassa a reescrita de comandos simples de leitura e de teste, sem pular pedidos de permissão. Saída compacta demais: `rtk bypass <cmd>`;
+    - o headroom comprime o contexto só na minha máquina: `bash scripts/headroom-local.sh`, com a telemetria desligada. Nas sessões de nuvem ele não fica no caminho do modelo. Nunca use o `headroom learn` aqui;
   - **Uso registrado de tudo:**
     - o hook de uso soma também os transcripts dos subagentes;
     - o executor comita `harness/uso/` ao fechar cada fase;
@@ -254,6 +260,7 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - Acompanhamento ao vivo e histórico até o fim da pós: o app `apps/painel-ia` (npm ou Docker) lê os transcripts, guarda tudo em SQLite e exporta o relatório final (ADR 0002).
 
 ## Privacidade
+- Links de sessão do Claude (URL do claude.ai cujo caminho tenha `session_` ou comece com `chat/`) nunca entram no repositório, nem em PR, commit, issue ou comentário: o repositório é público e o link dá acesso à conversa inteira. O rodapé de atribuição `claude.com/claude-code` é permitido. Teste: `harness/testes/test_links_de_sessao.py`.
 - Nunca coloque no repositório, em commits, PRs ou posts os detalhes do curso e do aluno (plataforma, endereço, matrícula, instituição, datas, progresso nas aulas, contrato) nem dados pessoais do dono.
 - Nunca use código, dados, diagramas ou detalhes internos das empresas em que trabalho. Só fontes públicas e dados sintéticos.
 - Segredos nunca entram no repositório.
