@@ -6,6 +6,13 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-22 · D-073 · D03 (MCP de regras do CDB): plano aprovado e teto diário de US$ 0,50 · fonte: Marcos
+O Marcos respondeu por múltipla escolha às duas perguntas do plano da D03 (`specs/03-mcp-regras-cdb/plan.md`):
+- **D03-P7 = A:** teto diário `teto_diario_usd = 0.50` (US$ 0,50 por dia, sobre a estimativa de US$ 0,39, com ~28% de margem), combinado com cota dura de 300.000 tokens por dia no código do agente (pior caso US$ 0,58).
+- **D03-P11 = A:** aprovado o plano SDD da D03 (`specs/03-mcp-regras-cdb/plan.md`, ADRs 0001 a 0006 e `specs/03-mcp-regras-cdb/azure.md`, D-033), liberando o avanço para a fase `tarefas` (`sdd-tarefas`) e a delegação das fases seguintes.
+
+**Aplicado em:** `specs/03-mcp-regras-cdb/plan.md`, `specs/03-mcp-regras-cdb/spec.md`, `specs/03-mcp-regras-cdb/adr/0001-arquitetura-ancora-mcp-sem-estado.md` a `0006-custo-diario-seguranca-e-cobertura-do-floci.md`, `harness/estado.json` (`teto_diario_usd: 0.5`, `plano_aprovado` e fase `tarefas`, branch `modulo/03-mcp/mcp-regras-cdb`).
+
 ### 2026-11-22 · D-072 · D03: lane de compatibilidade MCP somente na versão 2025-11-25 · fonte: delegada
 A lane de compatibilidade da D03 (D-011) atende somente a versão `2025-11-25` (a imediatamente anterior à `2026-07-28`, já presente em `versoes_mcp` do contrato `comum`, ADR-0010 da plataforma), sem estado de sessão nem cabeçalho de sessão. A versão `2025-06-18` só entra se um cliente real precisar, como versão menor do contrato (`1.1.0`). Boa prática: menor superfície de compatibilidade que atende os clientes reais, com política de versão explícita (2.4, 5.6); evita o erro comum de aceitar versões antigas sem demanda e aumentar a superfície de tradução e teste.
 
