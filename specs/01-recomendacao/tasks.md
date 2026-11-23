@@ -389,7 +389,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/infrastructure/bedrock/bedrock-claude.client.ts`, `U/src/serving/src/config/env.ts` (sai `bedrock_model_id`), os testes.
   - **Aceite:** nenhum id de modelo ou ARN escrito no código (ST-06); `@anthropic-ai/bedrock-sdk` fixado em 1.1.2.
   - **Depende de:** T080.
-- [ ] T082 [engenheiro-claude] Intervenção no InvokeModel e 403 sem guardrail como categorias não retentáveis · RF-110, RF-007, ADR-0010 · VT-11
+- [x] T082 [engenheiro-claude] Intervenção no InvokeModel e 403 sem guardrail como categorias não retentáveis · RF-110, RF-007, ADR-0010 · VT-11
   - **Teste vermelho:** VT-11: com a gravação de intervenção, o explicador devolve `unavailable` com a categoria nova `guardrail`, sem segunda tentativa e sem contar no disjuntor; com a gravação de 403, `unavailable`, não retentável.
   - **Arquivos:** `U/src/serving/src/application/recommendation-explainer.ts`, `U/src/serving/src/domain/explanation.ts` (categoria `guardrail`), o cliente, os testes.
   - **Aceite:** o campo é lido do corpo cru pela porta `ClaudeMessagesPort`; sem o campo e sem `tool_use`, segue a validação de hoje (R4); as métricas `ExplanationFallbackCount` contam a intervenção.

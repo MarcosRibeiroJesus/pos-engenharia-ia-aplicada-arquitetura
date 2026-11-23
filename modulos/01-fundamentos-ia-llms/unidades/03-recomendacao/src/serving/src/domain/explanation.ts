@@ -11,6 +11,23 @@ export const ExplanationSignalEnum = z.enum([
 ]);
 export type ExplanationSignal = z.infer<typeof ExplanationSignalEnum>;
 
+/**
+ * Categorias de falha da explicação (ADR-0004 item 8, ADR-0010 item 6). Enum fechado: vira o `reason`
+ * da API e o nome da métrica `ExplanationFallback_<categoria>`, nunca texto livre.
+ * `guardrail`: o guardrail da plataforma interveio (não retentável, não conta no disjuntor).
+ */
+export const ExplanationErrorCategoryEnum = z.enum([
+  'validation',
+  'timeout',
+  'throttled',
+  'model_error',
+  'refusal',
+  'guardrail',
+  'circuit_open',
+  'internal_error',
+]);
+export type ExplanationErrorCategory = z.infer<typeof ExplanationErrorCategoryEnum>;
+
 export interface ItemExplanation {
   itemId: string;
   reason: string;

@@ -1,21 +1,21 @@
 {
   "sessao": "e7f13580-a7d3-5ce6-ad35-91b42f488e03",
   "branch": "modulo/01-fundamentos-ia-llms/03-recomendacao",
-  "atualizado": "2026-11-23T15:31:32+00:00",
+  "atualizado": "2026-11-23T15:42:09+00:00",
   "modelos": {
     "claude-sonnet-5-5": {
-      "requisicoes": 290,
-      "input": 766,
-      "cache_write": 2055052,
-      "cache_read": 100288737,
-      "output": 160607
+      "requisicoes": 297,
+      "input": 785,
+      "cache_write": 2068548,
+      "cache_read": 104615342,
+      "output": 165267
     },
     "claude-opus-5-5": {
-      "requisicoes": 1177,
-      "input": 2450,
-      "cache_write": 6321841,
-      "cache_read": 100294300,
-      "output": 1136675
+      "requisicoes": 1224,
+      "input": 2548,
+      "cache_write": 6566608,
+      "cache_read": 103989938,
+      "output": 1175580
     }
   }
 }

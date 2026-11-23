@@ -156,7 +156,7 @@ components:
           description: Chamadas ao modelo, contando a retentativa após erro de validação.
         reason:
           type: string
-          enum: [validation, timeout, throttled, model_error, refusal, circuit_open, internal_error]
+          enum: [validation, timeout, throttled, model_error, refusal, guardrail, circuit_open, internal_error]
           description: Categoria da falha quando status = unavailable.
 
     ItemExplanation:

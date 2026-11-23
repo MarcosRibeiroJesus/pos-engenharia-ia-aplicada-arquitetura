@@ -27,7 +27,7 @@
         "SKU-2"
       ]
     },
-    "observacao": "formato a confirmar: corpo e cabeçalho escritos à mão; a mensagem real do IAM só na captura da T107"
+    "observacao": "formato a confirmar: corpo, cabeçalho e mensagem escritos à mão; a mensagem imita o formato comum de AccessDenied do IAM, com o ARN do chamador e do recurso, para provar que ela não chega ao log (A5 da revisão da T081). Conta 000000000000 e nomes sintéticos, sem recurso real; a mensagem real só na captura da T107"
   },
   "resposta": {
     "status": 403,
@@ -35,10 +35,10 @@
       "type": "error",
       "error": {
         "type": "permission_error",
-        "message": "User is not authorized to perform bedrock:InvokeModel"
+        "message": "User: arn:aws:sts::000000000000:assumed-role/role-sintetica/sessao-sintetica is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:us-east-1:000000000000:application-inference-profile/perfilsintetico because no identity-based policy allows the bedrock:InvokeModel action"
       }
     },
-    "mensagem": "User is not authorized to perform bedrock:InvokeModel",
+    "mensagem": "User: arn:aws:sts::000000000000:assumed-role/role-sintetica/sessao-sintetica is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:us-east-1:000000000000:application-inference-profile/perfilsintetico because no identity-based policy allows the bedrock:InvokeModel action",
     "tipo_de_erro": "AccessDeniedException",
     "cabecalhos": {
       "x-amzn-errortype": "AccessDeniedException"

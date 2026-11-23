@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { CandidateProvenance } from '../domain/candidate';
 import {
+  ExplanationErrorCategory,
   ExplanationSignal,
   ExplanationSignalEnum,
   ItemExplanation,
@@ -52,14 +53,15 @@ export interface ExplainInput {
   sessionItemIds?: string[];
 }
 
-export type ExplanationErrorCategory =
-  | 'validation'
-  | 'timeout'
-  | 'throttled'
-  | 'model_error'
-  | 'refusal'
-  | 'circuit_open'
-  | 'internal_error';
+export type { ExplanationErrorCategory };
+
+/**
+ * Campo do corpo da resposta do InvokeModel com a ação do guardrail (`INTERVENED` ou `NONE`,
+ * ADR-0010 item 6). A porta devolve o corpo JSON cru do Bedrock, então o campo chega aqui mesmo fora
+ * do tipo `Anthropic.Message`. Formato a confirmar na captura da T107 (risco R4): se o campo não
+ * vier, uma intervenção sem `tool_use` cai na validação e termina em `unavailable` do mesmo jeito.
+ */
+export const CAMPO_ACAO_DO_GUARDRAIL = 'amazon-bedrock-guardrailAction';
 
 export type ExplanationOutcome =
   | { status: 'ok'; attempts: number; modelId: string; explanations: ItemExplanation[] }
@@ -191,23 +193,45 @@ class TerminalFailure extends Error {
   }
 }
 
+/**
+ * Detalhe do erro HTTP do provedor só com o status, nunca com a mensagem dele: o `detail` vai para o
+ * log, e a mensagem de um 403 do IAM costuma trazer o ARN do chamador e do recurso, com a conta
+ * (achado A5 da revisão da T081). Formato real da mensagem a confirmar na captura da T107.
+ */
+function detalheHttp(status: number | undefined): string {
+  if (status === 403) {
+    return 'acesso negado ao modelo (HTTP 403): chamada sem o guardrail do contrato ou fora do perfil; mensagem do provedor omitida';
+  }
+  return `o Bedrock respondeu HTTP ${status ?? 'sem status'}; mensagem do provedor omitida`;
+}
+
 function classify(err: unknown, aborted: boolean): TerminalFailure {
   if (err instanceof TerminalFailure) return err;
   if (aborted || err instanceof Anthropic.APIUserAbortError || err instanceof Anthropic.APIConnectionTimeoutError) {
     return new TerminalFailure('timeout', true, 'orçamento de tempo da explicação esgotado');
   }
-  if (err instanceof Anthropic.RateLimitError) return new TerminalFailure('throttled', true, err.message);
-  if (err instanceof Anthropic.InternalServerError) return new TerminalFailure('model_error', true, err.message);
-  if (err instanceof Anthropic.APIConnectionError) return new TerminalFailure('model_error', true, err.message);
+  if (err instanceof Anthropic.RateLimitError) return new TerminalFailure('throttled', true, detalheHttp(err.status));
+  if (err instanceof Anthropic.InternalServerError) return new TerminalFailure('model_error', true, detalheHttp(err.status));
+  if (err instanceof Anthropic.APIConnectionError) {
+    return new TerminalFailure('model_error', true, 'falha de conexão com o Bedrock; mensagem do provedor omitida');
+  }
   if (err instanceof Anthropic.APIError) {
-    // 400/401/403/404/422: repetir a mesma requisição não muda o resultado.
+    // 400/401/403/404/422: repetir a mesma requisição não muda o resultado. O 403 é o caso da
+    // chamada sem o guardrail do contrato, negada pela condição do IAM (ADR-0010 item 4).
     const retryable = typeof err.status === 'number' && (err.status === 408 || err.status === 409 || err.status >= 500);
-    return new TerminalFailure('model_error', retryable, err.message);
+    return new TerminalFailure('model_error', retryable, detalheHttp(err.status));
   }
   return new TerminalFailure('internal_error', false, err instanceof Error ? err.message : String(err));
 }
 
 // ---------------------------------------------------------------- explainer
+
+const NAO_CONTAM_NO_DISJUNTOR: ReadonlySet<ExplanationErrorCategory> = new Set<ExplanationErrorCategory>([
+  'circuit_open',
+  'validation',
+  'refusal',
+  'guardrail',
+]);
 
 export class RecommendationExplainer implements IRecommendationExplainer {
   private readonly maxAttempts: number;
@@ -338,6 +362,13 @@ export class RecommendationExplainer implements IRecommendationExplainer {
     input: ExplainInput,
     allowed: Map<string, ExplanationSignal[]>
   ): ItemExplanation[] {
+    // Intervenção do guardrail (ADR-0010 item 6): decide pelo campo do corpo, antes de olhar o
+    // conteúdo, porque o texto devolvido é a mensagem de bloqueio e não uma resposta a validar.
+    // Retentar não muda o resultado; o texto de bloqueio não entra no detail (sem eco).
+    if ((response as unknown as Record<string, unknown>)[CAMPO_ACAO_DO_GUARDRAIL] === 'INTERVENED') {
+      throw new TerminalFailure('guardrail', false, 'o guardrail da plataforma interveio na chamada ao modelo');
+    }
+
     if (response.stop_reason === 'refusal') {
       throw new TerminalFailure('refusal', false, 'o modelo recusou a solicitação');
     }
@@ -418,8 +449,9 @@ export class RecommendationExplainer implements IRecommendationExplainer {
   }
 
   private fail(attempts: number, failure: TerminalFailure): ExplanationOutcome {
-    // Validação e recusa são problema da resposta, não da disponibilidade do Bedrock.
-    if (failure.category !== 'circuit_open' && failure.category !== 'validation' && failure.category !== 'refusal') {
+    // Validação, recusa e intervenção do guardrail são problema da resposta (do conteúdo), não da
+    // disponibilidade do Bedrock: não contam no disjuntor.
+    if (!NAO_CONTAM_NO_DISJUNTOR.has(failure.category)) {
       this.consecutiveFailures++;
       if (this.consecutiveFailures >= this.failureThreshold) this.openedAt = this.now();
     }
