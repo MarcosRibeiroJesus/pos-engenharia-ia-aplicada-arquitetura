@@ -71,17 +71,18 @@ variables {
 run "raiz_tags" {
   command = plan
 
+  # O padrão completo (module de cada recurso, ADR-0014) está em tests/tags.tftest.hcl (TT-T01).
   assert {
-    condition     = alltrue([for k in ["project", "module", "managed-by"] : contains(keys(local.common_tags), k)])
-    error_message = "R4: default_tags precisa ter project, module e managed-by."
+    condition     = local.tags_padrao["project"] == "01-recomendacao"
+    error_message = "R4: project é a chave do projeto em harness/estado.json (D-031)."
   }
   assert {
-    condition     = local.common_tags["managed-by"] == "terraform"
+    condition     = local.tags_padrao["managed-by"] == "terraform"
     error_message = "R4: managed-by deve ser 'terraform'."
   }
   assert {
-    condition     = local.common_tags["module"] == "01-fundamentos-ia-llms/03-recomendacao"
-    error_message = "R4: a tag module identifica disciplina e unidade."
+    condition     = !contains(keys(local.tags_padrao), "module") && !contains(keys(local.tags_padrao), "environment")
+    error_message = "R4: module vem do local.tags de cada módulo e environment saiu do default_tags (ADR-0014)."
   }
 }
 

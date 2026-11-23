@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "re-ranker"
+  }
+}
+
 data "aws_region" "current" {}
 data "aws_partition" "current" {}
 
@@ -23,6 +30,7 @@ data "aws_iam_policy_document" "sagemaker_assume_role" {
 resource "aws_iam_role" "sagemaker_execution" {
   name               = "${local.name}-sagemaker-role"
   assume_role_policy = data.aws_iam_policy_document.sagemaker_assume_role.json
+  tags               = local.tags
 }
 
 # R3: no lugar de AmazonSageMakerFullAccess, só o que o endpoint precisa para subir.
@@ -69,6 +77,7 @@ resource "aws_cloudwatch_log_group" "endpoint" {
   name              = "/aws/sagemaker/Endpoints/${local.endpoint_name}"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
+  tags              = local.tags
 }
 
 resource "aws_sagemaker_model" "reranker" {
@@ -81,6 +90,7 @@ resource "aws_sagemaker_model" "reranker" {
     image          = var.model_image
     model_data_url = var.model_data_url
   }
+  tags = local.tags
 }
 
 resource "aws_sagemaker_endpoint_configuration" "reranker" {
@@ -104,10 +114,12 @@ resource "aws_sagemaker_endpoint_configuration" "reranker" {
 
   # KMS do volume não se aplica a Serverless Inference; vale só para instâncias.
   kms_key_arn = var.enable_serverless_inference ? null : var.kms_key_arn
+  tags        = local.tags
 }
 
 resource "aws_sagemaker_endpoint" "reranker" {
   name                 = local.endpoint_name
   endpoint_config_name = aws_sagemaker_endpoint_configuration.reranker.name
   depends_on           = [aws_cloudwatch_log_group.endpoint, aws_iam_role_policy.sagemaker_execution]
+  tags                 = local.tags
 }

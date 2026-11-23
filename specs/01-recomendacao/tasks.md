@@ -60,7 +60,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - as extensões do apply e do destroy (build, duas passadas, cascata, requisitos da plataforma) ficam para a T056 e a T057; aqui os arquivos são o modelo preenchido.
   - **Nota sobre o TH-07 (A11 da análise 1):** o TH-07 compara os workflows da D01 com o modelo do harness de hoje. Quando a plataforma T043 (prazo registrado antes do apply) e a T048 (filtro da chave KMS no destroy) entrarem no `main`, o TH-07 da D01 fica vermelho até a T055 e a T056 regenerarem os arquivos a partir do modelo novo. Esse vermelho é esperado e não é defeito da D01: a correção é regenerar, nunca afrouxar o teste para passar.
   - **Depende de:** T000.
-- [ ] T011 [engenheiro-terraform] Tags no padrão da política em todo recurso da base · RNF-107, RNF-003, Art. VI · TT-T01
+- [x] T011 [engenheiro-terraform] Tags no padrão da política em todo recurso da base · RNF-107, RNF-003, Art. VI · TT-T01
   - **Teste vermelho:** `U/infra/terraform/tests/tags.tftest.hcl`, copiado de `harness/modelos/tags.tftest.hcl` com `projeto = "01-recomendacao"`, iterando sobre todos os recursos tagueáveis do root (output de teste com as tags efetivas, como na plataforma). Hoje reprova com `project = "recsys"` e `module` com barra.
   - **Arquivos:** `U/infra/terraform/{versions.tf,main.tf,variables.tf}`, o `local.tags` de cada um dos 13 módulos, `terraform.tfvars.example`, `backend.hcl.example`, `testing/scripts/integracao_01_03_recomendacao.py`, `tests/tags.tftest.hcl`.
   - **Aceite:**

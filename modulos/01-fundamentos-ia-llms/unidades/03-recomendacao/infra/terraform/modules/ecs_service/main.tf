@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "servico"
+  }
+}
+
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
@@ -57,6 +64,7 @@ resource "aws_ecr_repository" "app" {
     encryption_type = "KMS"
     kms_key         = var.kms_key_arn
   }
+  tags = local.tags
 }
 
 resource "aws_ecr_lifecycle_policy" "app" {
@@ -83,6 +91,7 @@ resource "aws_ecs_cluster" "main" {
     name  = "containerInsights"
     value = "enabled"
   }
+  tags = local.tags
 }
 
 resource "aws_ecs_cluster_capacity_providers" "main" {
@@ -105,6 +114,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/ecs/${local.name}"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
+  tags              = local.tags
 }
 
 # ---------------------------------------------------------------- IAM
@@ -122,6 +132,7 @@ data "aws_iam_policy_document" "ecs_assume_role" {
 resource "aws_iam_role" "ecs_execution_role" {
   name               = "${local.name}-ecs-exec-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
+  tags               = local.tags
 }
 
 resource "aws_iam_role_policy" "ecs_execution" {
@@ -165,6 +176,7 @@ resource "aws_iam_role_policy" "ecs_execution" {
 resource "aws_iam_role" "ecs_task_role" {
   name               = "${local.name}-ecs-task-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
+  tags               = local.tags
 }
 
 resource "aws_iam_policy" "ecs_task_policy" {
@@ -207,6 +219,7 @@ resource "aws_iam_policy" "ecs_task_policy" {
       }
     ], local.bedrock_statements)
   })
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_policy_attach" {
@@ -226,6 +239,7 @@ resource "aws_lb" "alb" {
   subnets                    = var.alb_subnet_ids
   drop_invalid_header_fields = true
   enable_deletion_protection = false # R7: destroy do lab sem passo manual
+  tags                       = local.tags
 }
 
 resource "aws_lb_target_group" "app" {
@@ -247,6 +261,7 @@ resource "aws_lb_target_group" "app" {
     healthy_threshold   = 2
     unhealthy_threshold = 3
   }
+  tags = local.tags
 }
 
 # API interna: HTTP dentro da VPC (ADR-0003). API pública: HTTP só redireciona para HTTPS.
@@ -269,6 +284,7 @@ resource "aws_lb_listener" "http" {
       }
     }
   }
+  tags = local.tags
 }
 
 resource "aws_lb_listener" "https" {
@@ -283,6 +299,7 @@ resource "aws_lb_listener" "https" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
   }
+  tags = local.tags
 }
 
 # ---------------------------------------------------------------- task e serviço
@@ -334,6 +351,7 @@ resource "aws_ecs_task_definition" "app" {
       }
     }
   ])
+  tags = local.tags
 }
 
 resource "aws_ecs_service" "app" {
@@ -371,4 +389,5 @@ resource "aws_ecs_service" "app" {
   }
 
   depends_on = [aws_lb_listener.http]
+  tags       = local.tags
 }

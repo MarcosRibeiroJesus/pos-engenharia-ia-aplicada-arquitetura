@@ -1,7 +1,15 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "busca-vetorial"
+  }
+}
+
 resource "aws_memorydb_subnet_group" "main" {
   name        = "${var.project_name}-${var.environment}-memdb-subnets"
   subnet_ids  = var.subnet_ids
   description = "MemoryDB subnet group across private subnets"
+  tags        = local.tags
 }
 
 resource "aws_memorydb_parameter_group" "redis7" {
@@ -12,6 +20,7 @@ resource "aws_memorydb_parameter_group" "redis7" {
     name  = "activedefrag"
     value = "yes"
   }
+  tags = local.tags
 }
 
 resource "aws_memorydb_cluster" "vector_cluster" {
@@ -33,8 +42,8 @@ resource "aws_memorydb_cluster" "vector_cluster" {
   snapshot_retention_limit   = 0 # vetores são reconstruídos pelo batch diário
   auto_minor_version_upgrade = true
 
-  tags = {
+  tags = merge(local.tags, {
     Name     = "${var.project_name}-${var.environment}-memorydb-vector"
     Replicas = "0"
-  }
+  })
 }

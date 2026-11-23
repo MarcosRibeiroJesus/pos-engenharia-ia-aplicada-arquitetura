@@ -1,6 +1,6 @@
 # Copie para terraform.tfvars (fora do git). Valores do lab.
+# A tag project (01-recomendacao) é fixa no main.tf (D-031); o prefixo dos nomes muda na T012.
 aws_region                  = "us-east-1"
-project_name                = "recsys"
 environment                 = "lab"
 enable_mwaa                 = false # maior custo fixo; ligue só para validar o DAG
 expose_api_publicly         = false # ALB interno; true exige certificate_arn

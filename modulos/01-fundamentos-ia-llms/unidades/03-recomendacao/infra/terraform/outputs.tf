@@ -52,3 +52,36 @@ output "alerts_topic_arn" {
   description = "Tópico SNS de alarmes e orçamento."
   value       = module.cloudwatch_monitoring.alerts_topic_arn
 }
+
+output "tags_padrao" {
+  description = "Tags que o provider aplica a todo recurso (default_tags)."
+  value       = local.tags_padrao
+}
+
+# Tags efetivas de cada recurso tagueável do root: o default_tags do provider somado ao atributo
+# tags do recurso (que leva o local.tags do módulo). O tests/tags.tftest.hcl itera sobre este mapa;
+# cada módulo novo entra aqui com o output tags_dos_recursos dele (TT-T01).
+output "tags_dos_recursos" {
+  description = "Tags efetivas por recurso tagueável do root, para o teste de tags (TT-T01)."
+  value = merge([for m, recursos in {
+    networking            = module.networking.tags_dos_recursos
+    kms                   = module.kms.tags_dos_recursos
+    s3_golden_dataset     = module.s3_golden_dataset.tags_dos_recursos
+    lake_formation        = module.lake_formation.tags_dos_recursos
+    dynamodb_table        = module.dynamodb_table.tags_dos_recursos
+    memorydb_cluster      = module.memorydb_cluster.tags_dos_recursos
+    sagemaker_endpoint    = module.sagemaker_endpoint.tags_dos_recursos
+    sagemaker_training    = module.sagemaker_training.tags_dos_recursos
+    ecs_service           = module.ecs_service.tags_dos_recursos
+    athena_queries        = module.athena_queries.tags_dos_recursos
+    glue_pipeline         = module.glue_pipeline.tags_dos_recursos
+    cloudwatch_monitoring = module.cloudwatch_monitoring.tags_dos_recursos
+    mwaa_orchestration    = module.mwaa_orchestration.tags_dos_recursos
+    } : { for endereco, tags in recursos : "${m}.${endereco}" => merge(local.tags_padrao, tags) }
+  ]...)
+}
+
+output "prefixo_dos_nomes" {
+  description = "Prefixo dos nomes dos recursos, lido pelo harness de integração no Floci."
+  value       = "${var.project_name}-${var.environment}"
+}

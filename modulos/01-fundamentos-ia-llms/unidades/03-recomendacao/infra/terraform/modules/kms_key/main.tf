@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "chave-kms"
+  }
+}
+
 # Uma chave gerenciada pelo cliente para toda a plataforma do lab (S3, DynamoDB, MemoryDB,
 # Logs, SNS, ECR, MWAA, Glue). Uma chave só porque cada CMK custa US$ 1/mês: em produção,
 # separe por domínio de dados para limitar o raio de impacto de uma política errada.
@@ -46,6 +53,7 @@ resource "aws_kms_key" "platform" {
       }
     ]
   })
+  tags = local.tags
 }
 
 resource "aws_kms_alias" "platform" {

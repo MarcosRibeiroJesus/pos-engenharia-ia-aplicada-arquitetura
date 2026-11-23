@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "monitoramento"
+  }
+}
+
 data "aws_region" "current" {}
 
 locals {
@@ -93,6 +100,7 @@ locals {
 resource "aws_sns_topic" "alerts" {
   name              = "${local.name}-alerts"
   kms_master_key_id = var.kms_key_arn
+  tags              = local.tags
 }
 
 data "aws_iam_policy_document" "alerts" {
@@ -136,6 +144,7 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
+  tags                = local.tags
 }
 
 # ---------------------------------------------------------------- orçamento (R9)
@@ -173,6 +182,7 @@ resource "aws_budgets_budget" "monthly" {
   }
 
   depends_on = [aws_sns_topic_policy.alerts]
+  tags       = local.tags
 }
 
 # ---------------------------------------------------------------- dashboard

@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "catalogo"
+  }
+}
+
 resource "aws_glue_catalog_database" "ecommerce_golden_db" {
   name        = var.database_name
   description = "${var.project_name}: golden datasets governados pelo Lake Formation"
@@ -6,6 +13,7 @@ resource "aws_glue_catalog_database" "ecommerce_golden_db" {
     Classification = "parquet"
     Environment    = var.environment
   }
+  tags = local.tags
 }
 
 resource "aws_lakeformation_resource" "golden_dataset" {

@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "dados"
+  }
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "golden_dataset" {
@@ -7,10 +14,10 @@ resource "aws_s3_bucket" "golden_dataset" {
   bucket        = "${var.project_name}-${var.environment}-golden-${data.aws_caller_identity.current.account_id}"
   force_destroy = var.force_destroy
 
-  tags = {
+  tags = merge(local.tags, {
     Name     = "${var.project_name}-${var.environment}-golden-dataset"
     DataTier = "Golden"
-  }
+  })
 }
 
 resource "aws_s3_bucket_ownership_controls" "golden_dataset" {
@@ -112,4 +119,5 @@ resource "aws_s3_object" "prefix" {
   for_each = toset(["catalog/", "interactions/", "user_features/", "recommendations/"])
   bucket   = aws_s3_bucket.golden_dataset.id
   key      = each.key
+  tags     = local.tags
 }

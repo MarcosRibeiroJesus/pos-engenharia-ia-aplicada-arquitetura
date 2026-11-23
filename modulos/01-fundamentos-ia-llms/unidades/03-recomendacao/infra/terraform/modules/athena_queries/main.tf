@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "consultas"
+  }
+}
+
 resource "aws_athena_workgroup" "analytics" {
   name          = "${var.project_name}-${var.environment}-workgroup"
   force_destroy = var.force_destroy
@@ -17,9 +24,9 @@ resource "aws_athena_workgroup" "analytics" {
     }
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${var.project_name}-${var.environment}-athena-workgroup"
-  }
+  })
 }
 
 resource "aws_athena_named_query" "extract_curated_features" {

@@ -1,9 +1,10 @@
 locals {
-  common_tags = {
-    project      = var.project_name
-    module       = "01-fundamentos-ia-llms/03-recomendacao"
+  # Padrão da política de tags do Infracost (D-031, ADR-0014): project é a chave do projeto em
+  # harness/estado.json e managed-by é sempre terraform. A tag module vem do local.tags de cada
+  # módulo; environment não entra, porque não faz parte da política.
+  tags_padrao = {
+    project      = "01-recomendacao"
     "managed-by" = "terraform"
-    environment  = var.environment
   }
 
   bedrock_model_id = var.bedrock_model_id
@@ -13,7 +14,7 @@ provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = local.common_tags
+    tags = local.tags_padrao
   }
 }
 

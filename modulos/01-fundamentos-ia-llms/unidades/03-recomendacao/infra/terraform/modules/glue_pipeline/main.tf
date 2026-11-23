@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "pipeline-glue"
+  }
+}
+
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
@@ -22,6 +29,7 @@ data "aws_iam_policy_document" "glue_assume_role" {
 resource "aws_iam_role" "glue_service_role" {
   name               = "${local.name}-glue-role"
   assume_role_policy = data.aws_iam_policy_document.glue_assume_role.json
+  tags               = local.tags
 }
 
 # R3: sem a managed policy AWSGlueServiceRole (que abre s3 em aws-glue-* e ec2 inteiro);
@@ -111,6 +119,7 @@ resource "aws_cloudwatch_log_group" "glue" {
   name              = "/aws-glue/jobs/${local.name}-feature-engineering"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
+  tags              = local.tags
 }
 
 resource "aws_s3_object" "script_feature_engineering" {
@@ -118,6 +127,7 @@ resource "aws_s3_object" "script_feature_engineering" {
   key    = "scripts/feature_engineering.py"
   source = "${path.module}/../../../../src/batch/glue/feature_engineering.py"
   etag   = filemd5("${path.module}/../../../../src/batch/glue/feature_engineering.py")
+  tags   = local.tags
 }
 
 resource "aws_glue_job" "feature_engineering" {
@@ -141,7 +151,7 @@ resource "aws_glue_job" "feature_engineering" {
     "--continuous-log-logGroup"          = aws_cloudwatch_log_group.glue.name
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-glue-job"
-  }
+  })
 }

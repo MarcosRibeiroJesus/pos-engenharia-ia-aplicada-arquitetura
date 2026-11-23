@@ -1,6 +1,6 @@
 # Copie para backend.hcl (fora do git) e rode: terraform init -backend-config=backend.hcl
-bucket       = "recsys-tfstate-123456789012"   # saída state_bucket do infra/bootstrap
-key          = "modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate"
+bucket       = "nome-do-bucket-de-state-123456789012" # o mesmo de vars.TF_STATE_BUCKET (ou a saída state_bucket do infra/bootstrap)
+key          = "01-recomendacao/lab.tfstate"          # mesma chave dos workflows do projeto (STATE_KEY)
 region       = "us-east-1"
 encrypt      = true
 use_lockfile = true # lock nativo do S3 (Terraform >= 1.10), sem tabela DynamoDB

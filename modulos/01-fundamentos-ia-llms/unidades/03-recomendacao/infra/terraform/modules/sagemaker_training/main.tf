@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "treino"
+  }
+}
+
 data "aws_iam_policy_document" "sagemaker_train_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -11,6 +18,7 @@ data "aws_iam_policy_document" "sagemaker_train_assume_role" {
 resource "aws_iam_role" "sagemaker_train_role" {
   name               = "${var.project_name}-${var.environment}-sm-train-role"
   assume_role_policy = data.aws_iam_policy_document.sagemaker_train_assume_role.json
+  tags               = local.tags
 }
 
 resource "aws_iam_policy" "sagemaker_s3_policy" {
@@ -32,6 +40,7 @@ resource "aws_iam_policy" "sagemaker_s3_policy" {
       }
     ]
   })
+  tags = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "sagemaker_s3_attach" {
@@ -44,4 +53,5 @@ resource "aws_s3_object" "train_script" {
   key    = "scripts/train_model.py"
   source = "${path.module}/../../../../src/batch/sagemaker/train_model.py"
   etag   = filemd5("${path.module}/../../../../src/batch/sagemaker/train_model.py")
+  tags   = local.tags
 }

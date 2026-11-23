@@ -30,9 +30,9 @@ BOOT_DIR = UNIT / "infra/bootstrap"
 REPORTS = REPO / "testing/reports"
 ENDPOINT = os.environ.get("AWS_ENDPOINT_URL", "http://localhost:4566")
 EMULATOR = os.environ.get("EMULATOR_NAME", "Floci")
-PROJECT, ENVIRONMENT = "recsys", "lab"
-STATE_BUCKET = "recsys-tfstate-floci"
-STATE_KEY = "modulos/01-fundamentos-ia-llms/03-recomendacao/lab.tfstate"
+PROJECT, ENVIRONMENT = "01-recomendacao", "lab"  # PROJECT é a tag project (D-031); os nomes vêm do output prefixo_dos_nomes
+STATE_BUCKET = "01-recomendacao-tfstate-floci"
+STATE_KEY = "01-recomendacao/lab.tfstate"  # mesma chave dos workflows (STATE_KEY)
 RUN_ID = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 OUT = REPORTS / f"{RUN_ID}-01-03-recomendacao"
 
@@ -64,7 +64,7 @@ def provider_override(default_tags: bool) -> str:
     if default_tags:
         tags = """
   default_tags {
-    tags = local.common_tags
+    tags = local.tags_padrao
   }"""
     return f"""# Gerado pelo harness de integração; apagado ao final. Não versionar.
 provider "aws" {{
@@ -237,6 +237,9 @@ def outputs():
 def assertions(o):
     bucket = o.get("s3_golden_dataset_bucket", {}).get("value", "")
     table = o.get("dynamodb_table_name", {}).get("value", "")
+    # Prefixo dos nomes lido do próprio stack: a tag project (PROJECT) e o prefixo dos nomes são
+    # coisas diferentes até a T012, e o harness não repete a regra de nomes do Terraform.
+    nome = o.get("prefixo_dos_nomes", {}).get("value", "")
 
     def s3_kms():
         d, raw = aws("s3api", "get-bucket-encryption", "--bucket", bucket)
@@ -265,21 +268,21 @@ def assertions(o):
     check("DynamoDB: SSE com KMS", ddb_sse, rule="R2", expected="KMS / ENABLED")
 
     def memdb_tls():
-        d, raw = aws("memorydb", "describe-clusters", "--cluster-name", f"{PROJECT}-{ENVIRONMENT}-vec")
+        d, raw = aws("memorydb", "describe-clusters", "--cluster-name", f"{nome}-vec")
         c = (d or {}).get("Clusters", [{}])[0]
         return c.get("TLSEnabled"), c.get("TLSEnabled") is True, raw
     check("MemoryDB: TLS em trânsito", memdb_tls, rule="R2", expected=True,
           gap_note="Cluster fora do apply (lacuna do Floci, ADR-0006); TLS verificado no plan por terraform test memorydb_tls")
 
     def alb_internal():
-        d, raw = aws("elbv2", "describe-load-balancers", "--names", f"{PROJECT}-{ENVIRONMENT}-alb")
+        d, raw = aws("elbv2", "describe-load-balancers", "--names", f"{nome}-alb")
         scheme = (d or {}).get("LoadBalancers", [{}])[0].get("Scheme")
         return scheme, scheme == "internal", raw
     check("ALB interno por padrão", alb_internal, rule="R1", expected="internal")
 
     def ecs_private():
-        d, raw = aws("ecs", "describe-services", "--cluster", f"{PROJECT}-{ENVIRONMENT}-cluster",
-                     "--services", f"{PROJECT}-{ENVIRONMENT}-service")
+        d, raw = aws("ecs", "describe-services", "--cluster", f"{nome}-cluster",
+                     "--services", f"{nome}-service")
         s = (d or {}).get("services", [{}])[0]
         ip = s.get("networkConfiguration", {}).get("awsvpcConfiguration", {}).get("assignPublicIp")
         return f"assignPublicIp={ip}, desired={s.get('desiredCount')}", ip == "DISABLED" and s.get("desiredCount") == 1, raw
@@ -308,7 +311,7 @@ def assertions(o):
 
     def task_policy():
         d, raw = aws("iam", "list-policies", "--scope", "Local")
-        arn = next(p["Arn"] for p in d["Policies"] if p["PolicyName"] == f"{PROJECT}-{ENVIRONMENT}-ecs-task-policy")
+        arn = next(p["Arn"] for p in d["Policies"] if p["PolicyName"] == f"{nome}-ecs-task-policy")
         meta, _ = aws("iam", "get-policy", "--policy-arn", arn)
         ver, raw2 = aws("iam", "get-policy-version", "--policy-arn", arn, "--version-id", meta["Policy"]["DefaultVersionId"])
         doc = ver["PolicyVersion"]["Document"]
@@ -326,7 +329,7 @@ def assertions(o):
     check("Tags project, module e managed-by", tags, rule="R4", expected=">0 recursos, 0 sem tags")
 
     def alarms():
-        d, raw = aws("cloudwatch", "describe-alarms", "--alarm-name-prefix", f"{PROJECT}-{ENVIRONMENT}-")
+        d, raw = aws("cloudwatch", "describe-alarms", "--alarm-name-prefix", f"{nome}-")
         al = (d or {}).get("MetricAlarms", [])
         no_action = [a["AlarmName"] for a in al if not a.get("AlarmActions")]
         return f"{len(al)} alarmes, {len(no_action)} sem ação", len(al) >= 7 and not no_action, raw
@@ -335,7 +338,7 @@ def assertions(o):
     def logs():
         d, raw = aws("logs", "describe-log-groups")
         groups = (d or {}).get("logGroups", [])
-        mine = [g for g in groups if PROJECT in g["logGroupName"]]
+        mine = [g for g in groups if nome and nome in g["logGroupName"]]
         no_kms = [g["logGroupName"] for g in mine if not g.get("kmsKeyId")]
         no_ret = [g["logGroupName"] for g in mine if not g.get("retentionInDays")]
         return f"{len(mine)} log groups, {len(no_kms)} sem KMS, {len(no_ret)} sem retenção", len(mine) >= 4 and not no_kms and not no_ret, raw
@@ -343,7 +346,7 @@ def assertions(o):
 
     def budget():
         acct, _ = aws("sts", "get-caller-identity")
-        d, raw = aws("budgets", "describe-budget", "--account-id", acct["Account"], "--budget-name", f"{PROJECT}-{ENVIRONMENT}-monthly")
+        d, raw = aws("budgets", "describe-budget", "--account-id", acct["Account"], "--budget-name", f"{nome}-monthly")
         lim = (d or {}).get("Budget", {}).get("BudgetLimit", {})
         return f"{lim.get('Amount')} {lim.get('Unit')}", float(lim.get("Amount", 0)) == 10.0 and lim.get("Unit") == "USD", raw
     check("AWS Budgets com teto de US$ 10", budget, rule="R9", expected="10 USD")
@@ -414,7 +417,7 @@ def main():
     record("Host do S3 Control do emulador resolve", ok_host, expected="000000000000.localhost -> 127.0.0.1",
            got=how, critical=True)
     override = TF_DIR / "zz_floci_override.tf"
-    boot_tmp = pathlib.Path(tempfile.mkdtemp(prefix="recsys-boot-"))
+    boot_tmp = pathlib.Path(tempfile.mkdtemp(prefix="01-recomendacao-boot-"))
     applied = False
 
     try:
@@ -483,7 +486,7 @@ def main():
 
             def leftovers():
                 d, raw = aws("resourcegroupstaggingapi", "get-resources", "--tag-filters",
-                             f"Key=project,Values={PROJECT}", f"Key=environment,Values={ENVIRONMENT}")
+                             f"Key=project,Values={PROJECT}")
                 arns = [r["ResourceARN"] for r in (d or {}).get("ResourceTagMappingList", [])]
                 real = []
                 for a in arns:

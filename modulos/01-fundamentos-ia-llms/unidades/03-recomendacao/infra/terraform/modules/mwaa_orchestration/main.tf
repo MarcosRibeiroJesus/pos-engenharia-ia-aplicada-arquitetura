@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "orquestracao-mwaa"
+  }
+}
+
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
@@ -23,6 +30,7 @@ resource "aws_iam_role" "mwaa_execution_role" {
   count              = var.enable_mwaa ? 1 : 0
   name               = "${local.name}-role"
   assume_role_policy = data.aws_iam_policy_document.mwaa_assume_role.json
+  tags               = local.tags
 }
 
 # R3: política de execução do MWAA restrita ao bucket, aos logs e à fila do próprio ambiente.
@@ -100,6 +108,7 @@ resource "aws_security_group" "mwaa" {
     protocol    = "-1"
     cidr_blocks = [var.vpc_cidr]
   }
+  tags = local.tags
 }
 
 resource "aws_s3_object" "pipeline_dag" {
@@ -107,6 +116,7 @@ resource "aws_s3_object" "pipeline_dag" {
   key    = "dags/daily_hybrid_recommendation_pipeline.py"
   source = "${path.module}/../../../../src/batch/airflow/dags/daily_hybrid_recommendation_pipeline.py"
   etag   = filemd5("${path.module}/../../../../src/batch/airflow/dags/daily_hybrid_recommendation_pipeline.py")
+  tags   = local.tags
 }
 
 resource "aws_mwaa_environment" "pipeline" {
@@ -150,7 +160,7 @@ resource "aws_mwaa_environment" "pipeline" {
     }
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = local.name
-  }
+  })
 }

@@ -42,3 +42,25 @@ output "interface_endpoint_services" {
   description = "Serviços com endpoint de interface."
   value       = keys(aws_vpc_endpoint.interface)
 }
+
+output "tags_dos_recursos" {
+  description = "Atributo tags de cada recurso tagueável do módulo, para o teste de tags (TT-T01)."
+  value = merge(
+    { "aws_vpc.main" = aws_vpc.main.tags },
+    { "aws_default_security_group.default" = aws_default_security_group.default.tags },
+    { for i, r in aws_subnet.private : "aws_subnet.private[${i}]" => r.tags },
+    { "aws_route_table.private" = aws_route_table.private.tags },
+    { for i, r in aws_internet_gateway.gw : "aws_internet_gateway.gw[${i}]" => r.tags },
+    { for i, r in aws_subnet.public : "aws_subnet.public[${i}]" => r.tags },
+    { for i, r in aws_route_table.public : "aws_route_table.public[${i}]" => r.tags },
+    { for k, r in aws_vpc_endpoint.gateway : "aws_vpc_endpoint.gateway[${k}]" => r.tags },
+    { for k, r in aws_vpc_endpoint.interface : "aws_vpc_endpoint.interface[${k}]" => r.tags },
+    { "aws_security_group.alb" = aws_security_group.alb.tags },
+    { "aws_security_group.ecs" = aws_security_group.ecs.tags },
+    { "aws_security_group.endpoints" = aws_security_group.endpoints.tags },
+    { "aws_security_group.internal" = aws_security_group.internal.tags },
+    { for i, r in aws_cloudwatch_log_group.flow_logs : "aws_cloudwatch_log_group.flow_logs[${i}]" => r.tags },
+    { for i, r in aws_iam_role.flow_logs : "aws_iam_role.flow_logs[${i}]" => r.tags },
+    { for i, r in aws_flow_log.vpc : "aws_flow_log.vpc[${i}]" => r.tags },
+  )
+}

@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "rede"
+  }
+}
+
 # Rede privada por padrão (R1) e saída das tasks por endpoints de interface (ADR-0002).
 data "aws_region" "current" {}
 
@@ -24,9 +31,9 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-vpc"
-  }
+  })
 }
 
 # R1: o security group padrão fica sem regras, para nada usá-lo por acidente.
@@ -34,6 +41,7 @@ resource "aws_default_security_group" "default" {
   vpc_id  = aws_vpc.main.id
   ingress = []
   egress  = []
+  tags    = local.tags
 }
 
 # ---------------------------------------------------------------- subnets
@@ -44,18 +52,18 @@ resource "aws_subnet" "private" {
   availability_zone       = local.azs[count.index]
   map_public_ip_on_launch = false
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-private-${count.index + 1}"
     Tier = "private"
-  }
+  })
 }
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-private-rt"
-  }
+  })
 }
 
 resource "aws_route_table_association" "private" {
@@ -69,9 +77,9 @@ resource "aws_internet_gateway" "gw" {
   count  = var.expose_api_publicly ? 1 : 0
   vpc_id = aws_vpc.main.id
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-igw"
-  }
+  })
 }
 
 resource "aws_subnet" "public" {
@@ -81,10 +89,10 @@ resource "aws_subnet" "public" {
   availability_zone       = local.azs[count.index]
   map_public_ip_on_launch = false # só o ALB vive aqui e recebe IP pelo próprio serviço
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-public-${count.index + 1}"
     Tier = "public"
-  }
+  })
 }
 
 resource "aws_route_table" "public" {
@@ -96,9 +104,9 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.gw[0].id
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-public-rt"
-  }
+  })
 }
 
 resource "aws_route_table_association" "public" {
@@ -116,9 +124,9 @@ resource "aws_vpc_endpoint" "gateway" {
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-${each.key}-gw-endpoint"
-  }
+  })
 }
 
 # Interface: US$ 0,01/h por endpoint por AZ. No lab, 1 AZ (ADR-0002).
@@ -131,9 +139,9 @@ resource "aws_vpc_endpoint" "interface" {
   subnet_ids          = slice(aws_subnet.private[*].id, 0, var.interface_endpoint_az_count)
   security_group_ids  = [aws_security_group.endpoints.id]
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-${each.key}-endpoint"
-  }
+  })
 }
 
 # ---------------------------------------------------------------- security groups
@@ -159,9 +167,9 @@ resource "aws_security_group" "alb" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-alb-sg"
-  }
+  })
 }
 
 resource "aws_security_group" "ecs" {
@@ -201,9 +209,9 @@ resource "aws_security_group" "ecs" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-ecs-sg"
-  }
+  })
 }
 
 resource "aws_security_group" "endpoints" {
@@ -219,9 +227,9 @@ resource "aws_security_group" "endpoints" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-endpoints-sg"
-  }
+  })
 }
 
 resource "aws_security_group" "internal" {
@@ -238,9 +246,9 @@ resource "aws_security_group" "internal" {
     security_groups = [aws_security_group.ecs.id]
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${local.name}-internal-sg"
-  }
+  })
 }
 
 # ---------------------------------------------------------------- flow logs (R6)
@@ -250,6 +258,7 @@ resource "aws_cloudwatch_log_group" "flow_logs" {
   name              = "/vpc/${local.name}/flow-logs"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_arn
+  tags              = local.tags
 }
 
 data "aws_iam_policy_document" "flow_logs_assume" {
@@ -266,6 +275,7 @@ resource "aws_iam_role" "flow_logs" {
   count              = var.enable_flow_logs ? 1 : 0
   name               = "${local.name}-flow-logs-role"
   assume_role_policy = data.aws_iam_policy_document.flow_logs_assume.json
+  tags               = local.tags
 }
 
 resource "aws_iam_role_policy" "flow_logs" {
@@ -289,4 +299,5 @@ resource "aws_flow_log" "vpc" {
   log_destination_type = "cloud-watch-logs"
   log_destination      = aws_cloudwatch_log_group.flow_logs[0].arn
   iam_role_arn         = aws_iam_role.flow_logs[0].arn
+  tags                 = local.tags
 }

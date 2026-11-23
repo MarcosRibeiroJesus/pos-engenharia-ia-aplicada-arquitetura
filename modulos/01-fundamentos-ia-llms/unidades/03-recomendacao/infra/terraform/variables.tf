@@ -16,7 +16,7 @@ variable "environment" {
 }
 
 variable "project_name" {
-  description = "Prefixo dos recursos e valor da tag project."
+  description = "Prefixo dos nomes dos recursos (o prefixo 01-recomendacao- entra na T012). Não define a tag project, que é fixa no local.tags_padrao (D-031)."
   type        = string
   default     = "recsys"
 

@@ -1,3 +1,10 @@
+# Tag module deste componente (ADR-0014, D-031); project e managed-by vêm do default_tags.
+locals {
+  tags = {
+    module = "recomendacoes-lote"
+  }
+}
+
 resource "aws_dynamodb_table" "user_recommendations" {
   name                        = "${var.project_name}-${var.environment}-${var.table_name}"
   billing_mode                = "PAY_PER_REQUEST"
@@ -24,7 +31,7 @@ resource "aws_dynamodb_table" "user_recommendations" {
     enabled = true
   }
 
-  tags = {
+  tags = merge(local.tags, {
     Name = "${var.project_name}-${var.environment}-user-recommendations"
-  }
+  })
 }
