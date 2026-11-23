@@ -4,6 +4,8 @@
 - Data: 2026-11-18
 - Unidade: 01.03 (recomendação)
 
+> **Nota de 2026-11-23 (T030, provedor OIDC e bucket de state no `infra/conta`):** o stack `infra/bootstrap/` foi removido da unidade pelo [ADR-0015](0015-identidade-de-deploy-por-projeto.md). O bucket de state e o provedor OIDC do GitHub passaram ao [`infra/conta`](../../../../../infra/conta/README.md), aplicado pelo dono, e servem a todos os projetos. O state da D01 continua no backend S3 com `use_lockfile`, na chave `01-recomendacao/lab.tfstate`. O bucket agora usa **SSE-KMS com chave do cliente** (`alias/00-conta-tfstate`), não SSE-S3: o trade-off de custo abaixo deixou de valer, porque a chave, de cerca de US$ 1 por mês, é uma só para a conta inteira. O corpo deste ADR fica como registro da decisão original.
+
 ## Contexto
 
 O stack rodava com state local. No CI, cada job começa com o diretório limpo, então o workflow de destroy rodava `terraform destroy` contra um state vazio e não removia nada: os recursos ficavam na conta, cobrando. Também não havia proteção contra dois applies simultâneos (um manual e outro do pipeline).

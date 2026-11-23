@@ -5,6 +5,8 @@
 - Unidade: 01.03 (recomendação)
 - Atualização (T010 e T012): os workflows passaram a `01-recomendacao-{ci,apply,destroy}.yml`, nascidos dos modelos do harness, com o grupo de concorrência `01-recomendacao-state`; o nome do stack digitado no destroy é `01-recomendacao-lab` (prefixo do ADR-0014). Os nomes `recsys-*` abaixo são o registro da decisão original.
 
+> **Nota de 2026-11-23 (T030, provedor OIDC e bucket de state no `infra/conta`):** o `infra/bootstrap/` foi removido da unidade pelo [ADR-0015](0015-identidade-de-deploy-por-projeto.md). O provedor OIDC e o bucket de state agora são do [`infra/conta`](../../../../../infra/conta/README.md), aplicado pelo dono, e as roles por projeto com ABAC entram lá na T031. O texto abaixo sobre aplicar o `infra/bootstrap` fica como registro da decisão original.
+
 ## Contexto
 
 Os workflows importados ficavam em `.github/workflows` dentro da unidade, onde o GitHub não os executa. O de criação aplicava sem plan revisado e não repassava `enable_mwaa`; o de destroy confirmava com a palavra fixa `DESTROY`, rodava contra state local vazio e não verificava sobras.

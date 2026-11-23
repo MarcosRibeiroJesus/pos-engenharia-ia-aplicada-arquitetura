@@ -2,7 +2,7 @@
 """Integração da unidade 01.03 (recomendação) contra o Floci.
 
 Fluxo, com o projeto concluído:
-  1. bootstrap do state remoto no emulador (bucket S3);
+  1. bucket de state no emulador (na conta real ele vem do infra/conta, ADR-0015);
   2. init do stack com backend S3 + use_lockfile apontando para o emulador;
   3. apply com o provider apontando para o emulador;
   4. asserts nos recursos criados, cada um ligado a uma regra (R1..R9, ADRs);
@@ -20,13 +20,11 @@ import os
 import pathlib
 import shutil
 import subprocess
-import tempfile
 import time
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 UNIT = REPO / "modulos/01-fundamentos-ia-llms/unidades/03-recomendacao"
 TF_DIR = UNIT / "infra/terraform"
-BOOT_DIR = UNIT / "infra/bootstrap"
 REPORTS = REPO / "testing/reports"
 ENDPOINT = os.environ.get("AWS_ENDPOINT_URL", "http://localhost:4566")
 EMULATOR = os.environ.get("EMULATOR_NAME", "Floci")
@@ -424,26 +422,25 @@ def main():
     record("Host do S3 Control do emulador resolve", ok_host, expected="000000000000.localhost -> 127.0.0.1",
            got=how, critical=True)
     override = TF_DIR / "zz_floci_override.tf"
-    boot_tmp = pathlib.Path(tempfile.mkdtemp(prefix="01-recomendacao-boot-"))
     applied = False
 
     try:
         ok, _ = step("Emulador responde (STS)",
                      ["aws", "--endpoint-url", ENDPOINT, "sts", "get-caller-identity"], critical=True)
 
-        # 1. Bootstrap do state (state local, em diretório temporário)
-        for f in BOOT_DIR.glob("*.tf"):
-            shutil.copy(f, boot_tmp / f.name)
-        (boot_tmp / "zz_floci_override.tf").write_text(provider_override(default_tags=False), encoding="utf-8")
-        step("Bootstrap: init", ["terraform", "init", "-input=false", "-no-color"], cwd=boot_tmp, rule="R8", critical=True)
+        # 1. Bucket de state no emulador. Na conta real ele é do infra/conta (ADR-0015), aplicado pelo
+        # dono, e não pertence a este projeto: aqui basta um bucket versionado para o backend S3.
         rc, _, _ = run(["aws", "--endpoint-url", ENDPOINT, "s3api", "head-bucket", "--bucket", STATE_BUCKET])
         if rc == 0:
-            record("Bootstrap: bucket de state já existe no emulador (execução anterior)", True, rule="R8",
+            record("State: bucket de state já existe no emulador (execução anterior)", True, rule="R8",
                    expected="bucket existente", got=STATE_BUCKET)
         else:
-            step("Bootstrap: apply do bucket de state",
-                 ["terraform", "apply", "-auto-approve", "-input=false", "-no-color", f"-var=state_bucket_name={STATE_BUCKET}"],
-                 cwd=boot_tmp, rule="R8", critical=True)
+            step("State: cria o bucket de state no emulador",
+                 ["aws", "--endpoint-url", ENDPOINT, "s3api", "create-bucket", "--bucket", STATE_BUCKET],
+                 rule="R8", critical=True)
+            step("State: versionamento do bucket de state",
+                 ["aws", "--endpoint-url", ENDPOINT, "s3api", "put-bucket-versioning", "--bucket", STATE_BUCKET,
+                  "--versioning-configuration", "Status=Enabled"], rule="R8")
 
         # 2. Stack com backend remoto no emulador
         override.write_text(provider_override(default_tags=True), encoding="utf-8")
@@ -497,6 +494,10 @@ def main():
                 arns = [r["ResourceARN"] for r in (d or {}).get("ResourceTagMappingList", [])]
                 real = []
                 for a in arns:
+                    if a == f"arn:aws:s3:::{STATE_BUCKET}":
+                        # Defesa: o bucket de state é da conta (infra/conta, tag 00-conta) e sobrevive ao
+                        # destroy. No emulador ele nasce sem tag e não aparece; na AWS a tag é 00-conta.
+                        continue
                     if a.startswith("arn:aws:kms:"):
                         k, _ = aws("kms", "describe-key", "--key-id", a)
                         if k and k["KeyMetadata"].get("KeyState") == "PendingDeletion":
@@ -523,7 +524,6 @@ def main():
         for module in EMULATOR_GAPS:
             (TF_DIR / "modules" / module / "zz_floci_override.tf").unlink(missing_ok=True)
         shutil.rmtree(TF_DIR / ".terraform", ignore_errors=True)
-        shutil.rmtree(boot_tmp, ignore_errors=True)
         write_report()
 
     failed = [r for r in results if r["status"] in ("falha", "pulado")]

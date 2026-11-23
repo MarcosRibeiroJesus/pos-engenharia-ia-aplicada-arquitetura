@@ -22,3 +22,13 @@ variable "emails_alerta" {
     error_message = "Informe ao menos um e-mail para os alertas."
   }
 }
+
+variable "state_bucket_name" {
+  description = "Nome do bucket de state da conta. Padrão: 00-conta-tfstate-<id da conta>."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.state_bucket_name == null || startswith(coalesce(var.state_bucket_name, "00-conta-"), "00-conta-")
+    error_message = "O bucket de state leva o prefixo da chave da conta, 00-conta- (D-029)."
+  }
+}

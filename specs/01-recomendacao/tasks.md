@@ -112,7 +112,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 **Especialistas desta fase:** a T020 tem regra fechada e fica com o `operador-harness`. A T021 a T024 mudam a lógica do `estado.py`, do `infra.py` e do `gate_custo.py` e ficam com o `engenheiro-terraform`, como nas T041 a T044 da plataforma. Ele segue as regras da skill `evolucao-do-harness`, mesmo sem tê-la pré-carregada: teste primeiro, só a biblioteca padrão do Python e o registro da mudança em `harness/VERSAO.md`.
 
 **Ordem com a plataforma:** a plataforma muda os mesmos arquivos nas T040 a T043 (`consome`, `requisitos`, `dependentes` e o limite do consumidor). As tarefas desta fase começam depois delas, para não haver duas lógicas de prazo no `infra.py`.
-- [ ] T020 [operador-harness] `consome: ["00-plataforma-agentes"]` no projeto · RF-110, ADR-0007 da plataforma · `estado.py validar`
+- [ ] T020 [BLOQUEADO: depende da T040 e da T043 da plataforma, ainda não feitas; as T021 a T024 seguem em cadeia] [operador-harness] `consome: ["00-plataforma-agentes"]` no projeto · RF-110, ADR-0007 da plataforma · `estado.py validar`
   - **Teste vermelho:** um caso em `harness/testes/test_componentes.py` afirma que o projeto `01-recomendacao` do `harness/estado.json` declara `consome` com `00-plataforma-agentes`; hoje reprova.
   - **Arquivos:** `harness/estado.json` (só o campo), o teste.
   - **Aceite:** `estado.py validar` ok com as regras do `consome` da plataforma T040; `infra.py dependentes 00-plataforma-agentes` lista a D01.
@@ -155,7 +155,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Depende de:** T021 (sem dependência da plataforma T073, A17).
 
 ## Fase 3 · Identidade de deploy por projeto no `infra/conta` (ADR-0015)
-- [ ] T030 [engenheiro-terraform] Provedor OIDC e bucket de state no `infra/conta` · RNF-105, Art. IV, Art. VI · TT em `infra/conta/tests/`
+- [x] T030 [engenheiro-terraform] Provedor OIDC e bucket de state no `infra/conta` · RNF-105, Art. IV, Art. VI · TT em `infra/conta/tests/`
   - **Teste vermelho:** `infra/conta/tests/identidade.tftest.hcl` afirma um `aws_iam_openid_connect_provider` do `token.actions.githubusercontent.com` e um bucket de state com versionamento, KMS do cliente, bloqueio público, política que nega `aws:SecureTransport = false` e tag `project = "00-conta"`.
   - **Arquivos:** `infra/conta/{main.tf,variables.tf,outputs.tf}` (ou `identidade.tf`), `infra/conta/tests/identidade.tftest.hcl`; a remoção de `U/infra/bootstrap/` e das referências a ele no README e nos workflows.
   - **Aceite:** um provedor e um bucket por conta, que servem a todos os projetos; se o `infra/conta` já tiver um dos dois por outra tarefa, ele é reusado; o ADR-0001 da unidade ganha uma nota apontando para o ADR-0015.
@@ -184,7 +184,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
 - [ ] T033 [DONO] Aplicar o `infra/conta` com a identidade da D01 e criar a variável e o ambiente · RNF-105, D-024
   - **Passos:** aplicar o `infra/conta` (provedor OIDC, bucket de state, roles da D01); criar a variável `AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO` com o ARN da `01-recomendacao-deploy`; criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main` (pendência da D-024, compartilhada com a plataforma T083).
   - **Aceite:** um plan da base no PR assume a `01-recomendacao-plan`; um destroy manual de teste roda no `aws-lab-destroy` sem pedir aprovação.
-  - **Depende de:** T031, T032.
+  - **Depende de:** T031, T032; a tarefa do harness (ainda sem id) que põe `kms_key_id` (de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro) nos modelos `harness/modelos/{apply,destroy}.yml` e nos workflows da plataforma; pendente da plataforma/harness até alguém assumir; esta sessão não edita `harness/modelos` nem os workflows da plataforma.
 
 ## Fase 4 · Núcleo: lote sintético fechado (D-051)
 - [ ] T040 [P] [engenheiro-ml] Gerador sintético com semente fixa · Art. VIII, RNF-007, RF-012, RNF-104 · PY-07

@@ -41,6 +41,8 @@ O provedor OIDC com a URL do GitHub é único por conta, e o bucket de state ser
 ## Custo
 Nenhum: IAM e OIDC não cobram.
 
+> **Atualização de 2026-11-23 (T030, revisão 1):** a linha acima está incompleta. O bucket de state usa uma chave KMS do cliente, de **cerca de US$ 1 por mês**, mais centavos de requisições. Há uma única chave para a conta inteira, com rotação anual, e o bucket key reduz as chamadas ao KMS. É o único custo fixo do `infra/conta` e cabe no limite mensal de US$ 20 da conta (D-022), onde ele já é somado. **Alternativa rejeitada:** SSE-S3, que é grátis, mas não separa o acesso ao state do acesso ao bucket (ler o state com SSE-KMS exige também `kms:Decrypt`, dado só às roles de cada projeto), e foi o que o ADR-0001 usava antes desta decisão.
+
 ## Risco
 - Uma lista de exceções incompleta faz o primeiro apply falhar com `AccessDenied`. Isso aparece cedo, antes da gravação, e a correção entra na lista com a fonte.
 - O apply do `infra/conta` depende do dono.

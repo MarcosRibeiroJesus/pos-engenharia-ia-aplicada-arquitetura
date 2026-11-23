@@ -34,7 +34,7 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 
 | ADR | Decisão |
 |---|---|
-| [0001](adr/0001-state-remoto-com-lock.md) | State remoto em S3 com lock nativo (`use_lockfile`) e stack de bootstrap |
+| [0001](adr/0001-state-remoto-com-lock.md) | State remoto em S3 com lock nativo (`use_lockfile`); o bucket passou ao `infra/conta` (ADR-0015) |
 | [0002](adr/0002-saida-de-rede-e-custo-fixo.md) | Saída das tasks por endpoints de interface em 1 AZ no lab; inventário do custo fixo |
 | [0003](adr/0003-seguranca-em-transito-e-menor-privilegio.md) | TLS no MemoryDB, ALB interno por padrão, IAM escopado, exceções do checkov |
 | [0004](adr/0004-explicacao-com-claude-no-bedrock.md) | Explicação com Claude no Bedrock: tool_use, validação, retentativa e fallback |
@@ -66,8 +66,8 @@ Com `explain=true`, o serviço pede ao Claude uma frase por item, por saída est
 ## Como subir (5 passos)
 
 1. Testes locais, sem nuvem: `npm ci && npm test && (cd infra/terraform && terraform init -backend=false && terraform test)`.
-2. State remoto, uma vez por conta: `cd infra/bootstrap && terraform init && terraform apply -var github_repository=owner/repo`.
-3. Configuração: copie `infra/terraform/backend.hcl.example` para `backend.hcl` e `terraform.tfvars.example` para `terraform.tfvars`, com o bucket do passo 2 e o seu e-mail de alerta.
+2. State remoto e OIDC, uma vez por conta: o dono aplica o stack [`infra/conta`](../../../../infra/conta/README.md), que cria o provedor OIDC do GitHub e o bucket de state de todos os projetos (ADR-0015).
+3. Configuração: copie `infra/terraform/backend.hcl.example` para `backend.hcl` e `terraform.tfvars.example` para `terraform.tfvars`, com o bucket da saída `state_bucket` do `infra/conta` e o seu e-mail de alerta.
 4. Deploy: rode o workflow `01.03 recomendação · apply` (ambiente protegido `aws-lab`) ou, localmente, `terraform init -backend-config=backend.hcl && terraform apply`. Publique a imagem do serviço no repositório ECR da saída `ecr_repository_url` com a tag `lab`.
 5. Destroy ao terminar: workflow `01.03 recomendação · destroy`, digitando `01-recomendacao-lab`. Ele falha se sobrar recurso com a tag `project`.
 
@@ -119,7 +119,6 @@ Sem `explain=true`, `explanation.status` é `not_requested` e o fluxo segue o SL
 ```text
 src/serving/      serviço Node.js 20 / TypeScript (arquitetura hexagonal)
 src/batch/        Athena, Glue, SageMaker e DAG do Airflow (Python)
-infra/bootstrap/  bucket de state e roles OIDC do GitHub
 infra/terraform/  stack principal: 14 módulos reutilizáveis e tests/
 tests/            unitários, contrato e integração do serviço e do lote
 adr/              decisões de arquitetura
