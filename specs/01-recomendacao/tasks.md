@@ -176,8 +176,9 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
     - checkov sem achado alto; onde a referência só aceitar `*`, exceção do checkov com justificativa no próprio recurso.
   - **Análise 2 (A19):** o TT-I01 afirma que o padrão de `logs:GetLogEvents` (`log-group:01-recomendacao-*:log-stream:*`) casa com o nome do log group do serviço fixado na T012.
   - **Depende de:** T030.
-- [ ] T032 [engenheiro-terraform] Workflows da D01 com a role do projeto e fallback · RNF-105, D-012 · TH-07 (extensão)
-  - **Teste vermelho:** o TH-07 (T010) passa a exigir `role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO || vars.AWS_DEPLOY_ROLE_ARN }}` em todo job com OIDC dos workflows da D01; uma fixture só com `vars.AWS_DEPLOY_ROLE_ARN` precisa reprovar.
+- [x] T032 [engenheiro-terraform] Workflows da D01 com a role do projeto e fallback · RNF-105, D-012 · TH-07 (extensão)
+  - **Teste vermelho:** o TH-07 (T010) passa a exigir `role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO || vars.AWS_DEPLOY_ROLE_ARN }}` em todo job com OIDC do apply e do destroy da D01; o plan do PR mantém a role de plan (pergunta D01-P33, role do plan do PR, pendente do dono); uma fixture só com `vars.AWS_DEPLOY_ROLE_ARN` precisa reprovar.
+  - **Extensão (achado da T030):** `kms_key_id` do state por `vars.TF_STATE_KMS_KEY_ARN`, com fallback sem a variável, no init dos três workflows da D01 (apply, destroy e plan do ci); o teste `TestT032RoleDoProjetoEKmsDoState` em `harness/testes/test_workflows_01_recomendacao.py` cobre.
   - **Arquivos:** `.github/workflows/01-recomendacao-{apply,destroy,ci}.yml` (e os da janela e do roteiro, quando existirem), `U/README.md` (pré-requisitos).
   - **Aceite:** sem a variável nova, o fallback é a role de hoje; o README lista a variável como pré-requisito do dono, sem valor.
   - **Depende de:** T010, T031.
@@ -185,7 +186,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Passos:** aplicar o `infra/conta` (provedor OIDC, bucket de state, roles da D01); criar a variável `AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO` com o ARN da `01-recomendacao-deploy`; criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main` (pendência da D-024, compartilhada com a plataforma T083).
   - **Aceite:** um plan da base no PR assume a `01-recomendacao-plan`; um destroy manual de teste roda no `aws-lab-destroy` sem pedir aprovação.
   - **Service-linked roles (revisão da T031):** a `01-recomendacao-deploy` não tem `iam:CreateServiceLinkedRole`. Numa conta nova, o primeiro apply da base falha fechado nas service-linked roles do ECS, do ELB, do MemoryDB, do Lake Formation e do MWAA. Saídas, decisão do dono: pré-criar essas roles com a credencial do dono, ou conceder a ação com `iam:AWSServiceName` nesses serviços. Nada é concedido por padrão.
-  - **Depende de:** T031, T032; a tarefa do harness (ainda sem id) que põe `kms_key_id` (de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro) nos modelos `harness/modelos/{apply,destroy}.yml` e nos workflows da plataforma; pendente da plataforma/harness até alguém assumir; esta sessão não edita `harness/modelos` nem os workflows da plataforma.
+  - **Depende de:** T031, T032; `kms_key_id` (de `vars.TF_STATE_KMS_KEY_ARN` com fallback seguro): parte da D01 feita na T032; modelos do harness e workflows da plataforma seguem pendentes (tarefa do harness sem id); esta sessão não edita `harness/modelos` nem os workflows da plataforma.
 
 ## Fase 4 · Núcleo: lote sintético fechado (D-051)
 - [ ] T040 [P] [engenheiro-ml] Gerador sintético com semente fixa · Art. VIII, RNF-007, RF-012, RNF-104 · PY-07

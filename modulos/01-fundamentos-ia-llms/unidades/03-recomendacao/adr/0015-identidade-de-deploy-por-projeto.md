@@ -25,6 +25,7 @@ O provedor OIDC com a URL do GitHub é único por conta, e o bucket de state ser
      - nada de `*` com `*`;
    - **`01-recomendacao-plan`:** só leitura e state, para o plan comentado no PR.
 3. **Workflows:** usam `vars.AWS_DEPLOY_ROLE_ARN_01_RECOMENDACAO`, com fallback para `vars.AWS_DEPLOY_ROLE_ARN`. Criar a variável e dar o valor é com o dono.
+   > **Nota de 2026-11-23 (T032):** os workflows também leem `vars.TF_STATE_KMS_KEY_ARN` (ARN da CMK do state, saída `state_kms_key_arn` do `infra/conta`) para o `kms_key_id` do backend, com fallback sem a variável. A role de plan do PR (pergunta D01-P33) segue pendente do dono; até a resposta, o plan do PR mantém a role de plan.
 4. **Teste:** TT-I01 no `infra/conta` (os dois subjects; nenhuma ação ampla sem condição, fora da lista).
 
 ## Alternativas rejeitadas

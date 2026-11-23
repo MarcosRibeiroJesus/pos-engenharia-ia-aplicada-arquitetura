@@ -135,6 +135,9 @@ jobs:
       pull-requests: write  # comentário do plan
     env:
       TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      # Chave do state (saída state_kms_key_arn do infra/conta). Vazia: o init segue sem kms_key_id,
+      # como hoje; contra o bucket do infra/conta ele falha fechado com AccessDenied (T032, D-012).
+      TF_STATE_KMS_KEY_ARN: ${{ vars.TF_STATE_KMS_KEY_ARN }}
       REGIAO: ${{ vars.AWS_REGION || 'us-east-1' }}
     defaults:
       run:
@@ -153,10 +156,12 @@ jobs:
           terraform_wrapper: false
       - name: Init com state remoto
         run: |
+          KMS_ARGS=()
+          if [ -n "$TF_STATE_KMS_KEY_ARN" ]; then KMS_ARGS=(-backend-config="kms_key_id=$TF_STATE_KMS_KEY_ARN"); fi
           terraform init -input=false \
             -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="key=$STATE_KEY" \
             -backend-config="region=$REGIAO" \
-            -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+            -backend-config="encrypt=true" -backend-config="use_lockfile=true" "${KMS_ARGS[@]}"
       - name: Plan
         run: |
           terraform plan -input=false -no-color -lock-timeout=120s -out=tfplan > plan.txt 2>&1 || (cat plan.txt; exit 1)
