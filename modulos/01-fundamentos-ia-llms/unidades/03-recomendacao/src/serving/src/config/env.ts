@@ -23,7 +23,13 @@ const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
-  BEDROCK_MODEL_ID: z.string().default('anthropic.claude-haiku-5-5'),
+  // Contrato da plataforma (RF-110, ADR-0010): o task definition recebe os três valores do
+  // parâmetro `produtos/01-recomendacao`. Sem default e sem validação aqui, de propósito: um valor
+  // faltando ou inválido não derruba o serviço; desliga só a explicação (falha fechada em
+  // `contratoBedrock`). Nenhum id de modelo fica escrito no código (ST-06).
+  BEDROCK_PERFIL_ARN: z.string().optional(),
+  GUARDRAIL_ID: z.string().optional(),
+  GUARDRAIL_VERSAO: z.string().optional(),
   BEDROCK_ENDPOINT_URL: z.string().optional(),
   EXPLANATIONS_ENABLED: z
     .enum(['true', 'false'])
@@ -51,3 +57,56 @@ export function loadEnv(override?: Partial<EnvConfig>): EnvConfig {
 }
 
 export const env = loadEnv();
+
+// ---------------------------------------------------------------- contrato do Bedrock
+
+/** Configuração do Claude vinda do contrato da plataforma, já validada, ou o motivo da recusa. */
+export type ContratoBedrock =
+  | { valido: true; perfilArn: string; guardrailId: string; guardrailVersao: string }
+  | { valido: false; motivo: string };
+
+// Listas permitidas (ADR-0010). Só o perfil de inferência de APLICAÇÃO do produto (é ele que atribui
+// o custo pela tag); id de modelo e perfil de sistema ficam de fora. O guardrail vem por id e na
+// versão numerada publicada no contrato v1; `DRAFT` é recusado. Os padrões também barram quebra de
+// linha, então nenhum valor injeta cabeçalho.
+const PADROES_CONTRATO = {
+  BEDROCK_PERFIL_ARN:
+    /^arn:aws(-cn|-us-gov|-iso|-iso-b)?:bedrock:[a-z0-9-]{1,20}:[0-9]{12}:application-inference-profile\/[a-z0-9]{1,64}$/,
+  GUARDRAIL_ID: /^[a-z0-9]{1,64}$/,
+  GUARDRAIL_VERSAO: /^[1-9][0-9]{0,7}$/,
+} as const;
+
+type VariavelContrato = keyof typeof PADROES_CONTRATO;
+
+/**
+ * Valida os três valores do contrato. Falha fechada: qualquer um ausente ou fora da lista permitida
+ * devolve `valido: false`, e o explicador não chama o modelo. O motivo nomeia só a variável, nunca
+ * o valor recebido, porque ele vai para o detalhe do erro e pode chegar a log.
+ */
+export function contratoBedrock(
+  cfg: Partial<Record<VariavelContrato, string | undefined>>
+): ContratoBedrock {
+  const problemas: string[] = [];
+  for (const nome of Object.keys(PADROES_CONTRATO) as VariavelContrato[]) {
+    const valor = cfg[nome];
+    if (valor === undefined || valor === '') problemas.push(`${nome} ausente`);
+    else if (!PADROES_CONTRATO[nome].test(valor)) problemas.push(`${nome} fora do formato permitido`);
+  }
+  if (problemas.length > 0) {
+    return { valido: false, motivo: `configuração do contrato da plataforma inválida: ${problemas.join('; ')}` };
+  }
+  return {
+    valido: true,
+    perfilArn: cfg.BEDROCK_PERFIL_ARN!,
+    guardrailId: cfg.GUARDRAIL_ID!,
+    guardrailVersao: cfg.GUARDRAIL_VERSAO!,
+  };
+}
+
+/**
+ * Rótulo público do modelo, que vai no `explanation.modelId` da resposta da API. Só o id final do
+ * perfil de aplicação: o ARN traz a conta e a região e não sai para o cliente.
+ */
+export function rotuloDoPerfil(contrato: ContratoBedrock): string {
+  return contrato.valido ? `perfil/${contrato.perfilArn.split('/').pop()}` : 'sem-contrato';
+}

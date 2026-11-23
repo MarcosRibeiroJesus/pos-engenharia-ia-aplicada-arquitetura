@@ -22,12 +22,19 @@ export const EXPLANATION_TOOL_NAME = 'record_explanations';
 const MAX_REASON_CHARS = 160;
 const MIN_REASON_CHARS = 20;
 
+export type ProntidaoClaude = { pronto: true } | { pronto: false; motivo: string };
+
 /** Porta para a Messages API. O adaptador do Bedrock implementa; os testes injetam um fake. */
 export interface ClaudeMessagesPort {
   create(
     params: Anthropic.MessageCreateParamsNonStreaming,
     options?: { signal?: AbortSignal; timeout?: number }
   ): Promise<Anthropic.Message>;
+  /**
+   * Configuração obrigatória presente e válida (no Bedrock, o contrato da plataforma com o
+   * guardrail, RF-110). Sem ela o explicador não chama o modelo (falha fechada). Ausente: pronto.
+   */
+  prontidao?(): ProntidaoClaude;
 }
 
 export interface ExplainItem {
@@ -74,6 +81,10 @@ export interface IExplanationMetrics {
 }
 
 export interface ExplainerOptions {
+  /**
+   * Rótulo do modelo devolvido na resposta da API. No Bedrock, o adaptador troca o `model` da
+   * requisição pelo ARN do perfil do contrato; o ARN (com a conta) não vai para o cliente.
+   */
   modelId: string;
   /** Tentativas no total (a primeira + retentativas). */
   maxAttempts?: number;
@@ -221,6 +232,15 @@ export class RecommendationExplainer implements IRecommendationExplainer {
   }
 
   public async explain(input: ExplainInput): Promise<ExplanationOutcome> {
+    // Falha fechada (RF-110, ADR-0010 item 8): sem a configuração do contrato, nenhuma chamada ao
+    // modelo. É erro de configuração, não de disponibilidade: não conta no disjuntor, senão a
+    // categoria viraria circuit_open e esconderia a causa.
+    const prontidao = this.client.prontidao?.() ?? { pronto: true };
+    if (!prontidao.pronto) {
+      void this.options.metrics?.publishExplanationFallback('internal_error');
+      return { status: 'unavailable', attempts: 0, errorCategory: 'internal_error', retryable: false, detail: prontidao.motivo };
+    }
+
     if (input.items.length === 0) {
       return { status: 'ok', attempts: 0, modelId: this.options.modelId, explanations: [] };
     }

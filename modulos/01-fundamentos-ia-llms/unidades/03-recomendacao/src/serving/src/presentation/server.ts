@@ -1,6 +1,6 @@
 import fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { randomUUID } from 'crypto';
-import { env } from '../config/env';
+import { contratoBedrock, env, rotuloDoPerfil } from '../config/env';
 import { baseLogger } from '../infrastructure/logging/logger';
 import { HealthController, DownstreamHealthCheckers } from './controllers/health.controller';
 import { RecommendationController } from './controllers/recommendation.controller';
@@ -142,9 +142,13 @@ export function buildDefaultService(clients: DefaultUseCaseClients = {}): Defaul
   const vectorRepo = new MemoryDbVectorCandidateRepository(clients.redis);
   const scoringClient = clients.scoringClient ?? new SageMakerScoringClient();
   const metricsPublisher = clients.metricsPublisher ?? new EmfMetricsPublisher();
+  // Contrato da plataforma (RF-110): perfil e guardrail vêm do task definition; inválido, a
+  // explicação fica indisponível (falha fechada) e o resto da resposta segue.
+  const contrato = contratoBedrock(env);
   const explainer = env.EXPLANATIONS_ENABLED
-    ? new RecommendationExplainer(new BedrockClaudeClient(), {
-        modelId: env.BEDROCK_MODEL_ID,
+    ? new RecommendationExplainer(new BedrockClaudeClient(contrato), {
+        // Rótulo público: só o id do perfil, sem conta nem região do ARN.
+        modelId: rotuloDoPerfil(contrato),
         timeoutMs: env.EXPLANATION_TIMEOUT_MS,
         metrics: {
           publishExplanationRetry: () => metricsPublisher.publishExplanationRetry?.(),
