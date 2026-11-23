@@ -342,7 +342,7 @@ Estas tarefas registram o comportamento atual que a spec descreve e que já tem 
   - **Arquivos:** `U/src/serving/src/presentation/controllers/recommendation.controller.ts`, `U/src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository.ts`, os testes.
   - **Aceite:** o padrão `^[A-Za-z0-9_]{1,40}$` fica numa constante só, usada pelos dois; o contrato OpenAPI documenta o padrão.
   - **Depende de:** T000.
-- [ ] T071 [engenheiro-ml] Consulta `FT.SEARCH` sem `SORTBY`, com `LIMIT 0 k` · RF-002, RNF-104, E8, ADR-0011 · VT-03
+- [x] T071 [engenheiro-ml] Consulta `FT.SEARCH` sem `SORTBY`, com `LIMIT 0 k` · RF-002, RNF-104, E8, ADR-0011 · VT-03
   - **Teste vermelho:** VT-03 afirma os argumentos exatos enviados ao cliente Redis: `FT.SEARCH item_idx "<filtro>=>[KNN k @v $vec AS vector_score]" PARAMS 2 vec <bytes> LIMIT 0 k RETURN 3 vector_score cat inStock DIALECT 2`, sem `SORTBY`, com `k` igual ao pedido (até 50).
   - **Arquivos:** `U/src/serving/src/infrastructure/memorydb/memorydb-vector-candidate.repository.ts`, `U/tests/unit/memorydb-vector-candidate.repository.test.ts`.
   - **Aceite:** o serviço recebe até 50 candidatos vetoriais, e não mais 10; o `inStock` do `RETURN` chega ao candidato.
