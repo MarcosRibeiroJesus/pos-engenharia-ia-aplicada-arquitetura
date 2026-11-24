@@ -72,7 +72,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Marketplaces de skills** (D-049): HashiCorp, Trail of Bits, promptfoo e Google confirmados, além da Anthropic. Marketplace novo só com confirmação do Marcos.
 - **Códigos sempre com nome** (D-050): ao citar D01, P00-P3, T041 ou D-033 para o Marcos, escreva junto um nome curto do que é.
 - **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
-  - **Ciclo de cada tarefa:** especialista → revisor independente (nunca quem implementou, no máximo 2 rodadas) → commit só do que foi aprovado.
+  - **Ciclo de cada tarefa:** especialista → testes locais → commit. A revisão de código é do CI no PR, com o CodeRabbit como único revisor (D-075); os achados voltam ao especialista, no máximo 2 rodadas.
   - **Comandos:** os necessários ficam liberados; push com força, push no `main`, merge e apply ou destroy fora do Floci são negados pelo hook `gate_execucao.py`.
   - **Interrupções:** só pelos critérios (tarefa `[DONO]`, mudança de plano, falha repetida, ação irreversível), com o contexto pronto, pelo Monday, notificação e `## Bloqueios` do PR.
   - **Revisores da esteira:** usam o `CLAUDE_CODE_OAUTH_TOKEN` (D-028).
@@ -113,6 +113,9 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
+- Níveis de risco da revisão (D-075): 4 níveis aprovados em princípio; falta definir como aplicar cada nível ao CodeRabbit. Pendente até o Marcos decidir.
+- Medição automática do transcript para o reinício da orquestração em 230 mil tokens (D-076): pendente de construção.
+- SonarQube (D-075): depois, com a conta e o token criados pelo Marcos.
 - D02: a 2ª pergunta da sessão D02 não foi localizada; o dono a dispensou em 2026-11-21, sem decisão (ver D-070).
 - Configuração da conta do Marcos para o destroy automático (D-024):
   - criar o ambiente `aws-lab-destroy` sem aprovação e restrito ao `main`;
