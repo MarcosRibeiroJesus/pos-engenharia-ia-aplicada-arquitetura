@@ -33,3 +33,8 @@ node_modules/
 
 # checkout da base usado pelos agentes da esteira (seguranca.yml)
 .base/
+
+# material protegido do curso: nunca commitar (CLAUDE.md, Privacidade)
+docs/curso/pos-pdfs/
+docs/curso/pos-legendas/
+docs/curso/pos-resumos/
