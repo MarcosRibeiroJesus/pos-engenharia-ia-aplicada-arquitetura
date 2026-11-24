@@ -94,6 +94,17 @@ def somar_transcript(caminho: Path) -> dict[str, dict[str, int]]:
                     evento = json.loads(bruta)
                 except json.JSONDecodeError:
                     continue
+                if evento.get("type") == "PLANNER_RESPONSE":
+                    if evento.get("status") not in (None, "DONE") or not evento.get("model"):
+                        continue
+                    mid = f"{arq.parent.parent.parent.name}:step-{evento.get('step_index')}"
+                    vistos[mid] = (str(evento["model"]), {
+                        "input_tokens": evento.get("input_tokens") or 0,
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": evento.get("cache_read_tokens") or 0,
+                        "output_tokens": evento.get("output_tokens") or 0,
+                    })
+                    continue
                 msg = evento.get("message") or {}
                 uso = msg.get("usage")
                 modelo = msg.get("model")

@@ -17,6 +17,7 @@
     <button role="tab" data-aba="sessao" aria-selected="false">Sessão &amp; Timeline</button>
     <button role="tab" data-aba="atribuicao" aria-selected="false">Atribuição</button>
     <button role="tab" data-aba="subagentes" aria-selected="false">Subagentes</button>
+    <button role="tab" data-aba="comparativo" aria-selected="false">Comparativo</button>
     <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
   </nav>
   <nav class="exportar" aria-label="Exportar">
@@ -144,7 +145,29 @@
     </div>
   </div>
 
-  <!-- ABA 5: ECONOMIA -->
+  <!-- ABA 5: COMPARATIVO POR AGENTE -->
+  <div class="painel-aba oculto" data-painel="comparativo">
+    <section class="tiles" id="tiles-agentes"></section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Gasto total por agente</h2>
+        <span class="dica">Claude Code, Antigravity e demais agentes medidos em tempo real ou via registro</span>
+      </div>
+      <div id="barras-agentes"></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Comparativo de gasto de tokens por agente em tarefas</h2>
+        <label class="seletor">Projeto: <select id="filtro-projeto-comp"><option value="todos">Todos</option></select></label>
+      </div>
+      <div class="rolagem"><table id="tabela-comparativo"><thead><tr>
+        <th>Tarefa</th><th>Projeto</th><th class="num">Claude Code</th><th class="num">Antigravity</th>
+        <th class="num">Outros</th><th class="num">Total (eq.)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <!-- ABA 6: ECONOMIA -->
   <div class="painel-aba oculto" data-painel="economia">
     <section class="cartao">
       <div class="cartao-topo">

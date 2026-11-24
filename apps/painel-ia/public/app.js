@@ -35,6 +35,7 @@ const quando = (ms) => (ms ? new Date(ms).toLocaleString('pt-BR', { dateStyle: '
 const STATUS = { completed: ['✓', 'Concluída'], in_progress: ['◐', 'Em andamento'], pending: ['○', 'Pendente'] };
 
 let filtro = 'todas';
+let filtroProjetoComp = 'todos';
 let abaAtiva = 'geral';
 let ultimo = null;
 let sessaoSelecionada = null;
@@ -138,7 +139,7 @@ function sessoes(e) {
     class: 'sessao clicavel',
     onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
   },
-  h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
+  h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: 'chip' }, s.agente || 'claude-code'), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
   h('div', { class: 'linha2' }, `${s.branch || 'sem branch'} · ${s.modelos.join(', ')} · ${fmt(s.equivalente)} equivalentes`),
   s.tarefaAtiva ? h('div', { class: 'linha2' }, `◐ ${s.tarefaAtiva}`) : null)));
 
@@ -293,6 +294,54 @@ function renderSubagentes(e) {
     h('td', { class: 'num' }, fmt(s.equivalente)))));
 }
 
+function renderComparativo(e) {
+  const agentes = e.porAgente || [];
+  if (!agentes.length) {
+    $('tiles-agentes').replaceChildren();
+    $('barras-agentes').replaceChildren(h('p', { class: 'vazio' }, 'Sem uso por agente ainda.'));
+  } else {
+    $('tiles-agentes').replaceChildren(...agentes.map((a) => h('div', { class: 'tile' },
+      h('span', {}, a.agente),
+      h('b', {}, fmt(a.equivalente)),
+      h('small', {}, `${fmt(a.requisicoes)} reqs · média ${fmt(a.mediaPorReq)}/req · cache ${a.taxaCache}%`))));
+    const max = Math.max(1, ...agentes.map((a) => a.equivalente));
+    $('barras-agentes').replaceChildren(...agentes.map((a) => h('div', {
+      class: 'barra',
+      title: `${a.agente}: ${fmt(a.equivalente)} equivalentes · ${a.sessoes} sessões · ${a.requisicoes} reqs`,
+    },
+    h('span', { class: 'nome' }, a.agente),
+    h('span', { class: 'trilho' }, h('i', { style: { width: `${(100 * a.equivalente) / max}%` } })),
+    h('span', { class: 'valor' }, fmt(a.equivalente)),
+    h('span', { class: 'sub' }, `${a.sessoes} sessões · ${fmt(a.requisicoes)} reqs · média ${fmt(a.mediaPorReq)}/req · cache ${a.taxaCache}%`))));
+  }
+
+  const lista = e.comparativoTarefas || [];
+  const projetosUnicos = [...new Set(lista.flatMap((t) => t.projetos || []))].sort();
+  const sel = $('filtro-projeto-comp');
+  const atual = filtroProjetoComp;
+  sel.replaceChildren(h('option', { value: 'todos' }, 'Todos'), ...projetosUnicos.map((p) => h('option', { value: p }, p)));
+  sel.value = projetosUnicos.includes(atual) ? atual : 'todos';
+  filtroProjetoComp = sel.value;
+
+  const filtrada = lista.filter((t) => filtroProjetoComp === 'todos' || (t.projetos || []).includes(filtroProjetoComp));
+  const corpo = $('tabela-comparativo').tBodies[0];
+  if (!filtrada.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Nenhuma tarefa com uso registrado neste filtro.'))); return; }
+  corpo.replaceChildren(...filtrada.slice(0, 300).map((t) => {
+    const cc = t.agentes['claude-code'];
+    const agy = t.agentes.antigravity;
+    const outrosEq = Object.entries(t.agentes)
+      .filter(([k]) => k !== 'claude-code' && k !== 'antigravity')
+      .reduce((s, [, v]) => s + (v.equivalente || 0), 0);
+    return h('tr', {},
+      h('td', {}, t.tarefa),
+      h('td', {}, (t.projetos || []).join(', ') || '—'),
+      h('td', { class: 'num' }, cc ? `${fmt(cc.equivalente)} (${cc.requisicoes}r)` : '—'),
+      h('td', { class: 'num' }, agy ? `${fmt(agy.equivalente)} (${agy.requisicoes}r)` : '—'),
+      h('td', { class: 'num' }, outrosEq ? fmt(outrosEq) : '—'),
+      h('td', { class: 'num' }, fmt(t.totalEquivalente)));
+  }));
+}
+
 function renderEconomia(e) {
   const ops = e.consumo?.oportunidades || [];
   if (!ops.length) { $('lista-economia').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma oportunidade de economia disparada ainda.')); return; }
@@ -317,6 +366,7 @@ function render(e) {
   recentes(e);
   renderAtribuicaoGlobal(e);
   renderSubagentes(e);
+  renderComparativo(e);
   renderEconomia(e);
   externo('aprovacoes', e.aprovacoes, 'Defina MONDAY_TOKEN e MONDAY_BOARD_ID para ver as aprovações do board.',
     (i) => h('tr', {}, h('td', {}, h('a', { href: i.url, rel: 'noopener noreferrer', target: '_blank' }, i.nome)), h('td', {}, i.tipo), h('td', {}, i.prioridade), h('td', {}, i.status)));
@@ -336,6 +386,11 @@ $('abas').addEventListener('click', (ev) => {
 $('seletor-sessao').addEventListener('change', (ev) => {
   sessaoSelecionada = ev.target.value;
   carregarDetalhe(sessaoSelecionada);
+});
+
+$('filtro-projeto-comp').addEventListener('change', (ev) => {
+  filtroProjetoComp = ev.target.value;
+  if (ultimo) renderComparativo(ultimo);
 });
 
 $('filtros').addEventListener('click', (ev) => {

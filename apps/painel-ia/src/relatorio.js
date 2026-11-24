@@ -54,6 +54,10 @@ export function relatorio(p, { formato = 'md' } = {}) {
   p.restaurar(ag);
   const est = ag.estado();
 
+  const linhasAgente = (est.porAgente || [])
+    .map((a) => `| ${a.agente} | ${fmt(a.sessoes)} | ${fmt(a.requisicoes)} | ${fmt(a.mediaPorReq)} | ${a.taxaCache}% | ${fmt(a.equivalente)} |`)
+    .join('\n');
+
   const linhasTipo = est.porTipo
     .map((t) => `| ${t.rotulo} | ${fmt(t.tokens)} | ${fmt(t.equivalente)} | ${t.pct}% |`)
     .join('\n');
@@ -79,6 +83,12 @@ Período: ${dia(total.primeiro) || '—'} a ${dia(total.ultimo) || '—'} · ${f
 Tokens equivalentes: ${fmt(equivalente(total))} (cache lido pesa 0,1, cache escrito 2 e saída 5, em relação a um token de entrada comum; é medida de esforço, não preço).
 
 Tarefas: ${porStatus.completed || 0} concluídas, ${porStatus.in_progress || 0} em andamento, ${porStatus.pending || 0} pendentes.
+
+## Por agente
+
+| Agente | Sessões | Requisições | Média/req (eq.) | Taxa de cache | Equivalentes |
+|---|---:|---:|---:|---:|---:|
+${linhasAgente || '| — | — | — | — | — | — |'}
 
 ## Por tipo de token
 

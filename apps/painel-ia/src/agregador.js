@@ -1,4 +1,4 @@
-// Agrega eventos dos transcripts do Claude Code em métricas por modelo, projeto, sessão e tarefa.
+// Agrega eventos dos transcripts do Claude Code e do Antigravity em métricas por modelo, agente, projeto, sessão e tarefa.
 
 import { AnalisadorConsumo } from './consumo.js';
 
@@ -12,8 +12,18 @@ export function equivalente(u) {
   return CAMPOS.reduce((s, c) => s + (u[c] || 0) * PESOS[c], 0);
 }
 
+/** Infere o agente quando a linha vem do registro CSV (ou modelo sem metadado de origem). */
+export function inferirAgente(modelo = '', observacao = '') {
+  const m = String(modelo).toLowerCase();
+  const o = String(observacao).toLowerCase();
+  if (o.includes('antigravity') || m.includes('gemini')) return 'antigravity';
+  if (o.includes('copilot') || m.startsWith('gpt-') || m.startsWith('o1') || m.startsWith('o3')) return 'copilot';
+  if (m.includes('claude')) return 'claude-code';
+  return 'outro';
+}
+
 /** Chave do projeto: `NN.UU-slug` para branches de unidade, `NN-slug` para disciplina, `plataforma`, ou a pasta. */
-export function chaveProjeto({ gitBranch, cwd } = {}) {
+export function chaveProjeto({ gitBranch, cwd, agente } = {}) {
   const b = gitBranch || '';
   let m = b.match(/^modulo\/(\d+)-[^/]+\/(\d+)-([^/]+)$/);
   if (m) return `${m[1]}.${m[2]}-${m[3]}`;
@@ -21,6 +31,7 @@ export function chaveProjeto({ gitBranch, cwd } = {}) {
   if (m) return m[1];
   if (b.startsWith('plataforma/') || b.startsWith('docs/')) return 'plataforma';
   if (cwd) return cwd.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || 'desconhecido';
+  if (agente === 'antigravity') return 'antigravity';
   return 'desconhecido';
 }
 
@@ -41,6 +52,7 @@ export class Agregador {
     this.agora = agora;
     this.mensagens = new Map(); // id -> uso já contado
     this.modelos = new Map();
+    this.agentes = new Map();
     this.projetos = new Map();
     this.dias = new Map(); // YYYY-MM-DD -> uso
     this.sessoes = new Map();
@@ -59,8 +71,9 @@ export class Agregador {
   /** Processa um evento (linha) de transcript. */
   ingerir(ev, meta = {}) {
     if (!ev || typeof ev !== 'object') return;
+    const agente = meta.agente || 'claude-code';
     const sessaoId = meta.isSubagente && meta.sessaoPai ? meta.sessaoPai : (ev.sessionId || meta.sessaoPai || 'sem-sessao');
-    const sessao = this.#sessao(sessaoId, ev);
+    const sessao = this.#sessao(sessaoId, { ...ev, agente });
     this.consumo.ingerir(ev, meta, this.agora());
 
     const msg = ev.message;
@@ -84,7 +97,7 @@ export class Agregador {
     const delta = {};
     for (const c of CAMPOS) delta[c] = Math.max(0, novo[c] - (anterior?.uso[c] || 0));
     if (anterior && equivalente(delta) === 0) return;
-    const registro = anterior || { id, sessao: sessaoId, modelo, quando: Date.parse(ev.timestamp) || this.agora(),
+    const registro = anterior || { id, sessao: sessaoId, agente, modelo, quando: Date.parse(ev.timestamp) || this.agora(),
       tarefa: this.ativa.get(sessaoId) || null, uso: vazio() };
     for (const c of CAMPOS) registro.uso[c] = Math.max(novo[c], registro.uso[c]);
     this.mensagens.set(id, registro);
@@ -96,11 +109,13 @@ export class Agregador {
   /** Soma um delta de uso de uma mensagem em todos os agrupamentos. */
   #contar(reg, delta, nova) {
     const sessao = this.sessoes.get(reg.sessao);
+    const agente = reg.agente || sessao.agente || 'claude-code';
     const req = nova ? 1 : 0;
     const tarefa = reg.tarefa && this.tarefas.get(reg.tarefa);
     const diaChave = new Date(reg.quando).toISOString().slice(0, 10);
     const alvos = [
       this.#grupo(this.modelos, reg.modelo),
+      this.#grupo(this.agentes, agente),
       this.#grupo(this.projetos, sessao.projeto),
       this.#grupo(this.dias, diaChave),
       sessao.uso,
@@ -108,14 +123,20 @@ export class Agregador {
     if (tarefa) alvos.push(tarefa.uso);
     for (const a of alvos) { somar(a, delta); a.requisicoes += req; }
     const eq = equivalente(delta);
-    if (tarefa) tarefa.modelos[reg.modelo] = (tarefa.modelos[reg.modelo] || 0) + eq;
+    if (tarefa) {
+      tarefa.modelos[reg.modelo] = (tarefa.modelos[reg.modelo] || 0) + eq;
+      if (!tarefa.agentes) tarefa.agentes = {};
+      if (!tarefa.agentes[agente]) tarefa.agentes[agente] = { equivalente: 0, requisicoes: 0 };
+      tarefa.agentes[agente].equivalente += eq;
+      tarefa.agentes[agente].requisicoes += req;
+    }
     sessao.modelos.add(reg.modelo);
     sessao.ultimo = Math.max(sessao.ultimo, reg.quando);
     sessao.primeiro = Math.min(sessao.primeiro ?? reg.quando, reg.quando);
     const minuto = Math.floor(reg.quando / MINUTO);
     this.minutos.set(minuto, (this.minutos.get(minuto) || 0) + eq);
     if (nova) {
-      this.recentes.unshift({ quando: reg.quando, sessao: reg.sessao.slice(0, 8), projeto: sessao.projeto, modelo: reg.modelo,
+      this.recentes.unshift({ quando: reg.quando, sessao: reg.sessao.slice(0, 8), agente, projeto: sessao.projeto, modelo: reg.modelo,
         tarefa: tarefa?.titulo || null, equivalente: Math.round(eq) });
       this.recentes.sort((x, y) => y.quando - x.quando);
       this.recentes.length = Math.min(this.recentes.length, 40);
@@ -126,16 +147,16 @@ export class Agregador {
   /** Reconstrói o estado a partir do que foi persistido (sessões, tarefas, mensagens e fatos de consumo). */
   restaurar({ sessoes = [], tarefas = [], mensagens = [], requisicoes = [], chamadas = [], leituras = [] }) {
     for (const s of sessoes) {
-      this.sessoes.set(s.id, { id: s.id, projeto: s.projeto, branch: s.branch || '', ultimo: 0, primeiro: undefined, uso: vazio(), modelos: new Set() });
+      this.sessoes.set(s.id, { id: s.id, agente: s.agente || 'claude-code', projeto: s.projeto, branch: s.branch || '', ultimo: 0, primeiro: undefined, uso: vazio(), modelos: new Set() });
       if (s.tarefaAtiva) this.ativa.set(s.id, s.tarefaAtiva);
     }
     for (const t of tarefas) {
       this.tarefas.set(t.chave, { chave: t.chave, sessao: t.sessao.slice(0, 8), sessaoId: t.sessao, projeto: t.projeto, titulo: t.titulo,
-        status: t.status, uso: vazio(), modelos: {}, criado: t.criado, atualizado: t.atualizado });
+        status: t.status, uso: vazio(), modelos: {}, agentes: {}, criado: t.criado, atualizado: t.atualizado });
     }
     for (const m of mensagens) {
-      if (!this.sessoes.has(m.sessao)) this.#sessao(m.sessao, {});
-      const reg = { id: m.id, sessao: m.sessao, modelo: m.modelo, quando: m.quando, tarefa: m.tarefa || null, uso: vazio() };
+      if (!this.sessoes.has(m.sessao)) this.#sessao(m.sessao, { agente: m.agente || 'claude-code' });
+      const reg = { id: m.id, sessao: m.sessao, agente: m.agente || 'claude-code', modelo: m.modelo, quando: m.quando, tarefa: m.tarefa || null, uso: vazio() };
       for (const c of CAMPOS) reg.uso[c] = m[c] || 0;
       this.mensagens.set(m.id, reg);
       this.#contar(reg, reg.uso, true);
@@ -161,12 +182,13 @@ export class Agregador {
 
   #sessao(id, ev) {
     let s = this.sessoes.get(id);
+    const agente = ev.agente || 'claude-code';
     if (!s) {
-      s = { id, projeto: chaveProjeto(ev), branch: ev.gitBranch || '', ultimo: 0, primeiro: undefined, uso: vazio(), modelos: new Set() };
+      s = { id, agente, projeto: chaveProjeto({ ...ev, agente }), branch: ev.gitBranch || '', ultimo: 0, primeiro: undefined, uso: vazio(), modelos: new Set() };
       this.sessoes.set(id, s);
       this.sujos.sessoes.add(id);
     } else if (ev.gitBranch && !s.branch) {
-      s.branch = ev.gitBranch; s.projeto = chaveProjeto(ev);
+      s.branch = ev.gitBranch; s.projeto = chaveProjeto({ ...ev, agente: s.agente });
       this.sujos.sessoes.add(id);
     }
     return s;
@@ -179,7 +201,7 @@ export class Agregador {
 
   #novaTarefa(chave, sessaoId, sessao, titulo, status = 'pending') {
     const agora = this.agora();
-    const t = { chave, sessao: sessaoId.slice(0, 8), sessaoId, projeto: sessao.projeto, titulo, status, uso: vazio(), modelos: {}, criado: agora, atualizado: agora };
+    const t = { chave, sessao: sessaoId.slice(0, 8), sessaoId, projeto: sessao.projeto, titulo, status, uso: vazio(), modelos: {}, agentes: {}, criado: agora, atualizado: agora };
     this.tarefas.set(chave, t);
     this.sujos.tarefas.add(chave);
     this.sujos.status.push({ tarefa: chave, status, quando: agora });
@@ -237,8 +259,11 @@ export class Agregador {
     const lista = (mapa) => [...mapa].map(([nome, u]) => ({ nome, ...u, equivalente: Math.round(equivalente(u)) }));
     const modelos = new Map(this.modelos);
     const projetos = new Map(this.projetos);
+    const agentes = new Map(this.agentes);
+
     for (const l of this.registro.linhas) {
-      for (const [mapa, nome] of [[modelos, l.modelo], [projetos, l.projeto]]) {
+      const agNome = inferirAgente(l.modelo, l.observacao);
+      for (const [mapa, nome] of [[modelos, l.modelo], [projetos, l.projeto], [agentes, agNome]]) {
         const g = { ...(mapa.get(nome) || vazio()) };
         somar(g, l); g.requisicoes += l.requisicoes || 0;
         mapa.set(nome, g);
@@ -248,6 +273,23 @@ export class Agregador {
     const listaModelos = ordenar(lista(modelos));
     const totais = vazio();
     for (const m of listaModelos) { somar(totais, m); totais.requisicoes += m.requisicoes; }
+
+    const sessoesPorAgente = new Map();
+    for (const s of this.sessoes.values()) {
+      if (s.uso.requisicoes > 0) sessoesPorAgente.set(s.agente || 'claude-code', (sessoesPorAgente.get(s.agente || 'claude-code') || 0) + 1);
+    }
+    const porAgente = [...agentes.entries()].map(([agente, u]) => {
+      const ctxTotal = (u.input || 0) + (u.cache_write || 0) + (u.cache_read || 0);
+      const eq = Math.round(equivalente(u));
+      return {
+        agente,
+        ...u,
+        equivalente: eq,
+        sessoes: sessoesPorAgente.get(agente) || 0,
+        mediaPorReq: u.requisicoes ? Math.round(eq / u.requisicoes) : 0,
+        taxaCache: ctxTotal > 0 ? Number(((100 * (u.cache_read || 0)) / ctxTotal).toFixed(1)) : 0,
+      };
+    }).sort((a, b) => b.equivalente - a.equivalente);
 
     const eqTotal = equivalente(totais) || 1;
     const porTipo = [
@@ -273,9 +315,39 @@ export class Agregador {
     const contagem = { pending: 0, in_progress: 0, completed: 0 };
     for (const t of tarefas) contagem[t.status] = (contagem[t.status] || 0) + 1;
 
+    // Comparativo de gasto por agente em tarefas (agrupado pelo título normalizado da tarefa)
+    const compMapa = new Map();
+    const acumularComp = (titulo, projeto, agente, eqVal, reqs) => {
+      const chave = String(titulo || '').trim();
+      if (!chave || eqVal <= 0) return;
+      let item = compMapa.get(chave);
+      if (!item) { item = { tarefa: chave, projetos: new Set(), agentes: {}, totalEquivalente: 0 }; compMapa.set(chave, item); }
+      if (projeto) item.projetos.add(projeto);
+      if (!item.agentes[agente]) item.agentes[agente] = { equivalente: 0, requisicoes: 0 };
+      item.agentes[agente].equivalente += Math.round(eqVal);
+      item.agentes[agente].requisicoes += reqs || 0;
+      item.totalEquivalente += Math.round(eqVal);
+    };
+    for (const t of tarefas) {
+      const ags = Object.entries(t.agentes || {});
+      if (ags.length) {
+        for (const [agNome, dados] of ags) acumularComp(t.titulo, t.projeto, agNome, dados.equivalente, dados.requisicoes);
+      } else if (t.equivalente > 0) {
+        acumularComp(t.titulo, t.projeto, 'claude-code', t.equivalente, t.requisicoes);
+      }
+    }
+    for (const l of this.registro.linhas) {
+      if (!l.tarefa) continue;
+      const eqVal = equivalente(l) || (l.total || 0);
+      acumularComp(l.tarefa, l.projeto, inferirAgente(l.modelo, l.observacao), eqVal, l.requisicoes);
+    }
+    const comparativoTarefas = [...compMapa.values()]
+      .map((c) => ({ tarefa: c.tarefa, projetos: [...c.projetos], agentes: c.agentes, totalEquivalente: c.totalEquivalente }))
+      .sort((a, b) => b.totalEquivalente - a.totalEquivalente);
+
     const sessoes = [...this.sessoes.values()]
       .filter((s) => s.uso.requisicoes > 0)
-      .map((s) => ({ id: s.id.slice(0, 8), idCompleto: s.id, projeto: s.projeto, branch: s.branch, ultimo: s.ultimo,
+      .map((s) => ({ id: s.id.slice(0, 8), idCompleto: s.id, agente: s.agente || 'claude-code', projeto: s.projeto, branch: s.branch, ultimo: s.ultimo,
         ativa: agora - s.ultimo < JANELA_ATIVA, modelos: [...s.modelos], ...s.uso,
         equivalente: Math.round(equivalente(s.uso)), tarefaAtiva: this.tarefas.get(this.ativa.get(s.id))?.titulo || null }))
       .sort((a, b) => b.ultimo - a.ultimo);
@@ -284,6 +356,8 @@ export class Agregador {
       geradoEm: agora,
       totais: { ...totais, equivalente: Math.round(equivalente(totais)), porMinuto5: Math.round(ultimos5 / 5),
         sessoesAtivas: sessoes.filter((s) => s.ativa).length, naoMedidos: this.registro.naoMedidos },
+      porAgente,
+      comparativoTarefas,
       porTipo,
       porDia,
       modelos: listaModelos,

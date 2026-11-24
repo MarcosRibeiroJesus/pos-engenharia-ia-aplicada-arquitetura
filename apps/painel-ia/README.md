@@ -55,6 +55,7 @@ O relatório cobre o que veio dos transcripts. As medições manuais continuam e
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `CLAUDE_PROJECTS_DIR` | `~/.claude/projects` | Onde o Claude Code grava os transcripts |
+| `ANTIGRAVITY_BRAIN_DIR` | `~/.gemini/antigravity-cli/brain` | Onde o Antigravity grava os `transcript.jsonl` (tempo real) |
 | `DADOS_DIR` ou `BANCO` | `~/.pos-painel-ia/painel.db` | Banco com o histórico |
 | `REGISTRO_CSV` | vazio | Registro manual do repositório |
 | `PORTA`, `HOST` | `4317`, `127.0.0.1` | Endereço do servidor |
