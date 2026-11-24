@@ -6,7 +6,7 @@ agendado `expirar-infra.yml` avisa uma hora antes e dispara o destroy do projeto
 vence. O registro fica no branch `infra-no-ar` (arquivo ativos.json), visível a qualquer agente.
 
   status                                         o que está no ar e quando expira
-  registrar PROJETO --stack NOME [--horas 24] [--run URL]   chamado pelo apply
+  registrar PROJETO --stack NOME [--horas 6] [--run URL]    chamado pelo apply (padrão 6 h)
   estender PROJETO --horas N                     adia o destroy automático, sem passar de 24 h desde o apply
   remover PROJETO                                chamado pelo destroy, depois da verificação de sobras
   vencidos [--aviso-min 60]                      JSON com o que avisar e o que destruir (usado pelo agendador)
@@ -28,7 +28,7 @@ import ramo  # noqa: E402
 RAIZ = Path(__file__).resolve().parents[1]
 RAMO = "infra-no-ar"
 ARQUIVO = "ativos.json"
-PRAZO_PADRAO_H = 24
+PRAZO_PADRAO_H = 6  # decisão do dono (6 h após a subida); estender vai até o teto abaixo
 PRAZO_MAXIMO_H = 24  # D-024: destroy automático em até 24 h do apply, sem aprovação; o teto é de um dia
 REDISPARO_H = 3  # destroy disparado e ainda registrado depois disso: falhou ou espera aprovação; tenta de novo
 
