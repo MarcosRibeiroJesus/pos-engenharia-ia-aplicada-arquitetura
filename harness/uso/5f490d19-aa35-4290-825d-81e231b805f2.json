@@ -1,0 +1,14 @@
+{
+  "sessao": "5f490d19-aa35-4290-825d-81e231b805f2",
+  "branch": "plataforma/00-plataforma-agentes-fase2",
+  "atualizado": "2026-11-24T03:28:33+00:00",
+  "modelos": {
+    "claude-haiku-5-5": {
+      "requisicoes": 70,
+      "input": 154,
+      "cache_write": 248587,
+      "cache_read": 9397987,
+      "output": 66708
+    }
+  }
+}

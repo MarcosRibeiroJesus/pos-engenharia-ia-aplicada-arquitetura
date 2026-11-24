@@ -11,7 +11,7 @@ Você começa sem memória das sessões anteriores. A continuidade está em arqu
 2. Identifique o seu projeto em `harness/estado.json` pelo branch atual. Leia, nesta ordem:
    - `specs/<chave>/spec.md`, depois `plan.md` e `tasks.md`, quando existirem;
    - as decisões citadas em `decisoes`, via `git show origin/memoria-compartilhada:HISTORICO.md`.
-3. **Avalie se o contexto ainda vale.** Se a sessão ficou parada mais de 8 horas, ou se a memória mudou com decisão que afeta o projeto, não continue sobre resultados de ferramenta antigos. Escreva um resumo estruturado e trabalhe a partir dele. O resumo tem:
+3. **Avalie se o contexto ainda vale.** Se a sessão ficou parada mais de 4 horas, ou se a memória mudou com decisão que afeta o projeto, não continue sobre resultados de ferramenta antigos. Escreva um resumo estruturado e trabalhe a partir dele. O resumo tem:
    - branch e último commit;
    - o que está pronto e testado;
    - o que falta;
