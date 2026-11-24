@@ -1,0 +1,28 @@
+# Revisão automática de PR (D-075): o CodeRabbit é o único revisor de código.
+# Segurança e FinOps continuam no workflow seguranca.yml (revisao-ia).
+language: "pt-BR"
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  path_instructions:
+    - path: "modulos/**/infra/**"
+      instructions: |
+        Terraform: nada público por padrão, criptografia em repouso e em trânsito, IAM de menor privilégio,
+        tags project, module e managed-by em todo recurso, sem custo fixo ocioso sem ADR. Aponte o artigo da
+        constituição (Artigos IV, V e VI) quando houver violação.
+    - path: "plataforma/**"
+      instructions: |
+        Plataforma compartilhada: política com menor privilégio, sem Principal "*" (D-044), isolamento por tag
+        (D-029). Verifique se há teste correspondente no tests/ ou no terraform test.
+    - path: "harness/**"
+      instructions: |
+        Harness: os gates (SDD, delegação, memória) não podem ser enfraquecidos sem decisão do dono. Confira
+        que o teste do harness acompanha a mudança.
+    - path: "**/*.py"
+      instructions: |
+        Código Python: teste primeiro (Artigo III). Aponte segredos, entrada não validada e chamadas de
+        rede sem tempo limite.
+    - path: "specs/**"
+      instructions: |
+        Spec: nada assumido no lugar do dono. Decisão pendente tem de aparecer como [PENDENTE: pergunta],
+        nunca como decidida.

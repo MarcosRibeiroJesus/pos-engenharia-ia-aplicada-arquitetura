@@ -87,10 +87,18 @@ class TestConfiguracaoDaExecucao(unittest.TestCase):
         for regra in ("Bash(gh pr merge*)", "Bash(gh api*)", "WebFetch"):
             self.assertIn(regra, deny)
 
-    def test_skill_do_executor_com_revisao_por_tarefa_e_escalonamento(self):
+    def test_skill_do_executor_com_revisao_no_ci_e_escalonamento(self):
+        # D-075: a revisão de código é do CI (CodeRabbit), não de um revisor por tarefa
         texto = (RAIZ / ".claude" / "skills" / "executar-tarefas" / "SKILL.md").read_text(encoding="utf-8")
-        for trecho in ("revisor-independente", "2 rodadas", "um commit por tarefa", "Quando interromper o dono", "[DONO]"):
+        for trecho in ("CodeRabbit", "2 rodadas", "um commit por tarefa", "Quando interromper o dono", "[DONO]"):
             self.assertIn(trecho, texto)
+        self.assertNotIn("revisor-independente", texto)
+
+    def test_coderabbit_e_o_unico_revisor_de_codigo_em_portugues(self):
+        # D-075: CodeRabbit é o revisor de código (um só), em pt-BR, com instruções por caminho
+        cfg = (RAIZ / ".coderabbit.yaml").read_text(encoding="utf-8")
+        self.assertIn('language: "pt-BR"', cfg)
+        self.assertIn("path_instructions:", cfg)
 
     def test_revisores_da_esteira_usam_o_token_da_assinatura_so_no_passo(self):
         wf = (RAIZ / ".github" / "workflows" / "seguranca.yml").read_text(encoding="utf-8")
