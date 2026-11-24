@@ -73,7 +73,7 @@ test('variação de B contra A em percentual, com amostra pequena marcada', () =
 
 test('sem base em A a variação é nula, nunca um número inventado', () => {
   const p = new Persistencia(':memory:');
-  p.db.prepare("INSERT INTO mensagens VALUES ('x', 'b', 'opus', ?, NULL, 1, 0, 0, 0)").run(corteMs + 1);
+  p.db.prepare("INSERT INTO mensagens (id, sessao, modelo, quando, tarefa, input, cache_write, cache_read, output) VALUES ('x', 'b', 'opus', ?, NULL, 1, 0, 0, 0)").run(corteMs + 1);
   const c = comparativo(p);
   assert.equal(c.grupos.A.sessoes, 0);
   assert.equal(c.variacao.equivalente, null);

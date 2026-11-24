@@ -17,9 +17,13 @@
     <button role="tab" data-aba="sessao" aria-selected="false">Sessão &amp; Timeline</button>
     <button role="tab" data-aba="atribuicao" aria-selected="false">Atribuição</button>
     <button role="tab" data-aba="subagentes" aria-selected="false">Subagentes</button>
+    <button role="tab" data-aba="agentes" aria-selected="false">Code Agents</button>
     <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
     <button role="tab" data-aba="comparativo" aria-selected="false">Comparativo A x B</button>
   </nav>
+  <label class="seletor" title="Filtrar todos os painéis por Code Agent">Code Agent:
+    <select id="filtro-agente-global"><option value="todos">Todos</option></select>
+  </label>
   <nav class="exportar" aria-label="Exportar">
     <a href="/api/relatorio.md">Relatório (MD)</a>
     <a href="/api/relatorio.csv">Registro (CSV)</a>
@@ -64,7 +68,7 @@
         </div>
       </div>
       <div class="rolagem"><table id="tarefas"><thead><tr>
-        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Modelos</th><th class="num">Equivalentes</th>
+        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Code Agent</th><th>Modelos</th><th class="num">Equivalentes</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
 
@@ -104,7 +108,7 @@
     <section class="cartao">
       <h2>Requisições da sessão</h2>
       <div class="rolagem"><table id="tabela-timeline"><thead><tr>
-        <th>#</th><th>Fio</th><th>Modelo</th><th class="num">Contexto</th><th class="num">Delta</th>
+        <th>#</th><th>Code Agent</th><th>Fio</th><th>Modelo</th><th class="num">Contexto</th><th class="num">Delta</th>
         <th class="num">Cache %</th><th class="num">Equivalentes</th><th>Marcadores / Ferramentas</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
@@ -138,14 +142,84 @@
       <section class="cartao"><h2>Chamadas por tipo de subagente</h2><div id="subagentes-tipos"></div></section>
       <section class="cartao"><h2>Subagentes mais caros</h2>
         <div class="rolagem"><table id="tabela-subagentes"><thead><tr>
-          <th>Sessão</th><th>Fio</th><th>Modelos</th><th class="num">Reqs</th>
+          <th>Sessão</th><th>Code Agent</th><th>Fio</th><th>Modelos</th><th class="num">Reqs</th>
           <th class="num">Ctx máx</th><th class="num">Arq. reabertos</th><th class="num">Equivalentes</th>
         </tr></thead><tbody></tbody></table></div>
       </section>
     </div>
   </div>
 
-  <!-- ABA 5: ECONOMIA -->
+  <!-- ABA 5: CODE AGENTS (POR SESSÃO, SEMANA, TAREFAS E CUSTO/TOKEN) -->
+  <div class="painel-aba oculto" data-painel="agentes">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Painel por Code Agent (% da sessão e % da semana em tempo real)</h2>
+        <span class="dica">cotas configuráveis por agente via COTA_SESSAO_* e COTA_SEMANA_*</span>
+      </div>
+      <div id="paineis-code-agents" class="grade-agentes"></div>
+    </section>
+    <section class="tiles" id="tiles-agentes"></section>
+    <div class="duas">
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Gasto total por Code Agent</h2>
+          <span class="dica">em tempo real (transcripts + registro)</span>
+        </div>
+        <div id="barras-agentes"></div>
+      </section>
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Consumo por semana (ISO)</h2>
+          <span class="dica">tokens equivalentes por semana</span>
+        </div>
+        <div id="svg-semana"></div>
+      </section>
+    </div>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Consumo dos Code Agents por semana</h2>
+        <span class="dica">quebra semanal em tempo real (Claude Code × Antigravity × Outros)</span>
+      </div>
+      <div class="rolagem"><table id="tabela-semanas"><thead><tr>
+        <th>Semana</th><th class="num">Requisições</th><th class="num">Claude Code</th><th class="num">Antigravity</th>
+        <th class="num">Outros</th><th class="num">Total (eq.)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Consumo dos Code Agents por sessão</h2>
+        <span class="dica">clique numa sessão para abrir a linha do tempo detalhada</span>
+      </div>
+      <div class="rolagem"><table id="tabela-sessoes-agente"><thead><tr>
+        <th>Sessão</th><th>Code Agent</th><th>Projeto</th><th>Modelos</th><th class="num">Reqs</th>
+        <th class="num">Cache lido</th><th class="num">Cache escrito</th><th class="num">Saída</th>
+        <th class="num">Equivalentes</th><th>Status</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Custo por token (USD / 1M tokens)</h2>
+        <span class="dica">valor faturado quando a API do provedor está configurada, ou estimativa de referência por família de modelo</span>
+      </div>
+      <div class="rolagem"><table id="tabela-custo-token"><thead><tr>
+        <th>Modelo</th><th class="num">Entrada ($/1M)</th><th class="num">Cache escr. ($/1M)</th>
+        <th class="num">Cache lido ($/1M)</th><th class="num">Saída ($/1M)</th>
+        <th class="num">Efetivo ($/1M)</th><th class="num">Total (USD)</th><th>Origem</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Comparativo de gasto de tokens por agente em tarefas</h2>
+        <label class="seletor">Projeto: <select id="filtro-projeto-comp"><option value="todos">Todos</option></select></label>
+      </div>
+      <div class="rolagem"><table id="tabela-comparativo"><thead><tr>
+        <th>Tarefa</th><th>Projeto</th><th class="num">Claude Code</th><th class="num">Antigravity</th>
+        <th class="num">Outros</th><th class="num">Total (eq.)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <!-- ABA 6: ECONOMIA -->
   <div class="painel-aba oculto" data-painel="economia">
     <section class="cartao">
       <div class="cartao-topo">

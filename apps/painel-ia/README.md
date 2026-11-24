@@ -55,6 +55,7 @@ O relatório cobre o que veio dos transcripts. As medições manuais continuam e
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `CLAUDE_PROJECTS_DIR` | `~/.claude/projects` | Onde o Claude Code grava os transcripts |
+| `ANTIGRAVITY_BRAIN_DIR` | `~/.gemini/antigravity-cli/brain` | Onde o Antigravity grava os `transcript.jsonl` (tempo real) |
 | `DADOS_DIR` ou `BANCO` | `~/.pos-painel-ia/painel.db` | Banco com o histórico |
 | `REGISTRO_CSV` | vazio | Registro manual do repositório |
 | `TESTES_AB_CSV` | vazio | Registro dos testes A x B (`docs/uso/testes-ab.csv`) |
@@ -64,6 +65,9 @@ O relatório cobre o que veio dos transcripts. As medições manuais continuam e
 | `HOSTS_PERMITIDOS` | vazio | Nomes extras aceitos no cabeçalho Host (ex.: acesso por outro nome na rede) |
 | `MONDAY_TOKEN`, `MONDAY_BOARD_ID` | vazio | Aprovações pendentes do board |
 | `GITHUB_REPO`, `GITHUB_TOKEN` | vazio | PRs abertos; com token, também o resumo dos checks |
+| `ANTHROPIC_ADMIN_API_KEY` | vazio | Uso e custo real (7d) direto da Anthropic Admin API (Organização) |
+| `GITHUB_ORG` ou `GITHUB_USER` | vazio | Métricas/billing oficiais do GitHub Copilot (usa `GITHUB_TOKEN`) |
+| `COTA_SESSAO_*`, `COTA_SEMANA_*` | `10M` / `50M` eq. | Limites por Code Agent (`CLAUDE`, `ANTIGRAVITY`, `COPILOT`) para o cálculo em `%` |
 
 O Claude Code apaga transcripts antigos por padrão (configuração `cleanupPeriodDays`). Deixe o painel rodando, ou aumente esse prazo, para que todas as sessões entrem no banco.
 
