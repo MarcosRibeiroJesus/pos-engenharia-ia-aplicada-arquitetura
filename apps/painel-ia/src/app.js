@@ -10,6 +10,7 @@ import { prsGithub } from './github.js';
 import { criarServidor } from './servidor.js';
 import { Persistencia } from './persistencia.js';
 import { relatorio } from './relatorio.js';
+import { buscarAnthropic, buscarCopilot, montarPainelAgentes, calcularCustoPorToken } from './provedores.js';
 
 export function configuracao(env = process.env) {
   const numero = (v, padrao) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : padrao);
@@ -25,6 +26,15 @@ export function configuracao(env = process.env) {
     hostsPermitidos: (env.HOSTS_PERMITIDOS || '').split(',').map((h) => h.trim()).filter(Boolean),
     monday: env.MONDAY_TOKEN && env.MONDAY_BOARD_ID ? { token: env.MONDAY_TOKEN, quadro: env.MONDAY_BOARD_ID } : null,
     github: env.GITHUB_REPO ? { repo: env.GITHUB_REPO, token: env.GITHUB_TOKEN || '' } : null,
+    anthropic: env.ANTHROPIC_ADMIN_API_KEY ? { apiKey: env.ANTHROPIC_ADMIN_API_KEY } : null,
+    copilot: env.GITHUB_TOKEN && (env.GITHUB_ORG || env.GITHUB_USER)
+      ? { token: env.GITHUB_TOKEN, org: env.GITHUB_ORG || '', user: env.GITHUB_USER || '' }
+      : null,
+    cotas: {
+      'claude-code': { sessao: numero(env.COTA_SESSAO_CLAUDE, 10_000_000), semana: numero(env.COTA_SEMANA_CLAUDE, 50_000_000) },
+      antigravity: { sessao: numero(env.COTA_SESSAO_ANTIGRAVITY, 10_000_000), semana: numero(env.COTA_SEMANA_ANTIGRAVITY, 50_000_000) },
+      copilot: { sessao: numero(env.COTA_SESSAO_COPILOT, 5_000_000), semana: numero(env.COTA_SEMANA_COPILOT, 25_000_000) },
+    },
   };
 }
 
@@ -35,18 +45,30 @@ export async function iniciar(cfg = configuracao(), log = console) {
   const externos = {
     aprovacoes: { ativo: !!cfg.monday, itens: [], erro: null, atualizado: null },
     prs: { ativo: !!cfg.github, itens: [], erro: null, atualizado: null },
+    provedores: {
+      anthropic: { ativo: !!cfg.anthropic, fonte: 'local', semana: null, erro: null, atualizado: null },
+      copilot: { ativo: !!cfg.copilot, fonte: 'local', semana: null, erro: null, atualizado: null },
+    },
     fontes: { arquivos: 0, linhasInvalidas: 0, registroAtivo: Boolean(cfg.registro), progressoAtivo: Boolean(cfg.progresso), antigravityAtivo: Boolean(cfg.antigravity), salvoEm: null },
   };
   const leitor = new LeitorTranscripts(cfg.transcripts, (ev, meta) => agregador.ingerir(ev, meta));
   const leitorAgy = cfg.antigravity
     ? new LeitorTranscripts(cfg.antigravity, (ev, meta) => agregador.ingerir(ev, meta), { origem: 'antigravity', somenteNome: 'transcript.jsonl' })
     : null;
-  const estado = () => ({ ...agregador.estado(), ...externos,
-    fontes: {
-      ...externos.fontes,
-      arquivos: leitor.arquivos + (leitorAgy?.arquivos || 0),
-      linhasInvalidas: leitor.erros + (leitorAgy?.erros || 0),
-    } });
+  const estado = () => {
+    const base = agregador.estado();
+    return {
+      ...base,
+      ...externos,
+      painelAgentes: montarPainelAgentes(base, cfg.cotas, externos.provedores),
+      custoPorToken: calcularCustoPorToken(base.modelos, externos.provedores),
+      fontes: {
+        ...externos.fontes,
+        arquivos: leitor.arquivos + (leitorAgy?.arquivos || 0),
+        linhasInvalidas: leitor.erros + (leitorAgy?.erros || 0),
+      },
+    };
+  };
 
   const srv = criarServidor({
     estado,
@@ -80,6 +102,16 @@ export async function iniciar(cfg = configuracao(), log = console) {
   }, ms));
   if (cfg.monday) externo(externos.aprovacoes, () => itensMonday(cfg.monday), 60_000);
   if (cfg.github) externo(externos.prs, () => prsGithub(cfg.github), cfg.github.token ? 120_000 : 600_000);
+  if (cfg.anthropic) timers.push(periodico(async () => {
+    try { externos.provedores.anthropic = await buscarAnthropic(cfg.anthropic); }
+    catch (e) { externos.provedores.anthropic = { ativo: true, fonte: 'local', semana: null, erro: e.message }; }
+    srv.notificar();
+  }, 300_000));
+  if (cfg.copilot) timers.push(periodico(async () => {
+    try { externos.provedores.copilot = await buscarCopilot(cfg.copilot); }
+    catch (e) { externos.provedores.copilot = { ativo: true, fonte: 'local', semana: null, erro: e.message }; }
+    srv.notificar();
+  }, 300_000));
 
   await ciclo();
   timers.push(setInterval(ciclo, cfg.intervaloMs));

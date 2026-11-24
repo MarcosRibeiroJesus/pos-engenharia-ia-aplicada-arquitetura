@@ -150,6 +150,13 @@
 
   <!-- ABA 5: COMPARATIVO POR AGENTE -->
   <div class="painel-aba oculto" data-painel="comparativo">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Painel por Code Agent (% da sessão e % da semana em tempo real)</h2>
+        <span class="dica">cotas configuráveis por agente via COTA_SESSAO_* e COTA_SEMANA_*</span>
+      </div>
+      <div id="paineis-code-agents" class="grade-agentes"></div>
+    </section>
     <section class="tiles" id="tiles-agentes"></section>
     <div class="duas">
       <section class="cartao">
@@ -186,6 +193,17 @@
         <th>Sessão</th><th>Code Agent</th><th>Projeto</th><th>Modelos</th><th class="num">Reqs</th>
         <th class="num">Cache lido</th><th class="num">Cache escrito</th><th class="num">Saída</th>
         <th class="num">Equivalentes</th><th>Status</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Custo por token (USD / 1M tokens)</h2>
+        <span class="dica">valor faturado quando a API do provedor está configurada, ou estimativa de referência por família de modelo</span>
+      </div>
+      <div class="rolagem"><table id="tabela-custo-token"><thead><tr>
+        <th>Modelo</th><th class="num">Entrada ($/1M)</th><th class="num">Cache escr. ($/1M)</th>
+        <th class="num">Cache lido ($/1M)</th><th class="num">Saída ($/1M)</th>
+        <th class="num">Efetivo ($/1M)</th><th class="num">Total (USD)</th><th>Origem</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
     <section class="cartao">

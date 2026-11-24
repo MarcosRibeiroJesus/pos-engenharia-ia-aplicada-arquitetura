@@ -326,7 +326,43 @@ function renderSubagentes(e) {
     h('td', { class: 'num' }, fmt(s.equivalente)))));
 }
 
+function medidorPct(rotulo, pct, detalhe) {
+  const largura = Math.min(100, Math.max(0, Number(pct) || 0));
+  const classe = pct >= 100 ? 'critico' : (pct >= 80 ? 'alerta' : '');
+  return h('div', { class: 'medidor', title: detalhe },
+    h('div', { class: 'medidor-rotulo' }, h('span', {}, rotulo), h('b', {}, `${pct}%`)),
+    h('div', { class: 'medidor-trilho' }, h('i', { class: classe, style: { width: `${largura}%` } })),
+    h('div', { class: 'dica' }, detalhe));
+}
+
+function renderPaineisAgentes(e) {
+  const paineis = (e.painelAgentes || []).filter((p) => passaAgente(p.agente));
+  if (!paineis.length) { $('paineis-code-agents').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados neste filtro.')); return; }
+  $('paineis-code-agents').replaceChildren(...paineis.map((p) => h('div', { class: 'card-agente' },
+    h('div', { class: 'card-agente-topo' },
+      h('b', {}, p.titulo),
+      h('span', { class: p.provedor.ativo ? 'chip chip-info' : 'chip' }, p.provedor.ativo ? 'API provedor' : p.provedor.fonte)),
+    medidorPct('Sessão atual', p.sessao.pct, `${fmt(p.sessao.equivalente)} / ${fmt(p.sessao.cota)} eq.${p.sessao.id ? ` (${p.sessao.id})` : ''}`),
+    medidorPct(`Semana ${p.semana.chave}`, p.semana.pct, `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. · ${fmt(p.semana.requisicoes)} reqs`),
+    p.provedor.custoUsd != null ? h('div', { class: 'dica' }, `Custo provedor (7d): US$ ${p.provedor.custoUsd.toFixed(2)}`) : null,
+    p.provedor.erro ? h('div', { class: 'dica' }, `Provedor: ${p.provedor.erro}`) : null)));
+
+  const custos = e.custoPorToken || [];
+  const corpoCusto = $('tabela-custo-token').tBodies[0];
+  if (!custos.length) { corpoCusto.replaceChildren(h('tr', {}, h('td', { colspan: '8', class: 'vazio' }, 'Sem modelos medidos ainda.'))); return; }
+  corpoCusto.replaceChildren(...custos.map((c) => h('tr', {},
+    h('td', {}, c.modelo),
+    h('td', { class: 'num' }, `$${c.input1M}`),
+    h('td', { class: 'num' }, `$${c.cacheWrite1M}`),
+    h('td', { class: 'num' }, `$${c.cacheRead1M}`),
+    h('td', { class: 'num' }, `$${c.output1M}`),
+    h('td', { class: 'num' }, `$${c.efetivoPorMilhaoUsd.toFixed(3)}`),
+    h('td', { class: 'num' }, `$${c.totalUsd.toFixed(2)}`),
+    h('td', {}, h('span', { class: 'chip' }, c.rotulo)))));
+}
+
 function renderComparativo(e) {
+  renderPaineisAgentes(e);
   const agentes = (e.porAgente || []).filter((a) => passaAgente(a.agente));
   if (!agentes.length) {
     $('tiles-agentes').replaceChildren();
