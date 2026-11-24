@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buscarAnthropic, buscarCopilot, montarPainelAgentes, calcularCustoPorToken } from '../src/provedores.js';
 
 test('Anthropic Admin API: agrega uso e custo real sem vazar a chave', async () => {
-  const segredo = 'sk-ant-admin-segredo-12345';
+  const segredo = 'chave-sintetica-teste-anthropic';
   const fetchMock = async (url, opts) => {
     assert.equal(opts.headers['x-api-key'], segredo);
     if (String(url).includes('usage_report')) {
@@ -35,7 +35,7 @@ test('Anthropic Admin API: agrega uso e custo real sem vazar a chave', async () 
 });
 
 test('GitHub Copilot API: le billing de org sem vazar token', async () => {
-  const token = 'ghp_segredo_copilot_999';
+  const token = 'token-sintetico-teste-github';
   const fetchMock = async (url, opts) => {
     assert.equal(opts.headers.Authorization, `Bearer ${token}`);
     if (String(url).includes('/copilot/billing')) {
