@@ -35,8 +35,11 @@ const quando = (ms) => (ms ? new Date(ms).toLocaleString('pt-BR', { dateStyle: '
 const STATUS = { completed: ['✓', 'Concluída'], in_progress: ['◐', 'Em andamento'], pending: ['○', 'Pendente'] };
 
 let filtro = 'todas';
+let filtroAgenteGlobal = 'todos';
 let filtroProjetoComp = 'todos';
 let abaAtiva = 'geral';
+
+const passaAgente = (ag) => filtroAgenteGlobal === 'todos' || (ag || 'claude-code') === filtroAgenteGlobal;
 let ultimo = null;
 let sessaoSelecionada = null;
 let detalheAtual = null;
@@ -118,42 +121,48 @@ function barras(alvo, grupos, detalhe) {
 }
 
 function tarefas(e) {
-  const lista = e.tarefas.filter((t) => filtro === 'todas' || t.status === filtro);
+  const lista = e.tarefas.filter((t) => (filtro === 'todas' || t.status === filtro) && passaAgente(t.agente));
   const corpo = $('tarefas').tBodies[0];
-  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '5', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
-  corpo.replaceChildren(...lista.slice(0, 300).map((t) => {
+  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
+  corpo.replaceChildren(...lista.slice(0, 400).map((t) => {
     const [icone, rotulo] = STATUS[t.status] || ['·', t.status];
     const modelos = Object.entries(t.modelos || {}).sort((a, b) => b[1] - a[1]).map(([m]) => h('span', { class: 'chip' }, m.replace('claude-', '')));
     return h('tr', {},
       h('td', {}, h('span', { class: `status ${t.status}` }, `${icone} ${rotulo}`)),
       h('td', {}, t.titulo),
-      h('td', {}, t.projeto, h('div', { class: 'dica' }, `sessão ${t.sessao}`)),
+      h('td', {}, t.projeto, h('div', { class: 'dica' }, `${t.fonte === 'progresso' ? 'progresso' : 'sessão'} ${t.sessao}`)),
+      h('td', {}, h('span', { class: 'chip chip-info' }, t.agente || 'claude-code')),
       h('td', {}, modelos.length ? modelos : h('span', { class: 'dica' }, '—')),
-      h('td', { class: 'num' }, fmt(t.equivalente)));
+      h('td', { class: 'num' }, t.equivalente ? fmt(t.equivalente) : '—'));
   }));
 }
 
 function sessoes(e) {
-  if (!e.sessoes.length) { $('sessoes').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma sessão lida ainda.')); return; }
-  $('sessoes').replaceChildren(...e.sessoes.slice(0, 30).map((s) => h('div', {
-    class: 'sessao clicavel',
-    onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
-  },
-  h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: 'chip' }, s.agente || 'claude-code'), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
-  h('div', { class: 'linha2' }, `${s.branch || 'sem branch'} · ${s.modelos.join(', ')} · ${fmt(s.equivalente)} equivalentes`),
-  s.tarefaAtiva ? h('div', { class: 'linha2' }, `◐ ${s.tarefaAtiva}`) : null)));
+  const lista = e.sessoes.filter((s) => passaAgente(s.agente));
+  if (!lista.length) { $('sessoes').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma sessão neste filtro.')); }
+  else {
+    $('sessoes').replaceChildren(...lista.slice(0, 30).map((s) => h('div', {
+      class: 'sessao clicavel',
+      onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
+    },
+    h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: 'chip chip-info' }, s.agente || 'claude-code'), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
+    h('div', { class: 'linha2' }, `${s.branch || 'sem branch'} · ${s.modelos.join(', ')} · ${fmt(s.equivalente)} equivalentes`),
+    s.tarefaAtiva ? h('div', { class: 'linha2' }, `◐ ${s.tarefaAtiva}`) : null)));
+  }
 
   const sel = $('seletor-sessao');
-  const atual = sessaoSelecionada || (e.sessoes[0]?.idCompleto || e.sessoes[0]?.id || '');
-  sel.replaceChildren(...e.sessoes.map((s) => h('option', { value: s.idCompleto || s.id }, `${s.projeto} · ${s.id} (${fmt(s.equivalente)} eq.)`)));
-  if (atual) { sel.value = atual; sessaoSelecionada = sel.value; }
+  const atual = sessaoSelecionada || (lista[0]?.idCompleto || lista[0]?.id || '');
+  sel.replaceChildren(...lista.map((s) => h('option', { value: s.idCompleto || s.id }, `[${s.agente || 'claude-code'}] ${s.projeto} · ${s.id} (${fmt(s.equivalente)} eq.)`)));
+  if (atual && lista.some((s) => (s.idCompleto || s.id) === atual)) { sel.value = atual; sessaoSelecionada = sel.value; }
+  else if (lista[0]) { sel.value = lista[0].idCompleto || lista[0].id; sessaoSelecionada = sel.value; }
 }
 
 function recentes(e) {
-  if (!e.recentes.length) { $('recentes').replaceChildren(h('li', { class: 'vazio' }, 'Sem atividade.')); return; }
-  $('recentes').replaceChildren(...e.recentes.map((r) => h('li', {},
+  const lista = e.recentes.filter((r) => passaAgente(r.agente));
+  if (!lista.length) { $('recentes').replaceChildren(h('li', { class: 'vazio' }, 'Sem atividade neste filtro.')); return; }
+  $('recentes').replaceChildren(...lista.map((r) => h('li', {},
     h('span', { class: 'hora' }, hora(r.quando)),
-    h('span', {}, `${r.projeto} · ${r.modelo.replace('claude-', '')}`, r.tarefa ? h('div', { class: 'dica' }, r.tarefa) : null),
+    h('span', {}, `${r.projeto} · `, h('span', { class: 'chip chip-info' }, r.agente || 'claude-code'), ` ${r.modelo.replace('claude-', '')}`, r.tarefa ? h('div', { class: 'dica' }, r.tarefa) : null),
     h('span', { class: 'num' }, fmt(r.equivalente)))));
 }
 
@@ -213,6 +222,7 @@ function renderTimeline(det) {
   }
   $('svg-timeline').replaceChildren(svg);
 
+  const agenteSessao = ultimo?.sessoes?.find((s) => (s.idCompleto || s.id) === det.sessao)?.agente || 'claude-code';
   const corpo = $('tabela-timeline').tBodies[0];
   corpo.replaceChildren(...det.timeline.slice(0, 400).map((r) => {
     const tags = [];
@@ -225,6 +235,7 @@ function renderTimeline(det) {
     for (const t of (r.tools || []).slice(0, 4)) tags.push(h('span', { class: 'chip' }, t));
     return h('tr', {},
       h('td', { class: 'num' }, String(r.idx)),
+      h('td', {}, h('span', { class: 'chip chip-info' }, agenteSessao)),
       h('td', {}, r.fio),
       h('td', {}, r.modelo.replace('claude-', '')),
       h('td', { class: 'num' }, fmt(r.contexto)),
@@ -282,10 +293,12 @@ function renderSubagentes(e) {
       h('span', { class: 'valor' }, `${n}×`))));
   }
 
+  const topFiltrado = (sub.top || []).filter((s) => passaAgente(s.agente));
   const corpo = $('tabela-subagentes').tBodies[0];
-  if (!sub.top.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '7', class: 'vazio' }, 'Sem subagentes medidos.'))); return; }
-  corpo.replaceChildren(...sub.top.map((s) => h('tr', {},
+  if (!topFiltrado.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '8', class: 'vazio' }, 'Sem subagentes medidos neste filtro.'))); return; }
+  corpo.replaceChildren(...topFiltrado.map((s) => h('tr', {},
     h('td', {}, s.sessao),
+    h('td', {}, h('span', { class: 'chip chip-info' }, s.agente || 'claude-code')),
     h('td', {}, s.fio),
     h('td', {}, s.modelos.map((m) => m.replace('claude-', '')).join(', ')),
     h('td', { class: 'num' }, String(s.requisicoes)),
@@ -343,18 +356,33 @@ function renderComparativo(e) {
 }
 
 function renderEconomia(e) {
-  const ops = e.consumo?.oportunidades || [];
-  if (!ops.length) { $('lista-economia').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma oportunidade de economia disparada ainda.')); return; }
+  const ops = (e.consumo?.oportunidades || []).filter((o) => passaAgente(o.agente));
+  if (!ops.length) { $('lista-economia').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma oportunidade de economia neste filtro.')); return; }
   $('lista-economia').replaceChildren(...ops.map((o) => h('div', { class: `oportunidade sev-${o.severidade}` },
     h('div', { class: 'op-topo' },
       h('b', {}, o.titulo),
+      h('span', { class: 'chip chip-info' }, o.agente || 'claude-code'),
       h('span', { class: 'chip chip-alerta' }, `economia: ~${fmt(o.economia_estimada_equiv)} eq. (${o.rotulo})`)),
     h('div', { class: 'linha2' }, `Sessão ${o.sessao} · Regra: ${o.regra} · Evidência: ${o.evidencia}`),
     h('div', { class: 'op-acao' }, `Ação sugerida: ${o.acao}`))));
 }
 
+function atualizarFiltroAgenteGlobal(e) {
+  const nomes = new Set([
+    ...(e.porAgente || []).map((a) => a.agente),
+    ...(e.tarefas || []).map((t) => t.agente),
+    ...(e.sessoes || []).map((s) => s.agente),
+  ].filter(Boolean));
+  const lista = [...nomes].sort();
+  const sel = $('filtro-agente-global');
+  sel.replaceChildren(h('option', { value: 'todos' }, 'Todos'), ...lista.map((a) => h('option', { value: a }, a)));
+  sel.value = lista.includes(filtroAgenteGlobal) ? filtroAgenteGlobal : 'todos';
+  filtroAgenteGlobal = sel.value;
+}
+
 function render(e) {
   ultimo = e;
+  atualizarFiltroAgenteGlobal(e);
   tiles(e);
   renderPorTipo(e);
   renderPorDia(e);
@@ -386,6 +414,11 @@ $('abas').addEventListener('click', (ev) => {
 $('seletor-sessao').addEventListener('change', (ev) => {
   sessaoSelecionada = ev.target.value;
   carregarDetalhe(sessaoSelecionada);
+});
+
+$('filtro-agente-global').addEventListener('change', (ev) => {
+  filtroAgenteGlobal = ev.target.value;
+  if (ultimo) render(ultimo);
 });
 
 $('filtro-projeto-comp').addEventListener('change', (ev) => {

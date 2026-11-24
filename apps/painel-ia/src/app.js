@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Agregador } from './agregador.js';
 import { LeitorTranscripts } from './transcripts.js';
 import { lerRegistro } from './registro.js';
+import { lerProgresso } from './progresso.js';
 import { itensMonday } from './monday.js';
 import { prsGithub } from './github.js';
 import { criarServidor } from './servidor.js';
@@ -19,6 +20,7 @@ export function configuracao(env = process.env) {
     antigravity: env.ANTIGRAVITY_BRAIN_DIR || join(homedir(), '.gemini', 'antigravity-cli', 'brain'),
     banco: env.BANCO || join(env.DADOS_DIR || join(homedir(), '.pos-painel-ia'), 'painel.db'),
     registro: env.REGISTRO_CSV || '',
+    progresso: env.PROGRESSO_MD || (env.REGISTRO_CSV ? join(env.REGISTRO_CSV, '..', '..', '..', 'harness', 'progresso.md') : ''),
     intervaloMs: numero(env.INTERVALO_MS, 1500),
     hostsPermitidos: (env.HOSTS_PERMITIDOS || '').split(',').map((h) => h.trim()).filter(Boolean),
     monday: env.MONDAY_TOKEN && env.MONDAY_BOARD_ID ? { token: env.MONDAY_TOKEN, quadro: env.MONDAY_BOARD_ID } : null,
@@ -61,6 +63,7 @@ export async function iniciar(cfg = configuracao(), log = console) {
       await leitor.varrer();
       if (leitorAgy) await leitorAgy.varrer();
       if (cfg.registro) agregador.ingerirRegistro(await lerRegistro(cfg.registro));
+      if (cfg.progresso) agregador.ingerirProgresso(await lerProgresso(cfg.progresso));
       if (banco.salvar(agregador)) externos.fontes.salvoEm = Date.now();
     } catch (e) { log.error('falha ao ler as fontes:', e.message); }
     if (agregador.versao !== versaoEnviada) { versaoEnviada = agregador.versao; srv.notificar(); }

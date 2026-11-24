@@ -20,6 +20,9 @@
     <button role="tab" data-aba="comparativo" aria-selected="false">Comparativo</button>
     <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
   </nav>
+  <label class="seletor" title="Filtrar todos os painéis por Code Agent">Code Agent:
+    <select id="filtro-agente-global"><option value="todos">Todos</option></select>
+  </label>
   <nav class="exportar" aria-label="Exportar">
     <a href="/api/relatorio.md">Relatório (MD)</a>
     <a href="/api/relatorio.csv">Registro (CSV)</a>
@@ -64,7 +67,7 @@
         </div>
       </div>
       <div class="rolagem"><table id="tarefas"><thead><tr>
-        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Modelos</th><th class="num">Equivalentes</th>
+        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Code Agent</th><th>Modelos</th><th class="num">Equivalentes</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
 
@@ -104,7 +107,7 @@
     <section class="cartao">
       <h2>Requisições da sessão</h2>
       <div class="rolagem"><table id="tabela-timeline"><thead><tr>
-        <th>#</th><th>Fio</th><th>Modelo</th><th class="num">Contexto</th><th class="num">Delta</th>
+        <th>#</th><th>Code Agent</th><th>Fio</th><th>Modelo</th><th class="num">Contexto</th><th class="num">Delta</th>
         <th class="num">Cache %</th><th class="num">Equivalentes</th><th>Marcadores / Ferramentas</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
@@ -138,7 +141,7 @@
       <section class="cartao"><h2>Chamadas por tipo de subagente</h2><div id="subagentes-tipos"></div></section>
       <section class="cartao"><h2>Subagentes mais caros</h2>
         <div class="rolagem"><table id="tabela-subagentes"><thead><tr>
-          <th>Sessão</th><th>Fio</th><th>Modelos</th><th class="num">Reqs</th>
+          <th>Sessão</th><th>Code Agent</th><th>Fio</th><th>Modelos</th><th class="num">Reqs</th>
           <th class="num">Ctx máx</th><th class="num">Arq. reabertos</th><th class="num">Equivalentes</th>
         </tr></thead><tbody></tbody></table></div>
       </section>

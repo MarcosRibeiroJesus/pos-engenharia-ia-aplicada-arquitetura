@@ -62,6 +62,7 @@ export class Agregador {
     this.minutos = new Map(); // minuto (epoch/60000) -> equivalente
     this.recentes = [];
     this.registro = { linhas: [], naoMedidos: 0 };
+    this.progresso = [];
     this.consumo = new AnalisadorConsumo();
     this.versao = 0;
     // Para a persistência: o que mudou desde o último salvamento.
@@ -172,6 +173,12 @@ export class Agregador {
       if (l.fonte === 'nao-medido') { this.registro.naoMedidos++; continue; }
       this.registro.linhas.push(l);
     }
+    this.versao++;
+  }
+
+  /** Tarefas concluídas lidas de harness/progresso.md (com Code Agent e modelo). */
+  ingerirProgresso(linhas) {
+    this.progresso = Array.isArray(linhas) ? linhas : [];
     this.versao++;
   }
 
@@ -308,10 +315,42 @@ export class Agregador {
     });
     const ultimos5 = linhaDoTempo.slice(-5).reduce((s, p) => s + p.equivalente, 0);
 
-    const tarefas = [...this.tarefas.values()]
+    const tarefasTranscript = [...this.tarefas.values()]
       .filter((t) => t.status !== 'deleted')
-      .map(({ uso, sessaoId, ...t }) => ({ ...t, ...uso, equivalente: Math.round(equivalente(uso)) }))
-      .sort((a, b) => b.atualizado - a.atualizado);
+      .map(({ uso, sessaoId, ...t }) => {
+        const s = this.sessoes.get(sessaoId);
+        return { ...t, agente: s?.agente || 'claude-code', fonte: 'transcript', ...uso, equivalente: Math.round(equivalente(uso)) };
+      });
+    const tarefasRegistro = this.registro.linhas
+      .filter((l) => l.tarefa)
+      .map((l, idx) => ({
+        chave: `reg:${l.sessao || idx}:${l.modelo}`,
+        sessao: (l.sessao || 'csv').slice(0, 8),
+        agente: inferirAgente(l.modelo, l.observacao),
+        projeto: l.projeto || 'desconhecido',
+        titulo: l.tarefa,
+        status: 'completed',
+        modelos: l.modelo ? { [l.modelo]: Math.round(equivalente(l) || l.total || 1) } : {},
+        requisicoes: l.requisicoes || 0,
+        equivalente: Math.round(equivalente(l) || l.total || 0),
+        atualizado: Date.parse(`${l.data}T12:00:00Z`) || 0,
+        fonte: 'registro',
+      }));
+    const tarefasProgresso = this.progresso.map((p, idx) => ({
+      chave: `prog:${p.data}:${idx}`,
+      sessao: p.data,
+      agente: p.agente,
+      projeto: p.projeto,
+      titulo: p.titulo,
+      status: 'completed',
+      modelos: p.modelo && p.modelo !== '—' ? { [p.modelo]: 1 } : {},
+      requisicoes: 0,
+      equivalente: 0,
+      atualizado: p.quando,
+      fonte: 'progresso',
+    }));
+    const tarefas = [...tarefasTranscript, ...tarefasRegistro, ...tarefasProgresso]
+      .sort((a, b) => (b.atualizado || 0) - (a.atualizado || 0));
     const contagem = { pending: 0, in_progress: 0, completed: 0 };
     for (const t of tarefas) contagem[t.status] = (contagem[t.status] || 0) + 1;
 
@@ -352,6 +391,14 @@ export class Agregador {
         equivalente: Math.round(equivalente(s.uso)), tarefaAtiva: this.tarefas.get(this.ativa.get(s.id))?.titulo || null }))
       .sort((a, b) => b.ultimo - a.ultimo);
 
+    const consumoGlobal = this.consumo.resumoGlobal();
+    for (const sf of consumoGlobal.subagentes.top) {
+      sf.agente = this.sessoes.get(sf.sessaoId)?.agente || 'claude-code';
+    }
+    for (const op of consumoGlobal.oportunidades) {
+      op.agente = this.sessoes.get(op.sessaoId)?.agente || 'claude-code';
+    }
+
     return {
       geradoEm: agora,
       totais: { ...totais, equivalente: Math.round(equivalente(totais)), porMinuto5: Math.round(ultimos5 / 5),
@@ -367,7 +414,7 @@ export class Agregador {
       sessoes,
       linhaDoTempo,
       recentes: this.recentes,
-      consumo: this.consumo.resumoGlobal(),
+      consumo: consumoGlobal,
     };
   }
 }

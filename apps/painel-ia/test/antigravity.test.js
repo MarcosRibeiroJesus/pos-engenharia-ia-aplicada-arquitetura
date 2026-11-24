@@ -7,6 +7,7 @@ import { Agregador } from '../src/agregador.js';
 import { LeitorTranscripts } from '../src/transcripts.js';
 import { Persistencia } from '../src/persistencia.js';
 import { relatorio } from '../src/relatorio.js';
+import { parseProgresso } from '../src/progresso.js';
 
 function criarTranscriptAntigravity(raiz, convId) {
   const logsDir = join(raiz, convId, '.system_generated', 'logs');
@@ -112,4 +113,25 @@ test('antigravity: leitura em tempo real ignora transcript_full, conta tokens di
     rmSync(dirAgy, { recursive: true, force: true });
     rmSync(dirClaude, { recursive: true, force: true });
   }
+});
+
+test('progresso: inclui tasks concluidas com Code Agent e modelo no Agregador', () => {
+  const md = [
+    '# Progresso',
+    '- 2026-11-22 · 03-mcp-regras-cdb · antigravity (Gemini 4 Argon, orquestração) · plan.md e ADRs 0001-0006 · 141 testes · próxima: T001',
+    '- 2026-11-21 · 00-plataforma-agentes · claude-code (Claude Opus 5.5) · T018 módulo contrato · 93 testes · próxima: T019',
+  ].join('\n');
+  const itens = parseProgresso(md);
+  assert.equal(itens.length, 2);
+  assert.equal(itens[0].agente, 'antigravity');
+  assert.equal(itens[0].modelo, 'Gemini 4 Argon');
+  assert.equal(itens[1].agente, 'claude-code');
+  assert.equal(itens[1].modelo, 'Claude Opus 5.5');
+
+  const ag = new Agregador();
+  ag.ingerirProgresso(itens);
+  const est = ag.estado();
+  assert.equal(est.tarefas.length, 2);
+  assert.equal(est.contagemTarefas.completed, 2);
+  assert.ok(est.tarefas.some((t) => t.agente === 'antigravity' && t.projeto === '03-mcp-regras-cdb'));
 });
