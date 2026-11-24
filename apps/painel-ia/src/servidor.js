@@ -1,4 +1,4 @@
-// Servidor HTTP sem dependências: página estática, API de estado, SSE e healthcheck.
+// Servidor HTTP sem dependências: página estática, API de estado, detalhe de sessão, SSE e healthcheck.
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -27,13 +27,14 @@ const SEGURANCA = {
 };
 const HOSTS_LOCAIS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const MAX_CLIENTES = 20;
+const ID_SESSAO_RE = /^[a-zA-Z0-9_-]{1,128}$/;
 
 function nomeDoHost(host = '') {
   if (host.startsWith('[')) return host.slice(0, host.indexOf(']') + 1);
   return host.split(':')[0].toLowerCase();
 }
 
-export function criarServidor({ estado, hostsPermitidos = [], extras = {} }) {
+export function criarServidor({ estado, detalheSessao = () => null, hostsPermitidos = [], extras = {} }) {
   const permitidos = new Set([...HOSTS_LOCAIS, ...hostsPermitidos.map((h) => h.toLowerCase())]);
   const clientes = new Set();
 
@@ -52,6 +53,13 @@ export function criarServidor({ estado, hostsPermitidos = [], extras = {} }) {
 
     if (rota === '/healthz') return enviar(res, 'ok', 'text/plain; charset=utf-8');
     if (rota === '/api/estado') return enviar(res, JSON.stringify(estado()), 'application/json; charset=utf-8');
+    if (rota.startsWith('/api/sessao/')) {
+      const id = decodeURIComponent(rota.slice('/api/sessao/'.length));
+      if (!ID_SESSAO_RE.test(id)) return enviar(res, 'ID de sessão inválido', 'text/plain; charset=utf-8', 400);
+      const det = detalheSessao(id);
+      if (!det) return enviar(res, 'Sessão não encontrada', 'text/plain; charset=utf-8', 404);
+      return enviar(res, JSON.stringify(det), 'application/json; charset=utf-8');
+    }
     if (rota === '/eventos') {
       if (clientes.size >= MAX_CLIENTES) return enviar(res, 'Muitas conexões', 'text/plain; charset=utf-8', 503);
       res.writeHead(200, { ...SEGURANCA, 'Content-Type': 'text/event-stream', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });

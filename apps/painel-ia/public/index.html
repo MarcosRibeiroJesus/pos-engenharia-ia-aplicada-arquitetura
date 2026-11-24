@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel de IA · uso em tempo real</title>
+<title>Painel de IA · consumo de tokens</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/app.css">
 <script src="/app.js" defer></script>
@@ -12,6 +12,13 @@
 <header class="topo">
   <div class="marca">Painel de IA</div>
   <span id="conexao" class="conexao" role="status">conectando…</span>
+  <nav class="abas" id="abas" role="tablist" aria-label="Visões do painel">
+    <button role="tab" data-aba="geral" aria-selected="true">Visão geral</button>
+    <button role="tab" data-aba="sessao" aria-selected="false">Sessão &amp; Timeline</button>
+    <button role="tab" data-aba="atribuicao" aria-selected="false">Atribuição</button>
+    <button role="tab" data-aba="subagentes" aria-selected="false">Subagentes</button>
+    <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
+  </nav>
   <nav class="exportar" aria-label="Exportar">
     <a href="/api/relatorio.md">Relatório (MD)</a>
     <a href="/api/relatorio.csv">Registro (CSV)</a>
@@ -19,42 +26,133 @@
 </header>
 
 <main>
-  <section class="tiles" id="tiles" aria-label="Indicadores"></section>
+  <!-- ABA 1: VISÃO GERAL -->
+  <div class="painel-aba" data-painel="geral">
+    <section class="tiles" id="tiles" aria-label="Indicadores"></section>
 
-  <section class="cartao">
-    <div class="cartao-topo"><h2>Últimos 60 minutos</h2><span class="dica">tokens equivalentes por minuto</span></div>
-    <div id="tempo" class="tempo" role="img" aria-label="Tokens equivalentes por minuto na última hora"></div>
-    <div class="eixo"><span>-60 min</span><span>-30 min</span><span>agora</span></div>
-  </section>
-
-  <div class="duas">
-    <section class="cartao"><h2>Por modelo</h2><div id="modelos"></div></section>
-    <section class="cartao"><h2>Por projeto</h2><div id="projetos"></div></section>
-  </div>
-
-  <section class="cartao">
-    <div class="cartao-topo">
-      <h2>Tarefas</h2>
-      <div class="filtros" id="filtros" role="group" aria-label="Filtrar tarefas">
-        <button data-f="todas" aria-pressed="true">Todas</button>
-        <button data-f="in_progress" aria-pressed="false">Em andamento</button>
-        <button data-f="pending" aria-pressed="false">Pendentes</button>
-        <button data-f="completed" aria-pressed="false">Concluídas</button>
-      </div>
+    <div class="duas">
+      <section class="cartao">
+        <div class="cartao-topo"><h2>Por tipo de token</h2><span class="dica">destaque do que mais pesa no custo equivalente</span></div>
+        <div id="por-tipo"></div>
+      </section>
+      <section class="cartao">
+        <div class="cartao-topo"><h2>Por dia</h2><span class="dica">tokens equivalentes por data</span></div>
+        <div id="por-dia"></div>
+      </section>
     </div>
-    <div class="rolagem"><table id="tarefas"><thead><tr>
-      <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Modelos</th><th class="num">Equivalentes</th>
-    </tr></thead><tbody></tbody></table></div>
-  </section>
 
-  <div class="duas">
-    <section class="cartao"><h2>Sessões</h2><div id="sessoes"></div></section>
-    <section class="cartao"><h2>Atividade recente</h2><ol id="recentes" class="feed"></ol></section>
+    <section class="cartao">
+      <div class="cartao-topo"><h2>Últimos 60 minutos</h2><span class="dica">tokens equivalentes por minuto</span></div>
+      <div id="tempo" class="tempo" role="img" aria-label="Tokens equivalentes por minuto na última hora"></div>
+      <div class="eixo"><span>-60 min</span><span>-30 min</span><span>agora</span></div>
+    </section>
+
+    <div class="duas">
+      <section class="cartao"><h2>Por modelo</h2><div id="modelos"></div></section>
+      <section class="cartao"><h2>Por projeto</h2><div id="projetos"></div></section>
+    </div>
+
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Tarefas</h2>
+        <div class="filtros" id="filtros" role="group" aria-label="Filtrar tarefas">
+          <button data-f="todas" aria-pressed="true">Todas</button>
+          <button data-f="in_progress" aria-pressed="false">Em andamento</button>
+          <button data-f="pending" aria-pressed="false">Pendentes</button>
+          <button data-f="completed" aria-pressed="false">Concluídas</button>
+        </div>
+      </div>
+      <div class="rolagem"><table id="tarefas"><thead><tr>
+        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Modelos</th><th class="num">Equivalentes</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <div class="duas">
+      <section class="cartao">
+        <div class="cartao-topo"><h2>Sessões</h2><span class="dica">clique numa sessão para abrir a linha do tempo</span></div>
+        <div id="sessoes"></div>
+      </section>
+      <section class="cartao"><h2>Atividade recente</h2><ol id="recentes" class="feed"></ol></section>
+    </div>
+
+    <div class="duas">
+      <section class="cartao"><h2>Aprovações pendentes</h2><div id="aprovacoes"></div></section>
+      <section class="cartao"><h2>Pull requests abertos</h2><div id="prs"></div></section>
+    </div>
   </div>
 
-  <div class="duas">
-    <section class="cartao"><h2>Aprovações pendentes</h2><div id="aprovacoes"></div></section>
-    <section class="cartao"><h2>Pull requests abertos</h2><div id="prs"></div></section>
+  <!-- ABA 2: SESSÃO & TIMELINE -->
+  <div class="painel-aba oculto" data-painel="sessao">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Linha do tempo da sessão</h2>
+        <label class="seletor">Sessão: <select id="seletor-sessao"></select></label>
+      </div>
+      <div id="resumo-sessao" class="dica"></div>
+      <div id="svg-timeline" class="svg-caixa"></div>
+      <div class="legenda-marcadores">
+        <span><i class="dot dot-ctx"></i> Contexto (tokens)</span>
+        <span><i class="dot dot-cache"></i> Taxa de cache (%)</span>
+        <span><i class="dot dot-frio"></i> Cache frio</span>
+        <span><i class="dot dot-comp"></i> Compactação</span>
+        <span><i class="dot dot-pausa"></i> Pausa &gt; 8h</span>
+        <span><i class="dot dot-sub"></i> Subagente</span>
+        <span><i class="dot dot-hook"></i> Hook</span>
+      </div>
+    </section>
+    <section class="cartao">
+      <h2>Requisições da sessão</h2>
+      <div class="rolagem"><table id="tabela-timeline"><thead><tr>
+        <th>#</th><th>Fio</th><th>Modelo</th><th class="num">Contexto</th><th class="num">Delta</th>
+        <th class="num">Cache %</th><th class="num">Equivalentes</th><th>Marcadores / Ferramentas</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <!-- ABA 3: ATRIBUIÇÃO -->
+  <div class="painel-aba oculto" data-painel="atribuicao">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Para onde foi cada token (atribuição proporcional)</h2>
+        <span class="dica">repartição proporcional por bytes do crescimento de contexto; o que não se atribui entra em "nao-atribuido"</span>
+      </div>
+      <div id="atribuicao-global"></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Ranking de carregamento na sessão selecionada</h2>
+        <span class="dica">custo de carregar = delta × requisições seguintes até compactação (estimativa proporcional)</span>
+      </div>
+      <div class="rolagem"><table id="tabela-carregamento"><thead><tr>
+        <th>Fio</th><th>Req</th><th>Origem</th><th class="num">Delta tokens</th>
+        <th class="num">Reqs seguintes</th><th class="num">Token-reqs</th><th class="num">Custo eq. (est.)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <!-- ABA 4: SUBAGENTES -->
+  <div class="painel-aba oculto" data-painel="subagentes">
+    <section class="tiles" id="tiles-subagentes"></section>
+    <div class="duas">
+      <section class="cartao"><h2>Chamadas por tipo de subagente</h2><div id="subagentes-tipos"></div></section>
+      <section class="cartao"><h2>Subagentes mais caros</h2>
+        <div class="rolagem"><table id="tabela-subagentes"><thead><tr>
+          <th>Sessão</th><th>Fio</th><th>Modelos</th><th class="num">Reqs</th>
+          <th class="num">Ctx máx</th><th class="num">Arq. reabertos</th><th class="num">Equivalentes</th>
+        </tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ABA 5: ECONOMIA -->
+  <div class="painel-aba oculto" data-painel="economia">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Oportunidades concretas de economia</h2>
+        <span class="dica">regras determinísticas sobre fatos medidos; economias são sempre rotuladas como estimativa</span>
+      </div>
+      <div id="lista-economia"></div>
+    </section>
   </div>
 </main>
 

@@ -86,22 +86,23 @@ def arquivos_da_sessao(caminho: Path) -> list[Path]:
 def somar_transcript(caminho: Path) -> dict[str, dict[str, int]]:
     """Soma message.usage por modelo, com os subagentes, sem contar duas vezes a mesma mensagem."""
     por_modelo: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    vistos: set[str] = set()
-    brutas = [b for arq in arquivos_da_sessao(caminho) for b in arq.read_text(encoding="utf-8").splitlines()]
-    for bruta in brutas:
-        try:
-            evento = json.loads(bruta)
-        except json.JSONDecodeError:
-            continue
-        msg = evento.get("message") or {}
-        uso = msg.get("usage")
-        if not isinstance(uso, dict):
-            continue
-        mid = msg.get("id") or evento.get("uuid")
-        if mid in vistos:
-            continue
-        vistos.add(mid)
-        c = por_modelo[msg.get("model") or "desconhecido"]
+    vistos: dict[str, tuple[str, dict]] = {}
+    for arq in arquivos_da_sessao(caminho):
+        with arq.open("r", encoding="utf-8", errors="replace") as f:
+            for bruta in f:
+                try:
+                    evento = json.loads(bruta)
+                except json.JSONDecodeError:
+                    continue
+                msg = evento.get("message") or {}
+                uso = msg.get("usage")
+                modelo = msg.get("model")
+                if not isinstance(uso, dict) or not modelo or modelo == "<synthetic>":
+                    continue
+                mid = str(msg.get("id") or evento.get("uuid"))
+                vistos[mid] = (str(modelo), uso)  # última versão da mensagem vale (alinhado a registrar_uso.py)
+    for modelo, uso in vistos.values():
+        c = por_modelo[modelo]
         c["requisicoes"] += 1
         c["input"] += uso.get("input_tokens") or 0
         c["cache_write"] += uso.get("cache_creation_input_tokens") or 0

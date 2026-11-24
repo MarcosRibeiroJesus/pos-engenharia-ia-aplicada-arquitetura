@@ -52,3 +52,10 @@ Curso relacionado: *Claude Code in Action*.
 ## O que um arquiteto sênior faria em produção
 
 Numa equipe, exportaria as mesmas métricas via OpenTelemetry, que o Claude Code já suporta, para um coletor central (CloudWatch ou Prometheus). Também colocaria autenticação SSO na frente do painel, reteria os dados por política e alertaria sobre gasto por projeto acima do orçamento. Este app é o recorte individual desse desenho.
+
+## Evolução (2026-11-23 · Visões internas de consumo de tokens)
+
+- **Decisão:** estender o próprio `apps/painel-ia` com 5 abas (Visão geral, Sessão & Timeline, Atribuição, Subagentes, Economia), mantendo zero dependências npm, 100% local em `127.0.0.1` (sem alterar `site/uso.html`), leitura em fluxo por chunks fixos de 64 KB e retenção indefinida de fatos detalhados no SQLite local (esquema v2, sempre sem texto de mensagens nem caminhos completos — arquivos são identificados apenas por hash SHA-256 curto).
+- **Método de atribuição:** mede o aumento real de contexto (`input + cache_write + cache_read`) entre requisições consecutivas do mesmo fio e reparte proporcionalmente pelos bytes de cada origem (saída anterior, `tool_result`, `hook/attachment`, `system-reminder`, `meta/skill`, usuário); o que não se atribui entra em `nao-atribuido`, fechando 100% do delta medido. O custo de carregamento (`delta × requisições seguintes até compactação`) e as regras de economia vêm sempre rotulados como estimativa.
+- **Alternativas rejeitadas:** rota separada `/consumo` (fragmentaria a navegação), envio de agregados internos ao site público (risco desnecessário de exposição de metadados) e contagem por tokenizador externo (traria dependência npm e divergiria do `usage` real da API).
+- **Tarefas da prova exercitadas:** **5.1** (preservação de contexto e detecção de retomada > 8 h / compactação), **5.6** (proveniência e rotulagem explícita de estimativas vs. medições) e **1.7** (observabilidade de sessões e subagentes).

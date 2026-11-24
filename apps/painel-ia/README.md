@@ -1,11 +1,12 @@
 # Painel de IA
 
-Painel local, em tempo real, do uso de IA nas sessões do Claude Code. Ele mostra:
+Painel local, em tempo real, do uso e diagnóstico de consumo de tokens nas sessões do Claude Code. Ele tem cinco abas na mesma interface:
 
-- tokens por modelo, projeto, sessão e tarefa;
-- status das tarefas (`TaskCreate`/`TaskUpdate` e `TodoWrite`);
-- atividade dos últimos 60 minutos;
-- opcionalmente, as aprovações pendentes de um board do Monday e os PRs abertos no GitHub.
+- **Visão geral:** tokens equivalentes por tipo (entrada, cache escrito, cache lido, saída — destacando o que mais pesa), por dia, por modelo, por projeto, últimos 60 minutos, tarefas (`TaskCreate`/`TaskUpdate` e `TodoWrite`), sessões e (opcionalmente) Monday e GitHub;
+- **Sessão & Timeline:** gráfico SVG de crescimento do contexto por requisição, taxa de acerto do cache e marcadores (cache frio, compactação, pausa > 8 h, troca de modelo, subagente, hook);
+- **Atribuição:** repartição proporcional por bytes do crescimento de contexto (ferramentas, hooks/system-reminders, usuário, saída, mais `nao-atribuido` fechando 100% do delta medido) e ranking de custo de carregamento (`delta × requisições seguintes`, rotulado como estimativa proporcional);
+- **Subagentes:** custo total e por tipo (`subagent_type`), fios mais caros e arquivos reabertos entre fios (detectados via hash curto SHA-256, sem guardar caminhos nem conteúdo);
+- **Economia:** regras determinísticas de oportunidade de economia (cache frio, saída de ferramenta grande, sessão longa / retomada > 8 h, arquivos relidos, briefing grande, injeções de hook repetidas, Opus sem Sonnet no mecânico, excesso de revisões), sempre com evidência, economia rotulada como *estimativa* e ação sugerida.
 
 O histórico fica num banco SQLite local, que sobrevive a reinícios e à limpeza automática dos transcripts. Dele saem o relatório final (Markdown) e o registro no formato de `docs/uso/uso-tokens.csv`.
 
