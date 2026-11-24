@@ -1,0 +1,51 @@
+{
+ "_descricao": "Viola TT-O03: alarme comum (métrica única) de DenyDecisions só com a dimensão Mode. O conjunto de dimensões da métrica não está publicado, então o alarme casaria com nenhuma série e ficaria em OK para sempre com notBreaching (ADR-0013, análise 1 A05). Montada no formato do plan com mock (T017).",
+ "_regra": "TT-O03",
+ "variaveis": {},
+ "plano": {
+  "resource_changes": [
+   {
+    "address": "aws_cloudwatch_metric_alarm.negacoes",
+    "mode": "managed",
+    "type": "aws_cloudwatch_metric_alarm",
+    "name": "negacoes",
+    "provider_name": "registry.terraform.io/hashicorp/aws",
+    "change": {
+     "actions": [
+      "create"
+     ],
+     "after": {
+      "alarm_name": "00-plataforma-agentes-motor-deny-decisions",
+      "namespace": "AWS/Bedrock-AgentCore",
+      "metric_name": "DenyDecisions",
+      "dimensions": {
+       "Mode": "ENFORCE"
+      },
+      "statistic": "Sum",
+      "period": 300,
+      "evaluation_periods": 1,
+      "threshold": 5,
+      "comparison_operator": "GreaterThanOrEqualToThreshold",
+      "treat_missing_data": "notBreaching",
+      "alarm_actions": [
+       "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes"
+      ],
+      "metric_query": [],
+      "tags": {
+       "module": "observabilidade"
+      }
+     },
+     "after_unknown": {
+      "arn": true,
+      "id": true,
+      "tags_all": true
+     },
+     "after_sensitive": {
+      "tags_all": {}
+     }
+    }
+   }
+  ],
+  "output_changes": {}
+ }
+}

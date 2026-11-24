@@ -5,6 +5,8 @@ mock_provider "aws" {}
 
 variables {
   projeto = "00-plataforma-agentes"
+  # Desde a T015 o root compõe o gateway, que exige a role de deploy (sintética aqui).
+  role_deploy_arn = "arn:aws:iam::111111111111:role/00-plataforma-agentes-deploy-sintetica"
 }
 
 run "tags_no_padrao_da_politica" {

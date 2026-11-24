@@ -20,7 +20,7 @@
   `SELECT SUM(DenyDecisions) FROM "AWS/Bedrock-AgentCore" WHERE PolicyEngine = '<id>' AND Mode = 'ENFORCE'`
 
   - O mesmo vale para o `SystemErrors` do motor.
-  - Vale também para as três métricas do gateway, se a página de métricas do Gateway não publicar o conjunto. Nesse caso, o filtro é pelo identificador do gateway (T017).
+  - Vale também para as três métricas do gateway, se a página de métricas do Gateway não publicar o conjunto. Nesse caso, o filtro é pelo identificador do gateway (ARN, a confirmar no ensaio) (T017).
 - **Os demais parâmetros do RNF-003 não mudam:** período de 300 s, 1 avaliação, `Sum`, `notBreaching`, limiares e ação no tópico (T017).
 - **O alarme só conta depois de disparar uma vez.** No ensaio (T084, DM-09), 5 `tools/call` negados com a role de fumaça levam o alarme de negações a `ALARM`, e o e-mail chega. Isso prova também a política da chave e a do tópico para o CloudWatch publicar no SNS cifrado (ADR-0001, ADR-0008).
   - O job de fumaça (T069) grava no relatório do ensaio o estado do alarme e a saída de `list-metrics` do namespace. Assim, os conjuntos reais de dimensões ficam registrados com evidência.

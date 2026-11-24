@@ -1,0 +1,24 @@
+{
+  "versao_contrato": "1.0.0",
+  "regiao": "us-east-1",
+  "gateway_arn": "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/00-plataforma-agentes-gateway-sintetico",
+  "gateway_url": "https://00-plataforma-agentes-gateway-sintetico.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
+  "gateway_id": "00-plataforma-agentes-gateway-sintetico",
+  "motor_politica_id": "p00_plataforma_agentes-sintetico",
+  "motor_politica_arn": "arn:aws:bedrock-agentcore:us-east-1:111111111111:policy-engine/p00_plataforma_agentes-sintetico",
+  "versoes_mcp": ["2025-11-25", "2026-07-28"],
+  "grupo_log_gateway": "/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/00-plataforma-agentes-gateway-sintetico",
+  "grupo_spans": "aws/spans",
+  "topico_alarmes_arn": "arn:aws:sns:us-east-1:111111111111:00-plataforma-agentes-alarmes",
+  "chave_kms_arn": "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001",
+  "mapa_erros": {
+    "politica_negada": {"origem": "isError true com AuthorizeActionException", "retentavel": false, "acao": "informa o usuário; não tenta de novo"},
+    "requer_aprovacao_humana": {"origem": "negação de tool sensivel (RF-012)", "retentavel": false, "acao": "escala para humano (handoff)"},
+    "guardrail_entrada": {"origem": "stopReason guardrail_intervened com ação BLOCKED", "retentavel": false, "acao": "responde com a mensagem de bloqueio"},
+    "guardrail_saida": {"origem": "saída suprimida ou bloqueada", "retentavel": false, "acao": "responde com a mensagem de bloqueio"},
+    "autenticacao": {"origem": "4xx de autorização do gateway", "retentavel": false, "acao": "falha a sessão e alarma"},
+    "limite_taxa": {"origem": "429 (Throttles)", "retentavel": true, "acao": "tenta de novo com espera exponencial", "tentativas_max": 3, "espera_segundos": [1, 2, 4]},
+    "falha_transitoria": {"origem": "5xx (SystemErrors)", "retentavel": true, "acao": "tenta de novo; depois escala com o erro propagado", "tentativas_max": 3, "espera_segundos": [1, 2, 4]},
+    "erro_desconhecido": {"origem": "isError true sem regra no mapa", "retentavel": false, "acao": "trata como negação (falha fechada)"}
+  }
+}

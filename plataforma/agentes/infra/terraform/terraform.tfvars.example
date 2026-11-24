@@ -1,3 +1,6 @@
 # Copie para terraform.tfvars (fora do git). O state vai no init:
 #   terraform init -backend-config=bucket=<bucket-do-state> -backend-config=key=00-plataforma-agentes/lab.tfstate -backend-config=region=us-east-1
 regiao = "us-east-1" # RNF-006
+
+# Role de deploy (OIDC do GitHub) que assume a role de fumaça (T014, ADR-0014). Troque pelo ARN real.
+role_deploy_arn = "arn:aws:iam::<conta>:role/<role-de-deploy-oidc>"

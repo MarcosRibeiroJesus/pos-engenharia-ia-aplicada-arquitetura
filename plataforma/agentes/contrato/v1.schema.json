@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "contrato-plataforma v1",
+  "description": "Contrato v1 da plataforma 00-plataforma-agentes (RF-007, ADR-0002). Dois parâmetros SSM String da camada Standard, até 4 KB cada: /00-plataforma-agentes/contrato/v1/comum (#/$defs/comum, escrito pelo stack da plataforma) e /00-plataforma-agentes/contrato/v1/produtos/<chave> (#/$defs/produto, escrito pelo módulo registro-produto no state do produto). Campo novo sobe a versão menor; remover, renomear ou mudar o sentido de um campo é versão maior (v2 ao lado do v1). O contrato não guarda segredo: a credencial de alvo fica no AgentCore Identity (ADR-0003).",
+  "oneOf": [
+    {"$ref": "#/$defs/comum"},
+    {"$ref": "#/$defs/produto"}
+  ],
+  "$defs": {
+    "versao_contrato": {
+      "description": "Versão completa 1.MENOR.CORRECAO; o 1 é a versão maior do caminho (v1).",
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "regiao": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[a-z]+)+-[0-9]$"
+    },
+    "arn_gateway": {
+      "$comment": "Os ARNs abaixo seguem <partição>:<serviço>:<região>:<conta de 12 dígitos>:<recurso>, sem curinga (ADR-0014).",
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:bedrock-agentcore:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:gateway/[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "arn_motor": {
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:bedrock-agentcore:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:policy-engine/[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "arn_topico": {
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:sns:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:[A-Za-z0-9_-]{1,256}$"
+    },
+    "arn_chave": {
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:kms:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:key/[0-9a-f-]{36}$"
+    },
+    "arn_perfil_inferencia": {
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:bedrock:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:application-inference-profile/[a-z0-9]+$"
+    },
+    "arn_role": {
+      "type": "string",
+      "pattern": "^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role/[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "texto": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "erro_nao_retentavel": {
+      "type": "object",
+      "required": ["origem", "retentavel", "acao"],
+      "additionalProperties": false,
+      "properties": {
+        "origem": {"$ref": "#/$defs/texto"},
+        "retentavel": {"const": false},
+        "acao": {"$ref": "#/$defs/texto"}
+      }
+    },
+    "erro_retentavel": {
+      "description": "Retentativa exponencial de 1, 2 e 4 segundos, até 3 tentativas (RF-011).",
+      "type": "object",
+      "required": ["origem", "retentavel", "acao", "tentativas_max", "espera_segundos"],
+      "additionalProperties": false,
+      "properties": {
+        "origem": {"$ref": "#/$defs/texto"},
+        "retentavel": {"const": true},
+        "acao": {"$ref": "#/$defs/texto"},
+        "tentativas_max": {"const": 3},
+        "espera_segundos": {"const": [1, 2, 4]}
+      }
+    },
+    "mapa_erros": {
+      "description": "Tabela do RF-011: categoria -> origem, retentável e o que o produto faz. Mascaramento (ANONYMIZED) não é erro e não entra aqui.",
+      "type": "object",
+      "required": ["politica_negada", "requer_aprovacao_humana", "guardrail_entrada", "guardrail_saida",
+                   "autenticacao", "limite_taxa", "falha_transitoria", "erro_desconhecido"],
+      "additionalProperties": false,
+      "properties": {
+        "politica_negada": {"$ref": "#/$defs/erro_nao_retentavel"},
+        "requer_aprovacao_humana": {"$ref": "#/$defs/erro_nao_retentavel"},
+        "guardrail_entrada": {"$ref": "#/$defs/erro_nao_retentavel"},
+        "guardrail_saida": {"$ref": "#/$defs/erro_nao_retentavel"},
+        "autenticacao": {"$ref": "#/$defs/erro_nao_retentavel"},
+        "limite_taxa": {"$ref": "#/$defs/erro_retentavel"},
+        "falha_transitoria": {"$ref": "#/$defs/erro_retentavel"},
+        "erro_desconhecido": {"$ref": "#/$defs/erro_nao_retentavel"}
+      }
+    },
+    "classe_tool": {
+      "enum": ["dado_privado", "conteudo_nao_confiavel", "canal_saida", "sensivel"]
+    },
+    "comum": {
+      "description": "/00-plataforma-agentes/contrato/v1/comum, escrito pelo stack da plataforma (tabela Contrato v1 do plano).",
+      "type": "object",
+      "required": ["versao_contrato", "regiao", "gateway_arn", "gateway_url", "gateway_id",
+                   "motor_politica_id", "motor_politica_arn", "versoes_mcp", "grupo_log_gateway",
+                   "grupo_spans", "topico_alarmes_arn", "chave_kms_arn", "mapa_erros"],
+      "additionalProperties": false,
+      "properties": {
+        "versao_contrato": {"$ref": "#/$defs/versao_contrato"},
+        "regiao": {"$ref": "#/$defs/regiao"},
+        "gateway_arn": {"$ref": "#/$defs/arn_gateway"},
+        "gateway_url": {
+          "description": "URL MCP do gateway; só HTTPS (Art. IV, TLS em trânsito).",
+          "type": "string",
+          "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~/-]*)?$"
+        },
+        "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$"},
+        "motor_politica_id": {
+          "description": "Obrigatório (emenda 1, F3): no root real vem do módulo politica; no root do Floci, valor sintético fixo (ADR-0009).",
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,99}$"
+        },
+        "motor_politica_arn": {
+          "description": "Obrigatório (emenda 1, F3; ADR-0009).",
+          "$ref": "#/$defs/arn_motor"
+        },
+        "versoes_mcp": {
+          "description": "Versões de MCP aceitas pelo gateway (ADR-0010); o cliente envia MCP-Protocol-Version.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["2025-03-26", "2025-06-18", "2025-11-25", "2026-07-28"]}
+        },
+        "grupo_log_gateway": {
+          "type": "string",
+          "pattern": "^/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/[A-Za-z0-9][A-Za-z0-9_-]*$"
+        },
+        "grupo_spans": {"const": "aws/spans"},
+        "topico_alarmes_arn": {"$ref": "#/$defs/arn_topico"},
+        "chave_kms_arn": {"$ref": "#/$defs/arn_chave"},
+        "mapa_erros": {"$ref": "#/$defs/mapa_erros"}
+      }
+    },
+    "produto": {
+      "description": "/00-plataforma-agentes/contrato/v1/produtos/<chave>, escrito pelo módulo registro-produto no state do produto (tabela Contrato v1 do plano).",
+      "type": "object",
+      "required": ["versao_contrato", "perfil_inferencia_arn", "guardrail_id", "guardrail_versao", "alvos", "roles"],
+      "additionalProperties": false,
+      "properties": {
+        "versao_contrato": {"$ref": "#/$defs/versao_contrato"},
+        "perfil_inferencia_arn": {"$ref": "#/$defs/arn_perfil_inferencia"},
+        "guardrail_id": {"type": "string", "pattern": "^[a-z0-9]+$"},
+        "guardrail_versao": {
+          "description": "Versão numerada publicada; nunca DRAFT (T033).",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "alvos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["nome", "tools"],
+            "additionalProperties": false,
+            "properties": {
+              "nome": {"type": "string", "pattern": "^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"},
+              "tools": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["nome", "classes"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "nome": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+                    "classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/classe_tool"}}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "roles": {
+          "type": "object",
+          "required": ["agentes", "aprovacao"],
+          "additionalProperties": false,
+          "properties": {
+            "agentes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["nome", "arn"],
+                "additionalProperties": false,
+                "properties": {
+                  "nome": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"},
+                  "arn": {"$ref": "#/$defs/arn_role"}
+                }
+              }
+            },
+            "aprovacao": {"$ref": "#/$defs/arn_role"}
+          }
+        }
+      }
+    }
+  }
+}
