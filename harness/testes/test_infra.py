@@ -69,6 +69,11 @@ class TestPrazoDaInfra(unittest.TestCase):
     """D-022: prazo de vida registrado no apply e destroy automático quando vence."""
     p = {"chave": "x", "infra_real": True, "destroy_workflow": ".github/workflows/x-destroy.yml"}
 
+    def test_prazo_padrao_e_seis_horas_e_teto_continua_24(self):
+        # decisão do dono: destroy automático 6 h após a subida; estender continua até o teto de D-024
+        self.assertEqual(infra.PRAZO_PADRAO_H, 6)
+        self.assertEqual(infra.PRAZO_MAXIMO_H, 24)
+
     def ativo(self, horas=24):
         return infra.registrar({}, self.p, "x-lab", horas, AGORA)
 
