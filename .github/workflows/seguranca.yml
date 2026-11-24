@@ -287,7 +287,9 @@ jobs:
   finops:
     name: FinOps (Infracost)
     needs: descobrir
-    if: needs.descobrir.outputs.terraform != '[]'
+    # Sempre roda: o check obrigatório precisa de resultado mesmo sem Terraform no PR (um job pulado
+    # não satisfaz a ruleset). Sem IaC, o job termina verde e avisa que não há o que estimar.
+    if: always() && needs.descobrir.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -307,12 +309,23 @@ jobs:
           else
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Verificar se há Terraform no PR
+        id: iac
+        env:
+          DIRS: ${{ needs.descobrir.outputs.terraform }}
+        run: |
+          if [ "$DIRS" = "[]" ]; then
+            echo "::notice::Sem Terraform neste PR: nada a estimar. O check FinOps fica verde."
+            echo "tem=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tem=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: infracost/actions/setup@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
-        if: steps.chave.outputs.ok == 'true'
+        if: steps.iac.outputs.tem == 'true' && steps.chave.outputs.ok == 'true'
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
       - name: Estimar custo por diretório
-        if: steps.chave.outputs.ok == 'true'
+        if: steps.iac.outputs.tem == 'true' && steps.chave.outputs.ok == 'true'
         env:
           DIRS: ${{ needs.descobrir.outputs.terraform }}
         run: |
@@ -320,21 +333,21 @@ jobs:
           infracost breakdown --config-file infracost.yml --format json --out-file infracost.json
           infracost output --path infracost.json --format table
       - name: Comentar no PR
-        if: steps.chave.outputs.ok == 'true' && github.event_name == 'pull_request'
+        if: steps.iac.outputs.tem == 'true' && steps.chave.outputs.ok == 'true' && github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
         run: infracost comment github --path infracost.json --repo "$REPO" --pull-request "$PR" --github-token "$GITHUB_TOKEN" --behavior update
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: steps.chave.outputs.ok == 'true'
+        if: steps.iac.outputs.tem == 'true' && steps.chave.outputs.ok == 'true'
         with:
           name: finops
           path: infracost.json
       - name: Testes do gate de custo
         run: python3 -m unittest discover -s .github/ia/testes
       - name: Bloquear acima do teto diário do projeto ou do limite mensal da conta
-        if: steps.chave.outputs.ok == 'true'
+        if: steps.iac.outputs.tem == 'true' && steps.chave.outputs.ok == 'true'
         # D-021: teto = custo de um dia de demonstração (harness/estado.json). D-022: limite mensal da conta.
         run: python3 .github/ia/gate_custo.py infracost.json "$CUSTO_MAX_MENSAL_USD" harness/estado.json
 
