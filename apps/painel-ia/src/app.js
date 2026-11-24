@@ -9,15 +9,19 @@ import { prsGithub } from './github.js';
 import { criarServidor } from './servidor.js';
 import { Persistencia } from './persistencia.js';
 import { relatorio } from './relatorio.js';
+import { comparativo, lerArquivoTestesAb, lerColetaCoderabbit } from './comparativo.js';
 
 export function configuracao(env = process.env) {
   const numero = (v, padrao) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : padrao);
+  const dados = env.DADOS_DIR || join(homedir(), '.pos-painel-ia');
   return {
     host: env.HOST || '127.0.0.1',
     porta: numero(env.PORTA ?? env.PORT, 4317),
     transcripts: env.CLAUDE_PROJECTS_DIR || join(homedir(), '.claude', 'projects'),
-    banco: env.BANCO || join(env.DADOS_DIR || join(homedir(), '.pos-painel-ia'), 'painel.db'),
+    banco: env.BANCO || join(dados, 'painel.db'),
     registro: env.REGISTRO_CSV || '',
+    testesAb: env.TESTES_AB_CSV || '',
+    coderabbit: env.CODERABBIT_JSON || join(dados, 'coderabbit-ab.json'),
     intervaloMs: numero(env.INTERVALO_MS, 1500),
     hostsPermitidos: (env.HOSTS_PERMITIDOS || '').split(',').map((h) => h.trim()).filter(Boolean),
     monday: env.MONDAY_TOKEN && env.MONDAY_BOARD_ID ? { token: env.MONDAY_TOKEN, quadro: env.MONDAY_BOARD_ID } : null,
@@ -34,6 +38,8 @@ export async function iniciar(cfg = configuracao(), log = console) {
     prs: { ativo: !!cfg.github, itens: [], erro: null, atualizado: null },
     fontes: { transcripts: cfg.transcripts, arquivos: 0, linhasInvalidas: 0, registro: cfg.registro || null, banco: cfg.banco, salvoEm: null },
   };
+  // Entradas do comparativo A x B, relidas a cada ciclo; a rota só monta a resposta (síncrona).
+  const ab = { registro: [], testes: [], coderabbit: null };
   const leitor = new LeitorTranscripts(cfg.transcripts, (ev, meta) => agregador.ingerir(ev, meta));
   const estado = () => ({ ...agregador.estado(), ...externos,
     fontes: { ...externos.fontes, arquivos: leitor.arquivos, linhasInvalidas: leitor.erros } });
@@ -44,6 +50,7 @@ export async function iniciar(cfg = configuracao(), log = console) {
     hostsPermitidos: cfg.hostsPermitidos,
     extras: {
       '/api/relatorio.md': () => [relatorio(banco, { formato: 'md' }), 'text/markdown; charset=utf-8', 'relatorio-uso-ia.md'],
+      '/api/comparativo': () => [JSON.stringify(comparativo(banco, ab)), 'application/json; charset=utf-8'],
       '/api/relatorio.csv': () => [relatorio(banco, { formato: 'csv' }), 'text/csv; charset=utf-8', 'uso-tokens.csv'],
     },
   });
@@ -51,7 +58,9 @@ export async function iniciar(cfg = configuracao(), log = console) {
   const ciclo = async () => {
     try {
       await leitor.varrer();
-      if (cfg.registro) agregador.ingerirRegistro(await lerRegistro(cfg.registro));
+      if (cfg.registro) { ab.registro = await lerRegistro(cfg.registro); agregador.ingerirRegistro(ab.registro); }
+      ab.testes = await lerArquivoTestesAb(cfg.testesAb);
+      ab.coderabbit = await lerColetaCoderabbit(cfg.coderabbit);
       if (banco.salvar(agregador)) externos.fontes.salvoEm = Date.now();
     } catch (e) { log.error('falha ao ler as fontes:', e.message); }
     if (agregador.versao !== versaoEnviada) { versaoEnviada = agregador.versao; srv.notificar(); }
