@@ -7,4 +7,4 @@ paths:
 - `permissions: contents: read` no topo; amplie só no job que precisa.
 - Nunca use `pull_request_target` com checkout do código do PR. Nunca interpole `github.event.*` direto em `run:`; passe por `env`.
 - Credenciais da AWS só via OIDC (`aws-actions/configure-aws-credentials` com `role-to-assume`).
-- Mudanças nesta pasta exigem revisão humana; os agentes não podem alterá-la.
+- Qualquer agente pode alterar workflows, sempre por PR. A aprovação do dono é obrigatória antes do merge (`.github/CODEOWNERS`). Nenhum agente faz merge, nem altera ambientes, rulesets ou secrets.
