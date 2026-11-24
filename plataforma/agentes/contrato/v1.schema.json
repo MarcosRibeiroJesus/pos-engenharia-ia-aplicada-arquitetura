@@ -7,47 +7,56 @@
     {"$ref": "#/$defs/produto"}
   ],
   "$defs": {
+    "nome_permitido": {
+      "description": "Nome de campo sem cara de segredo (ADR-0002, TS-02): nenhum nome contém segredo, senha, token, chave_secreta (também chave-secreta e chavesecreta) ou password, em qualquer posição e sem diferença de maiúscula. O JSON Schema não tem flag de caixa, então cada letra vai numa classe [aA]. Todo objeto do contrato referencia esta regra em propertyNames, o que barra o nome mesmo numa versão futura que o declare em properties; o test_segredos.py reprova objeto novo sem ela.",
+      "not": {"type": "string", "pattern": "[sS][eE][gG][rR][eE][dD][oO]|[sS][eE][nN][hH][aA]|[tT][oO][kK][eE][nN]|[cC][hH][aA][vV][eE][_-]?[sS][eE][cC][rR][eE][tT][aA]|[pP][aA][sS][sS][wW][oO][rR][dD]"}
+    },
+    "sem_credencial": {
+      "description": "Valor sem formato de credencial (TS-02, RF-003; a credencial de alvo fica no AgentCore Identity, ADR-0003): chave de acesso da AWS (AKIA ou ASIA + 16), chave privada PEM, chave da API da Anthropic (sk-ant-), token do GitHub (gh?_ + 20) e token do Slack (xox?-). Cobre os formatos do TT-S05 (plan/plano.py), sem a fronteira de palavra, porque no contrato a credencial colada num identificador também é credencial. Toda string do schema referencia esta regra; o test_segredos.py reprova string nova sem ela. A mensagem de erro nunca repete o valor.",
+      "not": {"type": "string", "pattern": "(AKIA|ASIA)[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-ant-|gh[pousr]_[A-Za-z0-9]{20,}|xox[abprs]-"}
+    },
     "versao_contrato": {
       "description": "Versão completa 1.MENOR.CORRECAO; o 1 é a versão maior do caminho (v1).",
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
     },
     "regiao": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^[a-z]{2}(-[a-z]+)+-[0-9]$"
     },
     "arn_gateway": {
       "$comment": "Os ARNs abaixo seguem <partição>:<serviço>:<região>:<conta de 12 dígitos>:<recurso>, sem curinga (ADR-0014).",
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:bedrock-agentcore:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:gateway/[A-Za-z0-9][A-Za-z0-9_-]*$"
     },
     "arn_motor": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:bedrock-agentcore:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:policy-engine/[A-Za-z][A-Za-z0-9_-]*$"
     },
     "arn_topico": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:sns:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:[A-Za-z0-9_-]{1,256}$"
     },
     "arn_chave": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:kms:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:key/[0-9a-f-]{36}$"
     },
     "arn_perfil_inferencia": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:bedrock:[a-z]{2}(-[a-z]+)+-[0-9]:[0-9]{12}:application-inference-profile/[a-z0-9]+$"
     },
     "arn_role": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "pattern": "^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role/[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"
     },
     "texto": {
-      "type": "string",
+      "$ref": "#/$defs/sem_credencial", "type": "string",
       "minLength": 1,
       "maxLength": 200
     },
     "erro_nao_retentavel": {
       "type": "object",
+      "propertyNames": {"$ref": "#/$defs/nome_permitido"},
       "required": ["origem", "retentavel", "acao"],
       "additionalProperties": false,
       "properties": {
@@ -59,6 +68,7 @@
     "erro_retentavel": {
       "description": "Retentativa exponencial de 1, 2 e 4 segundos, até 3 tentativas (RF-011).",
       "type": "object",
+      "propertyNames": {"$ref": "#/$defs/nome_permitido"},
       "required": ["origem", "retentavel", "acao", "tentativas_max", "espera_segundos"],
       "additionalProperties": false,
       "properties": {
@@ -72,6 +82,7 @@
     "mapa_erros": {
       "description": "Tabela do RF-011: categoria -> origem, retentável e o que o produto faz. Mascaramento (ANONYMIZED) não é erro e não entra aqui.",
       "type": "object",
+      "propertyNames": {"$ref": "#/$defs/nome_permitido"},
       "required": ["politica_negada", "requer_aprovacao_humana", "guardrail_entrada", "guardrail_saida",
                    "autenticacao", "limite_taxa", "falha_transitoria", "erro_desconhecido"],
       "additionalProperties": false,
@@ -92,6 +103,7 @@
     "comum": {
       "description": "/00-plataforma-agentes/contrato/v1/comum, escrito pelo stack da plataforma (tabela Contrato v1 do plano).",
       "type": "object",
+      "propertyNames": {"$ref": "#/$defs/nome_permitido"},
       "required": ["versao_contrato", "regiao", "gateway_arn", "gateway_url", "gateway_id",
                    "motor_politica_id", "motor_politica_arn", "versoes_mcp", "grupo_log_gateway",
                    "grupo_spans", "topico_alarmes_arn", "chave_kms_arn", "mapa_erros"],
@@ -102,13 +114,13 @@
         "gateway_arn": {"$ref": "#/$defs/arn_gateway"},
         "gateway_url": {
           "description": "URL MCP do gateway; só HTTPS (Art. IV, TLS em trânsito).",
-          "type": "string",
+          "$ref": "#/$defs/sem_credencial", "type": "string",
           "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[A-Za-z0-9._~/-]*)?$"
         },
-        "gateway_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$"},
+        "gateway_id": {"$ref": "#/$defs/sem_credencial", "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$"},
         "motor_politica_id": {
           "description": "Obrigatório (emenda 1, F3): no root real vem do módulo politica; no root do Floci, valor sintético fixo (ADR-0009).",
-          "type": "string",
+          "$ref": "#/$defs/sem_credencial", "type": "string",
           "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,99}$"
         },
         "motor_politica_arn": {
@@ -123,7 +135,7 @@
           "items": {"enum": ["2025-03-26", "2025-06-18", "2025-11-25", "2026-07-28"]}
         },
         "grupo_log_gateway": {
-          "type": "string",
+          "$ref": "#/$defs/sem_credencial", "type": "string",
           "pattern": "^/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/[A-Za-z0-9][A-Za-z0-9_-]*$"
         },
         "grupo_spans": {"const": "aws/spans"},
@@ -135,15 +147,16 @@
     "produto": {
       "description": "/00-plataforma-agentes/contrato/v1/produtos/<chave>, escrito pelo módulo registro-produto no state do produto (tabela Contrato v1 do plano).",
       "type": "object",
+      "propertyNames": {"$ref": "#/$defs/nome_permitido"},
       "required": ["versao_contrato", "perfil_inferencia_arn", "guardrail_id", "guardrail_versao", "alvos", "roles"],
       "additionalProperties": false,
       "properties": {
         "versao_contrato": {"$ref": "#/$defs/versao_contrato"},
         "perfil_inferencia_arn": {"$ref": "#/$defs/arn_perfil_inferencia"},
-        "guardrail_id": {"type": "string", "pattern": "^[a-z0-9]+$"},
+        "guardrail_id": {"$ref": "#/$defs/sem_credencial", "type": "string", "pattern": "^[a-z0-9]+$"},
         "guardrail_versao": {
           "description": "Versão numerada publicada; nunca DRAFT (T033).",
-          "type": "string",
+          "$ref": "#/$defs/sem_credencial", "type": "string",
           "pattern": "^[1-9][0-9]*$"
         },
         "alvos": {
@@ -151,19 +164,21 @@
           "minItems": 1,
           "items": {
             "type": "object",
+            "propertyNames": {"$ref": "#/$defs/nome_permitido"},
             "required": ["nome", "tools"],
             "additionalProperties": false,
             "properties": {
-              "nome": {"type": "string", "pattern": "^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"},
+              "nome": {"$ref": "#/$defs/sem_credencial", "type": "string", "pattern": "^[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"},
               "tools": {
                 "type": "array",
                 "minItems": 1,
                 "items": {
                   "type": "object",
+                  "propertyNames": {"$ref": "#/$defs/nome_permitido"},
                   "required": ["nome", "classes"],
                   "additionalProperties": false,
                   "properties": {
-                    "nome": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+                    "nome": {"$ref": "#/$defs/sem_credencial", "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
                     "classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/classe_tool"}}
                   }
                 }
@@ -173,6 +188,7 @@
         },
         "roles": {
           "type": "object",
+          "propertyNames": {"$ref": "#/$defs/nome_permitido"},
           "required": ["agentes", "aprovacao"],
           "additionalProperties": false,
           "properties": {
@@ -181,10 +197,11 @@
               "minItems": 1,
               "items": {
                 "type": "object",
+                "propertyNames": {"$ref": "#/$defs/nome_permitido"},
                 "required": ["nome", "arn"],
                 "additionalProperties": false,
                 "properties": {
-                  "nome": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"},
+                  "nome": {"$ref": "#/$defs/sem_credencial", "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"},
                   "arn": {"$ref": "#/$defs/arn_role"}
                 }
               }
