@@ -82,30 +82,40 @@ test('antigravity: leitura em tempo real ignora transcript_full, conta tokens di
     assert.equal(agy.output, 750);
     assert.equal(cc.requisicoes, 1);
 
-    // Detalhe de sessao e timeline funcionam para Antigravity
-    const det = ag.detalheSessao(convId);
+    // Detalhe de sessao e timeline funcionam para Antigravity (com namespace agy: isolado)
+    const det = ag.detalheSessao(`agy:${convId}`);
     assert.ok(det);
     assert.equal(det.timeline.length, 2);
     assert.equal(det.timeline[0].contexto, 15000);
     assert.equal(det.timeline[1].contexto, 17500);
     assert.ok(det.atribuicao.delta_total_medido === 2500);
 
-    // Comparativo por agente em tarefas inclui tarefas de transcripts e do CSV
+    // Comparativo por agente em tarefas: CSV nao duplica e projetos diferentes ficam separados
     ag.ingerirRegistro([
-      { projeto: '03-mcp-regras-cdb', tarefa: 'Implementar T001', modelo: 'gemini-4-neon-medium', requisicoes: 2, input: 1000, cache_write: 0, cache_read: 5000, output: 200, fonte: 'medido' },
+      { projeto: 'plataforma', tarefa: 'Implementar T001', modelo: 'gemini-4-neon-medium', requisicoes: 2, input: 1000, cache_write: 0, cache_read: 5000, output: 200, fonte: 'medido' },
+      { projeto: '03-mcp-regras-cdb', tarefa: 'Implementar T001', modelo: 'gemini-4-neon-medium', requisicoes: 1, input: 500, cache_write: 0, cache_read: 0, output: 100, fonte: 'medido' },
     ]);
     const est2 = ag.estado();
-    const linhaComp = est2.comparativoTarefas.find((t) => t.tarefa === 'Implementar T001');
-    assert.ok(linhaComp, 'tarefa presente no comparativo');
-    assert.ok(linhaComp.agentes['claude-code']?.equivalente > 0);
-    assert.ok(linhaComp.agentes.antigravity?.equivalente > 0);
+    const linhaPlat = est2.comparativoTarefas.find((t) => t.tarefa === 'Implementar T001' && t.projeto === 'plataforma');
+    const linhaD03 = est2.comparativoTarefas.find((t) => t.tarefa === 'Implementar T001' && t.projeto === '03-mcp-regras-cdb');
+    assert.ok(linhaPlat, 'tarefa de plataforma presente');
+    assert.ok(linhaD03, 'tarefa de D03 separada por projeto');
+    // 1000*1 + 5000*0.1 + 200*5 = 2500 (nao pode ser 5000 duplicado!)
+    assert.equal(linhaPlat.agentes.antigravity.equivalente, 2500);
+    // 500*1 + 100*5 = 1000
+    assert.equal(linhaD03.agentes.antigravity.equivalente, 1000);
+    assert.ok(linhaPlat.agentes['claude-code']?.equivalente > 0);
 
-    // Persistencia preserva agente e relatorio MD inclui comparativo por agente
+    // Persistencia + replay apos reinicio e 100% idempotente (nao infla leituras nem output_bytes)
     const p = new Persistencia(':memory:');
     p.salvar(ag);
     const ag2 = new Agregador({ agora: () => Date.parse('2026-11-24T10:01:00Z') });
     p.restaurar(ag2);
+    const leitorAgyReplay = new LeitorTranscripts(dirAgy, (ev, meta) => ag2.ingerir(ev, meta), { origem: 'antigravity', somenteNome: 'transcript.jsonl' });
+    await leitorAgyReplay.varrer();
     assert.equal(ag2.estado().porAgente.find((a) => a.agente === 'antigravity')?.requisicoes, 2);
+    const leiturasApos = [...(ag2.consumo.leiturasArquivo.get(`agy:${convId}`)?.values() || [])];
+    assert.equal(leiturasApos[0]?.total, 1, 'replay nao infla contagem de leituras');
     const md = relatorio(p, { formato: 'md' });
     assert.ok(md.includes('## Por agente'));
     p.fechar();

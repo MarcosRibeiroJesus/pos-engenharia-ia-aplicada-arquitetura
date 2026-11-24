@@ -354,25 +354,26 @@ export class Agregador {
     const contagem = { pending: 0, in_progress: 0, completed: 0 };
     for (const t of tarefas) contagem[t.status] = (contagem[t.status] || 0) + 1;
 
-    // Comparativo de gasto por agente em tarefas (agrupado pelo título normalizado da tarefa)
+    // Comparativo de gasto por agente em tarefas (agrupado por projeto + tarefa, sem contar CSV duas vezes)
     const compMapa = new Map();
     const acumularComp = (titulo, projeto, agente, eqVal, reqs) => {
-      const chave = String(titulo || '').trim();
-      if (!chave || eqVal <= 0) return;
+      const nomeTarefa = String(titulo || '').trim();
+      const nomeProj = String(projeto || 'desconhecido').trim();
+      if (!nomeTarefa || eqVal <= 0) return;
+      const chave = `${nomeProj}::${nomeTarefa}`;
       let item = compMapa.get(chave);
-      if (!item) { item = { tarefa: chave, projetos: new Set(), agentes: {}, totalEquivalente: 0 }; compMapa.set(chave, item); }
-      if (projeto) item.projetos.add(projeto);
+      if (!item) { item = { tarefa: nomeTarefa, projeto: nomeProj, projetos: [nomeProj], agentes: {}, totalEquivalente: 0 }; compMapa.set(chave, item); }
       if (!item.agentes[agente]) item.agentes[agente] = { equivalente: 0, requisicoes: 0 };
       item.agentes[agente].equivalente += Math.round(eqVal);
       item.agentes[agente].requisicoes += reqs || 0;
       item.totalEquivalente += Math.round(eqVal);
     };
-    for (const t of tarefas) {
+    for (const t of tarefasTranscript) {
       const ags = Object.entries(t.agentes || {});
       if (ags.length) {
         for (const [agNome, dados] of ags) acumularComp(t.titulo, t.projeto, agNome, dados.equivalente, dados.requisicoes);
       } else if (t.equivalente > 0) {
-        acumularComp(t.titulo, t.projeto, 'claude-code', t.equivalente, t.requisicoes);
+        acumularComp(t.titulo, t.projeto, t.agente || 'claude-code', t.equivalente, t.requisicoes);
       }
     }
     for (const l of this.registro.linhas) {
@@ -381,7 +382,6 @@ export class Agregador {
       acumularComp(l.tarefa, l.projeto, inferirAgente(l.modelo, l.observacao), eqVal, l.requisicoes);
     }
     const comparativoTarefas = [...compMapa.values()]
-      .map((c) => ({ tarefa: c.tarefa, projetos: [...c.projetos], agentes: c.agentes, totalEquivalente: c.totalEquivalente }))
       .sort((a, b) => b.totalEquivalente - a.totalEquivalente);
 
     const sessoes = [...this.sessoes.values()]

@@ -4,6 +4,7 @@
 
 import { readdir, open } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const CHUNK_PADRAO = 64 * 1024;
 
@@ -15,9 +16,11 @@ export function metadadosArquivo(caminho, origem = 'claude-code') {
     // .../<conversation-id>/.system_generated/logs/transcript.jsonl
     const avo = dirname(pai);
     const bisavo = dirname(avo);
-    const sessaoPai = basename(pai) === 'logs' && basename(avo) === '.system_generated'
+    const convId = basename(pai) === 'logs' && basename(avo) === '.system_generated'
       ? basename(bisavo)
       : basename(pai);
+    // Qualifica o ID de sessão pela origem para evitar qualquer colisão com sessões do Claude Code.
+    const sessaoPai = `agy:${convId}`;
     return { arquivo: arq, fio: 'principal', isSubagente: false, sessaoPai, agente: 'antigravity' };
   }
   if (basename(pai) === 'subagents') {
@@ -64,6 +67,11 @@ export function normalizarEventoAntigravity(ev, meta) {
   if (t === 'PLANNER_RESPONSE') {
     if (ev.status && ev.status !== 'DONE') return null;
     if (!ev.model) return null;
+    // Identidade determinística: exige step_index ou created_at; sem ambos usa hash estável do uso/modelo (nunca Date.now).
+    let sufixoId;
+    if (ev.step_index != null) sufixoId = `step-${ev.step_index}`;
+    else if (ev.created_at) sufixoId = `ts-${ev.created_at}`;
+    else sufixoId = `h-${createHash('sha256').update(JSON.stringify([ev.model, ev.input_tokens, ev.cache_read_tokens, ev.output_tokens])).digest('hex').slice(0, 12)}`;
     const content = [];
     if (typeof ev.thinking === 'string' && ev.thinking) content.push({ type: 'thinking', thinking: ev.thinking });
     if (typeof ev.content === 'string' && ev.content) content.push({ type: 'text', text: ev.content });
@@ -74,15 +82,15 @@ export function normalizarEventoAntigravity(ev, meta) {
         const inp = tc.args && typeof tc.args === 'object' ? tc.args : {};
         // Compatibilidade de detecção de leitura de arquivo (Read / read_file)
         const normInp = nome === 'read_file' && inp.Path ? { ...inp, file_path: inp.Path } : inp;
-        content.push({ type: 'tool_use', id: `agy-${ev.step_index}-${idx}`, name: nome === 'read_file' ? 'Read' : nome, input: normInp });
+        content.push({ type: 'tool_use', id: `agy-${sufixoId}-${idx}`, name: nome === 'read_file' ? 'Read' : nome, input: normInp });
       });
     }
     return {
       type: 'assistant',
       sessionId: sessaoId,
-      timestamp: ts,
+      timestamp: ev.created_at || null,
       message: {
-        id: `${sessaoId}:step-${ev.step_index ?? ts}`,
+        id: `${sessaoId}:${sufixoId}`,
         model: String(ev.model),
         content,
         usage: {

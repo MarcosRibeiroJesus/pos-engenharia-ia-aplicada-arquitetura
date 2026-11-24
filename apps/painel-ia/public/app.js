@@ -55,24 +55,43 @@ function trocarAba(nova) {
   if ((nova === 'sessao' || nova === 'atribuicao') && sessaoSelecionada) carregarDetalhe(sessaoSelecionada);
 }
 
+function resumoFiltrado(e) {
+  if (filtroAgenteGlobal === 'todos') return { totais: e.totais, porTipo: e.porTipo || [] };
+  const ag = (e.porAgente || []).find((a) => a.agente === filtroAgenteGlobal) || { requisicoes: 0, input: 0, cache_write: 0, cache_read: 0, output: 0, equivalente: 0, sessoes: 0 };
+  const eq = ag.equivalente || 1;
+  const porTipo = [
+    { tipo: 'cache_read', rotulo: 'Cache lido (×0,1)', tokens: ag.cache_read, equivalente: Math.round(ag.cache_read * 0.1), pct: Number(((100 * ag.cache_read * 0.1) / eq).toFixed(1)) },
+    { tipo: 'cache_write', rotulo: 'Cache escrito (×2)', tokens: ag.cache_write, equivalente: Math.round(ag.cache_write * 2), pct: Number(((100 * ag.cache_write * 2) / eq).toFixed(1)) },
+    { tipo: 'output', rotulo: 'Saída (×5)', tokens: ag.output, equivalente: Math.round(ag.output * 5), pct: Number(((100 * ag.output * 5) / eq).toFixed(1)) },
+    { tipo: 'input', rotulo: 'Entrada nova (×1)', tokens: ag.input, equivalente: Math.round(ag.input), pct: Number(((100 * ag.input) / eq).toFixed(1)) },
+  ].sort((a, b) => b.equivalente - a.equivalente);
+  const sessoesAtivas = (e.sessoes || []).filter((s) => s.ativa && passaAgente(s.agente)).length;
+  return { totais: { ...e.totais, ...ag, sessoesAtivas }, porTipo };
+}
+
 function tiles(e) {
-  const c = e.contagemTarefas || {};
+  const { totais, porTipo } = resumoFiltrado(e);
+  const tarefasFilt = (e.tarefas || []).filter((t) => passaAgente(t.agente));
+  const c = { in_progress: 0, completed: 0, pending: 0 };
+  for (const t of tarefasFilt) c[t.status] = (c[t.status] || 0) + 1;
+  const sessoesFilt = (e.sessoes || []).filter((s) => passaAgente(s.agente));
+  const opsFilt = (e.consumo?.oportunidades || []).filter((o) => passaAgente(o.agente));
   const abertas = (e.aprovacoes?.itens || []).filter((i) => !/feito|done|conclu/i.test(i.status)).length;
-  const maiorTipo = (e.porTipo || [])[0];
+  const maiorTipo = porTipo[0];
   const itens = [
-    ['Tokens equivalentes', fmt(e.totais.equivalente), `${fmt(e.totais.requisicoes)} requisições`],
+    ['Tokens equivalentes', fmt(totais.equivalente), `${fmt(totais.requisicoes)} requisições${filtroAgenteGlobal !== 'todos' ? ` · ${filtroAgenteGlobal}` : ''}`],
     ['Maior peso', maiorTipo ? `${maiorTipo.pct}%` : '—', maiorTipo ? maiorTipo.rotulo : 'sem dados'],
-    ['Ritmo agora', `${fmt(e.totais.porMinuto5)}/min`, 'média dos últimos 5 minutos'],
-    ['Sessões ativas', String(e.totais.sessoesAtivas), `${e.sessoes.length} com uso registrado`],
+    ['Ritmo agora', `${fmt(e.totais.porMinuto5)}/min`, 'média global dos últimos 5 minutos'],
+    ['Sessões ativas', String(totais.sessoesAtivas), `${sessoesFilt.length} com uso registrado`],
     ['Tarefas em andamento', String(c.in_progress || 0), `${c.completed || 0} concluídas · ${c.pending || 0} pendentes`],
-    ['Oportunidades', String((e.consumo?.oportunidades || []).length), 'regras de economia disparadas'],
+    ['Oportunidades', String(opsFilt.length), 'regras de economia disparadas'],
   ];
   if (e.aprovacoes?.ativo) itens.push(['Aprovações abertas', String(abertas), 'no board do Monday']);
   $('tiles').replaceChildren(...itens.map(([r, v, s]) => h('div', { class: 'tile' }, h('span', {}, r), h('b', {}, v), h('small', {}, s))));
 }
 
 function renderPorTipo(e) {
-  const lista = e.porTipo || [];
+  const { porTipo: lista } = resumoFiltrado(e);
   if (!lista.length) { $('por-tipo').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados ainda.')); return; }
   const max = Math.max(1, ...lista.map((t) => t.equivalente));
   $('por-tipo').replaceChildren(...lista.map((t) => h('div', {
@@ -403,7 +422,7 @@ function render(e) {
       h('td', {}, p.rascunho ? 'rascunho' : 'pronto'),
       h('td', {}, p.checks ? `✓ ${p.checks.sucesso} · ✗ ${p.checks.falha} · ◐ ${p.checks.andamento}` : '—')));
   const f = e.fontes || {};
-  $('rodape').textContent = `${f.arquivos ?? 0} transcripts lidos em ${f.transcripts || '—'}${f.linhasInvalidas ? ` (${f.linhasInvalidas} linhas inválidas ignoradas)` : ''} · histórico em ${f.banco || '—'}${f.salvoEm ? `, salvo às ${hora(f.salvoEm)}` : ''}${e.totais.naoMedidos ? ` · ${e.totais.naoMedidos} trecho(s) sem medição no registro` : ''}. Tokens equivalentes: cache lido 0,1, cache escrito 2, saída 5.`;
+  $('rodape').textContent = `${f.arquivos ?? 0} transcripts lidos${f.linhasInvalidas ? ` (${f.linhasInvalidas} linhas inválidas ignoradas)` : ''}${f.salvoEm ? ` · salvo às ${hora(f.salvoEm)}` : ''}${e.totais.naoMedidos ? ` · ${e.totais.naoMedidos} trecho(s) sem medição no registro` : ''}. Tokens equivalentes: cache lido 0,1, cache escrito 2, saída 5.`;
 }
 
 $('abas').addEventListener('click', (ev) => {

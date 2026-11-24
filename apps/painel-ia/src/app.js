@@ -35,7 +35,7 @@ export async function iniciar(cfg = configuracao(), log = console) {
   const externos = {
     aprovacoes: { ativo: !!cfg.monday, itens: [], erro: null, atualizado: null },
     prs: { ativo: !!cfg.github, itens: [], erro: null, atualizado: null },
-    fontes: { transcripts: cfg.transcripts, antigravity: cfg.antigravity, arquivos: 0, linhasInvalidas: 0, registro: cfg.registro || null, banco: cfg.banco, salvoEm: null },
+    fontes: { arquivos: 0, linhasInvalidas: 0, registroAtivo: Boolean(cfg.registro), progressoAtivo: Boolean(cfg.progresso), antigravityAtivo: Boolean(cfg.antigravity), salvoEm: null },
   };
   const leitor = new LeitorTranscripts(cfg.transcripts, (ev, meta) => agregador.ingerir(ev, meta));
   const leitorAgy = cfg.antigravity
@@ -59,13 +59,16 @@ export async function iniciar(cfg = configuracao(), log = console) {
   });
   let versaoEnviada = -1;
   const ciclo = async () => {
+    const rodarFonte = async (nome, fn) => {
+      try { await fn(); } catch (e) { log.error(`falha ao ler ${nome}:`, e.message); }
+    };
+    await rodarFonte('claude-code', () => leitor.varrer());
+    if (leitorAgy) await rodarFonte('antigravity', () => leitorAgy.varrer());
+    if (cfg.registro) await rodarFonte('registro', async () => agregador.ingerirRegistro(await lerRegistro(cfg.registro)));
+    if (cfg.progresso) await rodarFonte('progresso', async () => agregador.ingerirProgresso(await lerProgresso(cfg.progresso)));
     try {
-      await leitor.varrer();
-      if (leitorAgy) await leitorAgy.varrer();
-      if (cfg.registro) agregador.ingerirRegistro(await lerRegistro(cfg.registro));
-      if (cfg.progresso) agregador.ingerirProgresso(await lerProgresso(cfg.progresso));
       if (banco.salvar(agregador)) externos.fontes.salvoEm = Date.now();
-    } catch (e) { log.error('falha ao ler as fontes:', e.message); }
+    } catch (e) { log.error('falha ao salvar no banco:', e.message); }
     if (agregador.versao !== versaoEnviada) { versaoEnviada = agregador.versao; srv.notificar(); }
   };
 
