@@ -44,3 +44,6 @@ docs/pos-archs/
 
 # worktrees do git criados dentro da pasta do repositório (cada um tem o próprio branch)
 wt_*/
+
+# estado salvo pelo hook de 230 mil tokens (local da sessão, nunca commitado)
+harness/handoff/

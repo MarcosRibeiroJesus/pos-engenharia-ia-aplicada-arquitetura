@@ -17,8 +17,9 @@
     <button role="tab" data-aba="sessao" aria-selected="false">Sessão &amp; Timeline</button>
     <button role="tab" data-aba="atribuicao" aria-selected="false">Atribuição</button>
     <button role="tab" data-aba="subagentes" aria-selected="false">Subagentes</button>
-    <button role="tab" data-aba="comparativo" aria-selected="false">Comparativo</button>
+    <button role="tab" data-aba="agentes" aria-selected="false">Code Agents</button>
     <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
+    <button role="tab" data-aba="comparativo" aria-selected="false">Comparativo A x B</button>
   </nav>
   <label class="seletor" title="Filtrar todos os painéis por Code Agent">Code Agent:
     <select id="filtro-agente-global"><option value="todos">Todos</option></select>
@@ -148,8 +149,8 @@
     </div>
   </div>
 
-  <!-- ABA 5: COMPARATIVO POR AGENTE -->
-  <div class="painel-aba oculto" data-painel="comparativo">
+  <!-- ABA 5: CODE AGENTS (POR SESSÃO, SEMANA, TAREFAS E CUSTO/TOKEN) -->
+  <div class="painel-aba oculto" data-painel="agentes">
     <section class="cartao">
       <div class="cartao-topo">
         <h2>Painel por Code Agent (% da sessão e % da semana em tempo real)</h2>
@@ -226,6 +227,42 @@
         <span class="dica">regras determinísticas sobre fatos medidos; economias são sempre rotuladas como estimativa</span>
       </div>
       <div id="lista-economia"></div>
+    </section>
+  </div>
+
+  <!-- ABA 6: COMPARATIVO A x B -->
+  <div class="painel-aba oculto" data-painel="comparativo">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Antes e depois do revisor único</h2>
+        <span class="dica">A: sessões iniciadas antes do corte · B: a partir do corte · só números medidos</span>
+      </div>
+      <p id="ab-leitura" class="dica"></p>
+      <div class="rolagem"><table id="tabela-ab"><thead><tr>
+        <th>Métrica</th><th class="num">A (antes)</th><th class="num">B (depois)</th><th class="num">B contra A</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <div class="duas">
+      <section class="cartao"><h2>Chamadas de subagente por tipo</h2>
+        <div class="rolagem"><table id="tabela-ab-subagentes"><thead><tr>
+          <th>subagent_type</th><th class="num">A</th><th class="num">B</th>
+        </tr></thead><tbody></tbody></table></div>
+      </section>
+      <section class="cartao">
+        <div class="cartao-topo"><h2>CodeRabbit nos PRs mergeados</h2><span class="dica">contagens do GitHub; tokens do CodeRabbit não são medidos</span></div>
+        <div id="ab-coderabbit"></div>
+      </section>
+    </div>
+    <section class="cartao">
+      <div class="cartao-topo"><h2>Registro manual (docs/uso/uso-tokens.csv)</h2><span class="dica">fora dos totais acima, para não contar duas vezes</span></div>
+      <div id="ab-registro"></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo"><h2>Testes A x B</h2><span class="dica">rodadas controladas registradas pelo dono</span></div>
+      <div class="rolagem"><table id="tabela-testes-ab"><thead><tr>
+        <th>id</th><th>Data</th><th>Versão do harness</th><th>Grupo</th><th class="num">Tokens</th><th>Observação</th>
+      </tr></thead><tbody></tbody></table></div>
+      <p class="dica">Para registrar: acrescente uma linha em <code>docs/uso/testes-ab.csv</code> (colunas <code>id,data,versao_harness,grupo,tokens,observacao</code>, grupo A ou B, tokens medidos) e rode o painel com <code>TESTES_AB_CSV</code> apontando para esse arquivo.</p>
     </section>
   </div>
 </main>

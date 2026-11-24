@@ -53,6 +53,7 @@ function trocarAba(nova) {
     p.classList.toggle('oculto', p.dataset.painel !== nova);
   }
   if ((nova === 'sessao' || nova === 'atribuicao') && sessaoSelecionada) carregarDetalhe(sessaoSelecionada);
+  if (nova === 'comparativo') carregarComparativo();
 }
 
 function resumoFiltrado(e) {
@@ -361,7 +362,7 @@ function renderPaineisAgentes(e) {
     h('td', {}, h('span', { class: 'chip' }, c.rotulo)))));
 }
 
-function renderComparativo(e) {
+function renderComparativoAgentes(e) {
   renderPaineisAgentes(e);
   const agentes = (e.porAgente || []).filter((a) => passaAgente(a.agente));
   if (!agentes.length) {
@@ -503,9 +504,77 @@ function atualizarFiltroAgenteGlobal(e) {
   filtroAgenteGlobal = sel.value;
 }
 
+// ---- Comparativo A x B (D-075): lido de /api/comparativo ao abrir a aba e a cada atualização com ela aberta.
+const NAO_MEDIDO = 'nao-medido';
+const pct = (v) => (v == null ? 'sem base em A' : `${v > 0 ? '+' : ''}${String(v).replace('.', ',')}%`);
+const inteiro = (n) => (n == null ? NAO_MEDIDO : Math.round(n).toLocaleString('pt-BR'));
+let carregandoAb = false;
+
+function linhaAb(rotulo, a, b, v) {
+  return h('tr', {}, h('td', {}, rotulo), h('td', { class: 'num' }, a), h('td', { class: 'num' }, b), h('td', { class: 'num' }, v));
+}
+
+function renderComparativoAb(c) {
+  const { A, B } = c.grupos;
+  const corte = new Date(c.corte).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  $('ab-leitura').replaceChildren(
+    `Corte: ${corte} (constante CORTE_AB em src/comparativo.js). `,
+    h('span', { class: c.amostraPequena ? 'chip chip-alerta' : 'chip chip-info' }, c.leitura),
+  );
+  const metricas = [
+    ['Sessões', 'sessoes'], ['Requisições', 'requisicoes'], ['Entrada', 'input'], ['Cache escrito', 'cache_write'],
+    ['Cache lido', 'cache_read'], ['Saída', 'output'], ['Total equivalente', 'equivalente'],
+    ['Equivalente por sessão', 'mediaPorSessao'], ['Chamadas de subagente', 'chamadasSubagente'],
+    ['Chamadas de revisor-independente', 'revisorIndependente'],
+  ];
+  $('tabela-ab').querySelector('tbody').replaceChildren(...metricas.map(([r, k]) => linhaAb(r, inteiro(A[k]), inteiro(B[k]), pct(c.variacao[k]))));
+
+  const tipos = [...new Set([...Object.keys(A.subagentes), ...Object.keys(B.subagentes)])]
+    .sort((x, y) => ((A.subagentes[y] || 0) + (B.subagentes[y] || 0)) - ((A.subagentes[x] || 0) + (B.subagentes[x] || 0)));
+  const corpoSub = $('tabela-ab-subagentes').querySelector('tbody');
+  if (!tipos.length) corpoSub.replaceChildren(h('tr', {}, h('td', { colspan: 3, class: 'vazio' }, 'Nenhuma chamada de subagente medida.')));
+  else corpoSub.replaceChildren(...tipos.map((t) => h('tr', {}, h('td', {}, t),
+    h('td', { class: 'num' }, String(A.subagentes[t] || 0)), h('td', { class: 'num' }, String(B.subagentes[t] || 0)))));
+
+  const cr = c.coderabbit;
+  if (cr.status !== 'medido') {
+    $('ab-coderabbit').replaceChildren(h('p', { class: 'vazio' }, `${NAO_MEDIDO}: ${cr.motivo}`));
+  } else {
+    const t = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Métrica'), h('th', { class: 'num' }, 'A'), h('th', { class: 'num' }, 'B'))),
+      h('tbody', {}, ...[['PRs mergeados', 'prs'], ['PRs com review do CodeRabbit', 'prsComReview'], ['Reviews', 'reviews'],
+        ['Comentários', 'comentarios'], ['Rodadas (commits depois do 1º review)', 'rodadas']]
+        .map(([r, k]) => h('tr', {}, h('td', {}, r), h('td', { class: 'num' }, String(cr.A[k])), h('td', { class: 'num' }, String(cr.B[k]))))));
+    $('ab-coderabbit').replaceChildren(t, h('p', { class: 'dica' }, `Coletado em ${quando(Date.parse(cr.coletadoEm))}. Grupo pela data do merge.`));
+  }
+
+  const rg = c.registro;
+  $('ab-registro').replaceChildren(h('p', { class: 'dica' },
+    `A: ${rg.A.medido.linhas} linha(s) medida(s), ${inteiro(equivalenteReg(rg.A.medido))} equivalentes, ${rg.A.naoMedidos} ${NAO_MEDIDO} · `
+    + `B: ${rg.B.medido.linhas} linha(s) medida(s), ${inteiro(equivalenteReg(rg.B.medido))} equivalentes, ${rg.B.naoMedidos} ${NAO_MEDIDO}. `
+    + 'Linhas nao-medido não entram em número nenhum.'));
+
+  const corpoT = $('tabela-testes-ab').querySelector('tbody');
+  if (!c.testes.length) corpoT.replaceChildren(h('tr', {}, h('td', { colspan: 6, class: 'vazio' }, 'Nenhum teste registrado.')));
+  else corpoT.replaceChildren(...c.testes.map((t) => h('tr', {}, h('td', {}, t.id), h('td', {}, t.data), h('td', {}, t.versao_harness),
+    h('td', {}, t.grupo), h('td', { class: 'num' }, inteiro(t.tokens)), h('td', {}, t.observacao))));
+}
+
+const equivalenteReg = (m) => m.input + 2 * m.cache_write + 0.1 * m.cache_read + 5 * m.output;
+
+async function carregarComparativo() {
+  if (carregandoAb) return;
+  carregandoAb = true;
+  try {
+    const r = await fetch('/api/comparativo');
+    if (r.ok) renderComparativoAb(await r.json());
+    else $('ab-leitura').textContent = `Falha ao ler o comparativo (${r.status}).`;
+  } catch { $('ab-leitura').textContent = 'Falha ao ler o comparativo.'; } finally { carregandoAb = false; }
+}
+
 function render(e) {
   ultimo = e;
   atualizarFiltroAgenteGlobal(e);
+  if (abaAtiva === 'comparativo') carregarComparativo();
   tiles(e);
   renderPorTipo(e);
   renderPorDia(e);
@@ -517,7 +586,7 @@ function render(e) {
   recentes(e);
   renderAtribuicaoGlobal(e);
   renderSubagentes(e);
-  renderComparativo(e);
+  renderComparativoAgentes(e);
   renderEconomia(e);
   externo('aprovacoes', e.aprovacoes, 'Defina MONDAY_TOKEN e MONDAY_BOARD_ID para ver as aprovações do board.',
     (i) => h('tr', {}, h('td', {}, h('a', { href: i.url, rel: 'noopener noreferrer', target: '_blank' }, i.nome)), h('td', {}, i.tipo), h('td', {}, i.prioridade), h('td', {}, i.status)));
@@ -546,7 +615,7 @@ $('filtro-agente-global').addEventListener('change', (ev) => {
 
 $('filtro-projeto-comp').addEventListener('change', (ev) => {
   filtroProjetoComp = ev.target.value;
-  if (ultimo) renderComparativo(ultimo);
+  if (ultimo) renderComparativoAgentes(ultimo);
 });
 
 $('filtros').addEventListener('click', (ev) => {
