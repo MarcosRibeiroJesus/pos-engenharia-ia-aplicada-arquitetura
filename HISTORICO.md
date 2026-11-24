@@ -6,6 +6,29 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-23 · D-075 · Revisão automática de PR no CI com CodeRabbit como único revisor de código; sem revisor por tarefa · fonte: Marcos
+O Marcos respondeu por múltipla escolha às perguntas sobre a revisão automática no CI:
+- **Ferramenta = CodeRabbit** (só ele por enquanto). PR-Agent não entra: exigiria chave da OpenAI, fornecedor fora da D-028.
+- **Escopo = substitui o revisor de código.** Segurança e FinOps continuam no job `revisao-ia` do `seguranca.yml`; o corretor `auto-fix` não muda.
+- **Um só revisor, sem Opus:** a proposta de dois revisores vira uma revisão só, sem Opus; a esteira usa modelos mais baratos (Sonnet ou Haiku), conforme AGENTS.md, seção 9.
+- **Executor sem revisão por tarefa:** `executar-tarefas` não dispara `revisor-independente` por tarefa. Verificação local = suíte do projeto e testes do harness; revisão de código no PR. Achados do CI voltam ao especialista, no máximo 2 rodadas.
+- **SonarQube = depois**, quando o Marcos criar a conta e o token (secret dele).
+- **Níveis de risco:** o desenho de 4 níveis fica aprovado em princípio; como aplicar cada nível ao CodeRabbit (que não recebe modelo por PR) é pendente.
+
+Boa prática: um revisor por tipo de risco, sem revisões sobrepostas, com verificação determinística antes do juízo de IA. Erro comum que evita: pagar duas revisões de código que apontam a mesma coisa e travar a esteira por um token que ainda não existe.
+
+**Aplicado em:** `CLAUDE.md` (Execução autônoma), `AGENTS.md` (seção 8, ciclo de cada tarefa e seção 9, regra 4), `.claude/skills/executar-tarefas/SKILL.md` e `.agents/skills/executar-tarefas/SKILL.md` (passos 3 a 5 e descrição), `.coderabbit.yaml` (novo, pt-BR e instruções por caminho), `harness/testes/test_execucao_autonoma.py` (`test_skill_do_executor_com_revisao_no_ci_e_escalonamento`, `test_coderabbit_e_o_unico_revisor_de_codigo_em_portugues`).
+
+### 2026-11-24 · D-076 · Reinício da orquestração por tamanho de contexto (230 mil tokens) e retomada com 4 horas · fonte: Marcos
+O Marcos definiu, em três respostas:
+- **Retomada:** a sessão parada passa a ser avaliada a partir de **4 horas** (antes, 8 horas).
+- **Gatilho de reinício da orquestração:** a orquestração reinicia com resumo estruturado ao passar de **230 mil tokens** de transcript, numa pausa entre tarefas, nunca no meio de uma.
+- **Executores:** continuam como subagentes dentro da sessão de orquestração (com contexto próprio), sem sessão nova por tarefa. O commit fica com o coordenador; a memória é gravada só pela orquestração.
+
+Base: a documentação do Claude Code recomenda contexto limpo entre tarefas não relacionadas e compactação numa pausa natural. Não há número oficial de tokens para reiniciar; o 230 mil é decisão do Marcos. Erro comum que evita: deixar o contexto crescer com resultados antigos, o que aumenta o custo de cada mensagem e piora a resposta.
+
+**Aplicado em:** `AGENTS.md` (seção 9, regra 1), `CLAUDE.md` (Retomada de sessão), `.claude/skills/economia-de-tokens/SKILL.md` e `.agents/skills/economia-de-tokens/SKILL.md` (regra 4), `.claude/skills/retomar/SKILL.md` e `.agents/skills/retomar/SKILL.md` (4 horas). Medição automática do transcript: pendente de construção.
+
 ### 2026-11-23 · D-074 · Consumo completo da `00-plataforma-agentes` em todas as arquiteturas AWS e IA aplicada 100% alinhada às aulas · fonte: Marcos
 O Marcos definiu a separação clara de propósito entre os dois projetos de cada disciplina:
 - **Projetos de Arquitetura AWS (`tipo: arquitetura`):** foco em praticar conceitos e uso das ferramentas em produção, coerentes com os exemplos oficiais da AWS (âncoras da D-065) e não restritos às simplificações das aulas. Todo projeto de arquitetura AWS (`01-recomendacao`, `02-assistente-agendamento`, `03-mcp-regras-cdb` e seguintes) deve utilizar **completamente** a plataforma de agentes compartilhada (`00-plataforma-agentes`): AgentCore Gateway MCP, AgentCore Policy Engine (Cedar em `ENFORCE`), Bedrock Guardrails, Perfil de Inferência de Aplicação, Contrato SSM v1, alarmes no tópico SNS da plataforma e AgentCore Evaluations.
