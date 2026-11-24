@@ -6,6 +6,26 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-24 · D-077 · DAST (ZAP) bloqueante; falha da ferramenta é erro de pipeline, não achado · fonte: Marcos
+No chat, o Marcos escolheu corrigir o job DAST e manter o check bloqueante, em vez de torná-lo informativo ou só reexecutar. Diagnóstico: o ZAP abortou com `Failed to access summary file` (exit 3) no run 45321301256, sem achado de segurança; o rerun passou, então a falha é intermitente. O alvo resetou conexões logo após subir; a causa exata não foi reproduzida localmente. Correção: o job só libera o ZAP após 3 respostas seguidas do alvo. Boa prática: gate programático bloqueia só por achado real, e falha da própria ferramenta é erro de pipeline a corrigir; o erro comum que ela evita é afrouxar o gate para o PR passar.
+Ordem definida pelo Marcos: corrigir o DAST antes de mergear o #51, marcar o #51 como pronto e mergear; demais pendências seguem em aberto.
+**Aplicado em:** `.github/workflows/seguranca.yml` (job `dast`, PR #53, mergeada em `07e84f2`); regra ativa em `DECISOES.md`.
+
+### 2026-11-24 · D02-P6 · Permissions boundary nas roles criadas pelo deploy do D02 · fonte: Marcos
+- Pergunta: quando aplicar a permissions boundary exigida nas roles criadas?
+- Boa prática: privilégio mínimo com limite de permissão; erro comum: role de deploy que consegue se dar admin, mesmo com aprovação manual.
+- Resposta do Marcos: "Na role da conta, depois da P00-P2" (opção recomendada).
+- Tradeoff aceito: política central e fácil de auditar; o D02 segue com a brecha de escalada até a P00-P2.
+- Pendente: T210 (boundary) espera a P00-P2 (primeiro consumidor da plataforma).
+**Aplicado em:** `DECISOES.md` (regra ativa do D02 sobre boundary); `specs/02-assistente-agendamento/tasks.md` T210 segue com `[PENDENTE: D02-P6]` até a sessão do D02 executar a tarefa depois da P00-P2.
+
+### 2026-11-24 · D02-P7 · Troca do PowerUserAccess pela política do IAM Access Analyzer (D02) · fonte: Marcos
+- Pergunta: quando trocar o PowerUserAccess por política gerada pelo Access Analyzer?
+- Boa prática: política de privilégio mínimo medida no uso real; erro comum: manter PowerUserAccess para sempre porque funciona.
+- Resposta do Marcos: "No primeiro deploy real da demonstração", dentro do teto diário, com a política gerada a partir do CloudTrail.
+- Pendente: T211 espera esse deploy.
+**Aplicado em:** `DECISOES.md` (regra ativa do D02 sobre Access Analyzer); `specs/02-assistente-agendamento/tasks.md` T211 segue com `[PENDENTE: D02-P7]` até o primeiro deploy real.
+
 ### 2026-11-23 · D-075 · Revisão automática de PR no CI com CodeRabbit como único revisor de código; sem revisor por tarefa · fonte: Marcos
 O Marcos respondeu por múltipla escolha às perguntas sobre a revisão automática no CI:
 - **Ferramenta = CodeRabbit** (só ele por enquanto). PR-Agent não entra: exigiria chave da OpenAI, fornecedor fora da D-028.

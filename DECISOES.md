@@ -12,6 +12,8 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 | D04 Agentes autônomos | adiada | adiada | — | — |
 
 ## Regras ativas
+- **DAST bloqueante, com falha de ferramenta tratada como erro de pipeline** (D-077): o job DAST (ZAP) continua bloqueante. Falha da própria ferramenta não é achado: corrige-se o job, sem afrouxar o gate. O job libera o ZAP só após 3 respostas seguidas do alvo (`.github/workflows/seguranca.yml`, PR #53, mergeada em `07e84f2`).
+- **D02 (assistente de agendamento): permissions boundary e Access Analyzer** (D02-P6, D02-P7): a boundary obrigatória nas roles criadas entra na role da conta, depois da P00-P2 (T210 pendente); até lá o D02 segue com a brecha de escalada, aceita pelo dono. A troca do `PowerUserAccess` por política do IAM Access Analyzer acontece no primeiro deploy real da demonstração, dentro do teto diário, com a política gerada a partir do CloudTrail (T211 pendente).
 - **Consumo completo da `00-plataforma-agentes` em todas as arquiteturas AWS e IA aplicada 100% fiel às aulas** (D-074): todo projeto de arquitetura AWS (`01-recomendacao`, `02-assistente-agendamento`, `03-mcp-regras-cdb` e seguintes) utiliza completamente a plataforma de agentes (AgentCore Gateway MCP, AgentCore Policy Engine com Cedar em `ENFORCE`, Bedrock Guardrails, Perfil de Inferência de Aplicação, Contrato SSM v1, alarmes no SNS da plataforma e AgentCore Evaluations), com foco em praticar conceitos e ferramentas de produção coerentes com os exemplos oficiais da AWS (âncora D-065), enquanto o projeto de IA aplicada de cada disciplina é 100% alinhado às aulas. Substitui o consumo parcial na D02 (opção A da D-070 passa para opção B — consumo completo com o executor no Gateway MCP e Cedar), estende a D01 para registrar também alvo e política Cedar no gateway, e dispensa a D03-P9 na arquitetura AWS da D03.
 - **D03 (MCP de regras do CDB): plano aprovado e teto diário de US$ 0,50** (D-073): teto diário `teto_diario_usd = 0.50` com cota dura de 300.000 tokens no agente (D03-P7 = A); `plan.md`, ADRs 0001 a 0006 e `azure.md` aprovados pelo Marcos (D03-P11 = A, D-033); fase avançada para `tarefas`, com delegação liberada.
 - **D03 (MCP de regras do CDB): respostas da spec e lane de compatibilidade** (D-071, D-072):
@@ -113,6 +115,7 @@ Lido por toda sessão no início e sempre que muda. Ele prevalece sobre briefing
 - **Privacidade:** nada do curso nem dados do aluno; nada das empresas em que o Marcos trabalha (D-001).
 
 ## Pendências (aguardando o Marcos; não trate como decidido)
+- Conversa de orquestração: o Marcos respondeu "Outra conversa"; o id dela ainda não foi informado, então nenhuma gravação de orquestração sai até o id (sem id ainda).
 - Níveis de risco da revisão (D-075): 4 níveis aprovados em princípio; falta definir como aplicar cada nível ao CodeRabbit. Pendente até o Marcos decidir.
 - Medição automática do transcript para o reinício da orquestração em 230 mil tokens (D-076): pendente de construção.
 - SonarQube (D-075): depois, com a conta e o token criados pelo Marcos.
