@@ -1,10 +1,11 @@
 // Relatório a partir do banco: Markdown para o fechamento da pós e CSV no formato de docs/uso/uso-tokens.csv.
-import { equivalente } from './agregador.js';
+// Inclui as visões agregadas de consumo interno (sem conteúdo de mensagem).
+import { Agregador, equivalente } from './agregador.js';
 
 const CAB_CSV = ['data', 'sessao', 'projeto', 'disciplina', 'unidade', 'tarefa', 'modelo', 'requisicoes', 'input',
   'cache_write', 'cache_read', 'output', 'fonte', 'observacao'];
 
-const fmt = (n) => Math.round(n).toLocaleString('pt-BR');
+const fmt = (n) => Math.round(n || 0).toLocaleString('pt-BR');
 const dia = (ms) => (ms ? new Date(ms).toISOString().slice(0, 10) : '');
 const csvCampo = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : String(v));
 
@@ -48,7 +49,29 @@ export function relatorio(p, { formato = 'md' } = {}) {
   const contagem = p.consulta("SELECT status, COUNT(*) AS n FROM tarefas WHERE status != 'deleted' GROUP BY status");
   const porStatus = Object.fromEntries(contagem.map((c) => [c.status, c.n]));
 
+  // Recalcula as visões detalhadas a partir dos fatos persistidos (sem texto de mensagem).
+  const ag = new Agregador();
+  p.restaurar(ag);
+  const est = ag.estado();
+
+  const linhasTipo = est.porTipo
+    .map((t) => `| ${t.rotulo} | ${fmt(t.tokens)} | ${fmt(t.equivalente)} | ${t.pct}% |`)
+    .join('\n');
+
+  const linhasDia = est.porDia
+    .map((d) => `| ${d.nome} | ${fmt(d.requisicoes)} | ${fmt(d.cache_read)} | ${fmt(d.cache_write)} | ${fmt(d.output)} | ${fmt(d.equivalente)} |`)
+    .join('\n');
+
+  const linhasAtrib = est.consumo.atribuicao.slice(0, 15)
+    .map((a) => `| ${a.origem} | ${fmt(a.delta_tokens)} | ${fmt(a.token_reqs)} | ${fmt(a.custo_carr_equiv)} |`)
+    .join('\n');
+
+  const linhasOps = est.consumo.oportunidades.slice(0, 15)
+    .map((o) => `| ${o.sessao} | ${o.titulo} | ${o.evidencia.replaceAll('|', '/')} | ${fmt(o.economia_estimada_equiv)} (${o.rotulo}) |`)
+    .join('\n');
+
   const linhasTarefas = tarefas.map((t) => `| ${t.projeto} | ${t.titulo.replaceAll('|', '/')} | ${t.status} | ${fmt(t.requisicoes && t.input != null ? equivalente(t) : 0)} |`).join('\n');
+
   return `# Uso de IA no projeto
 
 Período: ${dia(total.primeiro) || '—'} a ${dia(total.ultimo) || '—'} · ${fmt(total.sessoes || 0)} sessões · ${fmt(total.requisicoes || 0)} requisições ao modelo.
@@ -57,8 +80,32 @@ Tokens equivalentes: ${fmt(equivalente(total))} (cache lido pesa 0,1, cache escr
 
 Tarefas: ${porStatus.completed || 0} concluídas, ${porStatus.in_progress || 0} em andamento, ${porStatus.pending || 0} pendentes.
 
+## Por tipo de token
+
+| Tipo | Tokens | Equivalentes | Participação |
+|---|---:|---:|---:|
+${linhasTipo || '| — | — | — | — |'}
+
+## Por dia
+
+| Dia | Requisições | Cache lido | Cache escrito | Saída | Equivalentes |
+|---|---:|---:|---:|---:|---:|
+${linhasDia || '| — | — | — | — | — | — |'}
+
 ${tabela('Por projeto', porProjeto, 'projeto')}
 ${tabela('Por modelo', porModelo, 'modelo')}
+## Atribuição de crescimento de contexto (estimativa proporcional por bytes)
+
+| Origem | Delta de contexto | Token-requisições | Custo de carregamento (eq.) |
+|---|---:|---:|---:|
+${linhasAtrib || '| — | — | — | — |'}
+
+## Oportunidades de economia
+
+| Sessão | Oportunidade | Evidência | Economia estimada |
+|---|---|---|---:|
+${linhasOps || '| — | — | — | — |'}
+
 ## Tarefas
 
 | Projeto | Tarefa | Status | Equivalentes |

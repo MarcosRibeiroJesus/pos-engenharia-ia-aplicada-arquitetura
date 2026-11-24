@@ -40,6 +40,11 @@
             "type": "command",
             "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/memoria_compartilhada.py\"; fi",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1; then python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/limite_contexto.py\"; else python \"$CLAUDE_PROJECT_DIR/.claude/hooks/limite_contexto.py\"; fi",
+            "timeout": 10
           }
         ]
       }

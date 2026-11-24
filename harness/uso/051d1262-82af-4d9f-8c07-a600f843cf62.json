@@ -1,0 +1,14 @@
+{
+  "sessao": "051d1262-82af-4d9f-8c07-a600f843cf62",
+  "branch": "plataforma/00-plataforma-agentes-impl",
+  "atualizado": "2026-11-20T11:08:01+00:00",
+  "modelos": {
+    "claude-haiku-5-5": {
+      "requisicoes": 2,
+      "input": 4,
+      "cache_write": 47350,
+      "cache_read": 113782,
+      "output": 775
+    }
+  }
+}

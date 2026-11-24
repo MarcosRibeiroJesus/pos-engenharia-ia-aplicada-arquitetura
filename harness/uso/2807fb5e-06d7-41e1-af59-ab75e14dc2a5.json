@@ -1,0 +1,14 @@
+{
+  "sessao": "2807fb5e-06d7-41e1-af59-ab75e14dc2a5",
+  "branch": "main",
+  "atualizado": "2026-11-20T08:34:38+00:00",
+  "modelos": {
+    "claude-haiku-5-5": {
+      "requisicoes": 7,
+      "input": 14,
+      "cache_write": 54147,
+      "cache_read": 499075,
+      "output": 3777
+    }
+  }
+}

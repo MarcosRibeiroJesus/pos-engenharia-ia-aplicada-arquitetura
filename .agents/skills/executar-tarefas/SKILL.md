@@ -1,11 +1,11 @@
 ---
 name: executar-tarefas
-description: "Executor autônomo de um projeto na fase implementar (D-047). Use quando o dono pedir para executar as tarefas: pega a próxima tarefa do tasks.md, delega ao especialista, manda um revisor diferente conferir, comita e segue até fechar a fase com PR, interrompendo o dono só nos critérios de escalonamento."
+description: "Executor autônomo de um projeto na fase implementar (D-047). Use quando o dono pedir para executar as tarefas: pega a próxima tarefa do tasks.md, delega ao especialista, verifica com os testes locais, comita e segue até fechar a fase com PR, com a revisão de código feita pelo CI (CodeRabbit, D-075), interrompendo o dono só nos critérios de escalonamento."
 ---
 
 # Executar as tarefas até o PR (D-047)
 
-Você é o coordenador desta execução. **Não escreve o código da tarefa:** delega ao especialista e manda revisar por outra instância (padrão orquestrador-trabalhador, D-045). O estado fica em arquivos (`tasks.md`, `harness/progresso.md`, commits), e não na conversa.
+Você é o coordenador desta execução. **Não escreve o código da tarefa:** delega ao especialista (padrão orquestrador-trabalhador, D-045). A revisão de código não roda por tarefa: ela roda no PR, no CI (D-075). O estado fica em arquivos (`tasks.md`, `harness/progresso.md`, commits), e não na conversa.
 
 ## Antes de começar
 1. Rode a skill `retomar` (init, memória, estado e testes verdes).
@@ -22,17 +22,12 @@ Repita até a fase atual do `tasks.md` terminar:
    - as restrições de custo e segurança.
    
    Peça: teste vermelho primeiro, implementação mínima, suíte do projeto verde, **sem commit**.
-3. **Revisão independente:** dispare o `revisor-independente`, que nunca é o mesmo agente que implementou, com:
-   - `Projeto: <chave>` e o id da tarefa;
-   - o diff (`git diff` e `git diff --cached`);
-   - os critérios: o aceite da tarefa, o requisito da spec, os artigos da constituição e as decisões citadas.
-   
-   Ele devolve **APROVADO** ou **REPROVADO**, com achados no formato da D-036.
-4. **Se REPROVADO:** devolva os achados ao mesmo especialista e revise de novo. São no máximo **2 rodadas de correção**. Na terceira reprovação, desfaça as mudanças da tarefa (`git restore` e `git clean` só nos arquivos dela) e marque a tarefa `[BLOQUEADO: revisão]` com o motivo. Isso é o critério 3 de escalonamento. Siga com a próxima tarefa que não dependa dela.
-5. **Se APROVADO:**
+3. **Verificação local:** rode a suíte do projeto e os testes do harness. Não dispare revisor por tarefa. A máquina pega antes o que um teste ou linter já reprova (AGENTS.md, seção 9, regra 4).
+4. **Achados do CI:** quando o PR receber achados (CodeRabbit, segurança ou FinOps), devolva-os ao mesmo especialista da tarefa, corrija e rode a suíte de novo. São no máximo **2 rodadas de correção**. Na terceira rodada sem resolver, desfaça as mudanças da tarefa (`git restore` e `git clean` só nos arquivos dela) e marque a tarefa `[BLOQUEADO: revisão]` com o motivo. Isso é o critério 3 de escalonamento. Siga com a próxima tarefa que não dependa dela.
+5. **Se a suíte estiver verde:**
    - marque `[x]` no `tasks.md`;
-   - rode a suíte do projeto e os testes do harness;
-   - faça **um commit por tarefa**: `feat(<chave>): T0xx <resumo>`, com a linha `Revisado-por: revisor-independente (APROVADO)` no corpo.
+   - faça **um commit por tarefa**: `feat(<chave>): T0xx <resumo>`, com a linha `Verificado-por: testes locais (revisão de código no PR, CI)` no corpo.
+   - Não comite tarefa com teste vermelho ou reprovada pelo CI.
 6. Acrescente uma linha em `harness/progresso.md`.
 
 ## Ao fechar a fase

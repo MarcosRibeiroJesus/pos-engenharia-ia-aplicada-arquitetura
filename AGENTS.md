@@ -72,7 +72,7 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
 - O especialista faz uma tarefa e devolve o relatório da skill `regras-do-especialista`. Ele não cria subagentes.
 - **Execução autônoma** (D-047): siga `.claude/skills/executar-tarefas/SKILL.md`.
   - **Antigravity:** a cópia está em `.agents/skills/`.
-  - **Ciclo de cada tarefa:** especialista → revisor diferente → commit só do que foi aprovado.
+  - **Ciclo de cada tarefa:** especialista → testes locais → commit. A revisão de código é do CI no PR (CodeRabbit, D-075); os achados voltam ao especialista, no máximo 2 rodadas.
   - **Interrupção:** só pelos critérios da skill.
   - **Nunca:** push com força, push no `main`, merge, nem apply ou destroy fora do Floci.
 - **Delegação dentro do plano aprovado** (D-033): com o `plan.md` aprovado pelo dono, a orquestração delega as tarefas das fases tarefas, analisar, implementar e verificar sem aprovar cada disparo.
@@ -82,3 +82,16 @@ especificar → esclarecer → planejar → tarefas → analisar → implementar
   - A aprovação do plano só é registrada depois que o dono aprova: `python3 harness/estado.py aprovar-plano <chave> --fonte "..."`. Plano alterado depois disso exige nova aprovação.
   - No Claude Code, o hook `gate_delegacao.py` aplica a regra.
 - **Decisão do dono vira regra ou skill no mesmo turno** (D-025). Use a skill `decisao-do-dono`.
+
+## 9. Economia de tokens (obrigatória)
+Estas regras valem para todo agente e para todo disparo de subagente. Cada uma nasce de um sinal medido pelo painel de IA (`apps/painel-ia`, ADR 0002), e a economia que ele mostra é estimativa. Sem medição, o sinal fica `nao-medido`; nunca estime número. O passo a passo está na skill `economia-de-tokens`.
+
+1. **Sessão longa sem compactar (`sessao_longa_sem_compactar`):** sessão parada mais de 4 horas não continua sobre o contexto antigo. Encerre com o resumo estruturado da seção "Retomada de sessão" do `CLAUDE.md` e abra sessão nova. Na orquestração, também reinicie quando o transcript passar de 230 mil tokens, numa pausa entre tarefas e nunca no meio de uma (D-076, decisão do dono).
+2. **Mecânico fora do Opus (`modelo_caro_mecanica`):** Opus fica só para decisão. Ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet (D-058) e, se a tarefa for só verificável, para Haiku (seção 6). Todo disparo leva o parâmetro `model` explícito.
+3. **Cache frio no meio da sessão (`cache_frio_pausa`):** não deixe pausa acima do TTL do cache (5 minutos em subagente, 1 hora na sessão principal) no meio de uma tarefa. Se a pausa for inevitável, volte com resumo estruturado em vez de reenviar o contexto inteiro reescrito.
+4. **Revisão independente em excesso (`revisao_excessiva`):** antes de chamar o revisor, rode os testes e os linters locais, para que a máquina pegue o que ela já pega. A revisão de código não é por tarefa: ela roda no PR, no CI, com o CodeRabbit como único revisor de código (D-075; seção 8 e skill `executar-tarefas`). O que se evita é gastar revisão com o que um comando barato já reprova.
+5. **Injeção repetida de hook ou lembrete (`injecao_hook_repetida`):** hooks do harness injetam só o que mudou, nunca o estado inteiro a cada mensagem, e não imprimem nada quando tudo está em ordem. Não repita no contexto o que já está lá.
+6. **Saída grande de ferramenta (`resultado_ferramenta_grande`):** filtre antes de trazer para o contexto (`rtk`, `head`, `grep`, `-C`), leia arquivo grande por trecho (`offset` e `limit`) ou isole a inspeção em subagente descartável.
+7. **Arquivo relido (`arquivo_relido`):** não releia arquivo que não mudou. O briefing do subagente leva o trecho exato ou um resumo, não o arquivo inteiro.
+
+O registro de uso (seção 7 do `CLAUDE.md`, `harness/uso/`) continua obrigatório: é ele que mostra se estas regras estão funcionando.

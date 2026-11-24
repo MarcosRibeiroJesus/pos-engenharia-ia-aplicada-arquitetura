@@ -50,7 +50,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 - Continuam meus: escopo, produto, orçamento e custos reais, cloud comparativa, escolha dos projetos de IA aplicada, merge, publicação, criação e valores de variáveis e secrets, e configurações da minha conta no GitHub ou na AWS.
 
 ## Retomada de sessão
-- Ao retomar uma sessão parada (limite de uso ou pausa), avalie se o contexto ainda vale. Se ela ficou parada mais de 8 horas, ou se a memória compartilhada mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado a continuar sobre resultados de ferramenta antigos (tarefas 1.7 e 5.1).
+- Ao retomar uma sessão parada (limite de uso ou pausa), avalie se o contexto ainda vale. Se ela ficou parada mais de 4 horas, ou se a memória compartilhada mudou com decisão que afeta o projeto, prefira uma sessão nova com resumo estruturado a continuar sobre resultados de ferramenta antigos (tarefas 1.7 e 5.1). A orquestração também reinicia ao passar de 230 mil tokens de transcript, numa pausa entre tarefas (D-076).
 - O resumo tem: branch e último commit; o que está pronto e testado; o que falta; decisões aplicadas (ids da memória); perguntas abertas.
 
 ## Perguntas ao dono
@@ -78,7 +78,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   O gate `.claude/hooks/gate_sdd.py` nega edição de código de um projeto antes da fase `implementar`.
 - **O estado de cada projeto** fica em `harness/estado.json`: fase, pastas, specs e decisões. A CLI `python3 harness/estado.py` (`status`, `validar`, `avancar`) é a única forma de mudar a fase, e só avança se os artefatos existirem.
 - **Execução autônoma** (D-047): a skill `executar-tarefas` toca o projeto até o PR da fase.
-  - **Como trabalha:** delega cada tarefa ao especialista, manda um revisor independente conferir cada tarefa (nunca quem implementou, no máximo 2 rodadas de correção) e comita só o que foi aprovado.
+  - **Como trabalha:** delega cada tarefa ao especialista, verifica com os testes locais e comita. A revisão de código não é por tarefa: ela roda no PR, no CI, com o CodeRabbit como único revisor de código (D-075). Os achados voltam ao especialista, no máximo 2 rodadas de correção.
   - **Comandos:** os necessários ficam liberados em `.claude/settings.json`. O hook `.claude/hooks/gate_execucao.py` (com shlex) e o `.githooks/pre-push` (`harness/push_seguro.py`) negam push com força, push no `main`, merge e apply ou destroy fora do Floci. Os agentes da esteira rodam com `--setting-sources user`, e os scripts deles vêm da base, nunca do PR.
   - **Quando me interrompe:** só por critério explícito (tarefa `[DONO]`, mudança de plano, falha repetida, ação irreversível), com o contexto pronto, pelo Monday, notificação e `## Bloqueios` do PR.
 - **Ritual de cada sessão:** skill `retomar`. Ela roda `harness/init.sh`, lê o estado e as decisões, avalia se o contexto ainda vale, roda os testes, executa uma tarefa por vez e registra em `harness/progresso.md`.
@@ -242,7 +242,7 @@ Escolha o modelo pelo risco e pela dificuldade da tarefa, não pelo hábito. Ao 
 - **Haiku**: tarefas mecânicas e verificáveis, como formatação, renomeações, atualização de índices e do registro de uso, e checagens de links.
 - **Fable (camada Mythos)**: só com a minha aprovação, para uma segunda opinião em decisão cara de reverter.
 - Na dúvida entre dois modelos, use o mais capaz para decidir e o mais barato para executar o que já foi decidido.
-- **Economia de tokens** (D-058):
+- **Economia de tokens** (D-058; as sete regras obrigatórias, com o sinal do painel de cada uma, estão no `AGENTS.md`, seção 9, e na skill `economia-de-tokens`):
   - **Sonnet no mecânico:** ajuste de texto, alinhamento entre artefatos e correção que não decide nada vão para Sonnet, com o parâmetro `model` no disparo. Os especialistas de plano, análise, segurança e código continuam em Opus.
   - **Orquestração curta:** quando a conversa de orquestração ficar longa (dias de trabalho ou muitos disparos), feche-a com o resumo estruturado da seção "Retomada de sessão" e abra uma nova.
   - **rtk e headroom** (D-067, ADR 0004):
