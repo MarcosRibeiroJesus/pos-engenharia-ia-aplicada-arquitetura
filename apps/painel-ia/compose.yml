@@ -8,6 +8,7 @@ services:
       - "127.0.0.1:4317:4317"
     environment:
       REGISTRO_CSV: /registro/uso-tokens.csv
+      TESTES_AB_CSV: /registro/testes-ab.csv
     env_file:
       - path: .env
         required: false
