@@ -7,7 +7,7 @@ import { lerCsv } from './registro.js';
 /** Data de corte entre os grupos (horário de Brasília). Troque só aqui. A: antes; B: a partir dela. */
 export const CORTE_AB = '2026-11-23T00:00:00-03:00';
 /** Abaixo disso, em qualquer grupo, o resultado é "amostra pequena", não conclusão. */
-export const AMOSTRA_MINIMA = 5;
+export const AMOSTRA_MINIMA = 15;
 export const CAB_TESTES_AB = ['id', 'data', 'versao_harness', 'grupo', 'tokens', 'observacao'];
 
 const CAMPOS = ['input', 'cache_write', 'cache_read', 'output'];
