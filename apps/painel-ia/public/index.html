@@ -18,6 +18,7 @@
     <button role="tab" data-aba="atribuicao" aria-selected="false">Atribuição</button>
     <button role="tab" data-aba="subagentes" aria-selected="false">Subagentes</button>
     <button role="tab" data-aba="economia" aria-selected="false">Economia</button>
+    <button role="tab" data-aba="modelos" aria-selected="false">Modelos</button>
   </nav>
   <nav class="exportar" aria-label="Exportar">
     <a href="/api/relatorio.md">Relatório (MD)</a>
@@ -152,6 +153,40 @@
         <span class="dica">regras determinísticas sobre fatos medidos; economias são sempre rotuladas como estimativa</span>
       </div>
       <div id="lista-economia"></div>
+    </section>
+  </div>
+
+  <!-- ABA 6: MODELOS -->
+  <div class="painel-aba oculto" data-painel="modelos">
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Custo estimado e cache por modelo</h2>
+        <span class="dica">estimativa, preços a conferir: tokens × preço de lista por MTok; tipo de token sem preço não entra no custo</span>
+      </div>
+      <div class="rolagem"><table id="tabela-modelos-custo"><thead><tr>
+        <th>Modelo</th><th class="num">Requisições</th><th class="num">Entrada</th><th class="num">Cache escrito 5m</th>
+        <th class="num">Cache escrito 1h</th><th class="num">Cache lido</th><th class="num">Saída</th>
+        <th class="num">Acerto do cache</th><th class="num">Custo (USD)</th><th>Observação</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Latência observada e vazão por modelo</h2>
+        <span class="dica">tempo observado entre eventos; inclui processamento local e rede; não é tempo até o primeiro token</span>
+      </div>
+      <div class="rolagem"><table id="tabela-modelos-latencia"><thead><tr>
+        <th>Modelo</th><th class="num">Após ferramenta: mediana</th><th class="num">p90</th><th class="num">n</th>
+        <th class="num">Após usuário: mediana</th><th class="num">p90</th><th class="num">n</th>
+        <th class="num">Vazão (tokens de saída/s, mediana)</th><th>Descartados</th>
+      </tr></thead><tbody></tbody></table></div>
+      <p class="dica">Δ = horário da mensagem do assistente − horário do evento anterior no mesmo fio (resultado de ferramenta ou mensagem do usuário). Δ negativo e Δ acima de 10 minutos (pausas) são descartados. Vazão = saída ÷ Δ, só após resultado de ferramenta.</p>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo"><h2>Tabela de preços usada</h2><span id="precos-fonte" class="dica"></span></div>
+      <div class="rolagem"><table id="tabela-precos"><thead><tr>
+        <th>Modelo</th><th>Faixa (tokens de entrada)</th><th class="num">Entrada</th><th class="num">Saída</th>
+        <th class="num">Cache escrito 5m</th><th class="num">Cache escrito 1h</th><th class="num">Cache lido</th><th>Status</th>
+      </tr></thead><tbody></tbody></table></div>
     </section>
   </div>
 </main>

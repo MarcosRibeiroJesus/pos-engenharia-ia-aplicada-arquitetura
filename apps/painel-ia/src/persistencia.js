@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS requisicoes_detalhe (
   cache_read INTEGER NOT NULL, output INTEGER NOT NULL, output_bytes INTEGER NOT NULL,
   tools TEXT NOT NULL, entradas TEXT NOT NULL,
   compactacao_marcada INTEGER NOT NULL, hook_injetado INTEGER NOT NULL, subagente_disparado INTEGER NOT NULL,
+  quando_anterior INTEGER, tipo_anterior TEXT,
   PRIMARY KEY (sessao, fio, id)
 );
 CREATE TABLE IF NOT EXISTS chamadas_subagente (
@@ -41,8 +42,29 @@ CREATE TABLE IF NOT EXISTS leituras_arquivo (
 CREATE INDEX IF NOT EXISTS mensagens_sessao ON mensagens(sessao);
 CREATE INDEX IF NOT EXISTS req_detalhe_sessao ON requisicoes_detalhe(sessao);
 CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT);
-INSERT OR REPLACE INTO meta VALUES ('versao_esquema', '2');
 `;
+const VERSAO_ESQUEMA = '3';
+
+// Migrações aditivas: só acrescentam colunas anuláveis, então linhas antigas ficam intactas (com null).
+// v3: horário e tipo do evento anterior a cada requisição, para a latência da aba Modelos.
+const COLUNAS_NOVAS = {
+  requisicoes_detalhe: [['quando_anterior', 'INTEGER'], ['tipo_anterior', 'TEXT']],
+};
+
+function migrar(db) {
+  db.exec('BEGIN');
+  try {
+    for (const [tabela, colunas] of Object.entries(COLUNAS_NOVAS)) {
+      const existentes = new Set(db.prepare(`PRAGMA table_info(${tabela})`).all().map((c) => c.name));
+      for (const [nome, tipo] of colunas) if (!existentes.has(nome)) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${nome} ${tipo}`);
+    }
+    db.prepare('INSERT OR REPLACE INTO meta VALUES (?, ?)').run('versao_esquema', VERSAO_ESQUEMA);
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+}
 
 export class Persistencia {
   constructor(caminho) {
@@ -55,6 +77,7 @@ export class Persistencia {
         + `compose.yml ou um tmpfs com uid=1000. Causa: ${erro.message}`, { cause: erro });
     }
     this.db.exec(ESQUEMA);
+    migrar(this.db);
     this.sql = {
       sessao: this.db.prepare(`INSERT INTO sessoes (id, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET projeto = excluded.projeto, branch = excluded.branch,
@@ -69,8 +92,9 @@ export class Persistencia {
       status: this.db.prepare('INSERT INTO historico_status (tarefa, status, quando) VALUES (?, ?, ?)'),
       reqDetalhe: this.db.prepare(`INSERT INTO requisicoes_detalhe
         (id, sessao, fio, is_subagente, modelo, quando, input, cache_write, cache_write_5m, cache_write_1h,
-         cache_read, output, output_bytes, tools, entradas, compactacao_marcada, hook_injetado, subagente_disparado)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         cache_read, output, output_bytes, tools, entradas, compactacao_marcada, hook_injetado, subagente_disparado,
+         quando_anterior, tipo_anterior)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(sessao, fio, id) DO UPDATE SET
           input = MAX(requisicoes_detalhe.input, excluded.input),
           cache_write = MAX(requisicoes_detalhe.cache_write, excluded.cache_write),
@@ -80,7 +104,9 @@ export class Persistencia {
           output = MAX(requisicoes_detalhe.output, excluded.output),
           output_bytes = MAX(requisicoes_detalhe.output_bytes, excluded.output_bytes),
           tools = excluded.tools,
-          subagente_disparado = MAX(requisicoes_detalhe.subagente_disparado, excluded.subagente_disparado)`),
+          subagente_disparado = MAX(requisicoes_detalhe.subagente_disparado, excluded.subagente_disparado),
+          quando_anterior = COALESCE(requisicoes_detalhe.quando_anterior, excluded.quando_anterior),
+          tipo_anterior = COALESCE(requisicoes_detalhe.tipo_anterior, excluded.tipo_anterior)`),
       chamadaSub: this.db.prepare(`INSERT OR IGNORE INTO chamadas_subagente
         (id, sessao, subagent_type, model_solicitado, briefing_bytes, quando) VALUES (?, ?, ?, ?, ?, ?)`),
       leituraArq: this.db.prepare(`INSERT INTO leituras_arquivo (sessao, arquivo_hash, total, fios) VALUES (?, ?, ?, ?)
@@ -123,6 +149,7 @@ export class Persistencia {
             r.input, r.cache_write, r.cache_write_5m, r.cache_write_1h,
             r.cache_read, r.output, r.output_bytes, JSON.stringify(r.tools), JSON.stringify(r.entradas),
             r.compactacao_marcada ? 1 : 0, r.hook_injetado ? 1 : 0, r.subagente_disparado ? 1 : 0,
+            r.quando_anterior ?? null, r.tipo_anterior ?? null,
           );
         }
       }

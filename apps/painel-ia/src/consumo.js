@@ -39,6 +39,18 @@ function chaveFio(sessaoId, fio) {
   return `${sessaoId}::${fio}`;
 }
 
+/** 'ferramenta' (há tool_result), 'usuario' (texto do usuário, sem meta nem system-reminder) ou null. */
+function tipoEventoAnterior(ev, content) {
+  if (ev.isMeta || ev.isCompactSummary) return null;
+  if (Array.isArray(content)) {
+    if (content.some((b) => b?.type === 'tool_result')) return 'ferramenta';
+    const textos = content.filter((b) => b?.type === 'text').map((b) => String(b.text || ''));
+    return textos.some((t) => t.trim() && !t.includes('<system-reminder>')) ? 'usuario' : null;
+  }
+  if (typeof content === 'string') return content.trim() && !content.includes('<system-reminder>') ? 'usuario' : null;
+  return null;
+}
+
 export class AnalisadorConsumo {
   constructor() {
     this.fios = new Map(); // `${sessao}::${fio}` -> { sessao, fio, isSubagente, ordem: [], reqs: Map, pendentes: [], compactacaoPendente: false, toolNomes: Map }
@@ -62,6 +74,7 @@ export class AnalisadorConsumo {
         pendentes: [],
         compactacaoPendente: false,
         toolNomes: new Map(),
+        anterior: null, // { quando, tipo } do último resultado de ferramenta ou mensagem do usuário ainda não consumido
       };
       this.fios.set(ch, f);
     }
@@ -106,6 +119,11 @@ export class AnalisadorConsumo {
     if (t === 'user') {
       if (ev.isCompactSummary) f.compactacaoPendente = true;
       const content = ev.message?.content;
+      // Evento anterior para a latência: resultado de ferramenta ou mensagem do usuário (anexos, hooks, meta e
+      // system-reminders não contam). Só com horário válido no próprio evento.
+      const tsProprio = Date.parse(ev.timestamp);
+      const tipoAnterior = tipoEventoAnterior(ev, content);
+      if (tipoAnterior && Number.isFinite(tsProprio)) f.anterior = { quando: tsProprio, tipo: tipoAnterior };
       if (typeof content === 'string') {
         const bytes = Buffer.byteLength(content, 'utf8');
         if (bytes > 0) {
@@ -199,10 +217,21 @@ export class AnalisadorConsumo {
         compactacao_marcada: f.compactacaoPendente,
         hook_injetado: hookInjetado,
         subagente_disparado: false,
+        quando_anterior: null,
+        tipo_anterior: null,
       };
       f.compactacaoPendente = false;
       f.ordem.push(mid);
       f.reqs.set(mid, rec);
+    }
+    // O primeiro evento da mensagem consome o evento anterior; linha restaurada sem esse dado é preenchida
+    // quando o transcript é relido na ordem.
+    if (rec.quando_anterior == null && f.anterior) {
+      if (Number.isFinite(Date.parse(ev.timestamp))) {
+        rec.quando_anterior = f.anterior.quando;
+        rec.tipo_anterior = f.anterior.tipo;
+      }
+      f.anterior = null;
     }
 
     const cc = usage.cache_creation && typeof usage.cache_creation === 'object' ? usage.cache_creation : {};
@@ -216,6 +245,11 @@ export class AnalisadorConsumo {
     if (disparouSubagente) rec.subagente_disparado = true;
     for (const nome of toolsBloco) if (!rec.tools.includes(nome)) rec.tools.push(nome);
     this.sujos.reqs.add(`${f.chave}::${mid}`);
+  }
+
+  /** Todas as requisições medidas (principal e subagentes), para a aba Modelos. */
+  * requisicoes() {
+    for (const f of this.fios.values()) yield* f.reqs.values();
   }
 
   /** Restaura fatos persistidos no SQLite. */
@@ -242,6 +276,8 @@ export class AnalisadorConsumo {
         compactacao_marcada: Boolean(r.compactacao_marcada),
         hook_injetado: Boolean(r.hook_injetado),
         subagente_disparado: Boolean(r.subagente_disparado),
+        quando_anterior: r.quando_anterior ?? null,
+        tipo_anterior: r.tipo_anterior ?? null,
       });
     }
     for (const c of chamadas) {
