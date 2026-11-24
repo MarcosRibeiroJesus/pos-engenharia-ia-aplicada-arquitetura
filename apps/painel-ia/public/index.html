@@ -151,12 +151,42 @@
   <!-- ABA 5: COMPARATIVO POR AGENTE -->
   <div class="painel-aba oculto" data-painel="comparativo">
     <section class="tiles" id="tiles-agentes"></section>
+    <div class="duas">
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Gasto total por Code Agent</h2>
+          <span class="dica">em tempo real (transcripts + registro)</span>
+        </div>
+        <div id="barras-agentes"></div>
+      </section>
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Consumo por semana (ISO)</h2>
+          <span class="dica">tokens equivalentes por semana</span>
+        </div>
+        <div id="svg-semana"></div>
+      </section>
+    </div>
     <section class="cartao">
       <div class="cartao-topo">
-        <h2>Gasto total por agente</h2>
-        <span class="dica">Claude Code, Antigravity e demais agentes medidos em tempo real ou via registro</span>
+        <h2>Consumo dos Code Agents por semana</h2>
+        <span class="dica">quebra semanal em tempo real (Claude Code × Antigravity × Outros)</span>
       </div>
-      <div id="barras-agentes"></div>
+      <div class="rolagem"><table id="tabela-semanas"><thead><tr>
+        <th>Semana</th><th class="num">Requisições</th><th class="num">Claude Code</th><th class="num">Antigravity</th>
+        <th class="num">Outros</th><th class="num">Total (eq.)</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Consumo dos Code Agents por sessão</h2>
+        <span class="dica">clique numa sessão para abrir a linha do tempo detalhada</span>
+      </div>
+      <div class="rolagem"><table id="tabela-sessoes-agente"><thead><tr>
+        <th>Sessão</th><th>Code Agent</th><th>Projeto</th><th>Modelos</th><th class="num">Reqs</th>
+        <th class="num">Cache lido</th><th class="num">Cache escrito</th><th class="num">Saída</th>
+        <th class="num">Equivalentes</th><th>Status</th>
+      </tr></thead><tbody></tbody></table></div>
     </section>
     <section class="cartao">
       <div class="cartao-topo">

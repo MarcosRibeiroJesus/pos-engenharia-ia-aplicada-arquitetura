@@ -327,10 +327,10 @@ function renderSubagentes(e) {
 }
 
 function renderComparativo(e) {
-  const agentes = e.porAgente || [];
+  const agentes = (e.porAgente || []).filter((a) => passaAgente(a.agente));
   if (!agentes.length) {
     $('tiles-agentes').replaceChildren();
-    $('barras-agentes').replaceChildren(h('p', { class: 'vazio' }, 'Sem uso por agente ainda.'));
+    $('barras-agentes').replaceChildren(h('p', { class: 'vazio' }, 'Sem uso por agente neste filtro.'));
   } else {
     $('tiles-agentes').replaceChildren(...agentes.map((a) => h('div', { class: 'tile' },
       h('span', {}, a.agente),
@@ -345,6 +345,74 @@ function renderComparativo(e) {
     h('span', { class: 'trilho' }, h('i', { style: { width: `${(100 * a.equivalente) / max}%` } })),
     h('span', { class: 'valor' }, fmt(a.equivalente)),
     h('span', { class: 'sub' }, `${a.sessoes} sessões · ${fmt(a.requisicoes)} reqs · média ${fmt(a.mediaPorReq)}/req · cache ${a.taxaCache}%`))));
+  }
+
+  // Gráfico SVG e tabela por semana (respeitando filtro global de Code Agent)
+  const semanas = (e.porSemana || []).slice(-12);
+  const valorSemana = (s) => (filtroAgenteGlobal === 'todos' ? s.equivalente : (s.agentes?.[filtroAgenteGlobal]?.equivalente || 0));
+  if (!semanas.length) {
+    $('svg-semana').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados semanais ainda.'));
+  } else {
+    const W = 520, H = 140, padL = 8, padB = 22, padT = 10;
+    const maxS = Math.max(1, ...semanas.map(valorSemana));
+    const bw = Math.max(12, Math.floor((W - padL * 2) / semanas.length) - 6);
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'svg-grafico', role: 'img', 'aria-label': 'Consumo semanal por Code Agent' });
+    semanas.forEach((s, i) => {
+      const val = valorSemana(s);
+      const x = padL + i * ((W - padL * 2) / semanas.length);
+      const bh = Math.max(2, ((H - padB - padT) * val) / maxS);
+      const y = H - padB - bh;
+      svg.append(
+        svgEl('rect', { x, y, width: bw, height: bh, rx: 3, class: 'svg-barra' },
+          svgEl('title', {}, `${s.semana}: ${fmt(val)} equivalentes`)),
+        svgEl('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle', class: 'svg-rotulo' }, s.semana.slice(5)),
+      );
+    });
+    $('svg-semana').replaceChildren(svg);
+  }
+
+  const corpoSem = $('tabela-semanas').tBodies[0];
+  if (!semanas.length) {
+    corpoSem.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Sem dados semanais ainda.')));
+  } else {
+    corpoSem.replaceChildren(...[...semanas].reverse().map((s) => {
+      const cc = s.agentes?.['claude-code'];
+      const agy = s.agentes?.antigravity;
+      const outrosEq = Object.entries(s.agentes || {})
+        .filter(([k]) => k !== 'claude-code' && k !== 'antigravity')
+        .reduce((acc, [, v]) => acc + (v.equivalente || 0), 0);
+      const reqs = filtroAgenteGlobal === 'todos' ? s.requisicoes : (s.agentes?.[filtroAgenteGlobal]?.requisicoes || 0);
+      const tot = valorSemana(s);
+      return h('tr', {},
+        h('td', {}, s.semana),
+        h('td', { class: 'num' }, fmt(reqs)),
+        h('td', { class: 'num' }, cc ? `${fmt(cc.equivalente)} (${cc.requisicoes}r)` : '—'),
+        h('td', { class: 'num' }, agy ? `${fmt(agy.equivalente)} (${agy.requisicoes}r)` : '—'),
+        h('td', { class: 'num' }, outrosEq ? fmt(outrosEq) : '—'),
+        h('td', { class: 'num' }, fmt(tot)));
+    }));
+  }
+
+  // Tabela de consumo dos Code Agents por sessão (clicável para abrir a linha do tempo)
+  const sessoesFilt = (e.sessoes || []).filter((s) => passaAgente(s.agente));
+  const corpoSess = $('tabela-sessoes-agente').tBodies[0];
+  if (!sessoesFilt.length) {
+    corpoSess.replaceChildren(h('tr', {}, h('td', { colspan: '10', class: 'vazio' }, 'Nenhuma sessão neste filtro.')));
+  } else {
+    corpoSess.replaceChildren(...sessoesFilt.slice(0, 100).map((s) => h('tr', {
+      class: 'clicavel',
+      onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
+    },
+    h('td', {}, s.id),
+    h('td', {}, h('span', { class: 'chip chip-info' }, s.agente || 'claude-code')),
+    h('td', {}, s.projeto),
+    h('td', {}, (s.modelos || []).map((m) => m.replace('claude-', '')).join(', ')),
+    h('td', { class: 'num' }, fmt(s.requisicoes)),
+    h('td', { class: 'num' }, fmt(s.cache_read)),
+    h('td', { class: 'num' }, fmt(s.cache_write)),
+    h('td', { class: 'num' }, fmt(s.output)),
+    h('td', { class: 'num' }, fmt(s.equivalente)),
+    h('td', {}, h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : quando(s.ultimo))))));
   }
 
   const lista = e.comparativoTarefas || [];

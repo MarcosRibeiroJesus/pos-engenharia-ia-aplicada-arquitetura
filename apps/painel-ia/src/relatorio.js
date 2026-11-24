@@ -66,6 +66,14 @@ export function relatorio(p, { formato = 'md' } = {}) {
     .map((d) => `| ${d.nome} | ${fmt(d.requisicoes)} | ${fmt(d.cache_read)} | ${fmt(d.cache_write)} | ${fmt(d.output)} | ${fmt(d.equivalente)} |`)
     .join('\n');
 
+  const linhasSemana = (est.porSemana || [])
+    .map((s) => {
+      const cc = s.agentes?.['claude-code']?.equivalente || 0;
+      const agy = s.agentes?.antigravity?.equivalente || 0;
+      return `| ${s.semana} | ${fmt(s.requisicoes)} | ${fmt(cc)} | ${fmt(agy)} | ${fmt(s.equivalente)} |`;
+    })
+    .join('\n');
+
   const linhasAtrib = est.consumo.atribuicao.slice(0, 15)
     .map((a) => `| ${a.origem} | ${fmt(a.delta_tokens)} | ${fmt(a.token_reqs)} | ${fmt(a.custo_carr_equiv)} |`)
     .join('\n');
@@ -101,6 +109,12 @@ ${linhasTipo || '| — | — | — | — |'}
 | Dia | Requisições | Cache lido | Cache escrito | Saída | Equivalentes |
 |---|---:|---:|---:|---:|---:|
 ${linhasDia || '| — | — | — | — | — | — |'}
+
+## Por semana (por Code Agent)
+
+| Semana | Requisições | Claude Code (eq.) | Antigravity (eq.) | Total (eq.) |
+|---|---:|---:|---:|---:|
+${linhasSemana || '| — | — | — | — | — |'}
 
 ${tabela('Por projeto', porProjeto, 'projeto')}
 ${tabela('Por modelo', porModelo, 'modelo')}

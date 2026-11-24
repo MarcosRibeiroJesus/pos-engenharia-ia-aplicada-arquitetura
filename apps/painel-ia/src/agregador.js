@@ -12,6 +12,18 @@ export function equivalente(u) {
   return CAMPOS.reduce((s, c) => s + (u[c] || 0) * PESOS[c], 0);
 }
 
+/** Chave de semana ISO-8601 (`AAAA-WSS`) a partir de um timestamp em ms. */
+export function semanaISO(ms) {
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return 'sem-data';
+  const utc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const diaSemana = utc.getUTCDay() || 7;
+  utc.setUTCDate(utc.getUTCDate() + 4 - diaSemana);
+  const inicioAno = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  const numSemana = Math.ceil((((utc - inicioAno) / 86_400_000) + 1) / 7);
+  return `${utc.getUTCFullYear()}-W${String(numSemana).padStart(2, '0')}`;
+}
+
 /** Infere o agente quando a linha vem do registro CSV (ou modelo sem metadado de origem). */
 export function inferirAgente(modelo = '', observacao = '') {
   const m = String(modelo).toLowerCase();
@@ -55,6 +67,7 @@ export class Agregador {
     this.agentes = new Map();
     this.projetos = new Map();
     this.dias = new Map(); // YYYY-MM-DD -> uso
+    this.semanas = new Map(); // YYYY-WSS -> { uso, agentes: Map(agente -> uso) }
     this.sessoes = new Map();
     this.tarefas = new Map(); // `${sessao}:${id}` -> tarefa
     this.criacoesPendentes = new Map(); // tool_use_id -> {sessao, subject, ...}
@@ -114,11 +127,16 @@ export class Agregador {
     const req = nova ? 1 : 0;
     const tarefa = reg.tarefa && this.tarefas.get(reg.tarefa);
     const diaChave = new Date(reg.quando).toISOString().slice(0, 10);
+    const semChave = semanaISO(reg.quando);
+    let sem = this.semanas.get(semChave);
+    if (!sem) { sem = { uso: vazio(), agentes: new Map() }; this.semanas.set(semChave, sem); }
     const alvos = [
       this.#grupo(this.modelos, reg.modelo),
       this.#grupo(this.agentes, agente),
       this.#grupo(this.projetos, sessao.projeto),
       this.#grupo(this.dias, diaChave),
+      sem.uso,
+      this.#grupo(sem.agentes, agente),
       sessao.uso,
     ];
     if (tarefa) alvos.push(tarefa.uso);
@@ -308,6 +326,34 @@ export class Agregador {
 
     const porDia = lista(this.dias).sort((a, b) => a.nome.localeCompare(b.nome));
 
+    // Consumo por semana ISO com quebra por Code Agent (transcripts + medições manuais do CSV)
+    const semanasMapa = new Map();
+    for (const [chave, s] of this.semanas.entries()) {
+      const ags = {};
+      for (const [agNome, u] of s.agentes.entries()) {
+        ags[agNome] = { ...u, equivalente: Math.round(equivalente(u)) };
+      }
+      semanasMapa.set(chave, { semana: chave, ...s.uso, equivalente: Math.round(equivalente(s.uso)), agentes: ags });
+    }
+    for (const l of this.registro.linhas) {
+      if (!l.data) continue;
+      const ms = Date.parse(`${l.data}T12:00:00Z`);
+      if (Number.isNaN(ms)) continue;
+      const chave = semanaISO(ms);
+      const agNome = inferirAgente(l.modelo, l.observacao);
+      const eqVal = Math.round(equivalente(l) || (l.total || 0));
+      let s = semanasMapa.get(chave);
+      if (!s) { s = { semana: chave, ...vazio(), equivalente: 0, agentes: {} }; semanasMapa.set(chave, s); }
+      somar(s, l);
+      s.requisicoes += l.requisicoes || 0;
+      s.equivalente += eqVal;
+      if (!s.agentes[agNome]) s.agentes[agNome] = { ...vazio(), equivalente: 0 };
+      somar(s.agentes[agNome], l);
+      s.agentes[agNome].requisicoes += l.requisicoes || 0;
+      s.agentes[agNome].equivalente += eqVal;
+    }
+    const porSemana = [...semanasMapa.values()].sort((a, b) => a.semana.localeCompare(b.semana));
+
     const minutoAtual = Math.floor(agora / MINUTO);
     const linhaDoTempo = Array.from({ length: 60 }, (_, i) => {
       const minuto = minutoAtual - 59 + i;
@@ -407,6 +453,7 @@ export class Agregador {
       comparativoTarefas,
       porTipo,
       porDia,
+      porSemana,
       modelos: listaModelos,
       projetos: ordenar(lista(projetos)),
       tarefas,

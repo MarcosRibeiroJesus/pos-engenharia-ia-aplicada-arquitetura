@@ -82,6 +82,13 @@ test('antigravity: leitura em tempo real ignora transcript_full, conta tokens di
     assert.equal(agy.output, 750);
     assert.equal(cc.requisicoes, 1);
 
+    // Visao por semana ISO com quebra por Code Agent
+    assert.ok(est.porSemana.length >= 1, 'visao por semana presente');
+    const semAtual = est.porSemana[0];
+    assert.match(semAtual.semana, /^\d{4}-W\d{2}$/);
+    assert.ok(semAtual.agentes['claude-code']?.equivalente > 0);
+    assert.ok(semAtual.agentes.antigravity?.equivalente > 0);
+
     // Detalhe de sessao e timeline funcionam para Antigravity (com namespace agy: isolado)
     const det = ag.detalheSessao(`agy:${convId}`);
     assert.ok(det);
@@ -118,6 +125,7 @@ test('antigravity: leitura em tempo real ignora transcript_full, conta tokens di
     assert.equal(leiturasApos[0]?.total, 1, 'replay nao infla contagem de leituras');
     const md = relatorio(p, { formato: 'md' });
     assert.ok(md.includes('## Por agente'));
+    assert.ok(md.includes('## Por semana (por Code Agent)'));
     p.fechar();
   } finally {
     rmSync(dirAgy, { recursive: true, force: true });
