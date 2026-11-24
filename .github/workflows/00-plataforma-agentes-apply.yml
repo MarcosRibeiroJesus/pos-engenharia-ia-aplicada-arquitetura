@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       prazo_horas:
-        description: "Horas até o destroy automático (padrão e máximo 24)"
+        description: "Horas até o destroy automático (padrão 6, máximo 24; D-024 e decisão do dono)"
         type: number
-        default: 24
+        default: 6
 
 # Permissões mínimas: o token OIDC só no job que acessa a AWS (zizmor excessive-permissions).
 permissions:
