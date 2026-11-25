@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pos-grafo": {
+      "command": "python",
+      "args": [
+        "scripts/mcp_pos_grafo/servidor_mcp.py"
+      ]
+    }
+  }
+}
