@@ -147,6 +147,23 @@ CUSTO_FIXO = {
 # TT-K03: conta única, sem Organizations nem Control Tower (RNF-004, D-029)
 PREFIXOS_DE_CONTA = ("aws_organizations_", "aws_controltower_")
 
+# TT-O03 (ADR-0013, análise 1 A05): um alarme comum (métrica única) só casa com a série que tem
+# exatamente o mesmo conjunto de dimensões; com notBreaching, o conjunto errado fica em OK para
+# sempre. Alarme comum só passa sobre um conjunto PUBLICADO, registrado aqui com a fonte:
+# (namespace, métrica) -> conjunto de dimensões. Métrica fora daqui usa alarme por consulta do
+# Metrics Insights (metric_query com SELECT SUM ... WHERE <recurso>), que esta regra não barra.
+# - InvocationsIntervened: plano, "Pesquisa com fonte", página "Monitor Amazon Bedrock Guardrails
+#   using CloudWatch metrics" (https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-guardrails-cw-metrics.html), T037.
+# - AWS/Bedrock-AgentCore: nenhuma. Policy (consulta de 2026-11-20, ADR-0013) só lista as
+#   dimensões disponíveis. Gateway: a página "observability-gateway-metrics"
+#   (https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability-gateway-metrics.html),
+#   consultada em 2026-11-21 pelo AWS documentation search, diz que o gateway publica métricas com
+#   as dimensões Operation, Resource e Name. Até o ensaio (T069, T084) registrar os conjuntos reais
+#   pelo list-metrics, o gateway também não entra aqui (T017).
+CONJUNTOS_PUBLICADOS = {
+    ("AWS/Bedrock/Guardrails", "InvocationsIntervened"): frozenset({"GuardrailArn", "GuardrailVersion"}),
+}
+
 # TT-S05: nomes e valores que denunciam credencial. O valor nunca é repetido na mensagem.
 NOME_DE_CREDENCIAL = re.compile(
     r"(senha|password|passwd|secret|segredo|token|api[_-]?key|apikey|access[_-]?key|"
@@ -251,6 +268,52 @@ def _credencial_no_valor(valor) -> str | None:
     return None
 
 
+def _item(valor, i):
+    """Elemento i de uma lista do plan (after ou after_unknown), ou {} quando não existe."""
+    if isinstance(valor, list) and i < len(valor) and isinstance(valor[i], dict):
+        return valor[i]
+    return {}
+
+
+def _metricas_do_alarme(after: dict, desconhecido: dict):
+    """(onde, métrica, desconhecido) de cada métrica única do alarme: a do topo, se houver, e a de
+    cada metric_query[*].metric[*]. A expressão (metric math ou Metrics Insights) não entra."""
+    if after.get("metric_name") or desconhecido.get("metric_name") is True:
+        yield "topo", after, desconhecido
+    consultas_desc = desconhecido.get("metric_query")
+    for i, consulta in enumerate(_lista(after.get("metric_query"))):
+        if not isinstance(consulta, dict):
+            continue
+        metricas_desc = _item(consultas_desc, i).get("metric")
+        for j, metrica in enumerate(_lista(consulta.get("metric"))):
+            if isinstance(metrica, dict):
+                yield f"metric_query[{i}].metric[{j}]", metrica, _item(metricas_desc, j)
+
+
+def _regras_do_alarme(endereco: str, after: dict, desconhecido: dict) -> list[str]:
+    """TT-O03: toda métrica única do alarme, no topo ou no metric_query, sobre conjunto publicado."""
+    erros = []
+    for onde, metrica, desc in _metricas_do_alarme(after, desconhecido):
+        if desc.get("metric_name") is True or desc.get("namespace") is True \
+                or desc.get("dimensions") is True:
+            # falha fechada: sem ler a métrica, a regra não prova que o conjunto é o publicado
+            erros.append(f"TT-O03 {endereco} ({onde}): métrica, namespace ou dimensões "
+                         "desconhecidos no plan; a regra não consegue conferir o conjunto (ADR-0013)")
+            continue
+        chave = (metrica.get("namespace"), metrica.get("metric_name"))
+        publicado = CONJUNTOS_PUBLICADOS.get(chave)
+        dimensoes = frozenset((metrica.get("dimensions") or {}).keys())
+        if publicado is None:
+            erros.append(f"TT-O03 {endereco} ({onde}): alarme comum sobre {chave[0]}/{chave[1]}, "
+                         "cujo conjunto de dimensões não está publicado; use alarme por consulta "
+                         "do Metrics Insights filtrada pelo recurso (ADR-0013)")
+        elif dimensoes != publicado:
+            erros.append(f"TT-O03 {endereco} ({onde}): alarme comum sobre {chave[0]}/{chave[1]} "
+                         f"com as dimensões {sorted(dimensoes)}, e o conjunto publicado é "
+                         f"{sorted(publicado)}; o alarme nunca casaria com a série (ADR-0013)")
+    return erros
+
+
 def _regras_do_recurso(r: dict) -> list[str]:
     endereco, tipo = r["address"], r["type"]
     mudanca = r.get("change") or {}
@@ -299,6 +362,9 @@ def _regras_do_recurso(r: dict) -> list[str]:
         achado = _credencial_no_valor({"value": after.get("value"), "insecure_value": after.get("insecure_value")})
         if achado:
             erros.append(f"TT-S05 {endereco}: {achado}")
+
+    if tipo == "aws_cloudwatch_metric_alarm":
+        erros += _regras_do_alarme(endereco, after, desconhecido)
 
     if tipo in CUSTO_FIXO:
         erros.append(f"TT-K02 {endereco}: {tipo} tem custo fixo ocioso; só com ADR (Art. V)")

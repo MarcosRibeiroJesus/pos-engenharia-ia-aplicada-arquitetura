@@ -54,12 +54,24 @@ export function relatorio(p, { formato = 'md' } = {}) {
   p.restaurar(ag);
   const est = ag.estado();
 
+  const linhasAgente = (est.porAgente || [])
+    .map((a) => `| ${a.agente} | ${fmt(a.sessoes)} | ${fmt(a.requisicoes)} | ${fmt(a.mediaPorReq)} | ${a.taxaCache}% | ${fmt(a.equivalente)} |`)
+    .join('\n');
+
   const linhasTipo = est.porTipo
     .map((t) => `| ${t.rotulo} | ${fmt(t.tokens)} | ${fmt(t.equivalente)} | ${t.pct}% |`)
     .join('\n');
 
   const linhasDia = est.porDia
     .map((d) => `| ${d.nome} | ${fmt(d.requisicoes)} | ${fmt(d.cache_read)} | ${fmt(d.cache_write)} | ${fmt(d.output)} | ${fmt(d.equivalente)} |`)
+    .join('\n');
+
+  const linhasSemana = (est.porSemana || [])
+    .map((s) => {
+      const cc = s.agentes?.['claude-code']?.equivalente || 0;
+      const agy = s.agentes?.antigravity?.equivalente || 0;
+      return `| ${s.semana} | ${fmt(s.requisicoes)} | ${fmt(cc)} | ${fmt(agy)} | ${fmt(s.equivalente)} |`;
+    })
     .join('\n');
 
   const linhasAtrib = est.consumo.atribuicao.slice(0, 15)
@@ -80,6 +92,12 @@ Tokens equivalentes: ${fmt(equivalente(total))} (cache lido pesa 0,1, cache escr
 
 Tarefas: ${porStatus.completed || 0} concluídas, ${porStatus.in_progress || 0} em andamento, ${porStatus.pending || 0} pendentes.
 
+## Por agente
+
+| Agente | Sessões | Requisições | Média/req (eq.) | Taxa de cache | Equivalentes |
+|---|---:|---:|---:|---:|---:|
+${linhasAgente || '| — | — | — | — | — | — |'}
+
 ## Por tipo de token
 
 | Tipo | Tokens | Equivalentes | Participação |
@@ -91,6 +109,12 @@ ${linhasTipo || '| — | — | — | — |'}
 | Dia | Requisições | Cache lido | Cache escrito | Saída | Equivalentes |
 |---|---:|---:|---:|---:|---:|
 ${linhasDia || '| — | — | — | — | — | — |'}
+
+## Por semana (por Code Agent)
+
+| Semana | Requisições | Claude Code (eq.) | Antigravity (eq.) | Total (eq.) |
+|---|---:|---:|---:|---:|
+${linhasSemana || '| — | — | — | — | — |'}
 
 ${tabela('Por projeto', porProjeto, 'projeto')}
 ${tabela('Por modelo', porModelo, 'modelo')}

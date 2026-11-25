@@ -39,12 +39,12 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - O módulo `registro-produto` ainda não existe aqui: ele entra no teste na T030, e a T032 confirma de novo (análise 1, A14).
   - **Depende de:** T001, T002.
 ## Fase 2 · Núcleo: stack da plataforma
-- [ ] T010 [P] [engenheiro-terraform] Módulo `nucleo`: chave KMS do cliente · Art. IV, RNF-001 · TT-S02 (chave)
+- [x] T010 [P] [engenheiro-terraform] Módulo `nucleo`: chave KMS do cliente · Art. IV, RNF-001 · TT-S02 (chave)
   - **Teste vermelho:** `modules/nucleo/tests/kms.tftest.hcl` afirma rotação ligada, `deletion_window_in_days = 7`, alias `alias/00-plataforma-agentes-chave` e a política da chave do ADR-0001 (logs com `kms:EncryptionContext:aws:logs:arn` no prefixo dos grupos da plataforma; `cloudwatch` e `sns` com `aws:SourceAccount` e `aws:SourceArn`; `bedrock-agentcore` com `aws:SourceAccount`).
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/nucleo/{main.tf,variables.tf,outputs.tf}`, `modules/nucleo/tests/kms.tftest.hcl`.
   - **Aceite:** testes verdes; o T003 continua verde; ADR-0001 cumprido item a item.
   - **Depende de:** T001.
-- [ ] T011 [engenheiro-terraform] Módulo `nucleo`: tópico SNS dos alarmes e assinaturas · Art. IV, RNF-001, RNF-003 · TT-S02 (SNS), TT-S04
+- [x] T011 [engenheiro-terraform] Módulo `nucleo`: tópico SNS dos alarmes e assinaturas · Art. IV, RNF-001, RNF-003 · TT-S02 (SNS), TT-S04
   - **Teste vermelho:** `modules/nucleo/tests/sns.tftest.hcl` afirma o tópico `00-plataforma-agentes-alarmes` com `kms_master_key_id` da chave do T010, política que nega `aws:SecureTransport = false` e só aceita `sns:Publish` do `cloudwatch.amazonaws.com` da conta, e uma assinatura `email` por endereço de `data "aws_ssm_parameter"` `/00-conta/alertas/emails` (mock com dois endereços sintéticos).
   - **Teste vermelho do TT-S06 (análise 1, A06; ADR-0008):** `plataforma/agentes/tests/plan/test_dados_pessoais.py` lê o `terraform show -json` do plan com mock. Ele reprova se `after_sensitive.endpoint` de alguma `aws_sns_topic_subscription` não for `true`. A fixture com o valor lido de `insecure_value`, ou com `nonsensitive()` em volta da lista, precisa reprovar.
   - **Arquivos:** `modules/nucleo/sns.tf`, `modules/nucleo/tests/sns.tftest.hcl`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`, `plataforma/agentes/tests/plan/fixtures/`.
@@ -53,7 +53,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - O `endpoint` vem de `split(...)[count.index]` sobre o valor sensível e continua sensível.
     - Nenhum output expõe os endereços. O repositório e os logs do Actions são públicos (Art. VIII).
   - **Depende de:** T010.
-- [ ] T012 [P] [engenheiro-terraform] Módulo `nucleo`: AWS Budgets diário com o teto · Art. V, RNF-002 · TT-K01, TH-06
+- [x] T012 [P] [engenheiro-terraform] Módulo `nucleo`: AWS Budgets diário com o teto · Art. V, RNF-002 · TT-K01, TH-06
   - **Teste vermelho:** `modules/nucleo/tests/budgets.tftest.hcl` afirma `time_unit = "DAILY"`, `limit_amount == var.teto_diario_usd` e filtro `user:project$00-plataforma-agentes`; TH-06 em `harness/testes/test_<assunto>.py` lê o padrão de `teto_diario_usd` em `variables.tf` do root e compara com `teto_diario_usd` do `harness/estado.json` (1,2).
   - **TT-S06 (análise 1, A06):** o `test_dados_pessoais.py` do T011 também reprova se `subscriber_email_addresses` das notificações do `aws_budgets_budget` não for sensível no plan.
   - **Arquivos:** `modules/nucleo/budgets.tf`, `modules/nucleo/tests/budgets.tftest.hcl`, `variables.tf` do root, `harness/testes/test_<assunto>.py`, `plataforma/agentes/tests/plan/test_dados_pessoais.py`.
@@ -61,7 +61,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - Os alertas do orçamento vão para os mesmos e-mails do parâmetro `/00-conta/alertas/emails`, lidos do atributo sensível. Mudar o teto num lugar só reprova o TH-06.
     - **O filtro `user:project$00-plataforma-agentes` só enxerga custo depois que a tag `project` estiver ativa como tag de alocação de custo** (D-039, T053). Antes disso, o orçamento diário não vê nada, e sobra só o mensal. O README (T072) e o roteiro do ensaio (T084) dizem isso (análise 1, A17).
   - **Depende de:** T001.
-- [ ] T013 [engenheiro-terraform] Módulo `gateway`: gateway MCP com IAM na entrada · RF-001, RF-003, Art. IV · TT-G01, TT-G02, TT-S02 (gateway)
+- [x] T013 [engenheiro-terraform] Módulo `gateway`: gateway MCP com IAM na entrada · RF-001, RF-003, Art. IV · TT-G01, TT-G02, TT-S02 (gateway)
   - **Teste vermelho:** `modules/gateway/tests/gateway.tftest.hcl` com `expect_failures` para `authorizer_type = "NONE"` e `"AUTHENTICATE_ONLY"`; asserts de exatamente um `aws_bedrockagentcore_gateway`, `protocol_type = "MCP"`, `kms_key_arn` da chave da plataforma, `supported_versions` padrão `["2025-11-25", "2026-07-28"]` (ADR-0010), sem `search_type = "SEMANTIC"` e sem `exception_level = "DEBUG"`.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/gateway/{main.tf,variables.tf,outputs.tf}`, `modules/gateway/tests/gateway.tftest.hcl`.
   - **Contrato da entrada do motor (análise 1, A03; [ADR-0011](adr/0011-entrada-do-motor-no-gateway.md)):**
@@ -71,22 +71,22 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
     - quem garante o valor no root real é o TT-P01 (T015 e T020).
   - **Aceite:** o ARN do motor de política entra como variável de composição anulável (ADR-0009 e ADR-0011); a role de execução do gateway não tem permissão de invocar alvos e tem `bedrock:InvokeGuardrailChecks` no recurso mais estreito que a documentação aceitar (R4; se exigir `*`, condição `aws:SourceAccount`, exceção do checkov e ADR).
   - **Depende de:** T010.
-- [ ] T014 [P] [engenheiro-terraform] Role de fumaça · RF-002, RNF-001, RNF-002 · TT-R09
+- [x] T014 [P] [engenheiro-terraform] Role de fumaça · RF-002, RNF-001, RNF-002 · TT-R09
   - **Teste vermelho:** `modules/gateway/tests/fumaca.tftest.hcl` afirma a role `00-plataforma-agentes-fumaca`, confiada só pela role de deploy (variável), com uma única declaração `bedrock-agentcore:InvokeGateway` no ARN do gateway.
   - **Arquivos:** `modules/gateway/fumaca.tf`, `modules/gateway/tests/fumaca.tftest.hcl`.
   - **Aceite:** nenhum `permit` no Cedar cita esta role (conferido de novo no T036). A role não tem `bedrock:ApplyGuardrail`, e o TT-R09 falha se ela ganhar uma segunda declaração (emenda 1, F1).
   - **Depende de:** T013.
-- [ ] T015 [engenheiro-terraform] Módulo `politica`: motor em `ENFORCE` · RF-002, Art. IV · TT-P01, TT-P02, TT-S02 (motor)
+- [x] T015 [engenheiro-terraform] Módulo `politica`: motor em `ENFORCE` · RF-002, Art. IV · TT-P01, TT-P02, TT-S02 (motor)
   - **Teste vermelho:** `modules/politica/tests/politica.tftest.hcl` com `expect_failures` para `modo_politica = "LOG_ONLY"` sem `calibracao = true`; asserts do nome `p00_plataforma_agentes` (regex `^[A-Za-z][A-Za-z0-9_]*$`) e de `encryption_key_arn` da chave da plataforma; `tests/composicao.tftest.hcl` no root afirma `length(policy_engine_configuration) == 1` no gateway, com `mode = "ENFORCE"` por padrão e o ARN vindo de `module.politica`. Uma fixture de root que passa `motor_politica_arn = null` ao gateway precisa reprovar o TT-P01 (análise 1, A03; ADR-0011).
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/politica/`, `tests/composicao.tftest.hcl` do root.
   - **Aceite:** ADR-0005 cumprido; o modo nunca é input de workflow.
   - **Depende de:** T013.
-- [ ] T016 [P] [engenheiro-terraform] Módulo `observabilidade`: entrega de logs e traces · RF-006, Art. VI · TT-O01, TT-O02
+- [x] T016 [P] [engenheiro-terraform] Módulo `observabilidade`: entrega de logs e traces · RF-006, Art. VI · TT-O01, TT-O02
   - **Teste vermelho:** `modules/observabilidade/tests/entrega.tftest.hcl` afirma `aws_cloudwatch_log_delivery_source` dos `APPLICATION_LOGS` do gateway, destino no grupo `/aws/vendedlogs/bedrock-agentcore/gateway/APPLICATION_LOGS/{gateway_id}` com retenção de 7 dias e `kms_key_id` da chave, e a entrega de traces para o X-Ray.
   - **Arquivos:** `plataforma/agentes/infra/terraform/modules/observabilidade/{entrega.tf,variables.tf,outputs.tf}`, `modules/observabilidade/tests/entrega.tftest.hcl`.
   - **Aceite:** todos os recursos entram no destroy; o grupo `aws/spans` não é criado aqui (é da conta, `infra/conta`).
   - **Depende de:** T010, T013.
-- [ ] T017 [engenheiro-terraform] Módulo `observabilidade`: cinco alarmes da plataforma · RNF-003, Art. VI · TT-O03
+- [x] T017 [engenheiro-terraform] Módulo `observabilidade`: cinco alarmes da plataforma · RNF-003, Art. VI · TT-O03
   - **Teste vermelho:** `modules/observabilidade/tests/alarmes.tftest.hcl` afirma os cinco alarmes do RNF-003 (`SystemErrors` ≥ 1, `Throttles` ≥ 1 e `UserErrors` ≥ 3 do gateway; `SystemErrors` do motor ≥ 1; `DenyDecisions` ≥ 5 só em `Mode = ENFORCE`), todos com período de 300 s, 1 avaliação, `Sum`, `treat_missing_data = "notBreaching"` e ação no tópico do T011.
   - **Dimensões (análise 1, A05; [ADR-0013](adr/0013-alarmes-sem-dimensoes-publicadas.md)):** um alarme comum só casa com a série que tem exatamente o mesmo conjunto de dimensões.
     - **Métrica com conjunto de dimensões publicado:** o assert fixa o conjunto completo, com o link da página e a data da consulta num comentário do teste.
@@ -99,7 +99,7 @@ Uma tarefa por sessão de trabalho. Cada tarefa começa por um teste que falha.
   - **Arquivos:** `modules/observabilidade/alarmes.tf`, `modules/observabilidade/tests/alarmes.tftest.hcl`.
   - **Aceite:** nomes com o prefixo `00-plataforma-agentes-`; o alarme de negações não dispara num apply de calibração (ADR-0005). O disparo real é provado no ensaio (DM-09, T069 e T084). O custo por métrica analisada entra na revisão do T073 (ADR-0013). O id do motor é entrada de composição obrigatória do módulo: no root real vem do módulo `politica`, e no root do Floci, de um valor sintético fixo (emenda 1, F3; ADR-0009).
   - **Depende de:** T011, T015, T016.
-- [ ] T018 [engenheiro-terraform] Módulo `contrato`: parâmetro `comum`, schema e output `contrato_v1` · RF-007, RF-011 · TS-01, TT-C01
+- [x] T018 [engenheiro-terraform] Módulo `contrato`: parâmetro `comum`, schema e output `contrato_v1` · RF-007, RF-011 · TS-01, TT-C01
   - **Teste vermelho:** `plataforma/agentes/tests/contrato/test_contrato.py` valida o output `contrato_v1` do plan com mock contra `plataforma/agentes/contrato/v1.schema.json` e falha com uma fixture sem `mapa_erros`; `modules/contrato/tests/contrato.tftest.hcl` afirma `/00-plataforma-agentes/contrato/v1/comum` com `type = "String"`, `tier = "Standard"` e valor de até 4 KB.
   - **Arquivos:** `plataforma/agentes/contrato/v1.schema.json`, `plataforma/agentes/infra/terraform/modules/contrato/`, `plataforma/agentes/tests/contrato/`.
   - **Aceite:** campos do `comum` iguais aos da tabela "Contrato v1" do plano, com `versao_contrato = "1.0.0"`; `mapa_erros` com as oito categorias do RF-011 e o retentável de cada uma; o schema também cobre o parâmetro `produtos/<chave>`. `motor_politica_id` e `motor_politica_arn` são obrigatórios no schema e entram no módulo como entradas de composição; no root do Floci, com valores sintéticos fixos (emenda 1, F3; ADR-0009).

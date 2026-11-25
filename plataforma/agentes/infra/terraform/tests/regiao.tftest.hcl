@@ -2,6 +2,11 @@
 # e Evaluations do AgentCore nos anúncios consultados no plano.
 mock_provider "aws" {}
 
+# Desde a T015 o root compõe o gateway, que exige a role de deploy (sintética aqui).
+variables {
+  role_deploy_arn = "arn:aws:iam::111111111111:role/00-plataforma-agentes-deploy-sintetica"
+}
+
 run "regiao_padrao_us_east_1" {
   command = plan
   assert {

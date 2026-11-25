@@ -1,0 +1,116 @@
+{
+  "plano": {
+    "resource_changes": [
+      {
+        "address": "module.gateway.aws_bedrockagentcore_gateway.plataforma",
+        "module_address": "module.gateway",
+        "mode": "managed",
+        "type": "aws_bedrockagentcore_gateway",
+        "name": "plataforma",
+        "provider_name": "registry.terraform.io/hashicorp/aws",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "authorizer_configuration": [],
+            "authorizer_type": "AWS_IAM",
+            "description": "Gateway MCP unico da plataforma de agentes (RF-001).",
+            "exception_level": null,
+            "gateway_arn": "arn:aws:bedrock-agentcore:us-east-1:111111111111:gateway/00-plataforma-agentes-gateway-sintetico",
+            "gateway_id": "00-plataforma-agentes-gateway-sintetico",
+            "gateway_url": "https://00-plataforma-agentes-gateway-sintetico.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp",
+            "interceptor_configuration": [],
+            "kms_key_arn": "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001",
+            "name": "00-plataforma-agentes-gateway",
+            "policy_engine_configuration": [],
+            "protocol_configuration": [
+              {
+                "mcp": [
+                  {
+                    "instructions": null,
+                    "search_type": null,
+                    "session_configuration": [],
+                    "streaming_configuration": [],
+                    "supported_versions": [
+                      "2025-11-25",
+                      "2026-07-28"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "protocol_type": "MCP",
+            "region": "hdkhq6bk",
+            "role_arn": "arn:aws:iam::111111111111:role/00-plataforma-agentes-gateway-execucao",
+            "tags": {
+              "module": "gateway"
+            },
+            "tags_all": {},
+            "timeouts": null,
+            "workload_identity_details": []
+          },
+          "after_unknown": {},
+          "before_sensitive": false,
+          "after_sensitive": {
+            "authorizer_configuration": [],
+            "interceptor_configuration": [],
+            "policy_engine_configuration": [],
+            "protocol_configuration": [
+              {
+                "mcp": [
+                  {
+                    "session_configuration": [],
+                    "streaming_configuration": [],
+                    "supported_versions": [
+                      false,
+                      false
+                    ]
+                  }
+                ]
+              }
+            ],
+            "tags": {},
+            "tags_all": {},
+            "workload_identity_details": []
+          }
+        }
+      },
+      {
+        "address": "module.politica.aws_bedrockagentcore_policy_engine.plataforma",
+        "module_address": "module.politica",
+        "mode": "managed",
+        "type": "aws_bedrockagentcore_policy_engine",
+        "name": "plataforma",
+        "provider_name": "registry.terraform.io/hashicorp/aws",
+        "change": {
+          "actions": [
+            "create"
+          ],
+          "before": null,
+          "after": {
+            "description": "Motor de politica Cedar da plataforma de agentes: nega por padrao (RF-002).",
+            "encryption_key_arn": "arn:aws:kms:us-east-1:111111111111:key/00000000-0000-0000-0000-000000000001",
+            "name": "p00_plataforma_agentes",
+            "policy_engine_arn": "arn:aws:bedrock-agentcore:us-east-1:111111111111:policy-engine/p00_plataforma_agentes-sintetico",
+            "policy_engine_id": "p00_plataforma_agentes-sintetico",
+            "region": "f6caabde",
+            "tags": {
+              "module": "politica"
+            },
+            "tags_all": {},
+            "timeouts": null
+          },
+          "after_unknown": {},
+          "before_sensitive": false,
+          "after_sensitive": {
+            "tags": {},
+            "tags_all": {}
+          }
+        }
+      }
+    ],
+    "output_changes": {}
+  }
+}

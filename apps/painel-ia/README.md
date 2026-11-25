@@ -1,6 +1,6 @@
 # Painel de IA
 
-Painel local, em tempo real, do uso e diagnóstico de consumo de tokens nas sessões do Claude Code. Ele tem cinco abas na mesma interface:
+Painel local, em tempo real, do uso e diagnóstico de consumo de tokens nas sessões do Claude Code. Ele tem seis abas na mesma interface (a sexta, **Comparativo A x B**, está descrita abaixo, em "Comparativo A x B"):
 
 - **Visão geral:** tokens equivalentes por tipo (entrada, cache escrito, cache lido, saída — destacando o que mais pesa), por dia, por modelo, por projeto, últimos 60 minutos, tarefas (`TaskCreate`/`TaskUpdate` e `TodoWrite`), sessões e (opcionalmente) Monday e GitHub;
 - **Sessão & Timeline:** gráfico SVG de crescimento do contexto por requisição, taxa de acerto do cache e marcadores (cache frio, compactação, pausa > 8 h, troca de modelo, subagente, hook);
@@ -55,13 +55,19 @@ O relatório cobre o que veio dos transcripts. As medições manuais continuam e
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `CLAUDE_PROJECTS_DIR` | `~/.claude/projects` | Onde o Claude Code grava os transcripts |
+| `ANTIGRAVITY_BRAIN_DIR` | `~/.gemini/antigravity-cli/brain` | Onde o Antigravity grava os `transcript.jsonl` (tempo real) |
 | `DADOS_DIR` ou `BANCO` | `~/.pos-painel-ia/painel.db` | Banco com o histórico |
 | `REGISTRO_CSV` | vazio | Registro manual do repositório |
+| `TESTES_AB_CSV` | vazio | Registro dos testes A x B (`docs/uso/testes-ab.csv`) |
+| `CODERABBIT_JSON` | `<dados>/coderabbit-ab.json` | Coleta do CodeRabbit gerada por `bin/coderabbit-ab.js` |
 | `PORTA`, `HOST` | `4317`, `127.0.0.1` | Endereço do servidor |
 | `INTERVALO_MS` | `1500` | Intervalo de leitura dos transcripts |
 | `HOSTS_PERMITIDOS` | vazio | Nomes extras aceitos no cabeçalho Host (ex.: acesso por outro nome na rede) |
 | `MONDAY_TOKEN`, `MONDAY_BOARD_ID` | vazio | Aprovações pendentes do board |
 | `GITHUB_REPO`, `GITHUB_TOKEN` | vazio | PRs abertos; com token, também o resumo dos checks |
+| `ANTHROPIC_ADMIN_API_KEY` | vazio | Uso e custo real (7d) direto da Anthropic Admin API (Organização) |
+| `GITHUB_ORG` ou `GITHUB_USER` | vazio | Métricas/billing oficiais do GitHub Copilot (usa `GITHUB_TOKEN`) |
+| `COTA_SESSAO_*`, `COTA_SEMANA_*` | `10M` / `50M` eq. | Limites por Code Agent (`CLAUDE`, `ANTIGRAVITY`, `COPILOT`) para o cálculo em `%` |
 
 O Claude Code apaga transcripts antigos por padrão (configuração `cleanupPeriodDays`). Deixe o painel rodando, ou aumente esse prazo, para que todas as sessões entrem no banco.
 
@@ -71,6 +77,27 @@ O Claude Code apaga transcripts antigos por padrão (configuração `cleanupPeri
 - **Atribuição a tarefas:** os tokens de uma mensagem vão para a tarefa que estava em andamento na sessão. A mensagem que abre a tarefa conta para ela; a que a conclui, não.
 - **Projeto:** a chave vem do branch da sessão. `modulo/NN-slug/UU-slug` vira `NN.UU-slug`, e `plataforma/*` vira `plataforma`.
 - **Tokens equivalentes:** pesam cada tipo pelo custo relativo a um token de entrada comum (cache lido 0,1, cache escrito 2, saída 5). É uma medida de esforço, não um preço.
+
+## Comparativo A x B
+
+A aba **Comparativo A x B** mede, com os números que o banco já guarda, se o consumo caiu depois que a revisão de código passou a ser feita só no PR, pelo CodeRabbit (D-075, revisor único no CI), em vez de um revisor independente por tarefa.
+
+- **Grupos:** A são as sessões iniciadas antes de `CORTE_AB`; B, as iniciadas a partir dele. O corte fica numa constante só, em `src/comparativo.js` (hoje `2026-11-23T00:00:00-03:00`). A sessão inteira vai para o grupo da sua primeira mensagem; ela nunca se divide no corte.
+- **O que aparece:** sessões, requisições, tokens por tipo (entrada, cache escrito, cache lido, saída), total equivalente, equivalente por sessão, chamadas de subagente por `subagent_type` e, à parte, as de `revisor-independente`. A última coluna é a variação de B contra A, em percentual; "sem base em A" quando A é zero.
+- **Amostra pequena:** com menos de `AMOSTRA_MINIMA` sessões (15, decisão do dono) em algum grupo, o resultado vem marcado como "amostra pequena" e é indício, não conclusão. Mesmo com amostra suficiente, o comparativo não controla o tamanho das tarefas de cada período.
+- **Registro manual:** as linhas `medido` de `docs/uso/uso-tokens.csv` aparecem num cartão separado, para não somar duas vezes com o banco. Linhas `nao-medido` só são contadas.
+- **CodeRabbit:** os tokens dele não são visíveis ao painel e nunca são estimados. O painel mostra o que o GitHub informa por PR mergeado, agrupado pela data do merge: reviews e comentários dos bots `coderabbitai`, e rodadas (commits depois do primeiro review). Para coletar, rode `node bin/coderabbit-ab.js` (usa o `gh` em modo leitura e grava `coderabbit-ab.json` no diretório de dados do painel, fora do repositório; `CODERABBIT_JSON` troca o caminho). Sem a coleta, o cartão mostra `nao-medido`.
+- **API:** `GET /api/comparativo` devolve o mesmo conteúdo em JSON.
+
+### Registrar um teste A x B
+
+Para rodadas controladas (a mesma tarefa rodada com o harness de A e com o de B), acrescente uma linha em `docs/uso/testes-ab.csv`:
+
+```csv
+id,data,versao_harness,grupo,tokens,observacao
+```
+
+`grupo` é `A` ou `B`; `tokens` é o total medido da rodada (do painel ou do `uso.py`), nunca estimado; `versao_harness` é o commit do harness usado. Rode o painel com `TESTES_AB_CSV=../../docs/uso/testes-ab.csv` (o `compose.yml` já aponta para ele). Linha com grupo diferente de A ou B é ignorada. Sem linhas, a tabela mostra "Nenhum teste registrado".
 
 ## Segurança
 

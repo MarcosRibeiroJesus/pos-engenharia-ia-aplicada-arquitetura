@@ -8,14 +8,14 @@ import { DatabaseSync } from 'node:sqlite';
 const ESQUEMA = `
 PRAGMA journal_mode = WAL;
 CREATE TABLE IF NOT EXISTS sessoes (
-  id TEXT PRIMARY KEY, projeto TEXT NOT NULL, branch TEXT, primeiro INTEGER, ultimo INTEGER, tarefa_ativa TEXT
+  id TEXT PRIMARY KEY, agente TEXT NOT NULL DEFAULT 'claude-code', projeto TEXT NOT NULL, branch TEXT, primeiro INTEGER, ultimo INTEGER, tarefa_ativa TEXT
 );
 CREATE TABLE IF NOT EXISTS tarefas (
   chave TEXT PRIMARY KEY, sessao TEXT NOT NULL, projeto TEXT NOT NULL, titulo TEXT NOT NULL,
   status TEXT NOT NULL, criado INTEGER, atualizado INTEGER
 );
 CREATE TABLE IF NOT EXISTS mensagens (
-  id TEXT PRIMARY KEY, sessao TEXT NOT NULL, modelo TEXT NOT NULL, quando INTEGER NOT NULL, tarefa TEXT,
+  id TEXT PRIMARY KEY, sessao TEXT NOT NULL, agente TEXT NOT NULL DEFAULT 'claude-code', modelo TEXT NOT NULL, quando INTEGER NOT NULL, tarefa TEXT,
   input INTEGER NOT NULL, cache_write INTEGER NOT NULL, cache_read INTEGER NOT NULL, output INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS historico_status (
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS leituras_arquivo (
 CREATE INDEX IF NOT EXISTS mensagens_sessao ON mensagens(sessao);
 CREATE INDEX IF NOT EXISTS req_detalhe_sessao ON requisicoes_detalhe(sessao);
 CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT);
-INSERT OR REPLACE INTO meta VALUES ('versao_esquema', '2');
+INSERT OR REPLACE INTO meta VALUES ('versao_esquema', '3');
 `;
 
 export class Persistencia {
@@ -55,15 +55,19 @@ export class Persistencia {
         + `compose.yml ou um tmpfs com uid=1000. Causa: ${erro.message}`, { cause: erro });
     }
     this.db.exec(ESQUEMA);
+    // Migração retrocompatível para bancos v1/v2 sem a coluna agente
+    for (const tabela of ['sessoes', 'mensagens']) {
+      try { this.db.exec(`ALTER TABLE ${tabela} ADD COLUMN agente TEXT NOT NULL DEFAULT 'claude-code'`); } catch { /* já existe */ }
+    }
     this.sql = {
-      sessao: this.db.prepare(`INSERT INTO sessoes (id, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET projeto = excluded.projeto, branch = excluded.branch,
+      sessao: this.db.prepare(`INSERT INTO sessoes (id, agente, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET agente = excluded.agente, projeto = excluded.projeto, branch = excluded.branch,
         primeiro = MIN(COALESCE(sessoes.primeiro, excluded.primeiro), COALESCE(excluded.primeiro, sessoes.primeiro)),
         ultimo = MAX(COALESCE(sessoes.ultimo, 0), COALESCE(excluded.ultimo, 0)), tarefa_ativa = excluded.tarefa_ativa`),
       tarefa: this.db.prepare(`INSERT INTO tarefas (chave, sessao, projeto, titulo, status, criado, atualizado) VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(chave) DO UPDATE SET titulo = excluded.titulo, status = excluded.status, projeto = excluded.projeto, atualizado = excluded.atualizado`),
-      mensagem: this.db.prepare(`INSERT INTO mensagens (id, sessao, modelo, quando, tarefa, input, cache_write, cache_read, output)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      mensagem: this.db.prepare(`INSERT INTO mensagens (id, sessao, agente, modelo, quando, tarefa, input, cache_write, cache_read, output)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET input = MAX(mensagens.input, excluded.input), cache_write = MAX(mensagens.cache_write, excluded.cache_write),
         cache_read = MAX(mensagens.cache_read, excluded.cache_read), output = MAX(mensagens.output, excluded.output)`),
       status: this.db.prepare('INSERT INTO historico_status (tarefa, status, quando) VALUES (?, ?, ?)'),
@@ -99,7 +103,7 @@ export class Persistencia {
     try {
       for (const id of sessoes) {
         const s = ag.sessoes.get(id);
-        if (s) this.sql.sessao.run(id, s.projeto, s.branch, s.primeiro ?? null, s.ultimo || null, ag.ativa.get(id) ?? null);
+        if (s) this.sql.sessao.run(id, s.agente || 'claude-code', s.projeto, s.branch, s.primeiro ?? null, s.ultimo || null, ag.ativa.get(id) ?? null);
       }
       for (const chave of tarefas) {
         const t = ag.tarefas.get(chave);
@@ -107,7 +111,7 @@ export class Persistencia {
       }
       for (const id of mensagens) {
         const m = ag.mensagens.get(id);
-        if (m) this.sql.mensagem.run(id, m.sessao, m.modelo, m.quando, m.tarefa, m.uso.input, m.uso.cache_write, m.uso.cache_read, m.uso.output);
+        if (m) this.sql.mensagem.run(id, m.sessao, m.agente || 'claude-code', m.modelo, m.quando, m.tarefa, m.uso.input, m.uso.cache_write, m.uso.cache_read, m.uso.output);
       }
       for (const h of status) this.sql.status.run(h.tarefa, h.status, h.quando);
 
@@ -154,7 +158,7 @@ export class Persistencia {
   restaurar(ag) {
     const linhas = (q) => this.db.prepare(q).all();
     ag.restaurar({
-      sessoes: linhas('SELECT id, projeto, branch, tarefa_ativa AS tarefaAtiva FROM sessoes'),
+      sessoes: linhas('SELECT id, agente, projeto, branch, tarefa_ativa AS tarefaAtiva FROM sessoes'),
       tarefas: linhas('SELECT * FROM tarefas'),
       mensagens: linhas('SELECT * FROM mensagens ORDER BY quando'),
       requisicoes: linhas('SELECT * FROM requisicoes_detalhe ORDER BY quando'),

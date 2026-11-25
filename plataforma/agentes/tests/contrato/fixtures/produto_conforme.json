@@ -1,0 +1,21 @@
+{
+  "versao_contrato": "1.0.0",
+  "perfil_inferencia_arn": "arn:aws:bedrock:us-east-1:111111111111:application-inference-profile/91produtoasintetico",
+  "guardrail_id": "91produtoasintetico",
+  "guardrail_versao": "1",
+  "alvos": [
+    {
+      "nome": "91-produto-a-consulta",
+      "tools": [
+        {"nome": "buscar_regra", "classes": ["dado_privado"]},
+        {"nome": "enviar_resumo", "classes": ["canal_saida", "sensivel"]}
+      ]
+    }
+  ],
+  "roles": {
+    "agentes": [
+      {"nome": "leitor", "arn": "arn:aws:iam::111111111111:role/91-produto-a-agente-leitor"}
+    ],
+    "aprovacao": "arn:aws:iam::111111111111:role/91-produto-a-aprovacao"
+  }
+}
