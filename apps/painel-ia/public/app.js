@@ -53,6 +53,7 @@ function trocarAba(nova) {
     p.classList.toggle('oculto', p.dataset.painel !== nova);
   }
   if ((nova === 'sessao' || nova === 'atribuicao') && sessaoSelecionada) carregarDetalhe(sessaoSelecionada);
+  if (nova === 'modelos') carregarModelos(true);
   if (nova === 'comparativo') carregarComparativo();
 }
 
@@ -491,6 +492,88 @@ function renderEconomia(e) {
     h('div', { class: 'op-acao' }, `Ação sugerida: ${o.acao}`))));
 }
 
+// ---------- ABA MODELOS ----------
+const NAO_MEDIDO = 'nao-medido';
+const ms = (v) => (v == null ? NAO_MEDIDO : (v >= 1000 ? `${(v / 1000).toFixed(1).replace('.', ',')} s` : `${Math.round(v)} ms`));
+const usd = (v) => (v == null ? 'sem preço cadastrado' : `US$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: v < 1 ? 4 : 2 })}`);
+const precoTxt = (v) => (v == null ? 'sem preço cadastrado' : String(v).replace('.', ','));
+const NOMES_SEM_PRECO = { entrada: 'entrada', saida: 'saída', cache_escrita_5m: 'cache escrito 5m', cache_escrita_1h: 'cache escrito 1h',
+  cache_leitura: 'cache lido', cache_escrita_sem_ttl: 'cache escrito sem TTL no transcript' };
+let modelosBuscadoEm = 0;
+let modelosEmVoo = false;
+
+async function carregarModelos(forcar = false) {
+  if (modelosEmVoo || (!forcar && Date.now() - modelosBuscadoEm < 5000)) return;
+  modelosEmVoo = true;
+  try {
+    const resp = await fetch('/api/modelos');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    renderModelos(await resp.json());
+    modelosBuscadoEm = Date.now();
+  } catch (err) {
+    $('tabela-modelos-custo').tBodies[0].replaceChildren(h('tr', {}, h('td', { colspan: '10', class: 'vazio' }, `Falha ao carregar: ${err.message}`)));
+  } finally { modelosEmVoo = false; }
+}
+
+function celulaLat(l, campo) {
+  if (l.status !== 'medido') return h('td', { class: 'num', title: l.motivo }, NAO_MEDIDO);
+  return h('td', { class: 'num' }, ms(l[campo]));
+}
+
+function renderModelos(r) {
+  const nome = (m) => m.replace('claude-', '');
+  const custo = $('tabela-modelos-custo').tBodies[0];
+  const lat = $('tabela-modelos-latencia').tBodies[0];
+  if (!r.modelos.length) {
+    custo.replaceChildren(h('tr', {}, h('td', { colspan: '10', class: 'vazio' }, 'Nenhuma requisição medida ainda.')));
+    lat.replaceChildren(h('tr', {}, h('td', { colspan: '9', class: 'vazio' }, 'Nenhuma requisição medida ainda.')));
+  } else {
+    custo.replaceChildren(...r.modelos.map((m) => {
+      const t = m.tokens;
+      const c = m.custo;
+      let obs;
+      if (c.usd == null) obs = `${c.status} (${c.motivo})`;
+      else if (c.parcial) obs = `${c.rotulo}; parcial: ${Object.entries(c.sem_preco).map(([k, n]) => `${fmt(n)} de ${NOMES_SEM_PRECO[k] || k}`).join(', ')} sem preço cadastrado`;
+      else obs = c.rotulo;
+      return h('tr', {},
+        h('td', {}, nome(m.modelo)),
+        h('td', { class: 'num' }, fmt(m.requisicoes)),
+        h('td', { class: 'num' }, fmt(t.input)),
+        h('td', { class: 'num' }, fmt(t.cache_write_5m)),
+        h('td', { class: 'num' }, fmt(t.cache_write_1h)),
+        h('td', { class: 'num' }, fmt(t.cache_read)),
+        h('td', { class: 'num' }, fmt(t.output)),
+        h('td', { class: 'num' }, m.taxa_cache == null ? NAO_MEDIDO : `${(100 * m.taxa_cache).toFixed(1).replace('.', ',')}%`),
+        h('td', { class: 'num' }, usd(c.usd)),
+        h('td', {}, obs));
+    }));
+    lat.replaceChildren(...r.modelos.map((m) => {
+      const d = m.latencia.descartes;
+      return h('tr', {},
+        h('td', {}, nome(m.modelo)),
+        celulaLat(m.latencia.ferramenta, 'mediana_ms'), celulaLat(m.latencia.ferramenta, 'p90_ms'),
+        h('td', { class: 'num' }, String(m.latencia.ferramenta.n ?? 0)),
+        celulaLat(m.latencia.usuario, 'mediana_ms'), celulaLat(m.latencia.usuario, 'p90_ms'),
+        h('td', { class: 'num' }, String(m.latencia.usuario.n ?? 0)),
+        m.vazao.status === 'medido'
+          ? h('td', { class: 'num' }, `${m.vazao.mediana_tps.toFixed(1).replace('.', ',')} (n=${m.vazao.n})`)
+          : h('td', { class: 'num', title: m.vazao.motivo }, NAO_MEDIDO),
+        h('td', {}, `negativo ${d.negativo} · pausa > 10 min ${d.pausa} · sem evento anterior ${d.sem_anterior}`));
+    }));
+  }
+  const p = r.precos;
+  $('precos-fonte').textContent = `${p.unidade} · fonte: ${p.fonte} · consultado em ${p.consultado_em} · status: ${p.status} (conferir na página oficial)`;
+  $('tabela-precos').tBodies[0].replaceChildren(...p.modelos.flatMap((m) => m.faixas.map((f, i) => h('tr', {},
+    h('td', {}, m.nome),
+    h('td', {}, f.ate_tokens_entrada != null ? `até ${fmt(f.ate_tokens_entrada)}` : (i > 0 ? `acima de ${fmt(m.faixas[i - 1].ate_tokens_entrada)}` : 'única')),
+    h('td', { class: 'num' }, precoTxt(f.entrada)),
+    h('td', { class: 'num' }, precoTxt(f.saida)),
+    h('td', { class: 'num' }, precoTxt(f.cache_escrita_5m)),
+    h('td', { class: 'num' }, precoTxt(f.cache_escrita_1h)),
+    h('td', { class: 'num' }, precoTxt(f.cache_leitura)),
+    h('td', {}, m.status)))));
+}
+
 function atualizarFiltroAgenteGlobal(e) {
   const nomes = new Set([
     ...(e.porAgente || []).map((a) => a.agente),
@@ -505,7 +588,6 @@ function atualizarFiltroAgenteGlobal(e) {
 }
 
 // ---- Comparativo A x B (D-075): lido de /api/comparativo ao abrir a aba e a cada atualização com ela aberta.
-const NAO_MEDIDO = 'nao-medido';
 const pct = (v) => (v == null ? 'sem base em A' : `${v > 0 ? '+' : ''}${String(v).replace('.', ',')}%`);
 const inteiro = (n) => (n == null ? NAO_MEDIDO : Math.round(n).toLocaleString('pt-BR'));
 let carregandoAb = false;
@@ -573,6 +655,7 @@ async function carregarComparativo() {
 
 function render(e) {
   ultimo = e;
+  if (abaAtiva === 'modelos') carregarModelos();
   atualizarFiltroAgenteGlobal(e);
   if (abaAtiva === 'comparativo') carregarComparativo();
   tiles(e);

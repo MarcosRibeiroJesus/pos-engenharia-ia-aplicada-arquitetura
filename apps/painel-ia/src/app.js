@@ -12,6 +12,7 @@ import { Persistencia } from './persistencia.js';
 import { relatorio } from './relatorio.js';
 import { buscarAnthropic, buscarCopilot, montarPainelAgentes, calcularCustoPorToken } from './provedores.js';
 import { comparativo, lerArquivoTestesAb, lerColetaCoderabbit } from './comparativo.js';
+import { carregarPrecos, resumoModelos } from './modelos.js';
 
 export function configuracao(env = process.env) {
   const numero = (v, padrao) => (Number.isFinite(Number(v)) && v !== undefined && v !== '' ? Number(v) : padrao);
@@ -44,6 +45,7 @@ export function configuracao(env = process.env) {
 
 export async function iniciar(cfg = configuracao(), log = console) {
   const agregador = new Agregador();
+  const precos = carregarPrecos();
   const banco = new Persistencia(cfg.banco);
   banco.restaurar(agregador);
   const externos = {
@@ -81,6 +83,7 @@ export async function iniciar(cfg = configuracao(), log = console) {
     detalheSessao: (id) => agregador.detalheSessao(id),
     hostsPermitidos: cfg.hostsPermitidos,
     extras: {
+      '/api/modelos': () => [JSON.stringify(resumoModelos(agregador.consumo.requisicoes(), precos)), 'application/json; charset=utf-8'],
       '/api/relatorio.md': () => [relatorio(banco, { formato: 'md' }), 'text/markdown; charset=utf-8', 'relatorio-uso-ia.md'],
       '/api/comparativo': () => [JSON.stringify(comparativo(banco, ab)), 'application/json; charset=utf-8'],
       '/api/relatorio.csv': () => [relatorio(banco, { formato: 'csv' }), 'text/csv; charset=utf-8', 'uso-tokens.csv'],

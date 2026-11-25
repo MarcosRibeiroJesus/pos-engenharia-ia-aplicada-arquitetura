@@ -1,0 +1,40 @@
+{
+  "unidade": "USD por milhão de tokens (MTok)",
+  "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+  "consultado_em": "2026-11-24",
+  "status": "conferir",
+  "observacao": "Valores informados pelo dono; conferir na página oficial antes de usar. null = sem preço cadastrado.",
+  "modelos": [
+    {
+      "modelo": "claude-opus-5-5",
+      "nome": "Opus 5.5",
+      "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "consultado_em": "2026-11-24",
+      "status": "conferir",
+      "faixas": [
+        { "ate_tokens_entrada": null, "entrada": 4, "saida": 20, "cache_escrita_5m": 5, "cache_escrita_1h": 8, "cache_leitura": 0.20 }
+      ]
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "nome": "Sonnet 5.5",
+      "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "consultado_em": "2026-11-24",
+      "status": "conferir",
+      "faixas": [
+        { "ate_tokens_entrada": null, "entrada": 2, "saida": 10, "cache_escrita_5m": 2.50, "cache_escrita_1h": null, "cache_leitura": 0.10 }
+      ]
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "nome": "Haiku 5.5",
+      "fonte": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "consultado_em": "2026-11-24",
+      "status": "conferir",
+      "faixas": [
+        { "ate_tokens_entrada": 100000, "entrada": 0.10, "saida": 0.50, "cache_escrita_5m": null, "cache_escrita_1h": null, "cache_leitura": 0.01 },
+        { "ate_tokens_entrada": null, "entrada": 0.50, "saida": 2.50, "cache_escrita_5m": null, "cache_escrita_1h": null, "cache_leitura": 0.05 }
+      ]
+    }
+  ]
+}
