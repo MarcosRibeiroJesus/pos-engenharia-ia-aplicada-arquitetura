@@ -6,6 +6,14 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-24 · D-078 · 01-doom: segunda estratégia comparativa com Jev + Astra (Sistema 1 + Sistema 2) e provider plugável · fonte: Marcos
+- Pergunta 1: como incluir a arquitetura Jev + Astra (Sistema 1 reativo em milissegundos + Sistema 2 assíncrono em segundo plano) no projeto `01-doom` sem violar a fidelidade à aula (D-074) nem substituir D-059?
+- Resposta do Marcos: manter o `01-doom` principal 100% fiel à aula (YOLO em TF.js num Web Worker + calibrador de limiar com gate humano, D-059) e adicionar **Jev + Astra** como **2ª estratégia (experimento comparativo)** dentro do mesmo projeto `01-doom`, com adaptador desacoplado e testes com respostas gravadas.
+- Pergunta 2: como integrar os modelos Jev e Astra garantindo testes determinísticos e controle de custo (Art. III e V)?
+- Resposta do Marcos: **abstração de Sistema 1 + Sistema 2 com provider plugável** (`Jev + Astra` quando houver chaves no `.env` local, fallback para `Claude Haiku/Opus` ou replay gravado no CI).
+- Boas práticas aplicadas: Separação de escopo e comparação controlada entre arquiteturas (evita misturar requisitos obrigatórios com extensões experimentais); Testes determinísticos com respostas gravadas e controle de custo (evita quebrar o CI ou gerar custo surpresa em APIs de terceiros; Art. III e V).
+**Aplicado em:** `DECISOES.md` (tabela da D01 e regra ativa D-078); `harness/estado.json` (projeto `01-doom`, PR `docs/d078-doom-jev-astra`).
+
 ### 2026-11-24 · D-077 · DAST (ZAP) bloqueante; falha da ferramenta é erro de pipeline, não achado · fonte: Marcos
 No chat, o Marcos escolheu corrigir o job DAST e manter o check bloqueante, em vez de torná-lo informativo ou só reexecutar. Diagnóstico: o ZAP abortou com `Failed to access summary file` (exit 3) no run 45321301256, sem achado de segurança; o rerun passou, então a falha é intermitente. O alvo resetou conexões logo após subir; a causa exata não foi reproduzida localmente. Correção: o job só libera o ZAP após 3 respostas seguidas do alvo. Boa prática: gate programático bloqueia só por achado real, e falha da própria ferramenta é erro de pipeline a corrigir; o erro comum que ela evita é afrouxar o gate para o PR passar.
 Ordem definida pelo Marcos: corrigir o DAST antes de mergear o #51, marcar o #51 como pronto e mergear; demais pendências seguem em aberto.
