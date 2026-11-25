@@ -172,7 +172,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
   - OIDC;
   - verificação final de recursos com a tag do projeto;
   - remoção do registro de prazo.
-- **Prazo do apply:** o workflow de apply registra o prazo de vida com `harness/infra.py registrar` (padrão e máximo de 24 h desde o apply, D-024; `harness/infra.py estender` adia dentro desse limite). O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
+- **Prazo do apply:** o workflow de apply registra o prazo de vida com `harness/infra.py registrar` (padrão de 6 h desde o apply, decisão do dono; teto de 24 h, D-024; `harness/infra.py estender` adia dentro desse teto). O `expirar-infra.yml` avisa uma hora antes e dispara o destroy quando o prazo vence.
 - **Onde fica e quem valida:** os caminhos ficam em `apply_workflow` e `destroy_workflow` no `harness/estado.json`. O `estado.py validar` reprova o projeto na fase `verificar` se um dos dois faltar ou estiver incompleto.
 - FinOps: versão "lab" na menor escala que demonstre o padrão. O uso é demonstração (subir, gravar um vídeo curto, destruir no mesmo dia), então o teto de cada projeto é o custo estimado de um dia de execução:
   - fica em `teto_diario_usd` no `harness/estado.json`, no README e num AWS Budgets com período diário;

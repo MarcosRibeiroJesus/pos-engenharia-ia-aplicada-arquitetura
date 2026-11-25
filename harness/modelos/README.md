@@ -3,7 +3,7 @@
 Ponto de partida para o apply, o destroy e o teste de tags (`tags.tftest.hcl`, D-031) de cada projeto com `infra_real: true` (Artigo V, D-021 e D-022). Copie para `.github/workflows/<chave>-apply.yml` e `.github/workflows/<chave>-destroy.yml` e troque os valores marcados com `TROCAR`. O `harness/estado.py validar` confere os requisitos a partir da fase `verificar`.
 
 ## Ciclo da demonstração
-1. **Apply:** disparo manual com `prazo_horas` (padrão e máximo 24, D-024). O workflow registra o prazo no branch `infra-no-ar`.
+1. **Apply:** disparo manual com `prazo_horas` (padrão 6 h, máximo 24 h, D-024). O workflow registra o prazo no branch `infra-no-ar`.
 2. **Demonstração:** grave o vídeo. Se precisar de mais tempo, rode `python3 harness/infra.py estender <chave> --horas 2`, sem passar de 24 h desde o apply.
 3. **Destroy:** manual, digitando o nome do stack. Se você esquecer:
    - o `expirar-infra.yml` abre uma issue de aviso uma hora antes do prazo;

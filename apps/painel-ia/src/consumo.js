@@ -62,6 +62,7 @@ export class AnalisadorConsumo {
         pendentes: [],
         compactacaoPendente: false,
         toolNomes: new Map(),
+        leiturasToolIds: new Set(),
       };
       this.fios.set(ch, f);
     }
@@ -138,6 +139,8 @@ export class AnalisadorConsumo {
     const msg = ev.message;
     if (!msg) return;
     const content = Array.isArray(msg.content) ? msg.content : [];
+    const mid = msg.id || ev.uuid ? String(msg.id || ev.uuid) : null;
+    const jaRestaurada = Boolean(mid && f.reqs.get(mid)?.restaurada);
 
     let disparouSubagente = false;
     const toolsBloco = [];
@@ -151,7 +154,10 @@ export class AnalisadorConsumo {
         toolsBloco.push(nome);
         if (b.id) f.toolNomes.set(b.id, nome);
         const inp = b.input && typeof b.input === 'object' ? b.input : {};
-        if (nome === 'Read' && inp.file_path) this.#registrarLeitura(sessaoId, f.fio, inp.file_path);
+        if (!jaRestaurada && nome === 'Read' && inp.file_path && (!b.id || !f.leiturasToolIds.has(b.id))) {
+          if (b.id) f.leiturasToolIds.add(b.id);
+          this.#registrarLeitura(sessaoId, f.fio, inp.file_path);
+        }
         if (nome === 'Agent' || nome === 'Task') {
           disparouSubagente = true;
           const lista = this.chamadasSubagente.get(sessaoId) || [];
@@ -176,12 +182,12 @@ export class AnalisadorConsumo {
     const usage = msg.usage;
     if (!usage || typeof usage !== 'object' || !modelo || modelo === '<synthetic>') return;
 
-    const mid = String(msg.id || ev.uuid);
-    let rec = f.reqs.get(mid);
+    const idFinal = mid || `${sessaoId}:${ts}`;
+    let rec = f.reqs.get(idFinal);
     if (!rec) {
       const hookInjetado = f.pendentes.some((p) => p.hook);
       rec = {
-        id: mid,
+        id: idFinal,
         sessao: sessaoId,
         fio: f.fio,
         isSubagente: f.isSubagente,
@@ -199,10 +205,15 @@ export class AnalisadorConsumo {
         compactacao_marcada: f.compactacaoPendente,
         hook_injetado: hookInjetado,
         subagente_disparado: false,
+        restaurada: false,
       };
       f.compactacaoPendente = false;
-      f.ordem.push(mid);
-      f.reqs.set(mid, rec);
+      f.ordem.push(idFinal);
+      f.reqs.set(idFinal, rec);
+    } else if (rec.restaurada) {
+      // Replay após reinício: descarta pendentes duplicados e não soma output_bytes novamente.
+      f.pendentes.length = 0;
+      return;
     }
 
     const cc = usage.cache_creation && typeof usage.cache_creation === 'object' ? usage.cache_creation : {};
@@ -215,7 +226,7 @@ export class AnalisadorConsumo {
     rec.output_bytes += bytesBloco;
     if (disparouSubagente) rec.subagente_disparado = true;
     for (const nome of toolsBloco) if (!rec.tools.includes(nome)) rec.tools.push(nome);
-    this.sujos.reqs.add(`${f.chave}::${mid}`);
+    this.sujos.reqs.add(`${f.chave}::${idFinal}`);
   }
 
   /** Restaura fatos persistidos no SQLite. */
@@ -242,6 +253,7 @@ export class AnalisadorConsumo {
         compactacao_marcada: Boolean(r.compactacao_marcada),
         hook_injetado: Boolean(r.hook_injetado),
         subagente_disparado: Boolean(r.subagente_disparado),
+        restaurada: true,
       });
     }
     for (const c of chamadas) {

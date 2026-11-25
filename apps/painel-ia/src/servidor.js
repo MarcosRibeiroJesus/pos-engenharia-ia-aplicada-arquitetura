@@ -27,7 +27,7 @@ const SEGURANCA = {
 };
 const HOSTS_LOCAIS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 const MAX_CLIENTES = 20;
-const ID_SESSAO_RE = /^[a-zA-Z0-9_-]{1,128}$/;
+const ID_SESSAO_RE = /^[a-zA-Z0-9_:-]{1,128}$/;
 
 function nomeDoHost(host = '') {
   if (host.startsWith('[')) return host.slice(0, host.indexOf(']') + 1);
