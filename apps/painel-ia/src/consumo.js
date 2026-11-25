@@ -75,6 +75,7 @@ export class AnalisadorConsumo {
         compactacaoPendente: false,
         toolNomes: new Map(),
         anterior: null, // { quando, tipo } do último resultado de ferramenta ou mensagem do usuário ainda não consumido
+        leiturasToolIds: new Set(),
       };
       this.fios.set(ch, f);
     }
@@ -156,6 +157,8 @@ export class AnalisadorConsumo {
     const msg = ev.message;
     if (!msg) return;
     const content = Array.isArray(msg.content) ? msg.content : [];
+    const mid = msg.id || ev.uuid ? String(msg.id || ev.uuid) : null;
+    const jaRestaurada = Boolean(mid && f.reqs.get(mid)?.restaurada);
 
     let disparouSubagente = false;
     const toolsBloco = [];
@@ -169,7 +172,10 @@ export class AnalisadorConsumo {
         toolsBloco.push(nome);
         if (b.id) f.toolNomes.set(b.id, nome);
         const inp = b.input && typeof b.input === 'object' ? b.input : {};
-        if (nome === 'Read' && inp.file_path) this.#registrarLeitura(sessaoId, f.fio, inp.file_path);
+        if (!jaRestaurada && nome === 'Read' && inp.file_path && (!b.id || !f.leiturasToolIds.has(b.id))) {
+          if (b.id) f.leiturasToolIds.add(b.id);
+          this.#registrarLeitura(sessaoId, f.fio, inp.file_path);
+        }
         if (nome === 'Agent' || nome === 'Task') {
           disparouSubagente = true;
           const lista = this.chamadasSubagente.get(sessaoId) || [];
@@ -194,12 +200,12 @@ export class AnalisadorConsumo {
     const usage = msg.usage;
     if (!usage || typeof usage !== 'object' || !modelo || modelo === '<synthetic>') return;
 
-    const mid = String(msg.id || ev.uuid);
-    let rec = f.reqs.get(mid);
+    const idFinal = mid || `${sessaoId}:${ts}`;
+    let rec = f.reqs.get(idFinal);
     if (!rec) {
       const hookInjetado = f.pendentes.some((p) => p.hook);
       rec = {
-        id: mid,
+        id: idFinal,
         sessao: sessaoId,
         fio: f.fio,
         isSubagente: f.isSubagente,
@@ -219,19 +225,29 @@ export class AnalisadorConsumo {
         subagente_disparado: false,
         quando_anterior: null,
         tipo_anterior: null,
+        restaurada: false,
       };
       f.compactacaoPendente = false;
-      f.ordem.push(mid);
-      f.reqs.set(mid, rec);
+      f.ordem.push(idFinal);
+      f.reqs.set(idFinal, rec);
     }
     // O primeiro evento da mensagem consome o evento anterior; linha restaurada sem esse dado é preenchida
-    // quando o transcript é relido na ordem.
+    // quando o transcript é relido na ordem. Roda antes do retorno do replay, para o evento anterior
+    // não vazar para a próxima requisição nova.
+    let preencheuAnterior = false;
     if (rec.quando_anterior == null && f.anterior) {
       if (Number.isFinite(Date.parse(ev.timestamp))) {
         rec.quando_anterior = f.anterior.quando;
         rec.tipo_anterior = f.anterior.tipo;
+        preencheuAnterior = true;
       }
       f.anterior = null;
+    }
+    if (rec.restaurada) {
+      // Replay após reinício: descarta pendentes duplicados e não soma output_bytes novamente.
+      f.pendentes.length = 0;
+      if (preencheuAnterior) this.sujos.reqs.add(`${f.chave}::${idFinal}`);
+      return;
     }
 
     const cc = usage.cache_creation && typeof usage.cache_creation === 'object' ? usage.cache_creation : {};
@@ -244,7 +260,7 @@ export class AnalisadorConsumo {
     rec.output_bytes += bytesBloco;
     if (disparouSubagente) rec.subagente_disparado = true;
     for (const nome of toolsBloco) if (!rec.tools.includes(nome)) rec.tools.push(nome);
-    this.sujos.reqs.add(`${f.chave}::${mid}`);
+    this.sujos.reqs.add(`${f.chave}::${idFinal}`);
   }
 
   /** Todas as requisições medidas (principal e subagentes), para a aba Modelos. */
@@ -278,6 +294,7 @@ export class AnalisadorConsumo {
         subagente_disparado: Boolean(r.subagente_disparado),
         quando_anterior: r.quando_anterior ?? null,
         tipo_anterior: r.tipo_anterior ?? null,
+        restaurada: true,
       });
     }
     for (const c of chamadas) {

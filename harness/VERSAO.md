@@ -1,6 +1,6 @@
 # Versão do harness
 
-**Versão atual: 0.6.2** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
+**Versão atual: 0.7.0** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
 
 ## Critérios para a 1.0 (estável e testada)
 | # | Critério | Como se prova | Situação |
@@ -15,6 +15,10 @@
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico
+- **0.7.0:**
+  - destroy automático padrão de 6 h após a subida (decisão do dono); o teto de 24 h (D-024) continua valendo para `estender` e para o máximo do apply. `harness/infra.py` e o modelo `harness/modelos/apply.yml` mudam. O workflow real `.github/workflows/*-apply.yml` ainda tem 24 e precisa ser ajustado por revisão humana (as regras proíbem agentes de alterar `.github/workflows/`).
+  - hook de 230 mil tokens (D-076) passa a salvar o estado da sessão em `harness/handoff/<sessao>.json` (gitignorado) e a pedir ao dono que decida fechar ou continuar. A memória compartilhada não é escrita pelo hook: só a orquestração grava nela.
+  - critérios afetados: 4 (ciclo de demonstração: o prazo padrão muda) e 7 (testes do hook e do prazo).
 - **0.6.2:**
   - registro de uso em todo commit (D-074): o `.githooks/pre-commit` inclui sozinho os arquivos novos ou modificados de `harness/uso/` (de qualquer sessão) em todo commit criado por `git commit` (inclusive no fim de merge, cherry-pick e revert com conflito, com `--continue`), só com git e bash, sem nunca bloquear; nos commits que o git cria sem passar por `git commit` (merge, rebase, cherry-pick e revert sem conflito; `git am`; `git pull`), em `git rebase --continue` e com `--no-verify`, o hook não roda e o registro entra no próximo commit; pula em silêncio no commit com caminhos explícitos (índice temporário) e não propaga registro apagado do disco. Testes em `harness/testes/test_uso_em_todo_commit.py`, em repositório temporário, inclusive merge automático, `merge --continue`, `cherry-pick --continue`, `rebase --continue`, commit só com o registro e o `estado.py` real liberando `harness/uso/`.
   - `.gitattributes` com `eol=lf` para `.githooks/*` e `*.sh`: com CRLF no Windows o pre-commit travaria todo commit. Teste em `harness/testes/test_atributos_de_fim_de_linha.py`. Critério 2 (gates estáveis) afetado: a regra que era só convenção no `CLAUDE.md` virou gate programático, e o gate SDD do mesmo hook segue coberto.

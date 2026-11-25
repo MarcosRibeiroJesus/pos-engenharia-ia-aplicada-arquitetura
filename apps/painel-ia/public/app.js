@@ -35,7 +35,11 @@ const quando = (ms) => (ms ? new Date(ms).toLocaleString('pt-BR', { dateStyle: '
 const STATUS = { completed: ['✓', 'Concluída'], in_progress: ['◐', 'Em andamento'], pending: ['○', 'Pendente'] };
 
 let filtro = 'todas';
+let filtroAgenteGlobal = 'todos';
+let filtroProjetoComp = 'todos';
 let abaAtiva = 'geral';
+
+const passaAgente = (ag) => filtroAgenteGlobal === 'todos' || (ag || 'claude-code') === filtroAgenteGlobal;
 let ultimo = null;
 let sessaoSelecionada = null;
 let detalheAtual = null;
@@ -50,26 +54,46 @@ function trocarAba(nova) {
   }
   if ((nova === 'sessao' || nova === 'atribuicao') && sessaoSelecionada) carregarDetalhe(sessaoSelecionada);
   if (nova === 'modelos') carregarModelos(true);
+  if (nova === 'comparativo') carregarComparativo();
+}
+
+function resumoFiltrado(e) {
+  if (filtroAgenteGlobal === 'todos') return { totais: e.totais, porTipo: e.porTipo || [] };
+  const ag = (e.porAgente || []).find((a) => a.agente === filtroAgenteGlobal) || { requisicoes: 0, input: 0, cache_write: 0, cache_read: 0, output: 0, equivalente: 0, sessoes: 0 };
+  const eq = ag.equivalente || 1;
+  const porTipo = [
+    { tipo: 'cache_read', rotulo: 'Cache lido (×0,1)', tokens: ag.cache_read, equivalente: Math.round(ag.cache_read * 0.1), pct: Number(((100 * ag.cache_read * 0.1) / eq).toFixed(1)) },
+    { tipo: 'cache_write', rotulo: 'Cache escrito (×2)', tokens: ag.cache_write, equivalente: Math.round(ag.cache_write * 2), pct: Number(((100 * ag.cache_write * 2) / eq).toFixed(1)) },
+    { tipo: 'output', rotulo: 'Saída (×5)', tokens: ag.output, equivalente: Math.round(ag.output * 5), pct: Number(((100 * ag.output * 5) / eq).toFixed(1)) },
+    { tipo: 'input', rotulo: 'Entrada nova (×1)', tokens: ag.input, equivalente: Math.round(ag.input), pct: Number(((100 * ag.input) / eq).toFixed(1)) },
+  ].sort((a, b) => b.equivalente - a.equivalente);
+  const sessoesAtivas = (e.sessoes || []).filter((s) => s.ativa && passaAgente(s.agente)).length;
+  return { totais: { ...e.totais, ...ag, sessoesAtivas }, porTipo };
 }
 
 function tiles(e) {
-  const c = e.contagemTarefas || {};
+  const { totais, porTipo } = resumoFiltrado(e);
+  const tarefasFilt = (e.tarefas || []).filter((t) => passaAgente(t.agente));
+  const c = { in_progress: 0, completed: 0, pending: 0 };
+  for (const t of tarefasFilt) c[t.status] = (c[t.status] || 0) + 1;
+  const sessoesFilt = (e.sessoes || []).filter((s) => passaAgente(s.agente));
+  const opsFilt = (e.consumo?.oportunidades || []).filter((o) => passaAgente(o.agente));
   const abertas = (e.aprovacoes?.itens || []).filter((i) => !/feito|done|conclu/i.test(i.status)).length;
-  const maiorTipo = (e.porTipo || [])[0];
+  const maiorTipo = porTipo[0];
   const itens = [
-    ['Tokens equivalentes', fmt(e.totais.equivalente), `${fmt(e.totais.requisicoes)} requisições`],
+    ['Tokens equivalentes', fmt(totais.equivalente), `${fmt(totais.requisicoes)} requisições${filtroAgenteGlobal !== 'todos' ? ` · ${filtroAgenteGlobal}` : ''}`],
     ['Maior peso', maiorTipo ? `${maiorTipo.pct}%` : '—', maiorTipo ? maiorTipo.rotulo : 'sem dados'],
-    ['Ritmo agora', `${fmt(e.totais.porMinuto5)}/min`, 'média dos últimos 5 minutos'],
-    ['Sessões ativas', String(e.totais.sessoesAtivas), `${e.sessoes.length} com uso registrado`],
+    ['Ritmo agora', `${fmt(e.totais.porMinuto5)}/min`, 'média global dos últimos 5 minutos'],
+    ['Sessões ativas', String(totais.sessoesAtivas), `${sessoesFilt.length} com uso registrado`],
     ['Tarefas em andamento', String(c.in_progress || 0), `${c.completed || 0} concluídas · ${c.pending || 0} pendentes`],
-    ['Oportunidades', String((e.consumo?.oportunidades || []).length), 'regras de economia disparadas'],
+    ['Oportunidades', String(opsFilt.length), 'regras de economia disparadas'],
   ];
   if (e.aprovacoes?.ativo) itens.push(['Aprovações abertas', String(abertas), 'no board do Monday']);
   $('tiles').replaceChildren(...itens.map(([r, v, s]) => h('div', { class: 'tile' }, h('span', {}, r), h('b', {}, v), h('small', {}, s))));
 }
 
 function renderPorTipo(e) {
-  const lista = e.porTipo || [];
+  const { porTipo: lista } = resumoFiltrado(e);
   if (!lista.length) { $('por-tipo').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados ainda.')); return; }
   const max = Math.max(1, ...lista.map((t) => t.equivalente));
   $('por-tipo').replaceChildren(...lista.map((t) => h('div', {
@@ -118,42 +142,48 @@ function barras(alvo, grupos, detalhe) {
 }
 
 function tarefas(e) {
-  const lista = e.tarefas.filter((t) => filtro === 'todas' || t.status === filtro);
+  const lista = e.tarefas.filter((t) => (filtro === 'todas' || t.status === filtro) && passaAgente(t.agente));
   const corpo = $('tarefas').tBodies[0];
-  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '5', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
-  corpo.replaceChildren(...lista.slice(0, 300).map((t) => {
+  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
+  corpo.replaceChildren(...lista.slice(0, 400).map((t) => {
     const [icone, rotulo] = STATUS[t.status] || ['·', t.status];
     const modelos = Object.entries(t.modelos || {}).sort((a, b) => b[1] - a[1]).map(([m]) => h('span', { class: 'chip' }, m.replace('claude-', '')));
     return h('tr', {},
       h('td', {}, h('span', { class: `status ${t.status}` }, `${icone} ${rotulo}`)),
       h('td', {}, t.titulo),
-      h('td', {}, t.projeto, h('div', { class: 'dica' }, `sessão ${t.sessao}`)),
+      h('td', {}, t.projeto, h('div', { class: 'dica' }, `${t.fonte === 'progresso' ? 'progresso' : 'sessão'} ${t.sessao}`)),
+      h('td', {}, h('span', { class: 'chip chip-info' }, t.agente || 'claude-code')),
       h('td', {}, modelos.length ? modelos : h('span', { class: 'dica' }, '—')),
-      h('td', { class: 'num' }, fmt(t.equivalente)));
+      h('td', { class: 'num' }, t.equivalente ? fmt(t.equivalente) : '—'));
   }));
 }
 
 function sessoes(e) {
-  if (!e.sessoes.length) { $('sessoes').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma sessão lida ainda.')); return; }
-  $('sessoes').replaceChildren(...e.sessoes.slice(0, 30).map((s) => h('div', {
-    class: 'sessao clicavel',
-    onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
-  },
-  h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
-  h('div', { class: 'linha2' }, `${s.branch || 'sem branch'} · ${s.modelos.join(', ')} · ${fmt(s.equivalente)} equivalentes`),
-  s.tarefaAtiva ? h('div', { class: 'linha2' }, `◐ ${s.tarefaAtiva}`) : null)));
+  const lista = e.sessoes.filter((s) => passaAgente(s.agente));
+  if (!lista.length) { $('sessoes').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma sessão neste filtro.')); }
+  else {
+    $('sessoes').replaceChildren(...lista.slice(0, 30).map((s) => h('div', {
+      class: 'sessao clicavel',
+      onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
+    },
+    h('div', { class: 'linha1' }, h('b', {}, `${s.projeto} (${s.id})`), h('span', { class: 'chip chip-info' }, s.agente || 'claude-code'), h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : `última atividade ${quando(s.ultimo)}`)),
+    h('div', { class: 'linha2' }, `${s.branch || 'sem branch'} · ${s.modelos.join(', ')} · ${fmt(s.equivalente)} equivalentes`),
+    s.tarefaAtiva ? h('div', { class: 'linha2' }, `◐ ${s.tarefaAtiva}`) : null)));
+  }
 
   const sel = $('seletor-sessao');
-  const atual = sessaoSelecionada || (e.sessoes[0]?.idCompleto || e.sessoes[0]?.id || '');
-  sel.replaceChildren(...e.sessoes.map((s) => h('option', { value: s.idCompleto || s.id }, `${s.projeto} · ${s.id} (${fmt(s.equivalente)} eq.)`)));
-  if (atual) { sel.value = atual; sessaoSelecionada = sel.value; }
+  const atual = sessaoSelecionada || (lista[0]?.idCompleto || lista[0]?.id || '');
+  sel.replaceChildren(...lista.map((s) => h('option', { value: s.idCompleto || s.id }, `[${s.agente || 'claude-code'}] ${s.projeto} · ${s.id} (${fmt(s.equivalente)} eq.)`)));
+  if (atual && lista.some((s) => (s.idCompleto || s.id) === atual)) { sel.value = atual; sessaoSelecionada = sel.value; }
+  else if (lista[0]) { sel.value = lista[0].idCompleto || lista[0].id; sessaoSelecionada = sel.value; }
 }
 
 function recentes(e) {
-  if (!e.recentes.length) { $('recentes').replaceChildren(h('li', { class: 'vazio' }, 'Sem atividade.')); return; }
-  $('recentes').replaceChildren(...e.recentes.map((r) => h('li', {},
+  const lista = e.recentes.filter((r) => passaAgente(r.agente));
+  if (!lista.length) { $('recentes').replaceChildren(h('li', { class: 'vazio' }, 'Sem atividade neste filtro.')); return; }
+  $('recentes').replaceChildren(...lista.map((r) => h('li', {},
     h('span', { class: 'hora' }, hora(r.quando)),
-    h('span', {}, `${r.projeto} · ${r.modelo.replace('claude-', '')}`, r.tarefa ? h('div', { class: 'dica' }, r.tarefa) : null),
+    h('span', {}, `${r.projeto} · `, h('span', { class: 'chip chip-info' }, r.agente || 'claude-code'), ` ${r.modelo.replace('claude-', '')}`, r.tarefa ? h('div', { class: 'dica' }, r.tarefa) : null),
     h('span', { class: 'num' }, fmt(r.equivalente)))));
 }
 
@@ -213,6 +243,7 @@ function renderTimeline(det) {
   }
   $('svg-timeline').replaceChildren(svg);
 
+  const agenteSessao = ultimo?.sessoes?.find((s) => (s.idCompleto || s.id) === det.sessao)?.agente || 'claude-code';
   const corpo = $('tabela-timeline').tBodies[0];
   corpo.replaceChildren(...det.timeline.slice(0, 400).map((r) => {
     const tags = [];
@@ -225,6 +256,7 @@ function renderTimeline(det) {
     for (const t of (r.tools || []).slice(0, 4)) tags.push(h('span', { class: 'chip' }, t));
     return h('tr', {},
       h('td', { class: 'num' }, String(r.idx)),
+      h('td', {}, h('span', { class: 'chip chip-info' }, agenteSessao)),
       h('td', {}, r.fio),
       h('td', {}, r.modelo.replace('claude-', '')),
       h('td', { class: 'num' }, fmt(r.contexto)),
@@ -282,10 +314,12 @@ function renderSubagentes(e) {
       h('span', { class: 'valor' }, `${n}×`))));
   }
 
+  const topFiltrado = (sub.top || []).filter((s) => passaAgente(s.agente));
   const corpo = $('tabela-subagentes').tBodies[0];
-  if (!sub.top.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '7', class: 'vazio' }, 'Sem subagentes medidos.'))); return; }
-  corpo.replaceChildren(...sub.top.map((s) => h('tr', {},
+  if (!topFiltrado.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '8', class: 'vazio' }, 'Sem subagentes medidos neste filtro.'))); return; }
+  corpo.replaceChildren(...topFiltrado.map((s) => h('tr', {},
     h('td', {}, s.sessao),
+    h('td', {}, h('span', { class: 'chip chip-info' }, s.agente || 'claude-code')),
     h('td', {}, s.fio),
     h('td', {}, s.modelos.map((m) => m.replace('claude-', '')).join(', ')),
     h('td', { class: 'num' }, String(s.requisicoes)),
@@ -294,12 +328,165 @@ function renderSubagentes(e) {
     h('td', { class: 'num' }, fmt(s.equivalente)))));
 }
 
+function medidorPct(rotulo, pct, detalhe) {
+  const largura = Math.min(100, Math.max(0, Number(pct) || 0));
+  const classe = pct >= 100 ? 'critico' : (pct >= 80 ? 'alerta' : '');
+  return h('div', { class: 'medidor', title: detalhe },
+    h('div', { class: 'medidor-rotulo' }, h('span', {}, rotulo), h('b', {}, `${pct}%`)),
+    h('div', { class: 'medidor-trilho' }, h('i', { class: classe, style: { width: `${largura}%` } })),
+    h('div', { class: 'dica' }, detalhe));
+}
+
+function renderPaineisAgentes(e) {
+  const paineis = (e.painelAgentes || []).filter((p) => passaAgente(p.agente));
+  if (!paineis.length) { $('paineis-code-agents').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados neste filtro.')); return; }
+  $('paineis-code-agents').replaceChildren(...paineis.map((p) => h('div', { class: 'card-agente' },
+    h('div', { class: 'card-agente-topo' },
+      h('b', {}, p.titulo),
+      h('span', { class: p.provedor.ativo ? 'chip chip-info' : 'chip' }, p.provedor.ativo ? 'API provedor' : p.provedor.fonte)),
+    medidorPct('Sessão atual', p.sessao.pct, `${fmt(p.sessao.equivalente)} / ${fmt(p.sessao.cota)} eq.${p.sessao.id ? ` (${p.sessao.id})` : ''}`),
+    medidorPct(`Semana ${p.semana.chave}`, p.semana.pct, `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. · ${fmt(p.semana.requisicoes)} reqs`),
+    p.provedor.custoUsd != null ? h('div', { class: 'dica' }, `Custo provedor (7d): US$ ${p.provedor.custoUsd.toFixed(2)}`) : null,
+    p.provedor.erro ? h('div', { class: 'dica' }, `Provedor: ${p.provedor.erro}`) : null)));
+
+  const custos = e.custoPorToken || [];
+  const corpoCusto = $('tabela-custo-token').tBodies[0];
+  if (!custos.length) { corpoCusto.replaceChildren(h('tr', {}, h('td', { colspan: '8', class: 'vazio' }, 'Sem modelos medidos ainda.'))); return; }
+  corpoCusto.replaceChildren(...custos.map((c) => h('tr', {},
+    h('td', {}, c.modelo),
+    h('td', { class: 'num' }, `$${c.input1M}`),
+    h('td', { class: 'num' }, `$${c.cacheWrite1M}`),
+    h('td', { class: 'num' }, `$${c.cacheRead1M}`),
+    h('td', { class: 'num' }, `$${c.output1M}`),
+    h('td', { class: 'num' }, `$${c.efetivoPorMilhaoUsd.toFixed(3)}`),
+    h('td', { class: 'num' }, `$${c.totalUsd.toFixed(2)}`),
+    h('td', {}, h('span', { class: 'chip' }, c.rotulo)))));
+}
+
+function renderComparativoAgentes(e) {
+  renderPaineisAgentes(e);
+  const agentes = (e.porAgente || []).filter((a) => passaAgente(a.agente));
+  if (!agentes.length) {
+    $('tiles-agentes').replaceChildren();
+    $('barras-agentes').replaceChildren(h('p', { class: 'vazio' }, 'Sem uso por agente neste filtro.'));
+  } else {
+    $('tiles-agentes').replaceChildren(...agentes.map((a) => h('div', { class: 'tile' },
+      h('span', {}, a.agente),
+      h('b', {}, fmt(a.equivalente)),
+      h('small', {}, `${fmt(a.requisicoes)} reqs · média ${fmt(a.mediaPorReq)}/req · cache ${a.taxaCache}%`))));
+    const max = Math.max(1, ...agentes.map((a) => a.equivalente));
+    $('barras-agentes').replaceChildren(...agentes.map((a) => h('div', {
+      class: 'barra',
+      title: `${a.agente}: ${fmt(a.equivalente)} equivalentes · ${a.sessoes} sessões · ${a.requisicoes} reqs`,
+    },
+    h('span', { class: 'nome' }, a.agente),
+    h('span', { class: 'trilho' }, h('i', { style: { width: `${(100 * a.equivalente) / max}%` } })),
+    h('span', { class: 'valor' }, fmt(a.equivalente)),
+    h('span', { class: 'sub' }, `${a.sessoes} sessões · ${fmt(a.requisicoes)} reqs · média ${fmt(a.mediaPorReq)}/req · cache ${a.taxaCache}%`))));
+  }
+
+  // Gráfico SVG e tabela por semana (respeitando filtro global de Code Agent)
+  const semanas = (e.porSemana || []).slice(-12);
+  const valorSemana = (s) => (filtroAgenteGlobal === 'todos' ? s.equivalente : (s.agentes?.[filtroAgenteGlobal]?.equivalente || 0));
+  if (!semanas.length) {
+    $('svg-semana').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados semanais ainda.'));
+  } else {
+    const W = 520, H = 140, padL = 8, padB = 22, padT = 10;
+    const maxS = Math.max(1, ...semanas.map(valorSemana));
+    const bw = Math.max(12, Math.floor((W - padL * 2) / semanas.length) - 6);
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'svg-grafico', role: 'img', 'aria-label': 'Consumo semanal por Code Agent' });
+    semanas.forEach((s, i) => {
+      const val = valorSemana(s);
+      const x = padL + i * ((W - padL * 2) / semanas.length);
+      const bh = Math.max(2, ((H - padB - padT) * val) / maxS);
+      const y = H - padB - bh;
+      svg.append(
+        svgEl('rect', { x, y, width: bw, height: bh, rx: 3, class: 'svg-barra' },
+          svgEl('title', {}, `${s.semana}: ${fmt(val)} equivalentes`)),
+        svgEl('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle', class: 'svg-rotulo' }, s.semana.slice(5)),
+      );
+    });
+    $('svg-semana').replaceChildren(svg);
+  }
+
+  const corpoSem = $('tabela-semanas').tBodies[0];
+  if (!semanas.length) {
+    corpoSem.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Sem dados semanais ainda.')));
+  } else {
+    corpoSem.replaceChildren(...[...semanas].reverse().map((s) => {
+      const cc = s.agentes?.['claude-code'];
+      const agy = s.agentes?.antigravity;
+      const outrosEq = Object.entries(s.agentes || {})
+        .filter(([k]) => k !== 'claude-code' && k !== 'antigravity')
+        .reduce((acc, [, v]) => acc + (v.equivalente || 0), 0);
+      const reqs = filtroAgenteGlobal === 'todos' ? s.requisicoes : (s.agentes?.[filtroAgenteGlobal]?.requisicoes || 0);
+      const tot = valorSemana(s);
+      return h('tr', {},
+        h('td', {}, s.semana),
+        h('td', { class: 'num' }, fmt(reqs)),
+        h('td', { class: 'num' }, cc ? `${fmt(cc.equivalente)} (${cc.requisicoes}r)` : '—'),
+        h('td', { class: 'num' }, agy ? `${fmt(agy.equivalente)} (${agy.requisicoes}r)` : '—'),
+        h('td', { class: 'num' }, outrosEq ? fmt(outrosEq) : '—'),
+        h('td', { class: 'num' }, fmt(tot)));
+    }));
+  }
+
+  // Tabela de consumo dos Code Agents por sessão (clicável para abrir a linha do tempo)
+  const sessoesFilt = (e.sessoes || []).filter((s) => passaAgente(s.agente));
+  const corpoSess = $('tabela-sessoes-agente').tBodies[0];
+  if (!sessoesFilt.length) {
+    corpoSess.replaceChildren(h('tr', {}, h('td', { colspan: '10', class: 'vazio' }, 'Nenhuma sessão neste filtro.')));
+  } else {
+    corpoSess.replaceChildren(...sessoesFilt.slice(0, 100).map((s) => h('tr', {
+      class: 'clicavel',
+      onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
+    },
+    h('td', {}, s.id),
+    h('td', {}, h('span', { class: 'chip chip-info' }, s.agente || 'claude-code')),
+    h('td', {}, s.projeto),
+    h('td', {}, (s.modelos || []).map((m) => m.replace('claude-', '')).join(', ')),
+    h('td', { class: 'num' }, fmt(s.requisicoes)),
+    h('td', { class: 'num' }, fmt(s.cache_read)),
+    h('td', { class: 'num' }, fmt(s.cache_write)),
+    h('td', { class: 'num' }, fmt(s.output)),
+    h('td', { class: 'num' }, fmt(s.equivalente)),
+    h('td', {}, h('span', { class: s.ativa ? 'ativa' : 'inativa' }, s.ativa ? '● ativa' : quando(s.ultimo))))));
+  }
+
+  const lista = e.comparativoTarefas || [];
+  const projetosUnicos = [...new Set(lista.flatMap((t) => t.projetos || []))].sort();
+  const sel = $('filtro-projeto-comp');
+  const atual = filtroProjetoComp;
+  sel.replaceChildren(h('option', { value: 'todos' }, 'Todos'), ...projetosUnicos.map((p) => h('option', { value: p }, p)));
+  sel.value = projetosUnicos.includes(atual) ? atual : 'todos';
+  filtroProjetoComp = sel.value;
+
+  const filtrada = lista.filter((t) => filtroProjetoComp === 'todos' || (t.projetos || []).includes(filtroProjetoComp));
+  const corpo = $('tabela-comparativo').tBodies[0];
+  if (!filtrada.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Nenhuma tarefa com uso registrado neste filtro.'))); return; }
+  corpo.replaceChildren(...filtrada.slice(0, 300).map((t) => {
+    const cc = t.agentes['claude-code'];
+    const agy = t.agentes.antigravity;
+    const outrosEq = Object.entries(t.agentes)
+      .filter(([k]) => k !== 'claude-code' && k !== 'antigravity')
+      .reduce((s, [, v]) => s + (v.equivalente || 0), 0);
+    return h('tr', {},
+      h('td', {}, t.tarefa),
+      h('td', {}, (t.projetos || []).join(', ') || '—'),
+      h('td', { class: 'num' }, cc ? `${fmt(cc.equivalente)} (${cc.requisicoes}r)` : '—'),
+      h('td', { class: 'num' }, agy ? `${fmt(agy.equivalente)} (${agy.requisicoes}r)` : '—'),
+      h('td', { class: 'num' }, outrosEq ? fmt(outrosEq) : '—'),
+      h('td', { class: 'num' }, fmt(t.totalEquivalente)));
+  }));
+}
+
 function renderEconomia(e) {
-  const ops = e.consumo?.oportunidades || [];
-  if (!ops.length) { $('lista-economia').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma oportunidade de economia disparada ainda.')); return; }
+  const ops = (e.consumo?.oportunidades || []).filter((o) => passaAgente(o.agente));
+  if (!ops.length) { $('lista-economia').replaceChildren(h('p', { class: 'vazio' }, 'Nenhuma oportunidade de economia neste filtro.')); return; }
   $('lista-economia').replaceChildren(...ops.map((o) => h('div', { class: `oportunidade sev-${o.severidade}` },
     h('div', { class: 'op-topo' },
       h('b', {}, o.titulo),
+      h('span', { class: 'chip chip-info' }, o.agente || 'claude-code'),
       h('span', { class: 'chip chip-alerta' }, `economia: ~${fmt(o.economia_estimada_equiv)} eq. (${o.rotulo})`)),
     h('div', { class: 'linha2' }, `Sessão ${o.sessao} · Regra: ${o.regra} · Evidência: ${o.evidencia}`),
     h('div', { class: 'op-acao' }, `Ação sugerida: ${o.acao}`))));
@@ -387,9 +574,90 @@ function renderModelos(r) {
     h('td', {}, m.status)))));
 }
 
+function atualizarFiltroAgenteGlobal(e) {
+  const nomes = new Set([
+    ...(e.porAgente || []).map((a) => a.agente),
+    ...(e.tarefas || []).map((t) => t.agente),
+    ...(e.sessoes || []).map((s) => s.agente),
+  ].filter(Boolean));
+  const lista = [...nomes].sort();
+  const sel = $('filtro-agente-global');
+  sel.replaceChildren(h('option', { value: 'todos' }, 'Todos'), ...lista.map((a) => h('option', { value: a }, a)));
+  sel.value = lista.includes(filtroAgenteGlobal) ? filtroAgenteGlobal : 'todos';
+  filtroAgenteGlobal = sel.value;
+}
+
+// ---- Comparativo A x B (D-075): lido de /api/comparativo ao abrir a aba e a cada atualização com ela aberta.
+const pct = (v) => (v == null ? 'sem base em A' : `${v > 0 ? '+' : ''}${String(v).replace('.', ',')}%`);
+const inteiro = (n) => (n == null ? NAO_MEDIDO : Math.round(n).toLocaleString('pt-BR'));
+let carregandoAb = false;
+
+function linhaAb(rotulo, a, b, v) {
+  return h('tr', {}, h('td', {}, rotulo), h('td', { class: 'num' }, a), h('td', { class: 'num' }, b), h('td', { class: 'num' }, v));
+}
+
+function renderComparativoAb(c) {
+  const { A, B } = c.grupos;
+  const corte = new Date(c.corte).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  $('ab-leitura').replaceChildren(
+    `Corte: ${corte} (constante CORTE_AB em src/comparativo.js). `,
+    h('span', { class: c.amostraPequena ? 'chip chip-alerta' : 'chip chip-info' }, c.leitura),
+  );
+  const metricas = [
+    ['Sessões', 'sessoes'], ['Requisições', 'requisicoes'], ['Entrada', 'input'], ['Cache escrito', 'cache_write'],
+    ['Cache lido', 'cache_read'], ['Saída', 'output'], ['Total equivalente', 'equivalente'],
+    ['Equivalente por sessão', 'mediaPorSessao'], ['Chamadas de subagente', 'chamadasSubagente'],
+    ['Chamadas de revisor-independente', 'revisorIndependente'],
+  ];
+  $('tabela-ab').querySelector('tbody').replaceChildren(...metricas.map(([r, k]) => linhaAb(r, inteiro(A[k]), inteiro(B[k]), pct(c.variacao[k]))));
+
+  const tipos = [...new Set([...Object.keys(A.subagentes), ...Object.keys(B.subagentes)])]
+    .sort((x, y) => ((A.subagentes[y] || 0) + (B.subagentes[y] || 0)) - ((A.subagentes[x] || 0) + (B.subagentes[x] || 0)));
+  const corpoSub = $('tabela-ab-subagentes').querySelector('tbody');
+  if (!tipos.length) corpoSub.replaceChildren(h('tr', {}, h('td', { colspan: 3, class: 'vazio' }, 'Nenhuma chamada de subagente medida.')));
+  else corpoSub.replaceChildren(...tipos.map((t) => h('tr', {}, h('td', {}, t),
+    h('td', { class: 'num' }, String(A.subagentes[t] || 0)), h('td', { class: 'num' }, String(B.subagentes[t] || 0)))));
+
+  const cr = c.coderabbit;
+  if (cr.status !== 'medido') {
+    $('ab-coderabbit').replaceChildren(h('p', { class: 'vazio' }, `${NAO_MEDIDO}: ${cr.motivo}`));
+  } else {
+    const t = h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'Métrica'), h('th', { class: 'num' }, 'A'), h('th', { class: 'num' }, 'B'))),
+      h('tbody', {}, ...[['PRs mergeados', 'prs'], ['PRs com review do CodeRabbit', 'prsComReview'], ['Reviews', 'reviews'],
+        ['Comentários', 'comentarios'], ['Rodadas (commits depois do 1º review)', 'rodadas']]
+        .map(([r, k]) => h('tr', {}, h('td', {}, r), h('td', { class: 'num' }, String(cr.A[k])), h('td', { class: 'num' }, String(cr.B[k]))))));
+    $('ab-coderabbit').replaceChildren(t, h('p', { class: 'dica' }, `Coletado em ${quando(Date.parse(cr.coletadoEm))}. Grupo pela data do merge.`));
+  }
+
+  const rg = c.registro;
+  $('ab-registro').replaceChildren(h('p', { class: 'dica' },
+    `A: ${rg.A.medido.linhas} linha(s) medida(s), ${inteiro(equivalenteReg(rg.A.medido))} equivalentes, ${rg.A.naoMedidos} ${NAO_MEDIDO} · `
+    + `B: ${rg.B.medido.linhas} linha(s) medida(s), ${inteiro(equivalenteReg(rg.B.medido))} equivalentes, ${rg.B.naoMedidos} ${NAO_MEDIDO}. `
+    + 'Linhas nao-medido não entram em número nenhum.'));
+
+  const corpoT = $('tabela-testes-ab').querySelector('tbody');
+  if (!c.testes.length) corpoT.replaceChildren(h('tr', {}, h('td', { colspan: 6, class: 'vazio' }, 'Nenhum teste registrado.')));
+  else corpoT.replaceChildren(...c.testes.map((t) => h('tr', {}, h('td', {}, t.id), h('td', {}, t.data), h('td', {}, t.versao_harness),
+    h('td', {}, t.grupo), h('td', { class: 'num' }, inteiro(t.tokens)), h('td', {}, t.observacao))));
+}
+
+const equivalenteReg = (m) => m.input + 2 * m.cache_write + 0.1 * m.cache_read + 5 * m.output;
+
+async function carregarComparativo() {
+  if (carregandoAb) return;
+  carregandoAb = true;
+  try {
+    const r = await fetch('/api/comparativo');
+    if (r.ok) renderComparativoAb(await r.json());
+    else $('ab-leitura').textContent = `Falha ao ler o comparativo (${r.status}).`;
+  } catch { $('ab-leitura').textContent = 'Falha ao ler o comparativo.'; } finally { carregandoAb = false; }
+}
+
 function render(e) {
   ultimo = e;
   if (abaAtiva === 'modelos') carregarModelos();
+  atualizarFiltroAgenteGlobal(e);
+  if (abaAtiva === 'comparativo') carregarComparativo();
   tiles(e);
   renderPorTipo(e);
   renderPorDia(e);
@@ -401,6 +669,7 @@ function render(e) {
   recentes(e);
   renderAtribuicaoGlobal(e);
   renderSubagentes(e);
+  renderComparativoAgentes(e);
   renderEconomia(e);
   externo('aprovacoes', e.aprovacoes, 'Defina MONDAY_TOKEN e MONDAY_BOARD_ID para ver as aprovações do board.',
     (i) => h('tr', {}, h('td', {}, h('a', { href: i.url, rel: 'noopener noreferrer', target: '_blank' }, i.nome)), h('td', {}, i.tipo), h('td', {}, i.prioridade), h('td', {}, i.status)));
@@ -409,7 +678,7 @@ function render(e) {
       h('td', {}, p.rascunho ? 'rascunho' : 'pronto'),
       h('td', {}, p.checks ? `✓ ${p.checks.sucesso} · ✗ ${p.checks.falha} · ◐ ${p.checks.andamento}` : '—')));
   const f = e.fontes || {};
-  $('rodape').textContent = `${f.arquivos ?? 0} transcripts lidos em ${f.transcripts || '—'}${f.linhasInvalidas ? ` (${f.linhasInvalidas} linhas inválidas ignoradas)` : ''} · histórico em ${f.banco || '—'}${f.salvoEm ? `, salvo às ${hora(f.salvoEm)}` : ''}${e.totais.naoMedidos ? ` · ${e.totais.naoMedidos} trecho(s) sem medição no registro` : ''}. Tokens equivalentes: cache lido 0,1, cache escrito 2, saída 5.`;
+  $('rodape').textContent = `${f.arquivos ?? 0} transcripts lidos${f.linhasInvalidas ? ` (${f.linhasInvalidas} linhas inválidas ignoradas)` : ''}${f.salvoEm ? ` · salvo às ${hora(f.salvoEm)}` : ''}${e.totais.naoMedidos ? ` · ${e.totais.naoMedidos} trecho(s) sem medição no registro` : ''}. Tokens equivalentes: cache lido 0,1, cache escrito 2, saída 5.`;
 }
 
 $('abas').addEventListener('click', (ev) => {
@@ -420,6 +689,16 @@ $('abas').addEventListener('click', (ev) => {
 $('seletor-sessao').addEventListener('change', (ev) => {
   sessaoSelecionada = ev.target.value;
   carregarDetalhe(sessaoSelecionada);
+});
+
+$('filtro-agente-global').addEventListener('change', (ev) => {
+  filtroAgenteGlobal = ev.target.value;
+  if (ultimo) render(ultimo);
+});
+
+$('filtro-projeto-comp').addEventListener('change', (ev) => {
+  filtroProjetoComp = ev.target.value;
+  if (ultimo) renderComparativoAgentes(ultimo);
 });
 
 $('filtros').addEventListener('click', (ev) => {

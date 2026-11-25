@@ -8,14 +8,14 @@ import { DatabaseSync } from 'node:sqlite';
 const ESQUEMA = `
 PRAGMA journal_mode = WAL;
 CREATE TABLE IF NOT EXISTS sessoes (
-  id TEXT PRIMARY KEY, projeto TEXT NOT NULL, branch TEXT, primeiro INTEGER, ultimo INTEGER, tarefa_ativa TEXT
+  id TEXT PRIMARY KEY, agente TEXT NOT NULL DEFAULT 'claude-code', projeto TEXT NOT NULL, branch TEXT, primeiro INTEGER, ultimo INTEGER, tarefa_ativa TEXT
 );
 CREATE TABLE IF NOT EXISTS tarefas (
   chave TEXT PRIMARY KEY, sessao TEXT NOT NULL, projeto TEXT NOT NULL, titulo TEXT NOT NULL,
   status TEXT NOT NULL, criado INTEGER, atualizado INTEGER
 );
 CREATE TABLE IF NOT EXISTS mensagens (
-  id TEXT PRIMARY KEY, sessao TEXT NOT NULL, modelo TEXT NOT NULL, quando INTEGER NOT NULL, tarefa TEXT,
+  id TEXT PRIMARY KEY, sessao TEXT NOT NULL, agente TEXT NOT NULL DEFAULT 'claude-code', modelo TEXT NOT NULL, quando INTEGER NOT NULL, tarefa TEXT,
   input INTEGER NOT NULL, cache_write INTEGER NOT NULL, cache_read INTEGER NOT NULL, output INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS historico_status (
@@ -43,20 +43,25 @@ CREATE INDEX IF NOT EXISTS mensagens_sessao ON mensagens(sessao);
 CREATE INDEX IF NOT EXISTS req_detalhe_sessao ON requisicoes_detalhe(sessao);
 CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT);
 `;
-const VERSAO_ESQUEMA = '3';
+const VERSAO_ESQUEMA = '4';
 
-// Migrações aditivas: só acrescentam colunas anuláveis, então linhas antigas ficam intactas (com null).
-// v3: horário e tipo do evento anterior a cada requisição, para a latência da aba Modelos.
-const COLUNAS_NOVAS = {
-  requisicoes_detalhe: [['quando_anterior', 'INTEGER'], ['tipo_anterior', 'TEXT']],
-};
+// Migrações aditivas, aplicadas em ordem: só acrescentam colunas (anuláveis ou com default),
+// então linhas antigas ficam intactas.
+// v3: coluna agente em sessoes e mensagens (Code Agent), com default 'claude-code' para bancos v1/v2.
+// v4: horário e tipo do evento anterior a cada requisição, para a latência da aba Modelos (null = nao-medido).
+const MIGRACOES = [
+  ['sessoes', 'agente', "TEXT NOT NULL DEFAULT 'claude-code'"],
+  ['mensagens', 'agente', "TEXT NOT NULL DEFAULT 'claude-code'"],
+  ['requisicoes_detalhe', 'quando_anterior', 'INTEGER'],
+  ['requisicoes_detalhe', 'tipo_anterior', 'TEXT'],
+];
 
 function migrar(db) {
   db.exec('BEGIN');
   try {
-    for (const [tabela, colunas] of Object.entries(COLUNAS_NOVAS)) {
+    for (const [tabela, nome, tipo] of MIGRACOES) {
       const existentes = new Set(db.prepare(`PRAGMA table_info(${tabela})`).all().map((c) => c.name));
-      for (const [nome, tipo] of colunas) if (!existentes.has(nome)) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${nome} ${tipo}`);
+      if (!existentes.has(nome)) db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${nome} ${tipo}`);
     }
     db.prepare('INSERT OR REPLACE INTO meta VALUES (?, ?)').run('versao_esquema', VERSAO_ESQUEMA);
     db.exec('COMMIT');
@@ -79,14 +84,14 @@ export class Persistencia {
     this.db.exec(ESQUEMA);
     migrar(this.db);
     this.sql = {
-      sessao: this.db.prepare(`INSERT INTO sessoes (id, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET projeto = excluded.projeto, branch = excluded.branch,
+      sessao: this.db.prepare(`INSERT INTO sessoes (id, agente, projeto, branch, primeiro, ultimo, tarefa_ativa) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET agente = excluded.agente, projeto = excluded.projeto, branch = excluded.branch,
         primeiro = MIN(COALESCE(sessoes.primeiro, excluded.primeiro), COALESCE(excluded.primeiro, sessoes.primeiro)),
         ultimo = MAX(COALESCE(sessoes.ultimo, 0), COALESCE(excluded.ultimo, 0)), tarefa_ativa = excluded.tarefa_ativa`),
       tarefa: this.db.prepare(`INSERT INTO tarefas (chave, sessao, projeto, titulo, status, criado, atualizado) VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(chave) DO UPDATE SET titulo = excluded.titulo, status = excluded.status, projeto = excluded.projeto, atualizado = excluded.atualizado`),
-      mensagem: this.db.prepare(`INSERT INTO mensagens (id, sessao, modelo, quando, tarefa, input, cache_write, cache_read, output)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      mensagem: this.db.prepare(`INSERT INTO mensagens (id, sessao, agente, modelo, quando, tarefa, input, cache_write, cache_read, output)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET input = MAX(mensagens.input, excluded.input), cache_write = MAX(mensagens.cache_write, excluded.cache_write),
         cache_read = MAX(mensagens.cache_read, excluded.cache_read), output = MAX(mensagens.output, excluded.output)`),
       status: this.db.prepare('INSERT INTO historico_status (tarefa, status, quando) VALUES (?, ?, ?)'),
@@ -125,7 +130,7 @@ export class Persistencia {
     try {
       for (const id of sessoes) {
         const s = ag.sessoes.get(id);
-        if (s) this.sql.sessao.run(id, s.projeto, s.branch, s.primeiro ?? null, s.ultimo || null, ag.ativa.get(id) ?? null);
+        if (s) this.sql.sessao.run(id, s.agente || 'claude-code', s.projeto, s.branch, s.primeiro ?? null, s.ultimo || null, ag.ativa.get(id) ?? null);
       }
       for (const chave of tarefas) {
         const t = ag.tarefas.get(chave);
@@ -133,7 +138,7 @@ export class Persistencia {
       }
       for (const id of mensagens) {
         const m = ag.mensagens.get(id);
-        if (m) this.sql.mensagem.run(id, m.sessao, m.modelo, m.quando, m.tarefa, m.uso.input, m.uso.cache_write, m.uso.cache_read, m.uso.output);
+        if (m) this.sql.mensagem.run(id, m.sessao, m.agente || 'claude-code', m.modelo, m.quando, m.tarefa, m.uso.input, m.uso.cache_write, m.uso.cache_read, m.uso.output);
       }
       for (const h of status) this.sql.status.run(h.tarefa, h.status, h.quando);
 
@@ -181,7 +186,7 @@ export class Persistencia {
   restaurar(ag) {
     const linhas = (q) => this.db.prepare(q).all();
     ag.restaurar({
-      sessoes: linhas('SELECT id, projeto, branch, tarefa_ativa AS tarefaAtiva FROM sessoes'),
+      sessoes: linhas('SELECT id, agente, projeto, branch, tarefa_ativa AS tarefaAtiva FROM sessoes'),
       tarefas: linhas('SELECT * FROM tarefas'),
       mensagens: linhas('SELECT * FROM mensagens ORDER BY quando'),
       requisicoes: linhas('SELECT * FROM requisicoes_detalhe ORDER BY quando'),

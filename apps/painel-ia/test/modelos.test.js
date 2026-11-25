@@ -185,7 +185,7 @@ INSERT INTO requisicoes_detalhe VALUES ('velha', 's0', 'principal', 0, 'claude-o
   10, 0, 0, 0, 0, 5, 0, '[]', '[]', 0, 0, 0);
 `;
 
-test('migração do esquema 2 para 3 preserva as linhas antigas, com latência nula (nao-medido)', async () => {
+test('migração do esquema 2 para 4 (agente e latência) preserva as linhas antigas, com latência nula (nao-medido)', async () => {
   const caminho = join(await mkdtemp(join(tmpdir(), 'painel-mig-')), 'painel.db');
   const velho = new DatabaseSync(caminho);
   velho.exec(ESQUEMA_V2);
@@ -193,7 +193,7 @@ test('migração do esquema 2 para 3 preserva as linhas antigas, com latência n
 
   const p = new Persistencia(caminho);
   const versao = p.consulta("SELECT valor FROM meta WHERE chave = 'versao_esquema'")[0].valor;
-  assert.equal(versao, '3');
+  assert.equal(versao, '4');
   const linhas = p.consulta('SELECT id, input, output, quando_anterior, tipo_anterior FROM requisicoes_detalhe');
   assert.equal(linhas.length, 1);
   assert.equal(linhas[0].id, 'velha');
