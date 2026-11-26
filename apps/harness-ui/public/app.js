@@ -56,11 +56,18 @@
     timerToast = setTimeout(() => el.toast.classList.add('hidden'), 3500);
   }
 
-  async function api(caminho, opts = {}) {
+  async function api(caminho, opts = {}, tentouRenovar = false) {
     const headers = { ...(opts.headers || {}) };
     if (estado.token) headers['X-Harness-Token'] = estado.token;
     if (opts.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
     const res = await fetch(caminho, { ...opts, headers });
+    if (res.status === 401 && !tentouRenovar && caminho !== '/api/bootstrap') {
+      const boot = await fetch('/api/bootstrap').then((r) => r.json()).catch(() => null);
+      if (boot?.token) {
+        estado.token = boot.token;
+        return api(caminho, opts, true);
+      }
+    }
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.erro || `HTTP ${res.status}`);
     return json;
