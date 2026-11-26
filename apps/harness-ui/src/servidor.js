@@ -31,6 +31,8 @@ const ARQUIVOS_ESTATICOS = {
   '/vendor/addon-fit.js': { caminho: join(DIR_APP, 'node_modules', '@xterm', 'addon-fit', 'lib', 'addon-fit.js'), tipo: 'application/javascript; charset=utf-8' },
 };
 
+const IDENTIFICADOR_RE = /^[a-zA-Z0-9._-]{1,80}$/;
+
 function compararToken(recebido, esperado) {
   if (!recebido || !esperado) return false;
   const a = Buffer.from(String(recebido), 'utf8');
@@ -107,7 +109,11 @@ export function criarServidor({
   });
 
   const enviarJson = (res, status, dados) => {
-    const corpo = JSON.stringify(dados);
+    const corpo = JSON.stringify(dados)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.writeHead(status, cabecalhosSeguros({ 'Content-Type': 'application/json; charset=utf-8' }));
     res.end(corpo);
   };
@@ -156,6 +162,9 @@ export function criarServidor({
       const agente = url.searchParams.get('agente') || 'claude-code';
       const tarefa = url.searchParams.get('tarefa') || 'codigo';
       const projeto = url.searchParams.get('projeto') || '';
+      if (!IDENTIFICADOR_RE.test(agente) || !IDENTIFICADOR_RE.test(tarefa) || (projeto && !IDENTIFICADOR_RE.test(projeto))) {
+        return enviarJson(res, 400, { erro: 'parâmetros inválidos' });
+      }
       return enviarJson(res, 200, { prompt: montarPromptPassagem({ agente, tarefa, projeto }) });
     }
 

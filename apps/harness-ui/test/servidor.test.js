@@ -136,4 +136,17 @@ test('servidor aplica cabeçalhos de segurança, bloqueia Host/Origin inválidos
   });
   assert.equal(del.status, 200);
   assert.equal(instancias[0].morto, true);
+
+  // 7. /api/prompt aceita identificadores válidos e recusa payload de XSS
+  const promptOk = await requisicao(porta, {
+    path: '/api/prompt?agente=antigravity&tarefa=codigo&projeto=03-mcp-regras-cdb',
+  });
+  assert.equal(promptOk.status, 200);
+  assert.match(JSON.parse(promptOk.body).prompt, /03-mcp-regras-cdb/);
+
+  const promptXss = await requisicao(porta, {
+    path: '/api/prompt?agente=antigravity&tarefa=codigo&projeto=%3Cscript%3Ealert(1)%3C%2Fscript%3E',
+  });
+  assert.equal(promptXss.status, 400);
+  assert.ok(!promptXss.body.includes('<script>'));
 });
