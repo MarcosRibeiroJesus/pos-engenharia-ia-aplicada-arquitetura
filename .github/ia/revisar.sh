@@ -8,7 +8,9 @@ python3 -m pip install --quiet jsonschema
 
 mkdir -p /tmp/revisao
 python3 "$IA"/resumir_sarif.py achados > /tmp/revisao/achados.md
-git diff --unified=3 "$BASE"...HEAD -- . ':(exclude)**/package-lock.json' | head -c 120000 > /tmp/revisao/diff.patch
+git diff --unified=3 "$BASE"...HEAD -- . ':(exclude)**/package-lock.json' > /tmp/revisao/diff.full
+head -c 120000 /tmp/revisao/diff.full > /tmp/revisao/diff.patch
+rm -f /tmp/revisao/diff.full
 python3 "$IA"/comentario.py anterior > /tmp/revisao/anterior.md
 
 ENTRADAS="Entradas (somente leitura): /tmp/revisao/diff.patch (diff do PR), /tmp/revisao/achados.md (achados das ferramentas e custo), /tmp/revisao/anterior.md (revisão anterior). Reporte só achados novos ou ainda não resolvidos."

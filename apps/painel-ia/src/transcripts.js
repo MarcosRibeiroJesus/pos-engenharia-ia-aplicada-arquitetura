@@ -31,7 +31,9 @@ export function metadadosArquivo(caminho, origem = 'claude-code') {
 }
 
 /** Normaliza um evento do transcript.jsonl do Antigravity para o contrato comum do Agregador/Consumo. */
-export function normalizarEventoAntigravity(ev, meta) {
+// `modelosConversa` guarda o último modelo visto em cada conversa: no transcript real só alguns passos
+// trazem `model`, e os demais carregam tokens mesmo assim. Descartá-los perdia ~88% do consumo.
+export function normalizarEventoAntigravity(ev, meta, modelosConversa = new Map()) {
   if (!ev || typeof ev !== 'object') return null;
   const sessaoId = meta.sessaoPai || 'antigravity-sem-sessao';
   const ts = ev.created_at || new Date().toISOString();
@@ -66,7 +68,8 @@ export function normalizarEventoAntigravity(ev, meta) {
   }
   if (t === 'PLANNER_RESPONSE') {
     if (ev.status && ev.status !== 'DONE') return null;
-    if (!ev.model) return null;
+    if (ev.model) modelosConversa.set(sessaoId, String(ev.model));
+    const modelo = ev.model ? String(ev.model) : (modelosConversa.get(sessaoId) || 'antigravity-nao-identificado');
     // Identidade determinística: exige step_index ou created_at; sem ambos usa hash estável do uso/modelo (nunca Date.now).
     let sufixoId;
     if (ev.step_index != null) sufixoId = `step-${ev.step_index}`;
@@ -91,7 +94,7 @@ export function normalizarEventoAntigravity(ev, meta) {
       timestamp: ev.created_at || null,
       message: {
         id: `${sessaoId}:${sufixoId}`,
-        model: String(ev.model),
+        model: modelo,
         content,
         usage: {
           input_tokens: Number(ev.input_tokens) || 0,
@@ -114,6 +117,7 @@ export class LeitorTranscripts {
     this.origem = origem;
     this.somenteNome = somenteNome;
     this.estado = new Map(); // caminho -> { posicao, resto }
+    this.modelosAgy = new Map(); // conversa do Antigravity -> último modelo visto
     this.erros = 0;
     this.arquivos = 0;
   }
@@ -174,7 +178,7 @@ export class LeitorTranscripts {
           let ev;
           try { ev = JSON.parse(linha); } catch { this.erros++; continue; }
           if (this.origem === 'antigravity') {
-            ev = normalizarEventoAntigravity(ev, meta);
+            ev = normalizarEventoAntigravity(ev, meta, this.modelosAgy);
             if (!ev) continue;
           }
           this.aoEvento(ev, meta);

@@ -1,0 +1,24 @@
+{
+  "name": "pos-harness-ui",
+  "version": "0.1.0",
+  "description": "Interface web local estilo navegador com abas de terminais PTY dedicados para os code agents do harness.",
+  "type": "module",
+  "bin": {
+    "pos-harness-ui": "bin/pos-harness-ui.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node bin/pos-harness-ui.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "node-pty": "^1.0.0",
+    "ws": "^8.18.0"
+  },
+  "license": "MIT",
+  "private": true
+}

@@ -1,21 +1,21 @@
 {
   "sessao": "1c4926a8-3b37-4599-a390-50e7fba715f6",
   "branch": "plataforma/00-plataforma-agentes-t019",
-  "atualizado": "2026-11-24T23:24:10+00:00",
+  "atualizado": "2026-11-25T18:48:21+00:00",
   "modelos": {
     "claude-haiku-5-5": {
-      "requisicoes": 194,
-      "input": 452,
-      "cache_write": 1045846,
-      "cache_read": 40786902,
-      "output": 187897
+      "requisicoes": 235,
+      "input": 536,
+      "cache_write": 1780164,
+      "cache_read": 54453371,
+      "output": 219238
     },
     "claude-opus-5-5": {
-      "requisicoes": 80,
-      "input": 2218,
-      "cache_write": 408437,
-      "cache_read": 8735967,
-      "output": 82058
+      "requisicoes": 105,
+      "input": 2268,
+      "cache_write": 622211,
+      "cache_read": 10727204,
+      "output": 96982
     }
   }
 }

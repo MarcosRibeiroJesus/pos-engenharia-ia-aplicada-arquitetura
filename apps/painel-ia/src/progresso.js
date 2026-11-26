@@ -1,6 +1,7 @@
 // Leitura de harness/progresso.md para incluir no painel todas as tarefas concluídas
 // com o Code Agent e o modelo usado em cada entrega.
 import { readFile } from 'node:fs/promises';
+import { tipoDaLinha } from './tipos.js';
 
 function normalizarAgente(sessaoCampo = '') {
   const s = sessaoCampo.toLowerCase();
@@ -18,7 +19,7 @@ function extrairModelo(sessaoCampo = '') {
 }
 
 /** Faz o parse do conteúdo de harness/progresso.md em tarefas concluídas. */
-export function parseProgresso(texto = '') {
+export function parseProgresso(texto = '', mapa = new Map()) {
   const saida = [];
   for (const linha of texto.split(/\r?\n/)) {
     if (!linha.startsWith('- ')) continue;
@@ -38,15 +39,16 @@ export function parseProgresso(texto = '') {
       status: 'completed',
       quando: Date.parse(`${data}T12:00:00Z`) || 0,
       fonte: 'progresso',
+      tipo: tipoDaLinha(linha, mapa),
     });
   }
   return saida;
 }
 
-export async function lerProgresso(caminho) {
+export async function lerProgresso(caminho, mapa = new Map()) {
   if (!caminho) return [];
   try {
-    return parseProgresso(await readFile(caminho, 'utf8'));
+    return parseProgresso(await readFile(caminho, 'utf8'), mapa);
   } catch {
     return [];
   }
