@@ -56,7 +56,7 @@
         "modulos/01-fundamentos-ia-llms/ia-aplicada/"
       ],
       "specs": "specs/01-doom/",
-      "fase": "especificar",
+      "fase": "esclarecer",
       "retroativo": false,
       "pr": null,
       "cloud": "gcp",
