@@ -43,7 +43,7 @@ export function criarServidor({ estado, detalheSessao = () => null, hostsPermiti
     res.end(corpo);
   };
 
-  const srv = createServer((req, res) => {
+  const srv = createServer(async (req, res) => {
     if (!permitidos.has(nomeDoHost(req.headers.host))) return enviar(res, 'Host não permitido', 'text/plain; charset=utf-8', 421);
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.setHeader('Allow', 'GET, HEAD');
@@ -70,9 +70,14 @@ export function criarServidor({ estado, detalheSessao = () => null, hostsPermiti
     }
     // Só rotas próprias do objeto: '/constructor' ou '/__proto__' não podem virar chamada (CodeQL js/unvalidated-dynamic-method-call).
     if (Object.hasOwn(extras, rota) && typeof extras[rota] === 'function') {
-      const [corpo, tipo, nome] = extras[rota]();
-      if (nome) res.setHeader('Content-Disposition', `attachment; filename="${nome}"`);
-      return enviar(res, corpo, tipo);
+      try {
+        const [corpo, tipo, nome] = await extras[rota]();
+        if (nome) res.setHeader('Content-Disposition', `attachment; filename="${nome}"`);
+        return enviar(res, corpo, tipo);
+      } catch (e) {
+        // a mensagem da rota não deve trazer segredo; o chamador só precisa saber que falhou
+        return enviar(res, JSON.stringify({ ok: false, erro: String(e.message || 'falha') }), 'application/json; charset=utf-8', 502);
+      }
     }
     const arq = Object.hasOwn(CACHE, rota) ? CACHE[rota] : undefined;
     if (!arq) return enviar(res, 'Não encontrado', 'text/plain; charset=utf-8', 404);

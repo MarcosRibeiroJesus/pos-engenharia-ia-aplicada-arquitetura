@@ -124,3 +124,52 @@ th { color: var(--mute); font-weight: 600; position: sticky; top: 0; background:
 .feed .hora { color: var(--soft); font: 12px var(--mono); }
 .vazio { color: var(--soft); font-size: 13.5px; }
 .rodape { max-width: 1200px; margin: 0 auto; padding: 0 24px 28px; color: var(--soft); font-size: 12.5px; }
+
+/* Botão Atualizar dos painéis de Code Agent */
+.botao-atualizar { margin-left: auto; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.botao-atualizar:hover:not(:disabled) { border-color: var(--info); }
+.botao-atualizar:disabled { opacity: .5; cursor: progress; }
+
+/* Semáforo de saúde (<70% verde, 70-90% amarelo, >=90% vermelho) e alertas */
+.saude-topo { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pilula-saude { background: var(--chip); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font: 12px var(--mono); cursor: pointer; }
+.pilula-saude.saude-saudavel { border-color: var(--accent); color: var(--accent); }
+.pilula-saude.saude-alerta { border-color: var(--warn); color: var(--warn); }
+.pilula-saude.saude-critico { border-color: var(--danger); color: var(--danger); }
+.alertas-cota { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.alerta-item { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); font-size: 13.5px; background: var(--paper); }
+.alerta-item.saude-alerta { border-left: 4px solid var(--warn); }
+.alerta-item.saude-critico { border-left: 4px solid var(--danger); }
+.card-agente.borda-alerta { border-color: var(--warn); }
+.card-agente.borda-critico { border-color: var(--danger); }
+.card-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.chip-saude-saudavel { border: 1px solid var(--accent); color: var(--accent); }
+.chip-saude-alerta { border: 1px solid var(--warn); color: var(--warn); }
+.chip-saude-critico { border: 1px solid var(--danger); color: var(--danger); }
+.countdown { color: var(--soft); font-size: 11.5px; }
+.pct-saudavel { color: var(--accent); }
+.pct-alerta { color: var(--warn); }
+.pct-critico { color: var(--danger); }
+.barra.clicavel { cursor: pointer; border-radius: 6px; padding-left: 4px; padding-right: 4px; }
+.barra.clicavel:hover { background: var(--chip); }
+
+/* Heatmap diário estilo GitHub */
+.svg-heatmap { width: 100%; max-width: 720px; height: auto; display: block; }
+.hm-cell { stroke: var(--bg); stroke-width: 1; }
+.hm-0 { fill: var(--chip); background: var(--chip); }
+.hm-1 { fill: #154513; background: #154513; }
+.hm-2 { fill: #196c16; background: #196c16; }
+.hm-3 { fill: #1f9d1b; background: #1f9d1b; }
+.hm-4 { fill: #39d353; background: #39d353; }
+.heatmap-legenda { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--soft); margin-top: 6px; }
+.hm-box { display: inline-block; width: 11px; height: 11px; border-radius: 2px; }
+
+/* Barra empilhada de participação por cliente/agente */
+.barra-empilhada { display: flex; height: 18px; border-radius: 999px; overflow: hidden; background: var(--chip); gap: 2px; margin-bottom: 10px; }
+.barra-empilhada i { display: block; height: 100%; }
+.seg-claude-code { background: var(--accent); }
+.seg-antigravity { background: var(--info); }
+.seg-copilot { background: var(--warn); }
+.seg-outro { background: var(--mute); }
+.legenda-agentes { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--mute); }
+.item-leg-agente b { color: var(--ink); }

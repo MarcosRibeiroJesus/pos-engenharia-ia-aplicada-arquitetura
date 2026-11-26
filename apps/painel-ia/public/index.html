@@ -12,6 +12,7 @@
 <header class="topo">
   <div class="marca">Painel de IA</div>
   <span id="conexao" class="conexao" role="status">conectando…</span>
+  <div id="saude-topo" class="saude-topo" aria-label="Saúde das cotas"></div>
   <nav class="abas" id="abas" role="tablist" aria-label="Visões do painel">
     <button role="tab" data-aba="geral" aria-selected="true">Visão geral</button>
     <button role="tab" data-aba="sessao" aria-selected="false">Sessão &amp; Timeline</button>
@@ -33,7 +34,21 @@
 <main>
   <!-- ABA 1: VISÃO GERAL -->
   <div class="painel-aba" data-painel="geral">
+    <section id="alertas-cota" class="alertas-cota oculto" aria-live="polite"></section>
     <section class="tiles" id="tiles" aria-label="Indicadores"></section>
+
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Heatmap diário de uso (últimas 16 semanas)</h2>
+        <span class="dica" id="heatmap-resumo">intensidade de tokens equivalentes por dia</span>
+      </div>
+      <div id="heatmap-dias" class="svg-caixa"></div>
+      <div class="heatmap-legenda">
+        <span>Menos</span>
+        <i class="hm-box hm-0"></i><i class="hm-box hm-1"></i><i class="hm-box hm-2"></i><i class="hm-box hm-3"></i><i class="hm-box hm-4"></i>
+        <span>Mais</span>
+      </div>
+    </section>
 
     <div class="duas">
       <section class="cartao">
@@ -68,7 +83,7 @@
         </div>
       </div>
       <div class="rolagem"><table id="tarefas"><thead><tr>
-        <th>Status</th><th>Tarefa</th><th>Projeto</th><th>Code Agent</th><th>Modelos</th><th class="num">Equivalentes</th>
+        <th>Status</th><th>Tarefa</th><th>Tipo</th><th>Projeto</th><th>Code Agent</th><th>Modelos</th><th class="num">Equivalentes</th>
       </tr></thead><tbody></tbody></table></div>
     </section>
 
@@ -155,9 +170,44 @@
       <div class="cartao-topo">
         <h2>Painel por Code Agent (% da sessão e % da semana em tempo real)</h2>
         <span class="dica">cotas configuráveis por agente via COTA_SESSAO_* e COTA_SEMANA_*</span>
+        <button type="button" id="atualizar-agentes" class="botao-atualizar">Atualizar</button>
+        <span class="dica" id="atualizar-status" aria-live="polite"></span>
       </div>
       <div id="paineis-code-agents" class="grade-agentes"></div>
     </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Performance e velocidade por modelo</h2>
+        <span class="dica">latência do envio até a resposta, throughput aproximado (tokens de saída/s) e pico de contexto; pausas &gt; 10 min não contam</span>
+      </div>
+      <div class="rolagem"><table id="tabela-latencia"><thead><tr>
+        <th>Modelo</th><th class="num">Amostras</th><th class="num">Latência média</th><th class="num">p50</th><th class="num">p95</th>
+        <th class="num">Vel. média</th><th class="num">Vel. p50</th><th class="num">Contexto máx</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <section class="cartao">
+      <div class="cartao-topo">
+        <h2>Participação por cliente / Code Agent</h2>
+        <span class="dica">divisão percentual de tokens equivalentes, sessões e média por sessão</span>
+      </div>
+      <div id="participacao-agentes"></div>
+    </section>
+    <div class="duas">
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Ranking: sessões mais caras</h2>
+          <span class="dica">top 10 por tokens equivalentes (clique para abrir a timeline)</span>
+        </div>
+        <div id="ranking-sessoes"></div>
+      </section>
+      <section class="cartao">
+        <div class="cartao-topo">
+          <h2>Ranking: projetos mais caros</h2>
+          <span class="dica">top 10 por tokens equivalentes</span>
+        </div>
+        <div id="ranking-projetos"></div>
+      </section>
+    </div>
     <section class="tiles" id="tiles-agentes"></section>
     <div class="duas">
       <section class="cartao">

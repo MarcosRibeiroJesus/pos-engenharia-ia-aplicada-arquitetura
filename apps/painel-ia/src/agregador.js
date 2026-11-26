@@ -4,6 +4,8 @@ import { AnalisadorConsumo } from './consumo.js';
 
 const CAMPOS = ['input', 'cache_write', 'cache_read', 'output'];
 const PESOS = { input: 1, cache_write: 2, cache_read: 0.1, output: 5 };
+import { NAO_ATRIBUIDO } from './tipos.js';
+
 const MINUTO = 60_000;
 const JANELA_ATIVA = 5 * MINUTO;
 
@@ -59,20 +61,47 @@ function usoDe(u = {}) {
   };
 }
 
+// Latência: amostras guardadas por modelo (as mais recentes) e teto para uma pausa não virar latência.
+const LIMITE_AMOSTRAS = 500;
+const LATENCIA_MAX_MS = 10 * MINUTO;
+
+/** Média e percentis (nearest-rank) de uma lista de valores. Lista vazia: n = 0. */
+function estatisticas(valores, decimais = 0) {
+  const n = valores.length;
+  if (!n) return { n: 0, mediaMs: null, p50Ms: null, p95Ms: null };
+  const ord = [...valores].sort((a, b) => a - b);
+  const nearest = (p) => ord[Math.min(n - 1, Math.ceil((p / 100) * n) - 1)];
+  const soma = ord.reduce((s, v) => s + v, 0);
+  const arred = (v) => (decimais > 0 ? Number(v.toFixed(decimais)) : Math.round(v));
+  return { n, mediaMs: arred(soma / n), p50Ms: arred(nearest(50)), p95Ms: arred(nearest(95)) };
+}
+
+function estatisticasTps(valores) {
+  const e = estatisticas(valores, 1);
+  return { n: e.n, media: e.mediaMs, p50: e.p50Ms, p95: e.p95Ms };
+}
+
 export class Agregador {
   constructor({ agora = () => Date.now() } = {}) {
     this.agora = agora;
+    this.ultimoEnvio = new Map(); // sessao -> ms do último envio ao modelo (prompt ou resultado de ferramenta)
+    this.latencias = new Map(); // modelo -> [ms] do tempo até a primeira resposta
+    this.throughput = new Map(); // modelo -> [tokens/s de saída]
+    this.ctxModelo = new Map(); // modelo -> { max, soma, n }
+    this.turnos = []; // ms de cada turno (evento turn_duration do Claude Code)
     this.mensagens = new Map(); // id -> uso já contado
     this.modelos = new Map();
     this.agentes = new Map();
     this.projetos = new Map();
     this.dias = new Map(); // YYYY-MM-DD -> uso
+    this.diasAgente = new Map(); // YYYY-MM-DD -> Map(agente -> uso)
     this.semanas = new Map(); // YYYY-WSS -> { uso, agentes: Map(agente -> uso) }
     this.sessoes = new Map();
     this.tarefas = new Map(); // `${sessao}:${id}` -> tarefa
     this.criacoesPendentes = new Map(); // tool_use_id -> {sessao, subject, ...}
     this.ativa = new Map(); // sessao -> chave da tarefa ativa
     this.minutos = new Map(); // minuto (epoch/60000) -> equivalente
+    this.janelasMinuto = new Map(); // agente -> Map(minuto -> equivalente), base das janelas corridas de 5 h e 7 dias
     this.recentes = [];
     this.registro = { linhas: [], naoMedidos: 0 };
     this.progresso = [];
@@ -90,11 +119,19 @@ export class Agregador {
     const sessao = this.#sessao(sessaoId, { ...ev, agente });
     this.consumo.ingerir(ev, meta, this.agora());
 
+    if (ev.type === 'system' && ev.subtype === 'turn_duration' && Number.isFinite(ev.durationMs)) {
+      this.turnos.push(ev.durationMs);
+      if (this.turnos.length > LIMITE_AMOSTRAS) this.turnos.shift();
+      return;
+    }
+
     const msg = ev.message;
     if (!msg) return;
     const conteudo = Array.isArray(msg.content) ? msg.content : [];
 
     if (ev.type === 'user') {
+      const t = Date.parse(ev.timestamp);
+      if (t) this.ultimoEnvio.set(sessaoId, t);
       for (const bloco of conteudo) if (bloco?.type === 'tool_result') this.#resultado(sessaoId, sessao, bloco);
       return;
     }
@@ -111,6 +148,7 @@ export class Agregador {
     const delta = {};
     for (const c of CAMPOS) delta[c] = Math.max(0, novo[c] - (anterior?.uso[c] || 0));
     if (anterior && equivalente(delta) === 0) return;
+    if (!anterior) this.#latencia(sessaoId, modelo, Date.parse(ev.timestamp), novo.output);
     const registro = anterior || { id, sessao: sessaoId, agente, modelo, quando: Date.parse(ev.timestamp) || this.agora(),
       tarefa: this.ativa.get(sessaoId) || null, uso: vazio() };
     for (const c of CAMPOS) registro.uso[c] = Math.max(novo[c], registro.uso[c]);
@@ -120,6 +158,29 @@ export class Agregador {
     this.#contar(registro, delta, !anterior);
   }
 
+  /**
+   * Latência de resposta: do último envio da sessão ao modelo até a primeira mensagem do assistente.
+   * Pausa longa (acima de LATENCIA_MAX_MS) é o usuário pensando, não o modelo, então não entra.
+   * Também registra throughput aproximado (tokens de saída / segundo) quando há saída e duração >= 100 ms.
+   */
+  #latencia(sessaoId, modelo, tResposta, outputTokens = 0) {
+    const tEnvio = this.ultimoEnvio.get(sessaoId);
+    this.ultimoEnvio.delete(sessaoId);
+    if (!tEnvio || !(tResposta > tEnvio) || tResposta - tEnvio > LATENCIA_MAX_MS) return;
+    const deltaMs = tResposta - tEnvio;
+    const lista = this.latencias.get(modelo) || [];
+    lista.push(deltaMs);
+    if (lista.length > LIMITE_AMOSTRAS) lista.shift();
+    this.latencias.set(modelo, lista);
+    if (outputTokens > 0 && deltaMs >= 100) {
+      const tps = outputTokens / (deltaMs / 1000);
+      const listaTps = this.throughput.get(modelo) || [];
+      listaTps.push(tps);
+      if (listaTps.length > LIMITE_AMOSTRAS) listaTps.shift();
+      this.throughput.set(modelo, listaTps);
+    }
+  }
+
   /** Soma um delta de uso de uma mensagem em todos os agrupamentos. */
   #contar(reg, delta, nova) {
     const sessao = this.sessoes.get(reg.sessao);
@@ -127,6 +188,8 @@ export class Agregador {
     const req = nova ? 1 : 0;
     const tarefa = reg.tarefa && this.tarefas.get(reg.tarefa);
     const diaChave = new Date(reg.quando).toISOString().slice(0, 10);
+    let diaAgMap = this.diasAgente.get(diaChave);
+    if (!diaAgMap) { diaAgMap = new Map(); this.diasAgente.set(diaChave, diaAgMap); }
     const semChave = semanaISO(reg.quando);
     let sem = this.semanas.get(semChave);
     if (!sem) { sem = { uso: vazio(), agentes: new Map() }; this.semanas.set(semChave, sem); }
@@ -135,12 +198,23 @@ export class Agregador {
       this.#grupo(this.agentes, agente),
       this.#grupo(this.projetos, sessao.projeto),
       this.#grupo(this.dias, diaChave),
+      this.#grupo(diaAgMap, agente),
       sem.uso,
       this.#grupo(sem.agentes, agente),
       sessao.uso,
     ];
     if (tarefa) alvos.push(tarefa.uso);
     for (const a of alvos) { somar(a, delta); a.requisicoes += req; }
+    if (nova) {
+      const ctx = (reg.uso.input || 0) + (reg.uso.cache_write || 0) + (reg.uso.cache_read || 0);
+      if (ctx > 0) {
+        const cm = this.ctxModelo.get(reg.modelo) || { max: 0, soma: 0, n: 0 };
+        cm.max = Math.max(cm.max, ctx);
+        cm.soma += ctx;
+        cm.n += 1;
+        this.ctxModelo.set(reg.modelo, cm);
+      }
+    }
     const eq = equivalente(delta);
     if (tarefa) {
       tarefa.modelos[reg.modelo] = (tarefa.modelos[reg.modelo] || 0) + eq;
@@ -154,6 +228,9 @@ export class Agregador {
     sessao.primeiro = Math.min(sessao.primeiro ?? reg.quando, reg.quando);
     const minuto = Math.floor(reg.quando / MINUTO);
     this.minutos.set(minuto, (this.minutos.get(minuto) || 0) + eq);
+    let porMinutoAgente = this.janelasMinuto.get(agente);
+    if (!porMinutoAgente) { porMinutoAgente = new Map(); this.janelasMinuto.set(agente, porMinutoAgente); }
+    porMinutoAgente.set(minuto, (porMinutoAgente.get(minuto) || 0) + eq);
     if (nova) {
       this.recentes.unshift({ quando: reg.quando, sessao: reg.sessao.slice(0, 8), agente, projeto: sessao.projeto, modelo: reg.modelo,
         tarefa: tarefa?.titulo || null, equivalente: Math.round(eq) });
@@ -278,7 +355,38 @@ export class Agregador {
     this.versao++;
   }
 
+  /** Tokens equivalentes acumulados por um agente desde um timestamp em ms (para delta após snapshot /usage). */
+  equivalenteDesde(agente, desdeMs) {
+    const porMinuto = this.janelasMinuto.get(agente);
+    if (!porMinuto || !Number.isFinite(desdeMs)) return 0;
+    const minCorte = Math.floor(desdeMs / MINUTO);
+    let soma = 0;
+    for (const [minuto, eqMin] of porMinuto) {
+      if (minuto >= minCorte) soma += eqMin;
+    }
+    return Math.round(soma);
+  }
+
   /** Fotografia serializável do estado, para a API e o SSE. */
+  /** Consumo por agente nas janelas corridas que os planos usam: últimas 5 h e últimos 7 dias. */
+  #janelas(agora) {
+    const corte7d = agora - 7 * 24 * 60 * MINUTO;
+    const corte5h = agora - 5 * 60 * MINUTO;
+    const saida = {};
+    for (const [agente, porMinuto] of this.janelasMinuto) {
+      let sessao5h = 0;
+      let semana7d = 0;
+      for (const [minuto, eqMin] of porMinuto) {
+        const ms = minuto * MINUTO;
+        if (ms < corte7d) { porMinuto.delete(minuto); continue; } // poda o que já saiu da janela maior
+        semana7d += eqMin;
+        if (ms >= corte5h) sessao5h += eqMin;
+      }
+      saida[agente] = { sessao5h: Math.round(sessao5h), semana7d: Math.round(semana7d) };
+    }
+    return saida;
+  }
+
   estado() {
     const agora = this.agora();
     const lista = (mapa) => [...mapa].map(([nome, u]) => ({ nome, ...u, equivalente: Math.round(equivalente(u)) }));
@@ -303,14 +411,18 @@ export class Agregador {
     for (const s of this.sessoes.values()) {
       if (s.uso.requisicoes > 0) sessoesPorAgente.set(s.agente || 'claude-code', (sessoesPorAgente.get(s.agente || 'claude-code') || 0) + 1);
     }
+    const eqTotalAgentes = [...agentes.values()].reduce((s, u) => s + equivalente(u), 0) || 1;
     const porAgente = [...agentes.entries()].map(([agente, u]) => {
       const ctxTotal = (u.input || 0) + (u.cache_write || 0) + (u.cache_read || 0);
       const eq = Math.round(equivalente(u));
+      const nSessoes = sessoesPorAgente.get(agente) || 0;
       return {
         agente,
         ...u,
         equivalente: eq,
-        sessoes: sessoesPorAgente.get(agente) || 0,
+        participacaoPct: Number(((100 * eq) / eqTotalAgentes).toFixed(1)),
+        sessoes: nSessoes,
+        mediaPorSessao: nSessoes ? Math.round(eq / nSessoes) : 0,
         mediaPorReq: u.requisicoes ? Math.round(eq / u.requisicoes) : 0,
         taxaCache: ctxTotal > 0 ? Number(((100 * (u.cache_read || 0)) / ctxTotal).toFixed(1)) : 0,
       };
@@ -324,7 +436,32 @@ export class Agregador {
       { tipo: 'input', rotulo: 'Entrada nova (×1)', tokens: totais.input, equivalente: Math.round(totais.input * PESOS.input), pct: Number(((100 * totais.input * PESOS.input) / eqTotal).toFixed(1)) },
     ].sort((a, b) => b.equivalente - a.equivalente);
 
-    const porDia = lista(this.dias).sort((a, b) => a.nome.localeCompare(b.nome));
+    // Consumo por dia com quebra por agente (transcripts + medições manuais do CSV) para o heatmap de calendário
+    const diasMapa = new Map();
+    for (const [nome, u] of this.dias.entries()) {
+      const agMap = this.diasAgente.get(nome);
+      const ags = {};
+      if (agMap) {
+        for (const [agNome, au] of agMap.entries()) {
+          ags[agNome] = { equivalente: Math.round(equivalente(au)), requisicoes: au.requisicoes };
+        }
+      }
+      diasMapa.set(nome, { nome, ...u, equivalente: Math.round(equivalente(u)), agentes: ags });
+    }
+    for (const l of this.registro.linhas) {
+      if (!l.data) continue;
+      const agNome = inferirAgente(l.modelo, l.observacao);
+      const eqVal = Math.round(equivalente(l) || (l.total || 0));
+      let d = diasMapa.get(l.data);
+      if (!d) { d = { nome: l.data, ...vazio(), equivalente: 0, agentes: {} }; diasMapa.set(l.data, d); }
+      somar(d, l);
+      d.requisicoes += l.requisicoes || 0;
+      d.equivalente += eqVal;
+      if (!d.agentes[agNome]) d.agentes[agNome] = { equivalente: 0, requisicoes: 0 };
+      d.agentes[agNome].equivalente += eqVal;
+      d.agentes[agNome].requisicoes += l.requisicoes || 0;
+    }
+    const porDia = [...diasMapa.values()].sort((a, b) => a.nome.localeCompare(b.nome));
 
     // Consumo por semana ISO com quebra por Code Agent (transcripts + medições manuais do CSV)
     const semanasMapa = new Map();
@@ -396,6 +533,7 @@ export class Agregador {
       fonte: 'progresso',
     }));
     const tarefas = [...tarefasTranscript, ...tarefasRegistro, ...tarefasProgresso]
+      .map((t) => ({ tipo: NAO_ATRIBUIDO, ...t }))
       .sort((a, b) => (b.atualizado || 0) - (a.atualizado || 0));
     const contagem = { pending: 0, in_progress: 0, completed: 0 };
     for (const t of tarefas) contagem[t.status] = (contagem[t.status] || 0) + 1;
@@ -445,6 +583,28 @@ export class Agregador {
       op.agente = this.sessoes.get(op.sessaoId)?.agente || 'claude-code';
     }
 
+    const nomesPerf = new Set([...this.latencias.keys(), ...this.throughput.keys(), ...this.ctxModelo.keys()]);
+    const perfPorModelo = [...nomesPerf].map((modelo) => {
+      const lat = estatisticas(this.latencias.get(modelo) || []);
+      const tps = estatisticasTps(this.throughput.get(modelo) || []);
+      const ctx = this.ctxModelo.get(modelo) || { max: 0, soma: 0, n: 0 };
+      const usoMod = this.modelos.get(modelo);
+      return {
+        modelo,
+        ...lat,
+        tpsN: tps.n,
+        tpsMedia: tps.media,
+        tpsP50: tps.p50,
+        tpsP95: tps.p95,
+        ctxMax: ctx.max,
+        ctxMedio: ctx.n ? Math.round(ctx.soma / ctx.n) : 0,
+        outputTotal: usoMod?.output || 0,
+      };
+    }).sort((a, b) => (b.n - a.n) || (b.ctxMax - a.ctxMax));
+
+    const listaProjetos = ordenar(lista(projetos));
+    const sessoesTop = [...sessoes].sort((a, b) => b.equivalente - a.equivalente).slice(0, 15);
+
     return {
       geradoEm: agora,
       totais: { ...totais, equivalente: Math.round(equivalente(totais)), porMinuto5: Math.round(ultimos5 / 5),
@@ -454,8 +614,22 @@ export class Agregador {
       porTipo,
       porDia,
       porSemana,
+      janelas: this.#janelas(agora),
+      latencia: {
+        porModelo: [...this.latencias].map(([modelo, valores]) => ({ modelo, ...estatisticas(valores) }))
+          .sort((a, b) => b.n - a.n),
+        turnos: estatisticas(this.turnos),
+      },
+      performance: {
+        porModelo: perfPorModelo,
+        turnos: estatisticas(this.turnos),
+      },
+      rankings: {
+        sessoes: sessoesTop,
+        projetos: listaProjetos.slice(0, 15),
+      },
       modelos: listaModelos,
-      projetos: ordenar(lista(projetos)),
+      projetos: listaProjetos,
       tarefas,
       contagemTarefas: contagem,
       sessoes,
