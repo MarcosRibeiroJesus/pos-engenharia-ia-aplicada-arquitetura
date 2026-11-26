@@ -464,17 +464,38 @@ function renderPaineisAgentes(e) {
       : (p.fontePct === 'snapshot' && p.semana.restantePct != null
         ? `snapshot /usage: ${p.semana.pct}% · restante ${p.semana.restantePct}%`
         : `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. (estimativa por logs, janela corrida)`);
+    const gruposSnap = p.snapshot?.grupos || [];
+    const renderGrupo = (g) => {
+      const nG = g.saude?.nivel || classeSaude(Math.max(g.sessao?.pct || 0, g.semana?.pct || 0));
+      const det5h = g.sessao?.desabilitado
+        ? 'Desabilitado: teto semanal atingido'
+        : `usado ${g.sessao?.pct ?? 0}% · restante ${g.sessao?.restantePct ?? 100}%`;
+      const det7d = `usado ${g.semana?.pct ?? 0}% · restante ${g.semana?.restantePct ?? 100}%`;
+      return h('div', { class: `subgrupo-usage borda-${nG}` },
+        h('div', { class: 'subgrupo-topo' },
+          h('b', {}, g.nome),
+          h('span', { class: `chip chip-saude-${nG}` }, g.saude?.rotulo || nG)),
+        g.modelos ? h('div', { class: 'dica subgrupo-modelos' }, g.modelos) : null,
+        medidorPct('5 h', g.sessao?.pct ?? 0, det5h, g.sessao?.resetEm, e.geradoEm),
+        medidorPct('7 dias', g.semana?.pct ?? 0, det7d, g.semana?.resetEm, e.geradoEm));
+    };
     return h('div', { class: `card-agente borda-${nivel}` },
       h('div', { class: 'card-agente-topo' },
         h('b', {}, p.titulo),
         h('div', { class: 'card-badges' },
           h('span', { class: `chip chip-saude-${nivel}` }, p.saude?.rotulo || nivel),
           h('span', { class: p.provedor.ativo || p.fontePct === 'conta' || p.fontePct === 'snapshot' ? 'chip chip-info' : 'chip' }, rotuloFonte))),
-      medidorPct('Últimas 5 h', p.sessao.pct, detSessao, p.sessao.resetEm, e.geradoEm),
-      medidorPct('Últimos 7 dias', p.semana.pct, detSemana, p.semana.resetEm, e.geradoEm),
+      gruposSnap.length
+        ? h('div', { class: 'subgrupos-usage' },
+          ...gruposSnap.map(renderGrupo),
+          h('div', { class: 'dica' }, `Δ logs desde snapshot: +${fmt(p.snapshot?.deltaEquivalente || 0)} eq.`))
+        : [
+          medidorPct('Últimas 5 h', p.sessao.pct, detSessao, p.sessao.resetEm, e.geradoEm),
+          medidorPct('Últimos 7 dias', p.semana.pct, detSemana, p.semana.resetEm, e.geradoEm),
+        ],
       p.snapshot?.capturadoEm ? h('div', { class: 'dica' },
         p.snapshot.expirado
-          ? `Snapshot de ${quando(Date.parse(p.snapshot.capturadoEm))} expirado — rode 'pos-painel-ia snapshot --agente ${p.agente} ...'`
+          ? `Snapshot de ${quando(Date.parse(p.snapshot.capturadoEm))} expirado — rode 'pos-painel-ia snapshot --agente ${p.agente} --colar'`
           : `Snapshot capturado em ${quando(Date.parse(p.snapshot.capturadoEm))}${p.snapshot.nota ? ` · ${p.snapshot.nota}` : ''}`) : null,
       p.provedor.custoUsd != null ? h('div', { class: 'dica' }, `Custo provedor (7d): US$ ${p.provedor.custoUsd.toFixed(2)}`) : null,
       p.provedor.erro ? h('div', { class: 'dica' }, `Provedor: ${p.provedor.erro}`) : null);
