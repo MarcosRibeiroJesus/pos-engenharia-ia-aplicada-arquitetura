@@ -155,7 +155,8 @@ CLAUDE AND GPT MODELS
 `;
   const baseMs = Date.parse('2026-11-26T05:53:00.000Z');
   const parsed = parsearTextoUsage(textoSintetico, { agora: () => baseMs });
-  assert.ok(!JSON.stringify(parsed).includes('example.com'), 'e-mail da conta nunca deve ser gravado');
+  const serializado = JSON.stringify(parsed);
+  assert.ok(!serializado.includes('usuario.sintetico') && !serializado.includes('@'), 'e-mail da conta nunca deve ser gravado');
   assert.equal(parsed.grupos.length, 2);
   assert.equal(parsed.grupos[0].nome, 'GEMINI MODELS');
   assert.equal(parsed.grupos[0].semana.pct, 87);
