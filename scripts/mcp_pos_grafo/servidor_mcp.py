@@ -154,45 +154,98 @@ class ServidorMCPPosGrafo:
     def __init__(self, motor: MotorGrafoPos | None = None) -> None:
         self.motor = motor or MotorGrafoPos()
 
+    @staticmethod
+    def _erro_jsonrpc(msg_id: Any, code: int, message: str) -> dict[str, Any]:
+        id_seguro = msg_id if isinstance(msg_id, (str, int)) and not isinstance(msg_id, bool) else None
+        return {
+            "jsonrpc": "2.0",
+            "id": id_seguro,
+            "error": {"code": code, "message": message},
+        }
+
+    @staticmethod
+    def _converter_inteiro(valor: Any, nome: str) -> tuple[int | None, dict[str, Any] | None]:
+        if isinstance(valor, bool):
+            return None, {
+                "isError": True,
+                "categoria": "parametro_invalido",
+                "retentavel": False,
+                "mensagem": f"O parâmetro `{nome}` deve ser um inteiro válido.",
+            }
+        try:
+            return int(valor), None
+        except (TypeError, ValueError):
+            return None, {
+                "isError": True,
+                "categoria": "parametro_invalido",
+                "retentavel": False,
+                "mensagem": f"O parâmetro `{nome}` deve ser um inteiro válido.",
+            }
+
     def chamar_ferramenta(self, nome: str, argumentos: dict[str, Any] | None) -> dict[str, Any]:
         """Despacha uma chamada `tools/call` e formata o retorno MCP com `isError`."""
-        args = argumentos or {}
-        if nome == "buscar_conteudo_pos":
-            res = self.motor.buscar_conteudo_pos(
-                consulta=str(args.get("consulta", "")),
-                disciplina=args.get("disciplina"),
-                limite=int(args.get("limite", 8)),
-            )
-        elif nome == "localizar_aula_por_termo_ou_link":
-            res = self.motor.localizar_aula_por_termo_ou_link(
-                termo=str(args.get("termo", "")),
-            )
-        elif nome == "obter_contexto_aula":
-            if "disciplina" not in args or "aula" not in args:
+        if argumentos is not None and not isinstance(argumentos, dict):
+            res: dict[str, Any] = {
+                "isError": True,
+                "categoria": "parametro_invalido",
+                "retentavel": False,
+                "mensagem": "Os argumentos da ferramenta devem ser um objeto JSON.",
+            }
+        else:
+            args = argumentos or {}
+            if nome == "buscar_conteudo_pos":
+                limite, erro_limite = self._converter_inteiro(args.get("limite", 8), "limite")
+                if erro_limite is not None:
+                    res = erro_limite
+                else:
+                    res = self.motor.buscar_conteudo_pos(
+                        consulta=str(args.get("consulta", "")),
+                        disciplina=args.get("disciplina"),
+                        limite=limite,
+                    )
+            elif nome == "localizar_aula_por_termo_ou_link":
+                res = self.motor.localizar_aula_por_termo_ou_link(
+                    termo=str(args.get("termo", "")),
+                )
+            elif nome == "obter_contexto_aula":
+                if "disciplina" not in args or "aula" not in args:
+                    res = {
+                        "isError": True,
+                        "categoria": "parametro_obrigatorio_ausente",
+                        "retentavel": False,
+                        "mensagem": "Os parâmetros `disciplina` e `aula` são obrigatórios.",
+                    }
+                else:
+                    aula_num, erro_aula = self._converter_inteiro(args["aula"], "aula")
+                    if erro_aula is not None:
+                        res = erro_aula
+                    else:
+                        res = self.motor.obter_contexto_aula(
+                            disciplina=str(args["disciplina"]),
+                            aula=aula_num,
+                            timestamp_foco=args.get("timestamp_foco"),
+                        )
+            elif nome == "consultar_grafo_cypher":
+                parametros_cypher = args.get("parametros")
+                if parametros_cypher is not None and not isinstance(parametros_cypher, dict):
+                    res = {
+                        "isError": True,
+                        "categoria": "parametro_invalido",
+                        "retentavel": False,
+                        "mensagem": "O parâmetro `parametros` deve ser um objeto JSON.",
+                    }
+                else:
+                    res = self.motor.consultar_grafo_cypher(
+                        cypher=str(args.get("cypher", "")),
+                        parametros=parametros_cypher,
+                    )
+            else:
                 res = {
                     "isError": True,
-                    "categoria": "parametro_obrigatorio_ausente",
+                    "categoria": "ferramenta_desconhecida",
                     "retentavel": False,
-                    "mensagem": "Os parâmetros `disciplina` e `aula` são obrigatórios.",
+                    "mensagem": f"Ferramenta MCP desconhecida: {nome}",
                 }
-            else:
-                res = self.motor.obter_contexto_aula(
-                    disciplina=str(args["disciplina"]),
-                    aula=int(args["aula"]),
-                    timestamp_foco=args.get("timestamp_foco"),
-                )
-        elif nome == "consultar_grafo_cypher":
-            res = self.motor.consultar_grafo_cypher(
-                cypher=str(args.get("cypher", "")),
-                parametros=args.get("parametros"),
-            )
-        else:
-            res = {
-                "isError": True,
-                "categoria": "ferramenta_desconhecida",
-                "retentavel": False,
-                "mensagem": f"Ferramenta MCP desconhecida: {nome}",
-            }
 
         is_error = bool(res.get("isError", False))
         return {
@@ -206,11 +259,23 @@ class ServidorMCPPosGrafo:
             "structuredContent": res,
         }
 
-    def processar_mensagem_jsonrpc(self, msg: dict[str, Any]) -> dict[str, Any] | None:
+    def processar_mensagem_jsonrpc(self, msg: Any) -> dict[str, Any] | None:
         """Processa uma requisição JSON-RPC 2.0 do protocolo MCP."""
-        metodo = msg.get("method", "")
+        if not isinstance(msg, dict):
+            return self._erro_jsonrpc(None, -32600, "Requisição JSON-RPC inválida: esperado objeto JSON.")
+
         msg_id = msg.get("id")
-        params = msg.get("params") or {}
+        metodo = msg.get("method")
+        if not isinstance(metodo, str) or not metodo:
+            return self._erro_jsonrpc(msg_id, -32600, "Requisição JSON-RPC inválida: campo `method` obrigatório.")
+
+        raw_params = msg.get("params")
+        if raw_params is None:
+            params: dict[str, Any] = {}
+        elif isinstance(raw_params, dict):
+            params = raw_params
+        else:
+            return self._erro_jsonrpc(msg_id, -32602, "Parâmetros JSON-RPC inválidos: `params` deve ser objeto JSON.")
 
         # Notificações (sem id) não exigem resposta
         if msg_id is None and metodo.startswith("notifications/"):
@@ -247,8 +312,16 @@ class ServidorMCPPosGrafo:
             }
 
         if metodo == "tools/call":
-            nome_tool = str(params.get("name", ""))
-            argumentos = params.get("arguments") or {}
+            nome_tool = params.get("name")
+            if not isinstance(nome_tool, str) or not nome_tool.strip():
+                return self._erro_jsonrpc(msg_id, -32602, "Parâmetro `name` obrigatório e deve ser string não vazia.")
+            raw_args = params.get("arguments")
+            if raw_args is None:
+                argumentos: dict[str, Any] = {}
+            elif isinstance(raw_args, dict):
+                argumentos = raw_args
+            else:
+                return self._erro_jsonrpc(msg_id, -32602, "Parâmetro `arguments` deve ser um objeto JSON.")
             resultado = self.chamar_ferramenta(nome_tool, argumentos)
             return {
                 "jsonrpc": "2.0",
@@ -256,14 +329,7 @@ class ServidorMCPPosGrafo:
                 "result": resultado,
             }
 
-        return {
-            "jsonrpc": "2.0",
-            "id": msg_id,
-            "error": {
-                "code": -32601,
-                "message": f"Método não suportado pelo servidor pos-grafo: {metodo}",
-            },
-        }
+        return self._erro_jsonrpc(msg_id, -32601, f"Método não suportado pelo servidor pos-grafo: {metodo}")
 
     def rodar_stdio(self) -> None:
         """Loop principal de leitura/escrita JSON-RPC 2.0 via stdin/stdout."""
@@ -283,7 +349,12 @@ class ServidorMCPPosGrafo:
                 sys.stdout.flush()
                 continue
 
-            resposta = self.processar_mensagem_jsonrpc(msg)
+            try:
+                resposta = self.processar_mensagem_jsonrpc(msg)
+            except Exception as exc:  # noqa: BLE001 — isola falha da requisição sem derrubar o loop stdio
+                msg_id = msg.get("id") if isinstance(msg, dict) else None
+                resposta = self._erro_jsonrpc(msg_id, -32603, f"Erro interno ao processar requisição: {exc}")
+
             if resposta is not None:
                 sys.stdout.write(json.dumps(resposta, ensure_ascii=False) + "\n")
                 sys.stdout.flush()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import pathlib
@@ -194,6 +195,72 @@ class TestMcpPosGrafoD079(unittest.TestCase):
                     caminho_cache=raiz_tmp / "grafo_pos.json",
                 )
                 self.assertEqual(motor_com_auth.neo4j_auth, cred_sintetica)
+
+    def test_rodar_stdio_isola_falhas_e_preserva_mensagens_seguintes(self) -> None:
+        motor = mock.MagicMock()
+        motor.buscar_conteudo_pos.side_effect = RuntimeError("falha simulada no motor")
+        servidor = ServidorMCPPosGrafo(motor=motor)
+
+        entrada = "\n".join(
+            [
+                "{json-quebrado",
+                json.dumps([1, 2, 3]),
+                json.dumps({"jsonrpc": "2.0", "id": 10, "method": "tools/call", "params": "invalido"}),
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 11,
+                        "method": "tools/call",
+                        "params": {"name": "buscar_conteudo_pos", "arguments": "nao-e-objeto"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 12,
+                        "method": "tools/call",
+                        "params": {"name": "obter_contexto_aula", "arguments": {"disciplina": "D03", "aula": "abc"}},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 13,
+                        "method": "tools/call",
+                        "params": {"name": "buscar_conteudo_pos", "arguments": {"consulta": "mcp"}},
+                    }
+                ),
+                json.dumps({"jsonrpc": "2.0", "id": 14, "method": "ping"}),
+            ]
+        ) + "\n"
+
+        saida = io.StringIO()
+        with mock.patch("sys.stdin", io.StringIO(entrada)), mock.patch("sys.stdout", saida):
+            servidor.rodar_stdio()
+
+        respostas = [json.loads(linha) for linha in saida.getvalue().splitlines() if linha.strip()]
+        self.assertEqual(len(respostas), 7)
+
+        # 1. JSON inválido preservado (-32700)
+        self.assertEqual(respostas[0]["error"]["code"], -32700)
+        self.assertIsNone(respostas[0]["id"])
+        # 2. Envelope não-objeto (-32600)
+        self.assertEqual(respostas[1]["error"]["code"], -32600)
+        # 3. params não-objeto (-32602)
+        self.assertEqual(respostas[2]["id"], 10)
+        self.assertEqual(respostas[2]["error"]["code"], -32602)
+        # 4. arguments não-objeto (-32602)
+        self.assertEqual(respostas[3]["id"], 11)
+        self.assertEqual(respostas[3]["error"]["code"], -32602)
+        # 5. Argumento inteiro inválido -> erro estruturado da tool (isError: true)
+        self.assertEqual(respostas[4]["id"], 12)
+        self.assertTrue(respostas[4]["result"]["isError"])
+        self.assertEqual(respostas[4]["result"]["structuredContent"]["categoria"], "parametro_invalido")
+        # 6. Exceção inesperada no motor -> erro interno JSON-RPC (-32603) sem matar o loop
+        self.assertEqual(respostas[5]["id"], 13)
+        self.assertEqual(respostas[5]["error"]["code"], -32603)
+        # 7. Requisição seguinte processada normalmente
+        self.assertEqual(respostas[6], {"jsonrpc": "2.0", "id": 14, "result": {}})
 
 
 if __name__ == "__main__":
