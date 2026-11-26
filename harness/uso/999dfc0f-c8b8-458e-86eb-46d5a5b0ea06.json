@@ -1,0 +1,14 @@
+{
+  "sessao": "999dfc0f-c8b8-458e-86eb-46d5a5b0ea06",
+  "branch": "plataforma/orquestracao-paralela",
+  "atualizado": "2026-11-20T11:19:37+00:00",
+  "modelos": {
+    "claude-haiku-5-5": {
+      "requisicoes": 14,
+      "input": 28,
+      "cache_write": 67222,
+      "cache_read": 1227735,
+      "output": 10153
+    }
+  }
+}
