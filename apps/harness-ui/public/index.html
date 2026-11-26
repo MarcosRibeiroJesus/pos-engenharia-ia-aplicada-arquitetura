@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harness UI · Terminais de Code Agents</title>
+  <link rel="stylesheet" href="/vendor/xterm.css" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="chrome-bar">
+    <div class="brand" title="Harness UI — Terminais dedicados em abas">
+      <span class="brand-dot"></span>
+      <span class="brand-name">HARNESS</span>
+    </div>
+
+    <div id="tab-strip" class="tab-strip" role="tablist" aria-label="Abas de terminais"></div>
+
+    <button id="btn-nova-aba" class="btn-icon btn-add-tab" type="button" title="Nova aba de agente (Alt+T)">+</button>
+
+    <div class="chrome-actions">
+      <a id="link-painel-ia" class="btn-link" href="http://localhost:4317" target="_blank" rel="noopener noreferrer">
+        Painel de IA ↗
+      </a>
+    </div>
+  </header>
+
+  <section id="tab-toolbar" class="tab-toolbar hidden">
+    <div class="toolbar-meta">
+      <span id="meta-agente" class="pill"></span>
+      <span id="meta-status" class="pill pill-status"></span>
+      <span id="meta-projeto" class="pill pill-muted hidden"></span>
+      <span id="meta-cwd" class="meta-cwd"></span>
+    </div>
+    <div class="toolbar-actions">
+      <button id="btn-enviar-prompt" class="btn-small hidden" type="button" title="Enviar prompt de passagem para este terminal">
+        Enviar prompt
+      </button>
+      <button id="btn-limpar-term" class="btn-small" type="button" title="Limpar visualização do terminal">
+        Limpar
+      </button>
+      <button id="btn-fechar-ativa" class="btn-small btn-danger" type="button" title="Encerrar processo e fechar aba">
+        Encerrar aba
+      </button>
+    </div>
+  </section>
+
+  <main id="stage" class="stage">
+    <section id="empty-state" class="empty-state">
+      <div class="hero">
+        <h1>Central de Terminais do Harness</h1>
+        <p>Cada code agent roda em um terminal PTY dedicado e isolado em sua própria aba. Recarregar a página não derruba nenhum agente em execução.</p>
+      </div>
+
+      <div id="quick-cards" class="quick-cards"></div>
+
+      <div class="launcher-panel">
+        <h2>Abrir com contexto do Harness</h2>
+        <form id="form-home" class="launcher-form">
+          <label>
+            Code Agent
+            <select id="home-perfil" name="perfilId"></select>
+          </label>
+          <label>
+            Projeto (SDD)
+            <select id="home-projeto" name="projeto"></select>
+          </label>
+          <label>
+            Tarefa
+            <select id="home-tarefa" name="tarefa"></select>
+          </label>
+          <label>
+            Título da aba (opcional)
+            <input id="home-titulo" name="titulo" type="text" placeholder="Ex.: Antigravity · D03 T004" maxlength="80" />
+          </label>
+          <label class="check-row">
+            <input id="home-com-prompt" type="checkbox" />
+            <span>Preparar botão de prompt de passagem do harness na aba</span>
+          </label>
+          <div class="form-actions">
+            <button class="btn-primary" type="submit">Abrir terminal dedicado</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div id="terminals-container" class="terminals-container hidden"></div>
+  </main>
+
+  <footer class="status-bar">
+    <div class="status-left">
+      <span id="status-conexao" class="status-item">Conectado</span>
+      <span id="status-abas" class="status-item">0 abas</span>
+    </div>
+    <div class="status-right">
+      <span id="status-raiz" class="status-item"></span>
+    </div>
+  </footer>
+
+  <dialog id="modal-nova-aba" class="modal">
+    <form id="form-modal" class="modal-card">
+      <div class="modal-header">
+        <h2>Nova aba de terminal dedicado</h2>
+        <button id="btn-fechar-modal" class="btn-icon" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div id="modal-perfis-rapidos" class="modal-perfis"></div>
+      <div class="launcher-form">
+        <label>
+          Code Agent
+          <select id="modal-perfil" name="perfilId"></select>
+        </label>
+        <label>
+          Projeto (SDD)
+          <select id="modal-projeto" name="projeto"></select>
+        </label>
+        <label>
+          Tarefa
+          <select id="modal-tarefa" name="tarefa"></select>
+        </label>
+        <label>
+          Título da aba (opcional)
+          <input id="modal-titulo" name="titulo" type="text" placeholder="Automático se vazio" maxlength="80" />
+        </label>
+        <label class="check-row">
+          <input id="modal-com-prompt" type="checkbox" />
+          <span>Preparar botão de prompt de passagem do harness</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancelar-modal" class="btn-small" type="button">Cancelar</button>
+        <button class="btn-primary" type="submit">Abrir aba</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="/vendor/xterm.js"></script>
+  <script src="/vendor/addon-fit.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
