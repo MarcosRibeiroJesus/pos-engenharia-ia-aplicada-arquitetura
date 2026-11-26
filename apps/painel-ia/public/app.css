@@ -173,3 +173,11 @@ th { color: var(--mute); font-weight: 600; position: sticky; top: 0; background:
 .seg-outro { background: var(--mute); }
 .legenda-agentes { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--mute); }
 .item-leg-agente b { color: var(--ink); }
+
+/* Subgrupos de modelos colados do /usage (ex.: GEMINI MODELS e CLAUDE AND GPT MODELS) */
+.subgrupos-usage { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.subgrupo-usage { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+.subgrupo-usage.borda-alerta { border-left: 3px solid var(--warn); }
+.subgrupo-usage.borda-critico { border-left: 3px solid var(--danger); }
+.subgrupo-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12.5px; margin-bottom: 4px; }
+.subgrupo-modelos { margin-bottom: 6px; font-size: 11.5px; }

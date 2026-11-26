@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Agregador } from '../src/agregador.js';
 import { montarPainelAgentes } from '../src/provedores.js';
-import { classificarSaude, piorSaude, salvarSnapshotUsage, lerSnapshotsUsage, aplicarSnapshotsUsage } from '../src/snapshot-usage.js';
+import { classificarSaude, piorSaude, salvarSnapshotUsage, lerSnapshotsUsage, aplicarSnapshotsUsage, parsearTextoUsage } from '../src/snapshot-usage.js';
 
 test('classificarSaude segue o semáforo <70% verde, 70-90% amarelo e >=90% vermelho', () => {
   assert.deepEqual(classificarSaude(0), { nivel: 'saudavel', rotulo: 'Saudável' });
@@ -124,4 +124,63 @@ test('heatmap por dia traz quebra por agente, participação percentual e rankin
   // Delta desde 10:30 deve incluir apenas a mensagem das 11:00 do Antigravity
   assert.equal(ag.equivalenteDesde('antigravity', Date.parse('2026-11-26T10:30:00.000Z')), 6000);
   assert.equal(ag.equivalenteDesde('claude-code', Date.parse('2026-11-26T10:30:00.000Z')), 0);
+});
+
+test('parsearTextoUsage converte saída colada do /usage em subgrupos e descarta e-mail da conta', () => {
+  const textoSintetico = `
+  Models & Quota
+
+  Account: usuario.sintetico@example.com
+
+GEMINI MODELS
+  Models within this group: Gemini 4 Neon, Gemini 4 Carbon
+
+  Weekly Limit Remaining
+    [] 12.98%
+    Refreshes in 4d 14h 57m
+
+  Five Hour Limit Remaining
+    [] 67.42%
+    Refreshes in 1h 6m
+
+CLAUDE AND GPT MODELS
+  Models within this group: Claude Opus 5.5, Claude Sonnet 5.5
+
+  Weekly Limit Remaining
+    [] 0.00%
+    Refreshes in 4d 17h 58m
+
+  Five Hour Limit Remaining
+    Disabled: You have hit your weekly limit, the 5-hour limit does not currently apply.
+`;
+  const baseMs = Date.parse('2026-11-26T05:53:00.000Z');
+  const parsed = parsearTextoUsage(textoSintetico, { agora: () => baseMs });
+  const serializado = JSON.stringify(parsed);
+  assert.ok(!serializado.includes('usuario.sintetico') && !serializado.includes('@'), 'e-mail da conta nunca deve ser gravado');
+  assert.equal(parsed.grupos.length, 2);
+  assert.equal(parsed.grupos[0].nome, 'GEMINI MODELS');
+  assert.equal(parsed.grupos[0].semana.pct, 87);
+  assert.equal(parsed.grupos[0].semana.restantePct, 13);
+  assert.equal(parsed.grupos[0].sessao.pct, 32.6);
+  assert.equal(parsed.grupos[0].sessao.restantePct, 67.4);
+  assert.equal(parsed.grupos[0].sessao.resetEm, new Date(baseMs + 66 * 60_000).toISOString());
+
+  assert.equal(parsed.grupos[1].nome, 'CLAUDE AND GPT MODELS');
+  assert.equal(parsed.grupos[1].semana.pct, 100);
+  assert.equal(parsed.grupos[1].sessao.desabilitado, true);
+
+  // Resumo principal herda o grupo ativo (GEMINI MODELS)
+  assert.equal(parsed.sessaoPct, 32.6);
+  assert.equal(parsed.semanaPct, 87);
+
+  // Ao aplicar nos painéis, a saúde geral reflete o pior subgrupo (Crítico por Claude+GPT em 100%)
+  const base = montarPainelAgentes({ janelas: {}, sessoes: [] }, {}, {});
+  const aplicados = aplicarSnapshotsUsage(base, {
+    antigravity: { capturadoEm: new Date(baseMs).toISOString(), ...parsed },
+  }, () => 5000, baseMs + 60_000);
+  const agy = aplicados.find((p) => p.agente === 'antigravity');
+  assert.equal(agy.snapshot.grupos.length, 2);
+  assert.equal(agy.snapshot.grupos[0].saude.nivel, 'alerta');
+  assert.equal(agy.snapshot.grupos[1].saude.nivel, 'critico');
+  assert.equal(agy.saude.nivel, 'critico');
 });
