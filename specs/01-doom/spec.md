@@ -9,6 +9,8 @@
 
 **O que existe hoje.** A unidade 04 da disciplina 01 ensina inferência de visão no cliente: um detector YOLO já treinado por terceiros, convertido para TensorFlow.js, roda num Web Worker, filtra detecções por um limiar fixo de confiança e devolve o centro da caixa, que move a mira de um jogo no navegador. O jogo da aula é Duck Hunt. A aula não ensina treino, aprendizado por reforço nem nuvem.
 
+**O tema da unidade é outro.** A unidade trata de usar IA para executar os movimentos e as ações necessárias para vencer um jogo, sem intervenção humana. O jogo de tiro com patos é só o exemplo da aula. Este projeto aplica o mesmo tema ao Doom: a IA percebe os monstros na tela, decide e age sozinha, sem nenhum comando humano durante a partida. A aula não ensina a reproduzir o exemplo; o aluno deve aplicar a técnica a outro jogo.
+
 **O que o projeto muda.** O jogo passa a ser Doom, com assets Freedoom, e os rótulos para medir o detector vêm do próprio motor do jogo (D-059). A decisão de arquitetura da unidade deixa de ser uma constante e passa a ser medida: o limiar de confiança é calibrado sobre a telemetria de partidas, e uma proposta do Claude só entra em uso depois de aprovação humana (opção 04-C, construída sobre a versão fiel à aula, 04-A). Além disso, a arquitetura híbrida Jev + Astra entra como segunda estratégia de comparação, sob o mesmo contrato (D-078). A estratégia principal continua sendo a da aula.
 
 **Para quem.** O dono do curso (para avaliar a decisão de calibrar o limiar) e quem visita o site para jogar e ver como a IA decide.
@@ -20,8 +22,10 @@
 
 ## Histórias de usuário
 
-- **H1.** Como visitante, quero jogar uma partida de Doom em que a mira é guiada pelo detector, para ver a IA jogar.
-  - Dado a página aberta com o modelo carregado, quando eu inicio uma partida, então a mira se move segundo as caixas devolvidas pelo worker e a partida termina sem erro no console.
+- **H1.** Como visitante, quero ver a IA zerar uma fase de Doom sozinha, sem nenhum comando humano, para ver o tema da unidade aplicado a outro jogo.
+  - Dado a página aberta com o agente carregado, quando eu inicio a fase, então o agente percorre a fase, mira, atira e chega à saída só com as ações dele, e o log registra cada ação.
+- **H1b.** Como dono do projeto, quero que a conclusão da fase seja medida, para saber se o agente zera de forma repetível.
+  - Dado a mesma semente de fase em N execuções, quando o agente roda, então a taxa de conclusão e o tempo até a saída são reportados. N e a meta de taxa são fixados no plano.
 - **H2.** Como dono do projeto, quero que uma proposta de limiar de confiança seja mostrada com evidências e aprovada por mim antes de valer, para que nenhuma mudança entre em produção sem decisão humana.
   - Dado uma proposta do Claude que cita quadros inexistentes, quando o gate roda, então a proposta é rejeitada e nada é gravado.
   - Dado uma proposta válida, quando eu não aprovo, então o limiar vigente não muda.
@@ -36,7 +40,10 @@
 - **RF-001:** o jogo DEVE rodar no navegador usando somente assets Freedoom. Nenhum arquivo do jogo original pode estar no repositório, no build ou no site. O código do port de Doom (D01-P2) fica no repositório, com a licença GPL-2.0 e o aviso de modificação. Aceite: a verificação de ativos do build lista só arquivos Freedoom e código com licença registrada no ADR.
 - **RF-002:** a thread principal DEVE apenas capturar o canvas e enviá-lo ao Web Worker. Aceite: um teste de instrumentação mostra que a chamada de inferência acontece só dentro do worker.
 - **RF-003:** o worker DEVE carregar o detector YOLO em TensorFlow.js com o arquivo de rótulos, baixado de fonte pública no build com licença conferida e registrada em ADR (D01-P3 = A; nenhum arquivo do curso entra no repositório), redimensionar a imagem para a entrada do modelo, normalizar, inferir, filtrar por confiança e classe, converter as coordenadas para a tela e devolver o centro da caixa. Aceite: com uma imagem sintética de posição conhecida, o centro devolvido está a no máximo 2 px da posição esperada.
-- **RF-004:** o limiar de confiança inicial DEVE ser lido da configuração vigente, com valor de partida 0,40, e nunca ficar fixo no código. Aceite: trocar o valor na configuração muda o filtro sem alterar código. O valor 0,40 e as demais constantes da aula (entrada 640×640, ~8 MB, classe "kite") estão marcados `[CONFIRMAR NO VÍDEO]` e não são usados como fato até a confirmação (D01-P4).
+- **RF-004:** o limiar de confiança inicial DEVE ser lido da configuração vigente, com valor de partida 0,40, e nunca ficar fixo no código. Aceite: trocar o valor na configuração muda o filtro sem alterar código. Os valores da aula (limiar de 40%, entrada 640×640, ~8 MB, classe "kite") não são fatos a reproduzir: o dono respondeu que só importa a ideia (D01-P4). Eles viram parâmetros de configuração, com o valor do modelo escolhido no plano.
+- **RF-017:** o agente DEVE concluir uma fase (escopo escolhido pelo dono em 2026-11-26; a fase exata, como E1M1, é fixada no plano) sem nenhuma intervenção humana durante a partida. Aceite: a conclusão é detectada pelo próprio jogo (saída da fase), e o log de entradas da partida só tem entradas do agente.
+- **RF-018:** o agente DEVE executar mirar, atirar, andar e navegar (chaves, portas e itens) para chegar à saída. Aceite: cada ação tem registro com o quadro e a decisão que a causou, para que a partida possa ser auditada.
+- **RF-019:** o agente decide com duas fontes declaradas (D01-P7 = pixels e estado do motor): a imagem da tela pelo detector, e o estado do motor (posição, vida, mapa) exposto pelo port. Aceite: o log de cada partida diz, por ação, qual fonte a fundamentou. Nenhuma ação usa estado que não esteja nessa lista.
 - **RF-005:** ao fim de cada partida, o navegador DEVE enviar a telemetria em lote com, por quadro: todas as detecções (inclusive as abaixo do limiar), com classe, confiança e caixa; o disparo; o resultado; e os rótulos do motor do jogo. Aceite: a telemetria de uma partida gravada reproduz, quadro a quadro, o número de detecções registrado.
 
 **Calibrador do limiar (opção 04-C)**
@@ -107,7 +114,10 @@ Respostas já dadas no chat em 2026-11-26 (registro; a memória compartilhada ai
 - **D01-P5 (plataforma AWS): B,** consumo completo da `00-plataforma-agentes`.
 
 **Pendentes:**
-- **D01-P4 (fatos da aula):** o dono respondeu "há diferenças", e falta dizer quais valores (limiar, entrada, tamanho do modelo, classe). Bloqueia RF-004 e o plano.
+- **D01-P4 (fatos da aula):** resolvida em 2026-11-26. Os valores da aula não são reproduzidos; só a ideia de jogar sozinho.
+- **D01-P7 (entradas do agente): pixels e estado do motor** (2026-11-26), RF-019.
+- **D01-P6 (onde o jogo é servido): site AWS privado** (2026-11-26), com o build do repositório, reproduzível com a conta de quem clona.
+- **Escopo (2026-11-26):** zerar uma fase (RF-017); ações de navegação completa (RF-018). O dono escolheu o conjunto completo, acima da recomendação de mirar e atirar. A dificuldade de navegação fica registrada como risco para o plano.
 - **D01-P6 (onde o jogo é servido):** com o repositório público e o jogo no navegador, o site na AWS (S3 e CloudFront) continua? Bloqueia RNF-002, RNF-003 e o plano da parte AWS.
 
 | id | pergunta | bloqueia | opções | recomendação |
