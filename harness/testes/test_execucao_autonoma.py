@@ -116,3 +116,9 @@ class TestConfiguracaoDaExecucao(unittest.TestCase):
         wf = (RAIZ / ".github" / "workflows" / "seguranca.yml").read_text(encoding="utf-8")
         for script in ("provedor.sh", "revisar.sh", "corrigir.sh", "publicar_correcao.sh"):
             self.assertIn(f"bash .base/.github/ia/{script}", wf)
+
+    def test_revisar_nao_usa_pipe_git_diff_para_head_com_pipefail(self):
+        # Evita SIGPIPE (exit 141) sob `set -o pipefail` quando o diff do PR excede 120 KB.
+        revisar = (RAIZ / ".github" / "ia" / "revisar.sh").read_text(encoding="utf-8")
+        self.assertNotIn("| head -c", revisar)
+        self.assertIn("head -c 120000", revisar)
