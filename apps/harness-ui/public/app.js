@@ -11,6 +11,7 @@
   };
 
   const el = {
+    btnInicio: document.getElementById('btn-inicio'),
     tabStrip: document.getElementById('tab-strip'),
     btnNovaAba: document.getElementById('btn-nova-aba'),
     linkPainelIa: document.getElementById('link-painel-ia'),
@@ -207,6 +208,7 @@
 
   function atualizarToolbarAtiva() {
     const item = estado.ativaId ? estado.abas.get(estado.ativaId) : null;
+    el.btnInicio.classList.toggle('active', !item);
     if (!item) {
       el.tabToolbar.classList.add('hidden');
       el.terminalsContainer.classList.add('hidden');
@@ -246,6 +248,15 @@
         item.ws.send(JSON.stringify({ tipo: 'resize', cols: item.term.cols, rows: item.term.rows }));
       }
     } catch { /* container ainda sem dimensões */ }
+  }
+
+  function mostrarInicio() {
+    estado.ativaId = null;
+    for (const item of estado.abas.values()) {
+      item.pane.classList.remove('active');
+    }
+    renderizarBarraAbas();
+    atualizarToolbarAtiva();
   }
 
   function ativarAba(id) {
@@ -406,6 +417,7 @@
   }
 
   // Eventos de UI
+  el.btnInicio.addEventListener('click', () => mostrarInicio());
   el.btnNovaAba.addEventListener('click', () => el.modal.showModal());
   el.btnFecharModal.addEventListener('click', () => el.modal.close());
   el.btnCancelarModal.addEventListener('click', () => el.modal.close());
