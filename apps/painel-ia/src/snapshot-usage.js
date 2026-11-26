@@ -133,6 +133,45 @@ export function parsearTextoUsage(texto, { agora = () => Date.now() } = {}) {
   };
 }
 
+/**
+ * Mescla overrides explícitos da CLI (`--sessao-pct`, `--semana-pct`, `--reset-sessao`, `--reset-semana`)
+ * sobre o resultado de `parsearTextoUsage`, mantendo os campos dos grupos consistentes com o resumo.
+ */
+export function mesclarOverridesSnapshot(parseado, overrides = {}) {
+  const sessaoOverride = overrides.sessaoPct !== undefined ? pctValido(overrides.sessaoPct) : null;
+  const semanaOverride = overrides.semanaPct !== undefined ? pctValido(overrides.semanaPct) : null;
+  const temResetSessao = overrides.resetSessaoEm !== undefined;
+  const temResetSemana = overrides.resetSemanaEm !== undefined;
+  const resetSessaoOverride = temResetSessao ? ISO(overrides.resetSessaoEm) : undefined;
+  const resetSemanaOverride = temResetSemana ? ISO(overrides.resetSemanaEm) : undefined;
+
+  const grupos = Array.isArray(parseado.grupos)
+    ? parseado.grupos.map((g) => ({
+      ...g,
+      sessao: {
+        ...g.sessao,
+        ...(sessaoOverride != null ? { pct: sessaoOverride, restantePct: restante(sessaoOverride), desabilitado: false } : {}),
+        ...(temResetSessao ? { resetEm: resetSessaoOverride } : {}),
+      },
+      semana: {
+        ...g.semana,
+        ...(semanaOverride != null ? { pct: semanaOverride, restantePct: restante(semanaOverride) } : {}),
+        ...(temResetSemana ? { resetEm: resetSemanaOverride } : {}),
+      },
+    }))
+    : [];
+
+  return {
+    ...parseado,
+    ...overrides,
+    ...(sessaoOverride != null ? { sessaoPct: sessaoOverride } : {}),
+    ...(semanaOverride != null ? { semanaPct: semanaOverride } : {}),
+    ...(temResetSessao ? { resetSessaoEm: resetSessaoOverride } : {}),
+    ...(temResetSemana ? { resetSemanaEm: resetSemanaOverride } : {}),
+    grupos,
+  };
+}
+
 /** Lê o arquivo JSON de snapshots de /usage. Ausente ou inválido retorna {}. */
 export async function lerSnapshotsUsage(caminho) {
   if (!caminho) return {};
@@ -162,13 +201,18 @@ export function salvarSnapshotUsage(caminho, entrada, { agora = () => Date.now()
   } catch { /* arquivo novo */ }
 
   const anterior = atual[agente] || {};
+  const atualizacaoManualSemGrupos = grupos === null
+    && (sessaoPct != null || semanaPct != null || entrada.resetSessaoEm !== undefined || entrada.resetSemanaEm !== undefined);
+  const gruposFinal = grupos !== null
+    ? grupos
+    : (atualizacaoManualSemGrupos ? [] : (anterior.grupos ?? []));
   const registro = {
     capturadoEm: new Date(agora()).toISOString(),
     sessaoPct: sessaoPct ?? anterior.sessaoPct ?? null,
     semanaPct: semanaPct ?? anterior.semanaPct ?? null,
     resetSessaoEm: entrada.resetSessaoEm !== undefined ? ISO(entrada.resetSessaoEm) : (anterior.resetSessaoEm ?? null),
     resetSemanaEm: entrada.resetSemanaEm !== undefined ? ISO(entrada.resetSemanaEm) : (anterior.resetSemanaEm ?? null),
-    grupos: grupos ?? anterior.grupos ?? [],
+    grupos: gruposFinal,
     nota: entrada.nota ? String(entrada.nota).slice(0, 200) : (anterior.nota || ''),
   };
   atual[agente] = registro;
@@ -181,8 +225,10 @@ function enriquecerGrupos(grupos = [], agora) {
   return grupos.map((g) => {
     const resetSessMs = g.sessao?.resetEm ? Date.parse(g.sessao.resetEm) : NaN;
     const resetSemMs = g.semana?.resetEm ? Date.parse(g.semana.resetEm) : NaN;
-    const sessaoExpirada = Number.isFinite(resetSessMs) && agora >= resetSessMs;
     const semanaExpirada = Number.isFinite(resetSemMs) && agora >= resetSemMs;
+    const desabSemResetSessao = Boolean(g.sessao?.desabilitado) && !Number.isFinite(resetSessMs);
+    const sessaoExpirada = (Number.isFinite(resetSessMs) && agora >= resetSessMs)
+      || (desabSemResetSessao && semanaExpirada);
     const saudeSessao = classificarSaude(sessaoExpirada ? 0 : g.sessao?.pct);
     const saudeSemana = classificarSaude(semanaExpirada ? 0 : g.semana?.pct);
     return {
@@ -193,6 +239,11 @@ function enriquecerGrupos(grupos = [], agora) {
       semana: { ...g.semana, expirada: semanaExpirada, saude: saudeSemana },
     };
   });
+}
+
+function grupoTemJanelaValida(g) {
+  return (g.sessao?.pct != null && !g.sessao.expirada)
+    || (g.semana?.pct != null && !g.semana.expirada);
 }
 
 /**
@@ -214,8 +265,9 @@ export function aplicarSnapshotsUsage(paineis, snapshots = {}, deltaDesde = () =
       const usaSemana = snap.semanaPct != null && !semanaExpirada;
       const deltaEq = Number.isFinite(capMs) ? Math.max(0, Math.round(Number(deltaDesde(p.agente, capMs)) || 0)) : 0;
       const grupos = Array.isArray(snap.grupos) ? enriquecerGrupos(snap.grupos, agora) : [];
+      const gruposValidos = grupos.filter(grupoTemJanelaValida);
 
-      if (usaSessao || usaSemana || grupos.length) {
+      if (usaSessao || usaSemana || gruposValidos.length) {
         painel = {
           ...p,
           fontePct: 'snapshot',
@@ -230,7 +282,7 @@ export function aplicarSnapshotsUsage(paineis, snapshots = {}, deltaDesde = () =
             deltaEquivalente: deltaEq,
             sessaoExpirada,
             semanaExpirada,
-            grupos,
+            grupos: gruposValidos,
             nota: snap.nota || '',
           },
         };

@@ -465,8 +465,13 @@ function renderPaineisAgentes(e) {
         ? `snapshot /usage: ${p.semana.pct}% · restante ${p.semana.restantePct}%`
         : `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. (estimativa por logs, janela corrida)`);
     const gruposSnap = p.snapshot?.grupos || [];
+    const medidorExpirado = (rotulo) => h('div', { class: 'medidor' },
+      h('div', { class: 'medidor-rotulo' },
+        h('span', {}, rotulo),
+        h('span', { class: 'dica' }, 'expirada')),
+      h('div', { class: 'dica' }, 'Janela expirada — rode /usage para atualizar'));
     const renderGrupo = (g) => {
-      const nG = g.saude?.nivel || classeSaude(Math.max(g.sessao?.pct || 0, g.semana?.pct || 0));
+      const nG = g.saude?.nivel || classeSaude(Math.max(g.sessao?.expirada ? 0 : (g.sessao?.pct || 0), g.semana?.expirada ? 0 : (g.semana?.pct || 0)));
       const det5h = g.sessao?.desabilitado
         ? 'Desabilitado: teto semanal atingido'
         : `usado ${g.sessao?.pct ?? 0}% · restante ${g.sessao?.restantePct ?? 100}%`;
@@ -476,8 +481,8 @@ function renderPaineisAgentes(e) {
           h('b', {}, g.nome),
           h('span', { class: `chip chip-saude-${nG}` }, g.saude?.rotulo || nG)),
         g.modelos ? h('div', { class: 'dica subgrupo-modelos' }, g.modelos) : null,
-        medidorPct('5 h', g.sessao?.pct ?? 0, det5h, g.sessao?.resetEm, e.geradoEm),
-        medidorPct('7 dias', g.semana?.pct ?? 0, det7d, g.semana?.resetEm, e.geradoEm));
+        g.sessao?.expirada ? medidorExpirado('5 h') : medidorPct('5 h', g.sessao?.pct ?? 0, det5h, g.sessao?.resetEm, e.geradoEm),
+        g.semana?.expirada ? medidorExpirado('7 dias') : medidorPct('7 dias', g.semana?.pct ?? 0, det7d, g.semana?.resetEm, e.geradoEm));
     };
     return h('div', { class: `card-agente borda-${nivel}` },
       h('div', { class: 'card-agente-topo' },
