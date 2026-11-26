@@ -47,3 +47,6 @@ wt_*/
 
 # estado salvo pelo hook de 230 mil tokens (local da sessão, nunca commitado)
 harness/handoff/
+
+# volume local do banco de grafo da Pós (D-001, D-079): dados locais, nunca commitados
+.neo4j-data/
