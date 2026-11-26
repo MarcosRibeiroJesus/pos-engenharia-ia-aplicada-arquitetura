@@ -250,3 +250,33 @@ GEMINI MODELS
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('snapshot com somente um grupo Disabled expira após o reset semanal', () => {
+  const baseMs = Date.parse('2026-11-26T05:53:00.000Z');
+  const parsed = parsearTextoUsage(`
+CLAUDE AND GPT MODELS
+  Models within this group: Claude Opus 5.5
+  Weekly Limit Remaining
+    [] 0.00%
+    Refreshes in 2d 0h 0m
+  Five Hour Limit Remaining
+    Disabled: You have hit your weekly limit, the 5-hour limit does not currently apply.
+`, { agora: () => baseMs });
+
+  const base = montarPainelAgentes({ janelas: {}, sessoes: [] }, {}, {});
+  // Antes do reset semanal: crítico e ativo
+  const antes = aplicarSnapshotsUsage(base, {
+    antigravity: { capturadoEm: new Date(baseMs).toISOString(), ...parsed },
+  }, () => 0, baseMs + 3600_000).find((p) => p.agente === 'antigravity');
+  assert.equal(antes.fontePct, 'snapshot');
+  assert.equal(antes.saude.nivel, 'critico');
+  assert.equal(antes.snapshot.expirado, undefined);
+
+  // Após o reset semanal: grupo Disabled expira e snapshot vai para expirado: true (não fica preso em usaSessao)
+  const depois = aplicarSnapshotsUsage(base, {
+    antigravity: { capturadoEm: new Date(baseMs).toISOString(), ...parsed },
+  }, () => 0, baseMs + 3 * 24 * 3600_000).find((p) => p.agente === 'antigravity');
+  assert.equal(depois.snapshot.expirado, true);
+  assert.equal(depois.snapshot.grupos.length, 0);
+  assert.equal(depois.saude.nivel, 'saudavel');
+});

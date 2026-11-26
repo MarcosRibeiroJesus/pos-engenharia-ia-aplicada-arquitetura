@@ -266,8 +266,9 @@ export function aplicarSnapshotsUsage(paineis, snapshots = {}, deltaDesde = () =
       const deltaEq = Number.isFinite(capMs) ? Math.max(0, Math.round(Number(deltaDesde(p.agente, capMs)) || 0)) : 0;
       const grupos = Array.isArray(snap.grupos) ? enriquecerGrupos(snap.grupos, agora) : [];
       const gruposValidos = grupos.filter(grupoTemJanelaValida);
+      const snapshotAtivo = grupos.length > 0 ? gruposValidos.length > 0 : (usaSessao || usaSemana);
 
-      if (usaSessao || usaSemana || gruposValidos.length) {
+      if (snapshotAtivo) {
         painel = {
           ...p,
           fontePct: 'snapshot',
