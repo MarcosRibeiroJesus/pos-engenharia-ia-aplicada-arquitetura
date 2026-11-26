@@ -33,9 +33,9 @@
 ## Requisitos funcionais
 
 **Jogo e detector (fiel à aula, estratégia principal)**
-- **RF-001:** o jogo DEVE rodar no navegador usando somente assets Freedoom. Nenhum arquivo do jogo original pode estar no repositório, no build ou no site. Aceite: a verificação de ativos do build lista só arquivos Freedoom e de código de terceiros com licença registrada no ADR.
+- **RF-001:** o jogo DEVE rodar no navegador usando somente assets Freedoom. Nenhum arquivo do jogo original pode estar no repositório, no build ou no site. O código do port de Doom (D01-P2) fica no repositório, com a licença GPL-2.0 e o aviso de modificação. Aceite: a verificação de ativos do build lista só arquivos Freedoom e código com licença registrada no ADR.
 - **RF-002:** a thread principal DEVE apenas capturar o canvas e enviá-lo ao Web Worker. Aceite: um teste de instrumentação mostra que a chamada de inferência acontece só dentro do worker.
-- **RF-003:** o worker DEVE carregar o detector YOLO em TensorFlow.js com o arquivo de rótulos, redimensionar a imagem para a entrada do modelo, normalizar, inferir, filtrar por confiança e classe, converter as coordenadas para a tela e devolver o centro da caixa. Aceite: com uma imagem sintética de posição conhecida, o centro devolvido está a no máximo 2 px da posição esperada.
+- **RF-003:** o worker DEVE carregar o detector YOLO em TensorFlow.js com o arquivo de rótulos, baixado de fonte pública no build com licença conferida e registrada em ADR (D01-P3 = A; nenhum arquivo do curso entra no repositório), redimensionar a imagem para a entrada do modelo, normalizar, inferir, filtrar por confiança e classe, converter as coordenadas para a tela e devolver o centro da caixa. Aceite: com uma imagem sintética de posição conhecida, o centro devolvido está a no máximo 2 px da posição esperada.
 - **RF-004:** o limiar de confiança inicial DEVE ser lido da configuração vigente, com valor de partida 0,40, e nunca ficar fixo no código. Aceite: trocar o valor na configuração muda o filtro sem alterar código. O valor 0,40 e as demais constantes da aula (entrada 640×640, ~8 MB, classe "kite") estão marcados `[CONFIRMAR NO VÍDEO]` e não são usados como fato até a confirmação (D01-P4).
 - **RF-005:** ao fim de cada partida, o navegador DEVE enviar a telemetria em lote com, por quadro: todas as detecções (inclusive as abaixo do limiar), com classe, confiança e caixa; o disparo; o resultado; e os rótulos do motor do jogo. Aceite: a telemetria de uma partida gravada reproduz, quadro a quadro, o número de detecções registrado.
 
@@ -51,7 +51,7 @@
 **Relatório pós-partida (herdado da 04-A)**
 - **RF-013:** ao fim da partida, o Claude DEVE gerar um relatório com fases em que o detector errou, causas prováveis e evidências com o id do quadro, por `tool_use` com schema. Um validador DEVE rejeitar evidência que não exista no lote, com retentativa até o limite. O campo "incerto" é obrigatório quando a telemetria não cobre a afirmação. Aceite: testes com respostas gravadas cobrem evidência válida, evidência inexistente e afirmação sem cobertura.
 
-**Estratégia comparativa Jev + Astra (D-078)**
+**Estratégia comparativa Jev + Astra (D-078), adiada pelo dono (D01-P1 = C)**
 - **RF-014:** a estratégia Jev + Astra DEVE implementar o mesmo contrato da estratégia principal: recebe o estado do jogo e devolve a ação de mira e disparo. Ela é composta por um Sistema 1 reativo, de baixa latência, e um Sistema 2 assíncrono, que planeja em segundo plano sobre um estado estruturado. Aceite: as duas estratégias passam pelos mesmos testes de contrato.
 - **RF-015:** os provedores de Jev e Astra DEVEM ser plugáveis. Com chaves no `.env` local, usam os modelos Jev e Astra. Sem chaves, usam o fallback Claude (Haiku ou Opus). No CI, usam replay gravado. Aceite: o CI roda sem nenhuma chave e sem chamada de rede a provedor externo.
 - **RF-016:** a comparação DEVE rodar as duas estratégias sobre o mesmo conjunto de partidas gravadas e reportar disparos perdidos, disparos em falso e latência por quadro (p50 e p95). Aceite: o relatório traz os dois conjuntos de números lado a lado, com as partidas usadas.
@@ -65,6 +65,8 @@
 - **RNF-005** (licenças, Art. VIII): antes de publicar, cada dependência (port de Doom, modelo YOLO, Freedoom, TF.js e a biblioteca de jogo) tem a licença conferida na fonte oficial, com data, e registrada em ADR. Nenhum ativo do jogo original é publicado no site.
 - **RNF-006** (desempenho): a latência por quadro (p50 e p95) de cada estratégia é medida e reportada em toda execução da comparação. O limite-alvo não é fixado nesta spec e entra no plano.
 - **RNF-007** (proveniência, Art. VIII): toda afirmação sobre a aula vem de resumo próprio com a marcação de confirmação. Nenhum trecho de legenda ou material do curso entra no repositório.
+- **RNF-008** (reprodutibilidade, Art. VI, pedido do dono em 2026-11-26): qualquer pessoa clona o repositório, roda o jogo no navegador e todos os testes locais sem credenciais (respostas gravadas e replay). Para o que depende da AWS ou do Bedrock, ela insere as próprias credenciais num `.env` local, documentadas no README em no máximo 5 passos. Nenhum valor real de credencial entra no repositório.
+- **RNF-009** (consumo da plataforma, D-074 e D01-P5 = B): a parte AWS consome completamente a `00-plataforma-agentes` (Gateway MCP, Cedar em `ENFORCE`, Guardrail, Perfil de Inferência, contrato SSM v1, alarmes no tópico SNS da plataforma e AgentCore Evaluations). Dependência: a plataforma ainda está em implementação (`specs/00-plataforma-agentes/`), e o plano precisa dela pronta ou de uma ordem de entrega.
 
 ## Componente Claude e tarefas da prova
 
@@ -85,7 +87,8 @@ Há dois componentes com Claude, ambos chamados via Bedrock (ou API da Anthropic
 - Inferência no servidor: a versão 04-B fica como comparação no post, não como implementação.
 - LLM multimodal que joga (experimento opcional, sem peso na unidade).
 - Publicar qualquer ativo do Doom original.
-- Consumo completo da `00-plataforma-agentes` nesta IA aplicada: D-074 exige a plataforma nas arquiteturas AWS, não nos projetos de IA aplicada. Isso fica sujeito à resposta de D01-P5.
+- Bedrock direto sem a plataforma: descartado pelo dono (D01-P5 = B, RNF-009).
+- Jev + Astra nesta rodada (adiada, D01-P1 = C). RF-014 a RF-016 ficam como referência para a próxima rodada.
 
 ## Decisões do dono que esta spec usa
 
@@ -96,6 +99,16 @@ Há dois componentes com Claude, ambos chamados via Bedrock (ou API da Anthropic
 - **D-055:** a especificação e o planejamento saem sem pergunta a cada disparo; o plano volta ao dono para aprovação.
 
 ## Perguntas ao dono
+
+Respostas já dadas no chat em 2026-11-26 (registro; a memória compartilhada ainda não foi gravada):
+- **D01-P1 (Jev + Astra): C, adiar.** Só a estratégia principal nesta rodada.
+- **D01-P2 (port de Doom): o código fica no repositório e o jogo roda no navegador,** para qualquer pessoa baixar (pedido do dono, 2026-11-26). Substitui a opção B.
+- **D01-P3 (modelo YOLO): A,** modelo oficial de fonte pública no build.
+- **D01-P5 (plataforma AWS): B,** consumo completo da `00-plataforma-agentes`.
+
+**Pendentes:**
+- **D01-P4 (fatos da aula):** o dono respondeu "há diferenças", e falta dizer quais valores (limiar, entrada, tamanho do modelo, classe). Bloqueia RF-004 e o plano.
+- **D01-P6 (onde o jogo é servido):** com o repositório público e o jogo no navegador, o site na AWS (S3 e CloudFront) continua? Bloqueia RNF-002, RNF-003 e o plano da parte AWS.
 
 | id | pergunta | bloqueia | opções | recomendação |
 |---|---|---|---|---|
