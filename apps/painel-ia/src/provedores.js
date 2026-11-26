@@ -1,6 +1,7 @@
 // Integrações oficiais de uso/custo com provedores (Anthropic Admin API e GitHub Copilot)
 // + painel por Code Agent (% da sessão atual e % da semana) + painel de custo por token.
 // Nenhuma credencial é exposta nos retornos ou mensagens de erro.
+import { classificarSaude, piorSaude } from './snapshot-usage.js';
 
 const AGENTES_PADRAO = [
   { agente: 'claude-code', titulo: 'Claude Code' },
@@ -116,42 +117,53 @@ export async function buscarCopilot({ token, org = '', user = '', agora = () => 
   };
 }
 
-/** Monta um painel individual para cada Code Agent com consumo em % da sessão atual e da semana atual. */
+/**
+ * Monta um painel por Code Agent com % em duas janelas corridas: últimas 5 h e últimos 7 dias.
+ * Os planos cobram por janela corrida, não por sessão de transcript nem por semana ISO; por isso
+ * o percentual soma todas as sessões do agente dentro da janela. A cota é um valor de referência
+ * (COTA_*), que só bate com o % do provedor depois de calibrada.
+ */
 export function montarPainelAgentes(estado, cotas = {}, provedores = {}) {
-  const ultimaSemana = (estado.porSemana || []).at(-1) || null;
   const sessoes = estado.sessoes || [];
 
   return AGENTES_PADRAO.map(({ agente, titulo }) => {
     const cotaAg = cotas[agente] || { sessao: 10_000_000, semana: 50_000_000 };
     const sessoesAg = sessoes.filter((s) => (s.agente || 'claude-code') === agente);
-    const sessaoAtual = sessoesAg.find((s) => s.ativa) || sessoesAg[0] || null;
-    const eqSessao = sessaoAtual?.equivalente || 0;
+    const sessaoRecente = sessoesAg.find((s) => s.ativa) || null;
+    const janela = estado.janelas?.[agente] || { sessao5h: 0, semana7d: 0 };
+
+    const eqSessao = janela.sessao5h || 0;
     const pctSessao = cotaAg.sessao > 0 ? Number(((100 * eqSessao) / cotaAg.sessao).toFixed(1)) : 0;
 
-    const dadosSemana = ultimaSemana?.agentes?.[agente] || { equivalente: 0, requisicoes: 0 };
-    const eqSemana = dadosSemana.equivalente || 0;
+    const eqSemana = janela.semana7d || 0;
     const pctSemana = cotaAg.semana > 0 ? Number(((100 * eqSemana) / cotaAg.semana).toFixed(1)) : 0;
 
     const prov = agente === 'claude-code' ? provedores.anthropic
       : (agente === 'copilot' ? provedores.copilot : null);
+    const saudeSessao = classificarSaude(pctSessao);
+    const saudeSemana = classificarSaude(pctSemana);
 
     return {
       agente,
       titulo,
+      saude: piorSaude(saudeSessao, saudeSemana),
       sessao: {
-        id: sessaoAtual?.id || null,
-        idCompleto: sessaoAtual?.idCompleto || null,
-        ativa: Boolean(sessaoAtual?.ativa),
+        janela: '5h',
+        id: sessaoRecente?.id || null,
+        idCompleto: sessaoRecente?.idCompleto || null,
+        ativa: Boolean(sessaoRecente?.ativa),
         equivalente: eqSessao,
         cota: cotaAg.sessao,
         pct: pctSessao,
+        saude: saudeSessao,
       },
       semana: {
-        chave: ultimaSemana?.semana || '—',
+        janela: '7d',
+        chave: 'últimos 7 dias',
         equivalente: eqSemana,
-        requisicoes: dadosSemana.requisicoes || 0,
         cota: cotaAg.semana,
         pct: pctSemana,
+        saude: saudeSemana,
       },
       provedor: prov?.ativo
         ? { ativo: true, fonte: 'provedor', custoUsd: prov.semana?.custoUsd ?? null, erro: prov.erro || null }

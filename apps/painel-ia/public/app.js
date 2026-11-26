@@ -108,20 +108,80 @@ function renderPorTipo(e) {
 function renderPorDia(e) {
   const dias = (e.porDia || []).slice(-14);
   if (!dias.length) { $('por-dia').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados ainda.')); return; }
+  const valorDia = (d) => (filtroAgenteGlobal === 'todos' ? d.equivalente : (d.agentes?.[filtroAgenteGlobal]?.equivalente || 0));
   const W = 520, H = 140, padL = 8, padB = 22, padT = 10;
-  const max = Math.max(1, ...dias.map((d) => d.equivalente));
+  const max = Math.max(1, ...dias.map(valorDia));
   const bw = Math.max(10, Math.floor((W - padL * 2) / dias.length) - 4);
   const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'svg-grafico', role: 'img', 'aria-label': 'Consumo diário em tokens equivalentes' });
   dias.forEach((d, i) => {
+    const val = valorDia(d);
     const x = padL + i * ((W - padL * 2) / dias.length);
-    const bh = Math.max(2, ((H - padB - padT) * d.equivalente) / max);
+    const bh = Math.max(2, ((H - padB - padT) * val) / max);
     const y = H - padB - bh;
     const rect = svgEl('rect', { x, y, width: bw, height: bh, rx: 3, class: 'svg-barra' },
-      svgEl('title', {}, `${d.nome}: ${fmt(d.equivalente)} equivalentes (${d.requisicoes} reqs)`));
+      svgEl('title', {}, `${d.nome}: ${fmt(val)} equivalentes (${d.requisicoes} reqs)`));
     const txt = svgEl('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle', class: 'svg-rotulo' }, d.nome.slice(5));
     svg.append(rect, txt);
   });
   $('por-dia').replaceChildren(svg);
+}
+
+function renderHeatmap(e) {
+  const alvo = $('heatmap-dias');
+  if (!alvo) return;
+  const mapa = new Map();
+  for (const d of (e.porDia || [])) {
+    const val = filtroAgenteGlobal === 'todos' ? d.equivalente : (d.agentes?.[filtroAgenteGlobal]?.equivalente || 0);
+    const reqs = filtroAgenteGlobal === 'todos' ? d.requisicoes : (d.agentes?.[filtroAgenteGlobal]?.requisicoes || 0);
+    if (val > 0) mapa.set(d.nome, { eq: val, reqs });
+  }
+  const hoje = new Date(e.geradoEm || Date.now());
+  const fimUtc = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate()));
+  const semanas = 16;
+  const inicioUtc = new Date(fimUtc.getTime());
+  inicioUtc.setUTCDate(inicioUtc.getUTCDate() - (semanas * 7 - 1) - inicioUtc.getUTCDay());
+
+  const celulas = [];
+  const valoresPositivos = [];
+  let cursor = new Date(inicioUtc.getTime());
+  while (cursor <= fimUtc) {
+    const iso = cursor.toISOString().slice(0, 10);
+    const rec = mapa.get(iso) || { eq: 0, reqs: 0 };
+    if (rec.eq > 0) valoresPositivos.push(rec.eq);
+    celulas.push({ iso, diaSem: cursor.getUTCDay(), mes: cursor.getUTCMonth(), dia: cursor.getUTCDate(), ...rec });
+    cursor = new Date(cursor.getTime() + 86_400_000);
+  }
+  valoresPositivos.sort((a, b) => a - b);
+  const quantil = (q) => valoresPositivos[Math.min(valoresPositivos.length - 1, Math.floor(q * (valoresPositivos.length - 1)))] || 0;
+  const q1 = quantil(0.25), q2 = quantil(0.5), q3 = quantil(0.75);
+  const nivel = (v) => (v <= 0 ? 0 : v <= q1 ? 1 : v <= q2 ? 2 : v <= q3 ? 3 : 4);
+
+  const cell = 13, gap = 3, step = cell + gap, padL = 28, padT = 18;
+  const cols = Math.ceil(celulas.length / 7);
+  const W = padL + cols * step + 6;
+  const H = padT + 7 * step + 4;
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'svg-heatmap', role: 'img', 'aria-label': 'Heatmap diário de uso de tokens' });
+  const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const DIAS = ['', 'Seg', '', 'Qua', '', 'Sex', ''];
+  DIAS.forEach((rot, idx) => {
+    if (rot) svg.append(svgEl('text', { x: 2, y: padT + idx * step + 10, class: 'svg-rotulo' }, rot));
+  });
+  let ultimoMes = -1;
+  celulas.forEach((c, idx) => {
+    const col = Math.floor(idx / 7);
+    const x = padL + col * step;
+    const y = padT + c.diaSem * step;
+    if (c.diaSem === 0 && c.mes !== ultimoMes) {
+      ultimoMes = c.mes;
+      svg.append(svgEl('text', { x, y: 12, class: 'svg-rotulo' }, MESES[c.mes]));
+    }
+    svg.append(svgEl('rect', { x, y, width: cell, height: cell, rx: 2.5, class: `hm-cell hm-${nivel(c.eq)}` },
+      svgEl('title', {}, `${c.iso}: ${fmt(c.eq)} equivalentes (${c.reqs} reqs)`)));
+  });
+  alvo.replaceChildren(svg);
+  const totalAtivos = valoresPositivos.length;
+  const somaPeriodo = valoresPositivos.reduce((s, v) => s + v, 0);
+  $('heatmap-resumo').textContent = `${totalAtivos} dia(s) ativo(s) · ${fmt(somaPeriodo)} eq. no período${filtroAgenteGlobal !== 'todos' ? ` (${filtroAgenteGlobal})` : ''}`;
 }
 
 function tempo(e) {
@@ -143,13 +203,14 @@ function barras(alvo, grupos, detalhe) {
 function tarefas(e) {
   const lista = e.tarefas.filter((t) => (filtro === 'todas' || t.status === filtro) && passaAgente(t.agente));
   const corpo = $('tarefas').tBodies[0];
-  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '6', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
+  if (!lista.length) { corpo.replaceChildren(h('tr', {}, h('td', { colspan: '7', class: 'vazio' }, 'Nenhuma tarefa neste filtro.'))); return; }
   corpo.replaceChildren(...lista.slice(0, 400).map((t) => {
     const [icone, rotulo] = STATUS[t.status] || ['·', t.status];
     const modelos = Object.entries(t.modelos || {}).sort((a, b) => b[1] - a[1]).map(([m]) => h('span', { class: 'chip' }, m.replace('claude-', '')));
     return h('tr', {},
       h('td', {}, h('span', { class: `status ${t.status}` }, `${icone} ${rotulo}`)),
       h('td', {}, t.titulo),
+      h('td', {}, h('span', { class: t.tipo && t.tipo !== 'não atribuído' ? 'chip chip-info' : 'chip' }, t.tipo || 'não atribuído')),
       h('td', {}, t.projeto, h('div', { class: 'dica' }, `${t.fonte === 'progresso' ? 'progresso' : 'sessão'} ${t.sessao}`)),
       h('td', {}, h('span', { class: 'chip chip-info' }, t.agente || 'claude-code')),
       h('td', {}, modelos.length ? modelos : h('span', { class: 'dica' }, '—')),
@@ -327,26 +388,97 @@ function renderSubagentes(e) {
     h('td', { class: 'num' }, fmt(s.equivalente)))));
 }
 
-function medidorPct(rotulo, pct, detalhe) {
+function fmtCountdown(iso, agoraMs) {
+  if (!iso) return '';
+  const diff = Date.parse(iso) - (agoraMs || Date.now());
+  if (!Number.isFinite(diff)) return '';
+  if (diff <= 0) return 'reset expirado';
+  const min = Math.floor(diff / 60_000);
+  const dias = Math.floor(min / 1440);
+  const horas = Math.floor((min % 1440) / 60);
+  const mins = min % 60;
+  if (dias > 0) return `reinicia em ${dias}d ${horas}h`;
+  if (horas > 0) return `reinicia em ${horas}h ${mins}m`;
+  return `reinicia em ${mins}m`;
+}
+
+function classeSaude(pct) {
+  const v = Number(pct) || 0;
+  if (v >= 90) return 'critico';
+  if (v >= 70) return 'alerta';
+  return 'saudavel';
+}
+
+function medidorPct(rotulo, pct, detalhe, resetEm, agoraMs) {
   const largura = Math.min(100, Math.max(0, Number(pct) || 0));
-  const classe = pct >= 100 ? 'critico' : (pct >= 80 ? 'alerta' : '');
+  const classe = classeSaude(pct);
+  const cd = fmtCountdown(resetEm, agoraMs);
   return h('div', { class: 'medidor', title: detalhe },
-    h('div', { class: 'medidor-rotulo' }, h('span', {}, rotulo), h('b', {}, `${pct}%`)),
+    h('div', { class: 'medidor-rotulo' },
+      h('span', {}, rotulo, cd ? h('span', { class: 'countdown' }, ` · ${cd}`) : null),
+      h('b', { class: `pct-${classe}` }, `${pct}%`)),
     h('div', { class: 'medidor-trilho' }, h('i', { class: classe, style: { width: `${largura}%` } })),
     h('div', { class: 'dica' }, detalhe));
+}
+
+function renderSaudeTopoEAlertas(e) {
+  const paineis = e.painelAgentes || [];
+  const topo = $('saude-topo');
+  if (topo) {
+    topo.replaceChildren(...paineis.map((p) => {
+      const nivel = p.saude?.nivel || classeSaude(Math.max(p.sessao?.pct || 0, p.semana?.pct || 0));
+      const pico = Math.max(p.sessao?.pct || 0, p.semana?.pct || 0);
+      return h('button', {
+        type: 'button',
+        class: `pilula-saude saude-${nivel}`,
+        title: `${p.titulo}: 5h ${p.sessao?.pct ?? 0}% · 7d ${p.semana?.pct ?? 0}% (${p.saude?.rotulo || nivel})`,
+        onclick: () => trocarAba('agentes'),
+      }, `${p.titulo} ${pico}%`);
+    }));
+  }
+  const caixa = $('alertas-cota');
+  if (!caixa) return;
+  const alertas = paineis.filter((p) => (p.saude?.nivel === 'alerta' || p.saude?.nivel === 'critico') && passaAgente(p.agente));
+  caixa.classList.toggle('oculto', !alertas.length);
+  if (!alertas.length) { caixa.replaceChildren(); return; }
+  caixa.replaceChildren(...alertas.map((p) => h('div', { class: `alerta-item saude-${p.saude.nivel}` },
+    h('b', {}, `${p.saude.rotulo}: ${p.titulo}`),
+    ` — 5h: ${p.sessao.pct}% · 7d: ${p.semana.pct}%`,
+    p.sessao.resetEm ? ` (${fmtCountdown(p.sessao.resetEm, e.geradoEm)})` : '')));
 }
 
 function renderPaineisAgentes(e) {
   const paineis = (e.painelAgentes || []).filter((p) => passaAgente(p.agente));
   if (!paineis.length) { $('paineis-code-agents').replaceChildren(h('p', { class: 'vazio' }, 'Sem dados neste filtro.')); return; }
-  $('paineis-code-agents').replaceChildren(...paineis.map((p) => h('div', { class: 'card-agente' },
-    h('div', { class: 'card-agente-topo' },
-      h('b', {}, p.titulo),
-      h('span', { class: p.provedor.ativo ? 'chip chip-info' : 'chip' }, p.provedor.ativo ? 'API provedor' : p.provedor.fonte)),
-    medidorPct('Sessão atual', p.sessao.pct, `${fmt(p.sessao.equivalente)} / ${fmt(p.sessao.cota)} eq.${p.sessao.id ? ` (${p.sessao.id})` : ''}`),
-    medidorPct(`Semana ${p.semana.chave}`, p.semana.pct, `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. · ${fmt(p.semana.requisicoes)} reqs`),
-    p.provedor.custoUsd != null ? h('div', { class: 'dica' }, `Custo provedor (7d): US$ ${p.provedor.custoUsd.toFixed(2)}`) : null,
-    p.provedor.erro ? h('div', { class: 'dica' }, `Provedor: ${p.provedor.erro}`) : null)));
+  $('paineis-code-agents').replaceChildren(...paineis.map((p) => {
+    const nivel = p.saude?.nivel || classeSaude(Math.max(p.sessao?.pct || 0, p.semana?.pct || 0));
+    const rotuloFonte = p.fontePct === 'conta' ? 'API conta'
+      : (p.fontePct === 'snapshot' ? 'snapshot /usage' : (p.provedor.ativo ? 'API provedor' : p.provedor.fonte));
+    const detSessao = p.fontePct === 'conta'
+      ? `usado ${p.sessao.pct}% · restante ${p.sessao.restantePct}% · da conta`
+      : (p.fontePct === 'snapshot' && p.sessao.restantePct != null
+        ? `snapshot /usage: ${p.sessao.pct}% · restante ${p.sessao.restantePct}% · Δ logs: +${fmt(p.snapshot?.deltaEquivalente || 0)} eq.`
+        : `${fmt(p.sessao.equivalente)} / ${fmt(p.sessao.cota)} eq. (estimativa por logs, janela corrida)`);
+    const detSemana = p.fontePct === 'conta'
+      ? `usado ${p.semana.pct}% · restante ${p.semana.restantePct}% · da conta`
+      : (p.fontePct === 'snapshot' && p.semana.restantePct != null
+        ? `snapshot /usage: ${p.semana.pct}% · restante ${p.semana.restantePct}%`
+        : `${fmt(p.semana.equivalente)} / ${fmt(p.semana.cota)} eq. (estimativa por logs, janela corrida)`);
+    return h('div', { class: `card-agente borda-${nivel}` },
+      h('div', { class: 'card-agente-topo' },
+        h('b', {}, p.titulo),
+        h('div', { class: 'card-badges' },
+          h('span', { class: `chip chip-saude-${nivel}` }, p.saude?.rotulo || nivel),
+          h('span', { class: p.provedor.ativo || p.fontePct === 'conta' || p.fontePct === 'snapshot' ? 'chip chip-info' : 'chip' }, rotuloFonte))),
+      medidorPct('Últimas 5 h', p.sessao.pct, detSessao, p.sessao.resetEm, e.geradoEm),
+      medidorPct('Últimos 7 dias', p.semana.pct, detSemana, p.semana.resetEm, e.geradoEm),
+      p.snapshot?.capturadoEm ? h('div', { class: 'dica' },
+        p.snapshot.expirado
+          ? `Snapshot de ${quando(Date.parse(p.snapshot.capturadoEm))} expirado — rode 'pos-painel-ia snapshot --agente ${p.agente} ...'`
+          : `Snapshot capturado em ${quando(Date.parse(p.snapshot.capturadoEm))}${p.snapshot.nota ? ` · ${p.snapshot.nota}` : ''}`) : null,
+      p.provedor.custoUsd != null ? h('div', { class: 'dica' }, `Custo provedor (7d): US$ ${p.provedor.custoUsd.toFixed(2)}`) : null,
+      p.provedor.erro ? h('div', { class: 'dica' }, `Provedor: ${p.provedor.erro}`) : null);
+  }));
 
   const custos = e.custoPorToken || [];
   const corpoCusto = $('tabela-custo-token').tBodies[0];
@@ -360,6 +492,63 @@ function renderPaineisAgentes(e) {
     h('td', { class: 'num' }, `$${c.efetivoPorMilhaoUsd.toFixed(3)}`),
     h('td', { class: 'num' }, `$${c.totalUsd.toFixed(2)}`),
     h('td', {}, h('span', { class: 'chip' }, c.rotulo)))));
+}
+
+function renderParticipacaoERankings(e) {
+  const partEl = $('participacao-agentes');
+  const agentes = e.porAgente || [];
+  if (partEl) {
+    if (!agentes.length) {
+      partEl.replaceChildren(h('p', { class: 'vazio' }, 'Sem uso registrado ainda.'));
+    } else {
+      const barra = h('div', { class: 'barra-empilhada', role: 'img', 'aria-label': 'Participação percentual por Code Agent' },
+        ...agentes.map((a) => h('i', {
+          class: `seg-agente seg-${a.agente.replace(/[^a-z0-9-]/gi, '')}`,
+          style: { width: `${Math.max(1, a.participacaoPct || 0)}%` },
+          title: `${a.agente}: ${a.participacaoPct}% (${fmt(a.equivalente)} eq.)`,
+        })));
+      const legenda = h('div', { class: 'legenda-agentes' }, ...agentes.map((a) => h('div', { class: 'item-leg-agente' },
+        h('i', { class: `dot seg-${a.agente.replace(/[^a-z0-9-]/gi, '')}` }),
+        h('b', {}, a.agente),
+        ` ${a.participacaoPct}% · ${fmt(a.equivalente)} eq. · ${a.sessoes} sessões (média ${fmt(a.mediaPorSessao)}/sessão)`)));
+      partEl.replaceChildren(barra, legenda);
+    }
+  }
+
+  const rankSess = $('ranking-sessoes');
+  if (rankSess) {
+    const lista = (e.rankings?.sessoes || e.sessoes || []).filter((s) => passaAgente(s.agente)).slice(0, 10);
+    if (!lista.length) rankSess.replaceChildren(h('p', { class: 'vazio' }, 'Sem sessões neste filtro.'));
+    else {
+      const max = Math.max(1, ...lista.map((s) => s.equivalente));
+      rankSess.replaceChildren(...lista.map((s, idx) => h('div', {
+        class: 'barra clicavel',
+        title: `${s.projeto} (${s.id}) · ${s.agente}: ${fmt(s.equivalente)} eq. (${s.requisicoes} reqs)`,
+        onclick: () => { sessaoSelecionada = s.idCompleto || s.id; $('seletor-sessao').value = sessaoSelecionada; trocarAba('sessao'); },
+      },
+      h('span', { class: 'nome' }, `#${idx + 1} ${s.projeto} (${s.id})`),
+      h('span', { class: 'trilho' }, h('i', { style: { width: `${(100 * s.equivalente) / max}%` } })),
+      h('span', { class: 'valor' }, fmt(s.equivalente)),
+      h('span', { class: 'sub' }, `${s.agente || 'claude-code'} · ${s.requisicoes} reqs · ${(s.modelos || []).slice(0, 2).join(', ')}`))));
+    }
+  }
+
+  const rankProj = $('ranking-projetos');
+  if (rankProj) {
+    const lista = (e.rankings?.projetos || e.projetos || []).slice(0, 10);
+    if (!lista.length) rankProj.replaceChildren(h('p', { class: 'vazio' }, 'Sem projetos registrados ainda.'));
+    else {
+      const max = Math.max(1, ...lista.map((p) => p.equivalente));
+      rankProj.replaceChildren(...lista.map((p, idx) => h('div', {
+        class: 'barra',
+        title: `${p.nome}: ${fmt(p.equivalente)} eq. (${p.requisicoes} reqs)`,
+      },
+      h('span', { class: 'nome' }, `#${idx + 1} ${p.nome}`),
+      h('span', { class: 'trilho' }, h('i', { style: { width: `${(100 * p.equivalente) / max}%` } })),
+      h('span', { class: 'valor' }, fmt(p.equivalente)),
+      h('span', { class: 'sub' }, `${p.requisicoes} requisições · saída ${fmt(p.output)}`)))) ;
+    }
+  }
 }
 
 function renderComparativoAgentes(e) {
@@ -571,11 +760,48 @@ async function carregarComparativo() {
   } catch { $('ab-leitura').textContent = 'Falha ao ler o comparativo.'; } finally { carregandoAb = false; }
 }
 
+// Performance e velocidade por modelo (latência, throughput em tok/s e pico de contexto) + duração dos turnos.
+function fmtMs(ms) { return ms == null ? '—' : `${(ms / 1000).toFixed(1).replace('.', ',')} s`; }
+function fmtTps(v) { return v == null ? '—' : `${String(v).replace('.', ',')} tok/s`; }
+function renderLatencia(e) {
+  const perf = e.performance || e.latencia;
+  const corpo = $('tabela-latencia').tBodies[0];
+  const lista = perf?.porModelo || [];
+  const t = perf?.turnos || { n: 0, mediaMs: null, p50Ms: null, p95Ms: null };
+  if (!lista.length && !t.n) {
+    corpo.replaceChildren(h('tr', {}, h('td', { colspan: '8', class: 'vazio' }, 'Sem respostas medidas ainda.')));
+    return;
+  }
+  const linhas = lista.map((m) => h('tr', {},
+    h('td', {}, m.modelo.replace('claude-', '')),
+    h('td', { class: 'num' }, String(m.n || 0)),
+    h('td', { class: 'num' }, fmtMs(m.mediaMs)),
+    h('td', { class: 'num' }, fmtMs(m.p50Ms)),
+    h('td', { class: 'num' }, fmtMs(m.p95Ms)),
+    h('td', { class: 'num' }, fmtTps(m.tpsMedia)),
+    h('td', { class: 'num' }, fmtTps(m.tpsP50)),
+    h('td', { class: 'num' }, m.ctxMax ? fmt(m.ctxMax) : '—')));
+  if (t.n) {
+    linhas.push(h('tr', {},
+      h('td', {}, 'Turno (todos)'),
+      h('td', { class: 'num' }, String(t.n)),
+      h('td', { class: 'num' }, fmtMs(t.mediaMs)),
+      h('td', { class: 'num' }, fmtMs(t.p50Ms)),
+      h('td', { class: 'num' }, fmtMs(t.p95Ms)),
+      h('td', { class: 'num' }, '—'),
+      h('td', { class: 'num' }, '—'),
+      h('td', { class: 'num' }, '—')));
+  }
+  corpo.replaceChildren(...linhas);
+}
+
 function render(e) {
   ultimo = e;
   atualizarFiltroAgenteGlobal(e);
   if (abaAtiva === 'comparativo') carregarComparativo();
+  renderSaudeTopoEAlertas(e);
   tiles(e);
+  renderHeatmap(e);
   renderPorTipo(e);
   renderPorDia(e);
   tempo(e);
@@ -586,6 +812,8 @@ function render(e) {
   recentes(e);
   renderAtribuicaoGlobal(e);
   renderSubagentes(e);
+  renderLatencia(e);
+  renderParticipacaoERankings(e);
   renderComparativoAgentes(e);
   renderEconomia(e);
   externo('aprovacoes', e.aprovacoes, 'Defina MONDAY_TOKEN e MONDAY_BOARD_ID para ver as aprovações do board.',
@@ -624,6 +852,24 @@ $('filtros').addEventListener('click', (ev) => {
   filtro = b.dataset.f;
   for (const x of $('filtros').querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
   if (ultimo) tarefas(ultimo);
+});
+
+// Botão Atualizar dos painéis de Code Agent: pede ao servidor uma leitura agora (transcripts e
+// limites da conta). O resultado chega pelo mesmo canal ao vivo, então a tela não precisa esperar.
+$('atualizar-agentes').addEventListener('click', async () => {
+  const botao = $('atualizar-agentes');
+  const status = $('atualizar-status');
+  botao.disabled = true;
+  status.textContent = 'atualizando…';
+  try {
+    const r = await fetch('/api/atualizar');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    status.textContent = `atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+  } catch (e) {
+    status.textContent = `falha ao atualizar: ${e.message}`;
+  } finally {
+    botao.disabled = false;
+  }
 });
 
 function conectar() {

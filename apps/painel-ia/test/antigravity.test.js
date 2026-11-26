@@ -153,3 +153,31 @@ test('progresso: inclui tasks concluidas com Code Agent e modelo no Agregador', 
   assert.equal(est.contagemTarefas.completed, 2);
   assert.ok(est.tarefas.some((t) => t.agente === 'antigravity' && t.projeto === '03-mcp-regras-cdb'));
 });
+
+test('antigravity: passos sem campo model herdam o modelo da conversa e nao sao descartados', async () => {
+  const dirAgy = mkdtempSync(join(tmpdir(), 'painel-agy-sem-modelo-'));
+  try {
+    const logsDir = join(dirAgy, 'conv-sem-modelo', '.system_generated', 'logs');
+    mkdirSync(logsDir, { recursive: true });
+    // Só o primeiro passo traz `model`; os seguintes trazem tokens, como ocorre no transcript real.
+    const linhas = [
+      { step_index: 1, type: 'PLANNER_RESPONSE', status: 'DONE', created_at: '2026-11-24T10:00:05Z', model: 'gemini-4-neon-medium', input_tokens: 1000, cache_read_tokens: 0, output_tokens: 100, content: 'a', tool_calls: [] },
+      { step_index: 2, type: 'PLANNER_RESPONSE', status: 'DONE', created_at: '2026-11-24T10:00:06Z', input_tokens: 2000, cache_read_tokens: 5000, output_tokens: 200, content: 'b', tool_calls: [] },
+      { step_index: 3, type: 'PLANNER_RESPONSE', status: 'DONE', created_at: '2026-11-24T10:00:07Z', input_tokens: 3000, cache_read_tokens: 0, output_tokens: 300, content: 'c', tool_calls: [] },
+    ];
+    writeFileSync(join(logsDir, 'transcript.jsonl'), `${linhas.map((l) => JSON.stringify(l)).join('\n')}\n`, 'utf8');
+    const ag = new Agregador();
+    const leitor = new LeitorTranscripts(dirAgy, (ev, meta) => ag.ingerir(ev, meta), { origem: 'antigravity' });
+    await leitor.varrer();
+    const est = ag.estado();
+    const agy = est.porAgente.find((a) => a.agente === 'antigravity');
+    assert.ok(agy, 'agente antigravity contabilizado');
+    assert.equal(agy.requisicoes, 3, 'os tres passos entram, nao so o que traz model');
+    assert.equal(agy.input, 6000);
+    assert.equal(agy.cache_read, 5000);
+    assert.equal(agy.output, 600);
+    assert.ok(est.modelos.some((m) => m.nome === 'gemini-4-neon-medium' && m.requisicoes === 3), 'passos herdam o modelo');
+  } finally {
+    rmSync(dirAgy, { recursive: true, force: true });
+  }
+});

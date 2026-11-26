@@ -60,6 +60,7 @@ O relatório cobre o que veio dos transcripts. As medições manuais continuam e
 | `REGISTRO_CSV` | vazio | Registro manual do repositório |
 | `TESTES_AB_CSV` | vazio | Registro dos testes A x B (`docs/uso/testes-ab.csv`) |
 | `CODERABBIT_JSON` | `<dados>/coderabbit-ab.json` | Coleta do CodeRabbit gerada por `bin/coderabbit-ab.js` |
+| `SNAPSHOT_USAGE_JSON` | `<dados>/usage-snapshot.json` | Snapshot manual do `/usage` (calibração de cota e countdown de reset) |
 | `PORTA`, `HOST` | `4317`, `127.0.0.1` | Endereço do servidor |
 | `INTERVALO_MS` | `1500` | Intervalo de leitura dos transcripts |
 | `HOSTS_PERMITIDOS` | vazio | Nomes extras aceitos no cabeçalho Host (ex.: acesso por outro nome na rede) |
@@ -77,6 +78,8 @@ O Claude Code apaga transcripts antigos por padrão (configuração `cleanupPeri
 - **Atribuição a tarefas:** os tokens de uma mensagem vão para a tarefa que estava em andamento na sessão. A mensagem que abre a tarefa conta para ela; a que a conclui, não.
 - **Projeto:** a chave vem do branch da sessão. `modulo/NN-slug/UU-slug` vira `NN.UU-slug`, e `plataforma/*` vira `plataforma`.
 - **Tokens equivalentes:** pesam cada tipo pelo custo relativo a um token de entrada comum (cache lido 0,1, cache escrito 2, saída 5). É uma medida de esforço, não um preço.
+- **Antigravity:** no transcript real só alguns passos trazem o `model`. Os demais contam com os tokens e herdam o último modelo da conversa; quando a conversa não traz modelo nenhum, aparecem como `antigravity-nao-identificado`, sem preço de referência.
+- **Percentuais (5 h e 7 dias):** cada Code Agent soma todas as suas sessões em janela corrida: últimas 5 horas e últimos 7 dias. Não é a sessão de um transcript nem a semana ISO. A cota (`COTA_*`) é uma referência: o % só bate com o do provedor depois de calibrada pela leitura do próprio provedor no mesmo instante.
 
 ## Comparativo A x B
 

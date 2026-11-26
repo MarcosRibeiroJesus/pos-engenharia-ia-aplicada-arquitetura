@@ -53,6 +53,10 @@ test('GitHub Copilot API: le billing de org sem vazar token', async () => {
 
 test('painelAgentes calcula % da sessao e % da semana por Code Agent e custo por token rotulado', () => {
   const estado = {
+    janelas: {
+      'claude-code': { sessao5h: 250_000, semana7d: 4_000_000 },
+      antigravity: { sessao5h: 500_000, semana7d: 2_000_000 },
+    },
     sessoes: [
       { id: 's1', agente: 'claude-code', ativa: true, equivalente: 250_000, ultimo: 2000 },
       { id: 'agy:c1', agente: 'antigravity', ativa: true, equivalente: 500_000, ultimo: 2000 },

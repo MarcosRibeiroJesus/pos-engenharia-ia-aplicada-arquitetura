@@ -1,0 +1,21 @@
+{
+  "sessao": "f72c1baa-3601-4f09-99cc-37b6c3609684",
+  "branch": "harness/interface-terminais",
+  "atualizado": "2026-11-26T04:19:32+00:00",
+  "modelos": {
+    "claude-haiku-5-5": {
+      "requisicoes": 97,
+      "input": 196,
+      "cache_write": 188108,
+      "cache_read": 15207368,
+      "output": 70221
+    },
+    "claude-sonnet-5-5": {
+      "requisicoes": 3,
+      "input": 6,
+      "cache_write": 65617,
+      "cache_read": 126884,
+      "output": 1107
+    }
+  }
+}
