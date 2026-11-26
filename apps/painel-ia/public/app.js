@@ -484,6 +484,9 @@ function renderPaineisAgentes(e) {
         g.sessao?.expirada ? medidorExpirado('5 h') : medidorPct('5 h', g.sessao?.pct ?? 0, det5h, g.sessao?.resetEm, e.geradoEm),
         g.semana?.expirada ? medidorExpirado('7 dias') : medidorPct('7 dias', g.semana?.pct ?? 0, det7d, g.semana?.resetEm, e.geradoEm));
     };
+    const snapExpirado = Boolean(p.snapshot?.expirado) && p.fontePct !== 'conta';
+    const sessaoSnapExp = snapExpirado || (p.fontePct === 'snapshot' && Boolean(p.snapshot?.sessaoExpirada));
+    const semanaSnapExp = snapExpirado || (p.fontePct === 'snapshot' && Boolean(p.snapshot?.semanaExpirada));
     return h('div', { class: `card-agente borda-${nivel}` },
       h('div', { class: 'card-agente-topo' },
         h('b', {}, p.titulo),
@@ -495,8 +498,8 @@ function renderPaineisAgentes(e) {
           ...gruposSnap.map(renderGrupo),
           h('div', { class: 'dica' }, `Δ logs desde snapshot: +${fmt(p.snapshot?.deltaEquivalente || 0)} eq.`))
         : [
-          medidorPct('Últimas 5 h', p.sessao.pct, detSessao, p.sessao.resetEm, e.geradoEm),
-          medidorPct('Últimos 7 dias', p.semana.pct, detSemana, p.semana.resetEm, e.geradoEm),
+          sessaoSnapExp ? medidorExpirado('Últimas 5 h') : medidorPct('Últimas 5 h', p.sessao.pct, detSessao, p.sessao.resetEm, e.geradoEm),
+          semanaSnapExp ? medidorExpirado('Últimos 7 dias') : medidorPct('Últimos 7 dias', p.semana.pct, detSemana, p.semana.resetEm, e.geradoEm),
         ],
       p.snapshot?.capturadoEm ? h('div', { class: 'dica' },
         p.snapshot.expirado
