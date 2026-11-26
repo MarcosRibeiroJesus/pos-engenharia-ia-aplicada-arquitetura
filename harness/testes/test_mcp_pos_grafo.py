@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 from scripts.mcp_pos_grafo.extrator import (
     construir_grafo_local,
@@ -162,6 +164,36 @@ class TestMcpPosGrafoD079(unittest.TestCase):
                 {"cypher": "MATCH (a:Aula) RETURN a"},
             )
             self.assertFalse(resp_cypher_ok["isError"])
+
+    def test_neo4j_auth_compartilhada_sem_padrao_publico(self) -> None:
+        compose = (RAIZ / "scripts" / "mcp_pos_grafo" / "docker-compose.yml").read_text(encoding="utf-8")
+        # Compose restringe portas ao loopback e exige NEO4J_AUTH do ambiente (sem senha padrão pública)
+        self.assertIn('"127.0.0.1:7474:7474"', compose)
+        self.assertIn('"127.0.0.1:7687:7687"', compose)
+        self.assertIn("NEO4J_AUTH=${NEO4J_AUTH:?", compose)
+        self.assertNotIn("NEO4J_AUTH=${NEO4J_AUTH:-", compose)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz_tmp = pathlib.Path(tmp)
+            # Sem NEO4J_AUTH no ambiente: motor não usa credencial padrão pública
+            with mock.patch.dict(os.environ, {}, clear=True):
+                motor_sem_auth = MotorGrafoPos(
+                    raiz_curso=raiz_tmp,
+                    caminho_cache=raiz_tmp / "grafo_pos.json",
+                )
+                self.assertEqual(motor_sem_auth.neo4j_auth, "")
+                status = motor_sem_auth.sincronizar_com_neo4j()
+                self.assertFalse(status["sincronizado"])
+                self.assertIn("NEO4J_AUTH", status["mensagem"])
+
+            # Com NEO4J_AUTH no ambiente: motor lê exatamente a mesma variável usada pelo Compose
+            cred_sintetica = "neo4j/credencial_sintetica_teste"
+            with mock.patch.dict(os.environ, {"NEO4J_AUTH": cred_sintetica}, clear=True):
+                motor_com_auth = MotorGrafoPos(
+                    raiz_curso=raiz_tmp,
+                    caminho_cache=raiz_tmp / "grafo_pos.json",
+                )
+                self.assertEqual(motor_com_auth.neo4j_auth, cred_sintetica)
 
 
 if __name__ == "__main__":

@@ -50,7 +50,9 @@ class MotorGrafoPos:
         self.neo4j_http_url = neo4j_http_url or os.environ.get(
             "NEO4J_HTTP_URL", "http://localhost:7474/db/neo4j/tx/commit"
         )
-        self.neo4j_auth = neo4j_auth or os.environ.get("NEO4J_AUTH", "neo4j/pos-grafo-local")
+        self.neo4j_auth = (
+            neo4j_auth if neo4j_auth is not None else os.environ.get("NEO4J_AUTH", "")
+        ).strip()
         self._grafo: dict[str, Any] | None = None
 
     def carregar_ou_ingerir(self, forcar_reingestao: bool = False) -> dict[str, Any]:
@@ -102,6 +104,11 @@ class MotorGrafoPos:
 
     def sincronizar_com_neo4j(self) -> dict[str, Any]:
         """Popula o banco Neo4j 5 Community quando o contêiner local está acessível."""
+        if not self.neo4j_auth:
+            return {
+                "sincronizado": False,
+                "mensagem": "NEO4J_AUTH não definida no ambiente; sincronização com Neo4j ignorada.",
+            }
         grafo = self.carregar_ou_ingerir()
         try:
             statements: list[dict[str, Any]] = [
