@@ -101,3 +101,20 @@ test('bloqueia cwd fora da raiz permitida do repositório', () => {
   });
   assert.throws(() => mgr.criar({ perfilId: 'shell', cwd: resolve('..', '..') }), /fora do diretório permitido/i);
 });
+
+test('abre na subpasta do projeto quando existe e cai para raiz se ainda não existir', () => {
+  const { factory, instancias } = criarPtyFake();
+  const raiz = resolve('.');
+  const mgr = new GerenciadorTerminais({
+    ptyFactory: factory,
+    raizPadrao: raiz,
+    resolverPerfil: resolverFake,
+  });
+  const abaSub = mgr.criar({ perfilId: 'shell', cwd: 'src' });
+  assert.equal(abaSub.cwd, resolve(raiz, 'src'));
+  assert.equal(instancias[0].opts.cwd, resolve(raiz, 'src'));
+
+  const abaInexistente = mgr.criar({ perfilId: 'shell', cwd: 'pasta-que-ainda-nao-existe' });
+  assert.equal(abaInexistente.cwd, raiz);
+  mgr.fecharTodos();
+});

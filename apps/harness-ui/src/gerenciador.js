@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { resolve, relative, isAbsolute } from 'node:path';
 import { resolverPerfil as resolverPerfilPadrao } from './perfis.js';
 
@@ -43,6 +44,7 @@ export class GerenciadorTerminais extends EventEmitter {
     if (rel.startsWith('..') || isAbsolute(rel)) {
       throw new Error(`diretório fora do diretório permitido: ${cwd}`);
     }
+    if (!existsSync(alvo)) return this.raizPadrao;
     return alvo;
   }
 

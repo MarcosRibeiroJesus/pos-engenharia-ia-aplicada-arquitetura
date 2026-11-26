@@ -374,11 +374,13 @@
         );
         promptInicial = resPrompt.prompt;
       }
+      const projObj = projeto ? (estado.harness.projetos || []).find((p) => p.chave === projeto) : null;
       const { terminal } = await api('/api/terminais', {
         method: 'POST',
         body: JSON.stringify({
           perfilId,
           projeto: projeto || null,
+          cwd: projObj?.pasta || undefined,
           titulo: titulo || undefined,
           promptInicial,
         }),
