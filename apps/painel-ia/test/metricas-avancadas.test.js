@@ -5,7 +5,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Agregador } from '../src/agregador.js';
 import { montarPainelAgentes } from '../src/provedores.js';
-import { classificarSaude, piorSaude, salvarSnapshotUsage, lerSnapshotsUsage, aplicarSnapshotsUsage, parsearTextoUsage } from '../src/snapshot-usage.js';
+import {
+  classificarSaude,
+  piorSaude,
+  salvarSnapshotUsage,
+  lerSnapshotsUsage,
+  aplicarSnapshotsUsage,
+  parsearTextoUsage,
+  mesclarOverridesSnapshot,
+} from '../src/snapshot-usage.js';
 
 test('classificarSaude segue o semáforo <70% verde, 70-90% amarelo e >=90% vermelho', () => {
   assert.deepEqual(classificarSaude(0), { nivel: 'saudavel', rotulo: 'Saudável' });
@@ -183,4 +191,62 @@ CLAUDE AND GPT MODELS
   assert.equal(agy.snapshot.grupos[0].saude.nivel, 'alerta');
   assert.equal(agy.snapshot.grupos[1].saude.nivel, 'critico');
   assert.equal(agy.saude.nivel, 'critico');
+
+  // Após o reset semanal de todos os grupos (inclusive o Disabled sem resetSessao próprio), tudo expira
+  const aposResetSemanal = baseMs + 6 * 24 * 3600_000;
+  const expirados = aplicarSnapshotsUsage(base, {
+    antigravity: { capturadoEm: new Date(baseMs).toISOString(), ...parsed },
+  }, () => 0, aposResetSemanal);
+  const agyExp = expirados.find((p) => p.agente === 'antigravity');
+  assert.equal(agyExp.snapshot.expirado, true);
+  assert.equal(agyExp.snapshot.grupos.length, 0);
+  assert.equal(agyExp.saude.nivel, 'saudavel');
+});
+
+test('mesclarOverridesSnapshot propaga overrides aos grupos e atualização manual sem --colar limpa grupos antigos', () => {
+  const baseMs = Date.parse('2026-11-26T05:53:00.000Z');
+  const parseado = parsearTextoUsage(`
+GEMINI MODELS
+  Weekly Limit Remaining
+    [] 20%
+    Refreshes in 2d 0h 0m
+  Five Hour Limit Remaining
+    [] 10%
+    Refreshes in 2h 0m
+`, { agora: () => baseMs });
+
+  const novoResetSessao = '2026-11-26T12:00:00.000Z';
+  const novoResetSemana = '2026-12-01T00:00:00.000Z';
+  const mesclado = mesclarOverridesSnapshot(parseado, {
+    agente: 'antigravity',
+    sessaoPct: 25,
+    semanaPct: 40,
+    resetSessaoEm: novoResetSessao,
+    resetSemanaEm: novoResetSemana,
+  });
+  assert.equal(mesclado.sessaoPct, 25);
+  assert.equal(mesclado.semanaPct, 40);
+  assert.equal(mesclado.grupos[0].sessao.pct, 25);
+  assert.equal(mesclado.grupos[0].semana.pct, 40);
+  assert.equal(mesclado.grupos[0].sessao.resetEm, novoResetSessao);
+  assert.equal(mesclado.grupos[0].semana.resetEm, novoResetSemana);
+
+  // Salva com grupos e depois sobrescreve manualmente sem --colar: grupos antigos devem ser limpos
+  const dir = mkdtempSync(join(tmpdir(), 'painel-snap-override-'));
+  try {
+    const arq = join(dir, 'usage-snapshot.json');
+    const comGrupos = salvarSnapshotUsage(arq, mesclado, { agora: () => baseMs });
+    assert.equal(comGrupos.grupos.length, 1);
+
+    const manual = salvarSnapshotUsage(arq, {
+      agente: 'antigravity',
+      sessaoPct: 15,
+      semanaPct: 30,
+    }, { agora: () => baseMs + 60_000 });
+    assert.deepEqual(manual.grupos, []);
+    assert.equal(manual.sessaoPct, 15);
+    assert.equal(manual.semanaPct, 30);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

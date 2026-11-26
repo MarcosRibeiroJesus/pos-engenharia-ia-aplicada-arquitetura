@@ -7,7 +7,7 @@ process.emitWarning = (aviso, ...resto) => (String(aviso).includes('SQLite') ? u
 const { configuracao, iniciar } = await import('../src/app.js');
 const { Persistencia } = await import('../src/persistencia.js');
 const { relatorio } = await import('../src/relatorio.js');
-const { salvarSnapshotUsage, parsearTextoUsage } = await import('../src/snapshot-usage.js');
+const { salvarSnapshotUsage, parsearTextoUsage, mesclarOverridesSnapshot } = await import('../src/snapshot-usage.js');
 
 const AJUDA = `pos-painel-ia: painel local, em tempo real, do uso de IA nas sessões do Claude Code e Antigravity.
 
@@ -47,7 +47,7 @@ if (subcomando === 'snapshot') {
   try {
     const caminho = configuracao(env).snapshotUsage;
     const dados = colarStdin
-      ? { ...parsearTextoUsage(readFileSync(0, 'utf8')), ...snapOpts }
+      ? mesclarOverridesSnapshot(parsearTextoUsage(readFileSync(0, 'utf8')), snapOpts)
       : snapOpts;
     const reg = salvarSnapshotUsage(caminho, dados);
     process.stdout.write(`Snapshot salvo em ${caminho} (${dados.agente}): ${JSON.stringify(reg)}\n`);
