@@ -3,7 +3,8 @@
 
   ler        mostra DECISOES.md e registra, neste clone, que a versão atual foi lida
   verificar  exit 1 se a memória mudou desde a última leitura (usado no pre-push)
-  auditar    exit 1 se uma decisão do dono (>= D-021) não diz onde foi aplicada (D-025) ou se DECISOES.md passa do teto (D-079)
+  auditar    exit 1 se uma decisão do dono (>= D-021) não diz onde foi aplicada (D-025),
+             ou se DECISOES.md não pode ser lido no ramo obtido ou passa do teto (D-079)
 
 No Claude Code os hooks fazem isso sozinhos; nos outros agentes o AGENTS.md manda rodar `ler`
 no início, e o pre-push do git (.githooks) bloqueia o envio se houver decisão nova não lida.
@@ -59,8 +60,9 @@ def main(argv: list[str], raiz: Path = RAIZ) -> int:
         faltam = sem_aplicacao(ramo.git(raiz, "show", f"{sha}:HISTORICO.md"))
         try:
             decisoes = ramo.git(raiz, "show", f"{sha}:DECISOES.md")
-        except RuntimeError:
-            decisoes = ""
+        except RuntimeError as erro:
+            print(f"Não foi possível ler DECISOES.md para a auditoria: {erro}", file=sys.stderr)
+            return 1
         acima = decisoes_acima_do_teto(decisoes)
         for d in faltam:
             print(f"{d}: decisão do dono sem '**Aplicado em:**' (regra ou skill que a aplica)")

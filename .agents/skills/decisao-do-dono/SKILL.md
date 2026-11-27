@@ -19,6 +19,7 @@ Quando o Marcos decide algo que só ele pode decidir (escopo, produto, orçament
 
 ## No mesmo turno
 1. **Memória compartilhada:** entrada `D-xxx · fonte: Marcos` no `HISTORICO.md` e a regra ativa no `DECISOES.md`. Saia das pendências o que foi resolvido. Mantenha `DECISOES.md` abaixo do teto de **8 KB** auditado por `python3 harness/memoria.py auditar` (D-079): por extenso ficam só `## Projetos`, `## Pendências` e o delta de decisões ainda não absorvidas por completo no `main`; decisões anteriores já mergeadas em `CLAUDE.md`, `AGENTS.md`, skills, hooks ou `harness/estado.json` viram índice compacto de 1 linha (`D-xxx (nome curto) → arquivo`).
+   - Em branches defasados, `memoria.py ler` exibe o índice. Busque o `main` com `git fetch origin refs/heads/main:refs/remotes/origin/main` e consulte o arquivo indicado com `git show origin/main:<arquivo>`, sem trocar de branch. Para apontamentos ao histórico, consulte `origin/memoria-compartilhada:HISTORICO.md`.
 2. **Aplicação com relação direta.** Escolha o lugar mais forte que couber, nesta ordem:
    - **gate programático:** hook, `estado.py validar`, CI ou teste. É o que impede o erro (1.4);
    - **constituição, `CLAUDE.md` ou `AGENTS.md`:** regra que todo agente lê;

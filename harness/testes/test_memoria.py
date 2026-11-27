@@ -43,6 +43,13 @@ class TestMemoria(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t:
             self.assertEqual(memoria.main(["verificar"], repo_com_remoto(Path(t))), 0)
 
+    def test_auditar_reprova_memoria_sem_decisoes(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone = repo_com_remoto(Path(t))
+            hist = "### 2026-11-27 · D-079 · Compactação · fonte: Marcos\n**Aplicado em:** harness/memoria.py\n"
+            ramo.gravar(clone, "memoria-compartilhada", "HISTORICO.md", hist, "hist")
+            self.assertNotEqual(memoria.main(["auditar"], clone), 0)
+
     def test_auditar_aprova_decisoes_ate_o_teto_de_bytes(self):
         with tempfile.TemporaryDirectory() as t:
             clone = repo_com_remoto(Path(t))

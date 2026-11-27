@@ -17,3 +17,4 @@ data,sessao,projeto,disciplina,unidade,tarefa,modelo,requisicoes,input,cache_wri
 2026-11-20,orquestracao-2026-11-c,plataforma,,,Orquestração na nuvem de 19 e 20/11 (conversa de orquestração),claude-opus-5-5,0,0,0,0,0,0,nao-medido,a sessão de nuvem não grava transcript nesta máquina; sem medição disponível
 2026-11-26,,plataforma,,,"Painel IA: saude, heatmap, performance e rankings",gemini-4-neon-medium,0,0,0,0,0,0,nao-medido,Sessao Antigravity (painel-ia)
 2026-11-27,272f00e3-d8f8-4908-a8af-bbb5885680e3,plataforma,,,Compactacao da memoria compartilhada e gate de 8 KB (D-079),gemini-4-carbon-medium,31,330882,0,2994550,49769,,transcript,
+2026-11-27,cr-c6b02126,plataforma,,,Correções da auditoria de decisões e do painel de uso,CodeRabbit,0,0,0,0,0,0,nao-medido,
