@@ -119,3 +119,17 @@ class TestConsumoCompletoDaPlataformaD074(unittest.TestCase):
             self.assertIn("00-plataforma-agentes", texto, arq)
             self.assertIn("100% alinhad", texto, arq)
 
+
+class TestCompactacaoDaMemoriaD079(unittest.TestCase):
+    """D-079: DECISOES.md mantém só Projetos, Pendências e delta não mergeado; o que já está no main vira índice curto (teto 8 KB)."""
+
+    def test_regra_no_claude_md_e_nas_duas_copias_da_skill_decisao_do_dono(self):
+        raiz = AQUI.parent
+        for arq in ("CLAUDE.md",
+                    ".claude/skills/decisao-do-dono/SKILL.md",
+                    ".agents/skills/decisao-do-dono/SKILL.md"):
+            texto = (raiz / arq).read_text(encoding="utf-8")
+            self.assertIn("D-079", texto, arq)
+            self.assertIn("8 KB", texto, arq)
+
+

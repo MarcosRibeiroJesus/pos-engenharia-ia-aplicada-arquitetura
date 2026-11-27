@@ -1,6 +1,6 @@
 # Versão do harness
 
-**Versão atual: 0.7.0** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
+**Versão atual: 0.7.2** (pré-estável). O pacote npx só será criado depois da versão estável e testada (D-027), e publicar é decisão do dono.
 
 ## Critérios para a 1.0 (estável e testada)
 | # | Critério | Como se prova | Situação |
@@ -15,6 +15,10 @@
 | 8 | Documentação | README do harness com instalação em no máximo 5 passos | pendente |
 
 ## Histórico
+- **0.7.2:** a auditoria falha se não conseguir ler `DECISOES.md` no ramo obtido; a skill `decisao-do-dono` explica como consultar o índice em branches defasados. Critérios afetados: 2 (gates estáveis) e 7 (teste da auditoria com memória incompleta).
+- **0.7.1:**
+  - compactação de `DECISOES.md` e teto de 8 KB (`MAX_BYTES_DECISOES = 8192`) em `harness/memoria.py auditar` (D-079): `DECISOES.md` mantém por extenso só `## Projetos`, `## Pendências` e o delta de decisões ainda não absorvidas nos manuais do `main`; decisões já incorporadas em `CLAUDE.md`, `AGENTS.md`, skills, hooks ou `harness/estado.json` ficam num índice compacto de 1 linha. Regra documentada em `CLAUDE.md` e na skill `decisao-do-dono`, com testes em `test_memoria.py` e `test_regras_do_dono.py`.
+  - critérios afetados: 2 (gates estáveis: o CI de pull requests executa a auditoria do teto; gravações diretas da memória não passam por esse gate) e 7 (testes de auditoria em repositório temporário).
 - **0.7.0:**
   - destroy automático padrão de 6 h após a subida (decisão do dono); o teto de 24 h (D-024) continua valendo para `estender` e para o máximo do apply. `harness/infra.py` e o modelo `harness/modelos/apply.yml` mudam. O workflow real `.github/workflows/*-apply.yml` ainda tem 24 e precisa ser ajustado por revisão humana (as regras proíbem agentes de alterar `.github/workflows/`).
   - hook de 230 mil tokens (D-076) passa a salvar o estado da sessão em `harness/handoff/<sessao>.json` (gitignorado) e a pedir ao dono que decida fechar ou continuar. A memória compartilhada não é escrita pelo hook: só a orquestração grava nela.

@@ -3,7 +3,8 @@
 
   ler        mostra DECISOES.md e registra, neste clone, que a versão atual foi lida
   verificar  exit 1 se a memória mudou desde a última leitura (usado no pre-push)
-  auditar    exit 1 se uma decisão do dono (a partir da D-021) não diz onde foi aplicada (D-025)
+  auditar    exit 1 se uma decisão do dono (>= D-021) não diz onde foi aplicada (D-025),
+             ou se DECISOES.md não pode ser lido no ramo obtido ou passa do teto (D-079)
 
 No Claude Code os hooks fazem isso sozinhos; nos outros agentes o AGENTS.md manda rodar `ler`
 no início, e o pre-push do git (.githooks) bloqueia o envio se houver decisão nova não lida.
@@ -26,6 +27,7 @@ def marca(raiz: Path) -> Path:
 
 
 PRIMEIRA_AUDITADA = 21  # D-025 vale para as decisões do dono a partir da D-021
+MAX_BYTES_DECISOES = 8192  # 8 KB: teto do estado ativo injetado em toda sessão (D-079)
 
 
 def sem_aplicacao(historico: str) -> list[str]:
@@ -36,6 +38,12 @@ def sem_aplicacao(historico: str) -> list[str]:
         if cab and int(cab.group(2)) >= PRIMEIRA_AUDITADA and "**Aplicado em:**" not in bloco:
             faltam.append(cab.group(1))
     return faltam
+
+
+def decisoes_acima_do_teto(decisoes: str, limite: int = MAX_BYTES_DECISOES) -> int | None:
+    """Devolve o tamanho em bytes UTF-8 se DECISOES.md ultrapassar `limite`, senão None."""
+    tamanho = len(decisoes.encode("utf-8"))
+    return tamanho if tamanho > limite else None
 
 
 def main(argv: list[str], raiz: Path = RAIZ) -> int:
@@ -50,10 +58,20 @@ def main(argv: list[str], raiz: Path = RAIZ) -> int:
         return 0
     if cmd == "auditar":
         faltam = sem_aplicacao(ramo.git(raiz, "show", f"{sha}:HISTORICO.md"))
+        try:
+            decisoes = ramo.git(raiz, "show", f"{sha}:DECISOES.md")
+        except RuntimeError as erro:
+            print(f"Não foi possível ler DECISOES.md para a auditoria: {erro}", file=sys.stderr)
+            return 1
+        acima = decisoes_acima_do_teto(decisoes)
         for d in faltam:
             print(f"{d}: decisão do dono sem '**Aplicado em:**' (regra ou skill que a aplica)")
-        print("ok" if not faltam else f"{len(faltam)} decisão(ões) sem aplicação registrada")
-        return 1 if faltam else 0
+        if acima is not None:
+            print(f"DECISOES.md com {acima} bytes (teto {MAX_BYTES_DECISOES}): "
+                  "compacte o que já está no main para índice de 1 linha")
+        erros = len(faltam) + (1 if acima is not None else 0)
+        print("ok" if not erros else f"{erros} problema(s) na auditoria da memória compartilhada")
+        return 1 if erros else 0
     if cmd == "verificar":
         try:
             lido = marca(raiz).read_text().strip()

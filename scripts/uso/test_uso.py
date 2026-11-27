@@ -56,6 +56,23 @@ def test_painel_atualiza_widget_do_post(tmp_path):
     assert "Por modelo" in (tmp_path / "uso.html").read_text()
 
 
+def test_barras_distinguem_grupos_sem_medicao_de_zero_medido():
+    sem_medicao = {"projeto": "Sem dados", "modelo": "Desconhecido", "fonte": "nao-medido"}
+    linhas = [
+        sem_medicao,
+        {**sem_medicao, "projeto": "Misto", "modelo": "Misto"},
+        {"projeto": "Misto", "modelo": "Misto", "fonte": "medido-total", "total": 75},
+        {"projeto": "Zero", "modelo": "Zero", "fonte": "medido", "total": 0},
+    ]
+
+    for chave in ("projeto", "modelo"):
+        html = uso.barras(uso.agrupar(linhas, chave), chave)
+        assert f'title="{sem_medicao[chave]}: sem medição"' in html
+        assert '<span class="uso-valor">sem medição</span>' in html
+        assert 'title="Misto: 75 equivalentes' in html
+        assert 'title="Zero: 0 equivalentes' in html
+
+
 def test_widget_sem_registro_diz_pendente(tmp_path):
     assert "Ainda sem uso registrado" in uso.widget([], "01.04-doom", "../")
 

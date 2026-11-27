@@ -129,9 +129,12 @@ def equivalente(linha: dict) -> float:
 
 
 def agrupar(linhas: list[dict], chave: str) -> list[tuple[str, dict]]:
-    grupos: dict[str, dict] = defaultdict(lambda: {**{n: 0 for n in NUMEROS}, "equiv": 0.0})
+    grupos: dict[str, dict] = defaultdict(lambda: {**{n: 0 for n in NUMEROS}, "equiv": 0.0, "medido": False})
     for l in linhas:
         g = grupos[l[chave] or "—"]
+        if l["fonte"] == "nao-medido":
+            continue
+        g["medido"] = True
         for n in NUMEROS:
             g[n] += l.get(n, 0) or 0
         g["equiv"] += equivalente(l)
@@ -154,11 +157,14 @@ def barras(grupos: list[tuple[str, dict]], titulo: str) -> str:
         dica = (f"{nome}: {fmt(g['equiv'])} equivalentes · entrada {fmt(g['input'])} · "
                 f"cache escrito {fmt(g['cache_write'])} · cache lido {fmt(g['cache_read'])} · "
                 f"saída {fmt(g['output'])} · {g['requisicoes']} requisições")
+        valor = fmt(g["equiv"]) if g["medido"] else "sem medição"
+        if not g["medido"]:
+            dica = f"{nome}: {valor}"
         linhas.append(
             f'<div class="uso-linha" title="{html.escape(dica)}">'
             f'<span class="uso-nome">{html.escape(nome)}</span>'
             f'<span class="uso-trilho"><span class="uso-barra" style="width:{pct:.1f}%"></span></span>'
-            f'<span class="uso-valor">{fmt(g["equiv"])}</span></div>'
+            f'<span class="uso-valor">{valor}</span></div>'
         )
     return f'<section class="uso-bloco"><h2>{html.escape(titulo)}</h2>{"".join(linhas)}</section>'
 
