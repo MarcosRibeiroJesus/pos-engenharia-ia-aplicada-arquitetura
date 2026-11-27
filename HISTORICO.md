@@ -6,6 +6,12 @@ Registro completo, do mais novo para o mais antigo. Cada entrada traz data, id e
 
 Quando uma decisão substitui outra, a nova diz qual substitui. Nada é apagado.
 
+### 2026-11-27 · D-079 · Compactação de `DECISOES.md` com índice do que já está no `main` e teto de 8 KB · fonte: Marcos
+Após analisar o custo da memória compartilhada no contexto (21.295 bytes em `DECISOES.md`, sendo 85% em `## Regras ativas` repetindo decisões já incorporadas nos manuais do `main` pela D-025) versus um banco vetorial (que traria custo de schemas MCP + turnos extras e risco de perder regras normativas por similaridade semântica, tarefas 3.1 e 5.1), o Marcos pediu ("Faça essa melhoria") a compactação de `DECISOES.md`:
+- `DECISOES.md` passa a manter por extenso apenas `## Projetos`, `## Pendências` e o delta de decisões/parâmetros ainda não absorvidos nos manuais do `main`, deixando as decisões já mergeadas num índice compacto de 1 linha apontando para `AGENTS.md`, `CLAUDE.md`, skills e `HISTORICO.md`.
+- `harness/memoria.py auditar` passa a aplicar o gate programático `MAX_BYTES_DECISOES = 8192` (8 KB), impedindo que `DECISOES.md` volte a inchar (tarefas 1.4 e 5.1).
+**Aplicado em:** `DECISOES.md` (reduzido de 21.295 bytes para 6986 bytes), `harness/memoria.py` (`MAX_BYTES_DECISOES = 8192` em `auditar`), `CLAUDE.md` (Memória compartilhada), `.claude/skills/decisao-do-dono/SKILL.md` e `.agents/skills/decisao-do-dono/SKILL.md`, `harness/VERSAO.md` (0.7.1) e testes em `harness/testes/test_memoria.py` e `harness/testes/test_regras_do_dono.py` (branch `harness/compactar-memoria-compartilhada`).
+
 ### 2026-11-24 · D-078 · 01-doom: segunda estratégia comparativa com Jev + Astra (Sistema 1 + Sistema 2) e provider plugável · fonte: Marcos
 - Pergunta 1: como incluir a arquitetura Jev + Astra (Sistema 1 reativo em milissegundos + Sistema 2 assíncrono em segundo plano) no projeto `01-doom` sem violar a fidelidade à aula (D-074) nem substituir D-059?
 - Resposta do Marcos: manter o `01-doom` principal 100% fiel à aula (YOLO em TF.js num Web Worker + calibrador de limiar com gate humano, D-059) e adicionar **Jev + Astra** como **2ª estratégia (experimento comparativo)** dentro do mesmo projeto `01-doom`, com adaptador desacoplado e testes com respostas gravadas.
