@@ -23,7 +23,7 @@ Você é o arquiteto e orquestrador deste repositório. Transforme os módulos d
 
 ## Memória compartilhada (decisões macro)
 - As decisões macro que tomo na conversa de orquestração ficam no branch `memoria-compartilhada`, fora do fluxo de PR, para chegar às sessões na hora:
-  - `DECISOES.md`: estado atual, regras ativas e pendências. É curto e sempre entra no contexto.
+  - `DECISOES.md`: estado atual (`## Projetos`), pendências (`## Pendências`) e delta de decisões ainda não absorvidas por completo no `main`. Decisões já aplicadas em `CLAUDE.md`, `AGENTS.md`, skills, hooks ou `harness/estado.json` (D-025) ficam num índice compacto de 1 linha apontando para o destino, sem repetir prosa longa nos dois lugares — teto de **8 KB** (`MAX_BYTES_DECISOES = 8192`), auditado por `python3 harness/memoria.py auditar` (D-079).
   - `HISTORICO.md`: registro completo, com data, id e fonte de cada decisão. Leia só quando precisar do porquê.
   - Para ler: `git fetch origin memoria-compartilhada && git show origin/memoria-compartilhada:DECISOES.md`.
 - O hook `.claude/hooks/memoria_compartilhada.py` injeta o `DECISOES.md` no início da sessão e o que mudou nele a cada mensagem minha e, durante trabalho longo, a cada 10 minutos. Se uma decisão de lá contradiz o briefing ou o branch, vale a de lá: ajuste o trabalho e registre no PR o que mudou.

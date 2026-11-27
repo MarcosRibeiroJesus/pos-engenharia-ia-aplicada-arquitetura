@@ -43,6 +43,26 @@ class TestMemoria(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t:
             self.assertEqual(memoria.main(["verificar"], repo_com_remoto(Path(t))), 0)
 
+    def test_auditar_aprova_decisoes_ate_o_teto_de_bytes(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone = repo_com_remoto(Path(t))
+            hist = "### 2026-11-27 · D-079 · Compactação · fonte: Marcos\n**Aplicado em:** harness/memoria.py\n"
+            ramo.gravar(clone, "memoria-compartilhada", "HISTORICO.md", hist, "hist")
+            ramo.gravar(clone, "memoria-compartilhada", "DECISOES.md", "a" * memoria.MAX_BYTES_DECISOES, "no teto")
+            self.assertIsNone(memoria.decisoes_acima_do_teto("a" * memoria.MAX_BYTES_DECISOES))
+            self.assertEqual(memoria.main(["auditar"], clone), 0)
+
+    def test_auditar_reprova_decisoes_acima_do_teto_de_bytes(self):
+        with tempfile.TemporaryDirectory() as t:
+            clone = repo_com_remoto(Path(t))
+            hist = "### 2026-11-27 · D-079 · Compactação · fonte: Marcos\n**Aplicado em:** harness/memoria.py\n"
+            ramo.gravar(clone, "memoria-compartilhada", "HISTORICO.md", hist, "hist")
+            acima = "ç" * (memoria.MAX_BYTES_DECISOES // 2 + 1)  # mede bytes UTF-8, não caracteres
+            ramo.gravar(clone, "memoria-compartilhada", "DECISOES.md", acima, "acima do teto")
+            self.assertGreater(memoria.decisoes_acima_do_teto(acima) or 0, memoria.MAX_BYTES_DECISOES)
+            self.assertEqual(memoria.main(["auditar"], clone), 1)
+
+
 
 class TestDecisaoDoDono(unittest.TestCase):
     """D-025: decisão do dono registra onde foi aplicada."""
